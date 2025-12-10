@@ -41,7 +41,7 @@ export function useGetOrdersByProduct(product_id) {
 
 export function useGetOrders(page = 1, perPage = 100) {
     const params = new URLSearchParams({ page, per_page: perPage });
-    const url = `${endpoints.product?.allOrders}?${params.toString()}`;
+    const url = `${endpoints.order?.root}?${params.toString()}`;
     console.log("url : ",url);
 
     const { data, isLoading, error, isValidating, mutate } = useSWR(

@@ -52,6 +52,8 @@ import { AuthContext } from 'src/auth/context/jwt';
 export default function ProductsListView({ }) {
 
     const { products, productsLoading } = useGetProducts()
+    console.log("products : ",products);
+
     const { user } = useContext(AuthContext);
 
     const [tableData, setTableData] = useState([]);
@@ -85,11 +87,19 @@ export default function ProductsListView({ }) {
                 color = "error";
             }
 
+            // Extract data from default variant
+            const defaultVariant = item?.variants?.find(v => v.is_default) || item?.variants?.[0];
+            const quantity = defaultVariant?.quantity || 0;
+            const real_price = defaultVariant?.compare_at_price || 0;
+            const sale_price = defaultVariant?.price || 0;
+
             return {
                 ...item,
                 c_status: t(item?.status),
                 color,
-
+                quantity,
+                real_price,
+                sale_price,
             };
         }) || [];
     };

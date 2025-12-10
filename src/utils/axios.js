@@ -18,7 +18,10 @@ axiosInstance.interceptors.response.use(
       // Redirect to login
       window.location.href = '/auth/jwt/login';
     }
-    return Promise.reject((error.response && error.response.data) || 'Something went wrong');
+
+    // Throw the error with consistent structure
+    const errorData = error.response?.data || { message: 'Something went wrong' };
+    return Promise.reject(errorData);
   }
 );
 
@@ -92,11 +95,14 @@ export const endpoints = {
     assets:(id)=> `/products/${id}/assets`,
     deploy:(id)=> `/products/${id}/deploy`,
     orders:(id)=> `/products/${id}/orders`,
-    allOrders:`/orders`,
     updateOrdersStatus:(product_id,order_id)=> `/products/${product_id}/orders/${order_id}/status`,
     search: '/product/search',
   },
+  order: {
+    root: '/orders',
+  },
   utils: { values: '/values' },
+  media: { root: '/media' },
   company: {
     list: '/company',
     statistics: "/company/statistics"

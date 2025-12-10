@@ -12,6 +12,7 @@ export default function ProductEditPage() {
 
   const { id } = params;
   const {product} = useGetProduct(id)
+  console.log("product : ",product);
 
   return (
     <>

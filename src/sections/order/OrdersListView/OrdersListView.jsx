@@ -1,4 +1,4 @@
-import { Box, Button, Card, FormControlLabel, FormGroup, Grid, IconButton, MenuItem, Stack, Switch, Tooltip, Typography } from '@mui/material';
+import { Box, Button, Card, FormControlLabel, FormGroup, Grid, IconButton, MenuItem, Stack, Switch, Tooltip, Typography, Avatar, Chip } from '@mui/material';
 import { t } from 'i18next';
 import { set } from 'lodash'; // [keep for later use]
 import { enqueueSnackbar, useSnackbar } from 'notistack';
@@ -42,9 +42,133 @@ import { LoadingScreen } from 'src/components/loading-screen';
 import { useGetProducts } from 'src/api/product';
 import { updateOrder, useGetOrders, useGetOrdersByProduct } from 'src/api/orders';
 import ExportOrdersButton from './ExportOrdersButton';
+import { HOST_API } from 'src/config-global';
 
 
 
+
+// ----------------------------------------------------------------------
+
+// Product Items Display Component
+function OrderItemsCell({ items, order }) {
+    // Handle old data structure (backward compatibility)
+    if (!items || items.length === 0) {
+        // Fallback to old structure: order.product and order.variant
+        if (order?.product) {
+            const mediaUrl = order.variant?.media?.url
+                ? `${HOST_API}/${order.variant.media.url}`
+                : order.product?.media?.[0]?.url
+                    ? `${HOST_API}/${order.product.media[0].url}`
+                    : null;
+
+            const variantText = order.variant?.options?.join(' / ') || '';
+
+            return (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                    {mediaUrl && (
+                        <Avatar
+                            src={mediaUrl}
+                            variant="rounded"
+                            sx={{ width: 48, height: 48 }}
+                        />
+                    )}
+                    <Box>
+                        <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                            {order.product?.name}
+                        </Typography>
+                        {variantText && (
+                            <Typography variant="caption" color="text.secondary" display="block">
+                                {variantText}
+                            </Typography>
+                        )}
+                        {order.quantity && (
+                            <Typography variant="caption" color="text.disabled" display="block">
+                                {t('quantity')}: {order.quantity}
+                            </Typography>
+                        )}
+                    </Box>
+                </Box>
+            );
+        }
+        return <Typography variant="caption" color="text.disabled">-</Typography>;
+    }
+
+    // If single item, show full details (new structure)
+    if (items.length === 1) {
+        const item = items[0];
+        const mediaUrl = item.variant?.media?.url
+            ? `${HOST_API}/${item.variant.media.url}`
+            : item.product?.media?.[0]?.url
+                ? `${HOST_API}/${item.product.media[0].url}`
+                : null;
+
+        const variantText = item.variant?.option_values
+            ?.map(ov => ov.value)
+            .join(' / ') || '';
+
+        return (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                {mediaUrl && (
+                    <Avatar
+                        src={mediaUrl}
+                        variant="rounded"
+                        sx={{ width: 48, height: 48 }}
+                    />
+                )}
+                <Box>
+                    <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                        {item.product?.name}
+                    </Typography>
+                    {variantText && (
+                        <Typography variant="caption" color="text.secondary" display="block">
+                            {variantText}
+                        </Typography>
+                    )}
+                    <Typography variant="caption" color="text.disabled" display="block">
+                        {t('quantity')}: {item.quantity}
+                    </Typography>
+                </Box>
+            </Box>
+        );
+    }
+
+    // If multiple items, show count with tooltip
+    return (
+        <Tooltip
+            title={
+                <Stack spacing={1} sx={{ p: 0.5 }}>
+                    {items.map((item, idx) => {
+                        const variantText = item.variant?.option_values
+                            ?.map(ov => ov.value)
+                            .join(' / ') || '';
+
+                        return (
+                            <Box key={idx}>
+                                <Typography variant="caption" sx={{ fontWeight: 500 }}>
+                                    {item.quantity}× {item.product?.name}
+                                </Typography>
+                                {variantText && (
+                                    <Typography variant="caption" display="block" sx={{ opacity: 0.8 }}>
+                                        {variantText}
+                                    </Typography>
+                                )}
+                            </Box>
+                        );
+                    })}
+                </Stack>
+            }
+            arrow
+        >
+            <Chip
+                label={t('multiple_items', { count: items.length })}
+                size="small"
+                color="primary"
+                variant="outlined"
+                sx={{ cursor: 'pointer' }}
+            />
+        </Tooltip>
+    );
+}
 
 // ----------------------------------------------------------------------
 
@@ -64,13 +188,11 @@ export default function OrdersListView({ product_id }) {
     const [dataFiltered, setDataFiltered] = useState([]);
 
     let TABLE_HEAD = [
-        { id: 'name', label: t('name'), type: "text", width: 180 },
+        { id: 'ref', label: t('order_ref'), type: "text", width: 140 },
+        { id: 'name', label: t('customer'), type: "text", width: 180 },
         { id: 'phone', label: t('phone'), type: "text", width: 140 },
-        { id: 'quantity', label: t('quantity'), type: "text", width: 60 },
-        { id: 'product', label: t('product'), type: "text", width: 140 },
-        // { id: 'birth_date', label: t('birth_date'), type: "text", width: 140 },
-        // { id: 'real_price', label: t('real_price'), type: "text", width: 140 },
-        // { id: 'sale_price', label: t('sale_price'), type: "text", width: 100 },
+        { id: 'product_items', label: t('product'), type: "custom", component: (item) => <OrderItemsCell items={item.items} order={item} />, width: 250 },
+        { id: 'total', label: t('total'), type: "text", width: 120 },
         { id: 'c_status', label: t('status'), type: "label", width: 100 },
         { id: 'full_address', label: t('address'), type: "long_text", length: 2, width: 200 },
         { id: 'actions', label: t('actions'), type: "threeDots", component: (item) => <ElementActions item={item} setTableData={setTableData} />, width: 60, align: "right" },
@@ -100,13 +222,25 @@ export default function OrdersListView({ product_id }) {
                 translatedStatus = t("cancelled");
             }
 
+            // Handle multiple items - show summary
+            const itemsSummary = item?.items?.length === 1
+                ? item.items[0].product?.name
+                : item?.items?.length > 1
+                    ? t('multiple_items', { count: item?.items?.length })
+                    : '-';
+
             return {
                 ...item,
+                ref: item?.ref || `#${item?.id}`,
                 name: item?.customer?.full_name,
                 phone: item?.customer?.phone,
-                product: item?.product?.name,
+                total_items: item?.total_items || item?.items?.length || 0,
+                total: item?.total ? `${item.total.toFixed(2)} DA` : '-',
+                products_summary: itemsSummary,
                 c_status: translatedStatus,
-                full_address: currentLang?.value == "ar" ? item?.address?.wilaya?.name_ar + ", " + item?.address?.commune?.name_ar + " " + item?.address?.street_address : item?.address?.wilaya?.name + " " + item?.address?.commune?.name + " " + item?.address?.street_address,
+                full_address: currentLang?.value === "ar"
+                    ? `${item?.address?.wilaya?.name_ar || ''}, ${item?.address?.commune?.name_ar || ''} ${item?.address?.street_address || ''}`
+                    : `${item?.address?.wilaya?.name || ''}, ${item?.address?.commune?.name || ''} ${item?.address?.street_address || ''}`,
                 color,
             };
         }) || [];
@@ -115,20 +249,42 @@ export default function OrdersListView({ product_id }) {
 
     const filters = [
         {
-            key: 'search', label: t('search'), match: (item, value) =>
-                item?.customer?.full_name?.toLowerCase().includes(value?.toLowerCase()) ||
-                item?.customer?.first_name?.toLowerCase().includes(value?.toLowerCase()) ||
-                item?.customer?.last_name?.toLowerCase().includes(value?.toLowerCase()) ||
-                item?.customer?.phone?.toLowerCase().includes(value?.toLowerCase()) ||
-                item?.product?.name?.toLowerCase().includes(value?.toLowerCase()) ||
-                item?.address?.street_address?.toLowerCase().includes(value?.toLowerCase()) ||
-                item?.address?.commune?.name?.toLowerCase().includes(value?.toLowerCase()) ||
-                item?.address?.commune?.name_ar?.toLowerCase().includes(value?.toLowerCase()) ||
-                item?.address?.wilaya?.name?.toLowerCase().includes(value?.toLowerCase()) ||
-                item?.address?.wilaya?.name_ar?.toLowerCase().includes(value?.toLowerCase()) ||
-                item?.address?.full_address?.toLowerCase().includes(value?.toLowerCase()) ||
-                item?.id?.toString().includes(value) ||
-                item?.notes?.toLowerCase().includes(value?.toLowerCase()),
+            key: 'search', label: t('search'), match: (item, value) => {
+                const lowerValue = value?.toLowerCase();
+
+                // Search in customer fields
+                const customerMatch =
+                    item?.customer?.full_name?.toLowerCase().includes(lowerValue) ||
+                    item?.customer?.first_name?.toLowerCase().includes(lowerValue) ||
+                    item?.customer?.last_name?.toLowerCase().includes(lowerValue) ||
+                    item?.customer?.phone?.toLowerCase().includes(lowerValue) ||
+                    item?.customer?.email?.toLowerCase().includes(lowerValue);
+
+                // Search in all items' product names and SKUs
+                const productsMatch = item?.items?.some(orderItem =>
+                    orderItem?.product?.name?.toLowerCase().includes(lowerValue) ||
+                    orderItem?.product?.ref?.toLowerCase().includes(lowerValue) ||
+                    orderItem?.variant?.sku?.toLowerCase().includes(lowerValue)
+                );
+
+                // Search in address fields
+                const addressMatch =
+                    item?.address?.street_address?.toLowerCase().includes(lowerValue) ||
+                    item?.address?.commune?.name?.toLowerCase().includes(lowerValue) ||
+                    item?.address?.commune?.name_ar?.toLowerCase().includes(lowerValue) ||
+                    item?.address?.wilaya?.name?.toLowerCase().includes(lowerValue) ||
+                    item?.address?.wilaya?.name_ar?.toLowerCase().includes(lowerValue) ||
+                    item?.address?.full_address?.toLowerCase().includes(lowerValue);
+
+                // Search in other fields
+                const otherMatch =
+                    item?.ref?.toLowerCase().includes(lowerValue) ||
+                    item?.id?.toString().includes(value) ||
+                    item?.store?.name?.toLowerCase().includes(lowerValue) ||
+                    item?.notes?.toLowerCase().includes(lowerValue);
+
+                return customerMatch || productsMatch || addressMatch || otherMatch;
+            },
         },
     ];
 
@@ -227,10 +383,10 @@ const ElementActions = ({ item, setTableData }) => {
             setPostloader(true)
             try {
                 loading.onTrue()
-                // TODO: Implement API call to update order status
+                // Update order status - use first item's product_id if backend requires it
+                const productId = item.items?.[0]?.product?.id || item.product_id;
                 console.log("item : ", item)
-                await updateOrder(item.product_id, item.id, { status: selectedStatus.key })
-                // const res = await updateOrderStatus(item?.id, selectedStatus.key);
+                await updateOrder(productId, item.id, { status: selectedStatus.key })
                 console.log("Changing order status:", { orderId: item?.id, newStatus: selectedStatus.key });
 
                 // Update table data optimistically

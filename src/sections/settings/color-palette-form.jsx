@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext } from 'react';
+import { useState, useEffect, useContext, useRef } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 
 import Box from '@mui/material/Box';
@@ -275,6 +275,7 @@ export default function ColorPaletteForm() {
   const methods = useForm({
     defaultValues: {
       primaryColor: DEFAULT_PRIMARY_COLOR,
+      palette: null,
     },
   });
 
@@ -310,16 +311,32 @@ export default function ColorPaletteForm() {
   };
 
   const primaryColor = watch('primaryColor');
+  const palette = watch('palette');
 
   // Generate palette whenever primary color changes
   useEffect(() => {
     generatePalette(primaryColor);
   }, [primaryColor]);
 
+  // Update generatedPalette when individual colors are edited
+  useEffect(() => {
+    if (palette) {
+      setGeneratedPalette(palette);
+    }
+  }, [palette]);
+
    useEffect(() => {
-    setGeneratedPalette(store?.config?.colorPalette);
-    setDEFAULT_PRIMARY_COLOR(store?.config?.colorPalette?.primary?.main)
-  }, [store]);
+    if (store?.config?.colorPalette) {
+      setGeneratedPalette(store.config.colorPalette);
+      setDEFAULT_PRIMARY_COLOR(store.config.colorPalette?.primary?.main);
+      // Also set the palette form field with the stored palette
+      setValue('palette', store.config.colorPalette);
+      // Set the primary color field
+      if (store.config.colorPalette?.primary?.main) {
+        setValue('primaryColor', store.config.colorPalette.primary.main);
+      }
+    }
+  }, [store, setValue]);
 
   const generatePalette = (baseColor) => {
     // Detect emotional tone
@@ -429,51 +446,166 @@ export default function ColorPaletteForm() {
     };
 
     setGeneratedPalette(palette);
+    // Also save to form field for individual color editing
+    setValue('palette', palette);
   };
 
   const onSubmit = handleSubmit(async (data) => {
     try {
       setLoading(true);
 
-      // Console log the JSON
-      console.log('Generated Color Palette:', generatedPalette);
-      await updateStoreConfig({ config: { colorPalette: generatedPalette } })
+      console.log('🚀 SUBMIT TRIGGERED');
+      console.log('📋 Full form data:', data);
+      console.log('🎨 data.palette:', data.palette);
+      console.log('🌈 generatedPalette state:', generatedPalette);
+
+      // Use the palette from form data (which includes all manual edits)
+      const paletteToSubmit = data.palette || generatedPalette;
+
+      console.log('📤 Palette being submitted to backend:', paletteToSubmit);
+      console.log('📤 Full config object:', { config: { colorPalette: paletteToSubmit } });
+
+      const response = await updateStoreConfig({ config: { colorPalette: paletteToSubmit } });
+      console.log('✅ Backend response:', response);
 
       enqueueSnackbar(t('color_palette_generated_successfully'), { variant: 'success' });
       setLoading(false);
     } catch (error) {
       setLoading(false);
-      console.error(error);
+      console.error('❌ Submit error:', error);
     }
   });
 
-  const ColorPreview = ({ label, color, showText = false }) => (
-    <Stack direction="row" alignItems="center" spacing={1.5}>
-      <Box
+  const ColorPreview = ({ label, color, showText = false, fieldPath = null }) => {
+    const inputRef = useRef(null);
+
+    // Watch the entire palette to get live updates
+    const currentPalette = watch('palette');
+
+    // Extract the color from the palette if fieldPath is provided
+    let displayColor = color;
+    if (fieldPath && currentPalette) {
+      const pathParts = fieldPath.split('.');
+      let value = currentPalette;
+      for (let i = 1; i < pathParts.length; i++) {
+        value = value?.[pathParts[i]];
+      }
+      displayColor = value || color;
+    }
+
+    const handleColorBoxClick = () => {
+      // Trigger the hidden color input
+      if (inputRef.current) {
+        inputRef.current.click();
+      }
+    };
+
+    const handleColorChange = (event) => {
+      const newColor = event.target.value;
+      console.log('🎨 Color changed:', { fieldPath, newColor });
+
+      if (fieldPath) {
+        // Get current palette
+        const currentPalette = watch('palette') || generatedPalette;
+        console.log('📦 Current palette before update:', currentPalette);
+
+        // Parse the field path (e.g., "palette.primary.main" -> ["palette", "primary", "main"])
+        const pathParts = fieldPath.split('.');
+        console.log('🗺️ Field path parts:', pathParts);
+
+        // Create a deep copy of the palette
+        const updatedPalette = JSON.parse(JSON.stringify(currentPalette));
+
+        // Navigate to the nested property and update it
+        let current = updatedPalette;
+        for (let i = 1; i < pathParts.length - 1; i++) {
+          current = current[pathParts[i]];
+        }
+        current[pathParts[pathParts.length - 1]] = newColor;
+
+        console.log('✅ Updated palette:', updatedPalette);
+        console.log('🎯 Specific field value:', current[pathParts[pathParts.length - 1]]);
+
+        // Update the entire palette object in the form
+        setValue('palette', updatedPalette, { shouldDirty: true });
+
+        // Verify the value was set
+        setTimeout(() => {
+          const verifyPalette = watch('palette');
+          console.log('✔️ Verification - palette after setValue:', verifyPalette);
+        }, 100);
+      } else {
+        // Fallback: update primary color
+        setValue('primaryColor', newColor);
+      }
+    };
+
+    return (
+      <Stack
+        direction="row"
+        alignItems="center"
+        spacing={1.5}
         sx={{
-          width: 40,
-          height: 40,
+          cursor: 'pointer',
+          p: 1,
           borderRadius: 1,
-          bgcolor: color,
-          border: (theme) => `1px solid ${theme.palette.divider}`,
-          boxShadow: 1,
+          transition: 'all 0.2s',
+          '&:hover': {
+            bgcolor: 'action.hover',
+            transform: 'scale(1.02)',
+            '& .color-box': {
+              transform: 'scale(1.1)',
+              boxShadow: 3,
+            },
+          },
         }}
-      />
-      <Box>
-        <Typography variant="caption" color="text.secondary">
-          {label}
-        </Typography>
-        <Typography variant="body2" fontWeight={600}>
-          {color}
-        </Typography>
-        {showText && (
-          <Typography variant="caption" sx={{ color }}>
-            Sample Text
+      >
+        <Box
+          className="color-box"
+          onClick={handleColorBoxClick}
+          sx={{
+            width: 40,
+            height: 40,
+            borderRadius: 1,
+            bgcolor: displayColor,
+            border: (theme) => `1px solid ${theme.palette.divider}`,
+            boxShadow: 1,
+            transition: 'all 0.2s',
+            position: 'relative',
+            cursor: 'pointer',
+          }}
+        >
+          {/* Hidden color input */}
+          <input
+            ref={inputRef}
+            type="color"
+            value={displayColor}
+            onChange={handleColorChange}
+            style={{
+              opacity: 0,
+              position: 'absolute',
+              width: '100%',
+              height: '100%',
+              cursor: 'pointer',
+            }}
+          />
+        </Box>
+        <Box>
+          <Typography variant="caption" color="text.secondary">
+            {label}
           </Typography>
-        )}
-      </Box>
-    </Stack>
-  );
+          <Typography variant="body2" fontWeight={600}>
+            {displayColor}
+          </Typography>
+          {showText && (
+            <Typography variant="caption" sx={{ color: displayColor }}>
+              Sample Text
+            </Typography>
+          )}
+        </Box>
+      </Stack>
+    );
+  };
 
   return (
     <FormProvider methods={methods} onSubmit={onSubmit}>
@@ -632,7 +764,7 @@ export default function ColorPaletteForm() {
                 {generatedPalette?.primary &&
                   Object.entries(generatedPalette.primary).map(([key, value]) => (
                     <Grid xs={12} sm={6} md={4} key={key}>
-                      <ColorPreview label={key} color={value} />
+                      <ColorPreview label={key} color={value} fieldPath={`palette.primary.${key}`} />
                     </Grid>
                   ))}
               </Grid>
@@ -649,7 +781,7 @@ export default function ColorPaletteForm() {
                 {generatedPalette?.secondary &&
                   Object.entries(generatedPalette.secondary).map(([key, value]) => (
                     <Grid xs={12} sm={6} md={4} key={key}>
-                      <ColorPreview label={key} color={value} />
+                      <ColorPreview label={key} color={value} fieldPath={`palette.secondary.${key}`} />
                     </Grid>
                   ))}
               </Grid>
@@ -666,7 +798,7 @@ export default function ColorPaletteForm() {
                 {generatedPalette?.tertiary &&
                   Object.entries(generatedPalette.tertiary).map(([key, value]) => (
                     <Grid xs={12} sm={6} md={4} key={key}>
-                      <ColorPreview label={key} color={value} />
+                      <ColorPreview label={key} color={value} fieldPath={`palette.tertiary.${key}`} />
                     </Grid>
                   ))}
               </Grid>
@@ -682,7 +814,7 @@ export default function ColorPaletteForm() {
                   <Stack spacing={2}>
                     {generatedPalette?.background &&
                       Object.entries(generatedPalette.background).map(([key, value]) => (
-                        <ColorPreview key={key} label={key} color={value} />
+                        <ColorPreview key={key} label={key} color={value} fieldPath={`palette.background.${key}`} />
                       ))}
                   </Stack>
                 </Card>
@@ -696,7 +828,7 @@ export default function ColorPaletteForm() {
                   <Stack spacing={2}>
                     {generatedPalette?.text &&
                       Object.entries(generatedPalette.text).map(([key, value]) => (
-                        <ColorPreview key={key} label={key} color={value} showText />
+                        <ColorPreview key={key} label={key} color={value} showText fieldPath={`palette.text.${key}`} />
                       ))}
                   </Stack>
                 </Card>
