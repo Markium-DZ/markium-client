@@ -378,8 +378,6 @@ function OrderItemsCell({ items, order }) {
 }
 
 // ----------------------------------------------------------------------
-
-
 export default function OrdersListView({ product_id }) {
     // Call hooks unconditionally at the top level
     const { orders: ordersByProduct, ordersLoading: loadingByProduct } = useGetOrdersByProduct(product_id);
