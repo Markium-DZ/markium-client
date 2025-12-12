@@ -375,6 +375,7 @@ function OrderItemsCell({ items, order }) {
             <OrderItemDetailsDialog open={dialogOpen} onClose={handleCloseDialog} item={selectedItem} />
         </>
     );
+}
 
 // ----------------------------------------------------------------------
 export default function OrdersListView({ product_id }) {
