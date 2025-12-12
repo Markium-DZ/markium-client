@@ -18,7 +18,7 @@ export function useGetOrdersByProduct(product_id) {
     const shouldFetch = product_id != null && product_id !== undefined;
 
     const { data, isLoading, error, isValidating, mutate } = useSWR(
-        shouldFetch ? endpoints.product.orders(product_id) : null,
+        shouldFetch ? endpoints.order.root : null,
         fetcher,
         options
     );
@@ -82,8 +82,8 @@ export async function createProduct(body) {
 
 
 
-export async function updateOrder(product_id, order_id, body) {
-    const URL = endpoints.product.updateOrdersStatus(product_id, order_id);
+export async function updateOrder(order_id, body) {
+    const URL = endpoints.order.root+"/"+order_id;
     console.log(" URL : ", URL)
     return await axios.patch(URL, body);
 }

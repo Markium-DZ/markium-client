@@ -149,6 +149,8 @@
   "sku": "كود SKU",
   "sku_placeholder": "مثال: TSHIRT-001",
   "variant_image": "صورة المتغير",
+  "product_details": "تفاصيل المنتج",
+  "variant_options": "خيارات المتغير",
   "or_select_from_uploaded": "أو اختر من المحملة",
   "variant_images_info_title": "رفع صور لكل متغير",
   "variant_images_info_description": "في الوضع المتقدم، يمكنك رفع صورة محددة لكل متغير. قم بتوسيع صف المتغير أدناه لرفع صورته.",

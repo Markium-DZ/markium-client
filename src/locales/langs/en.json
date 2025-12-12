@@ -147,6 +147,8 @@
     "sku": "SKU",
     "sku_placeholder": "e.g., TSHIRT-001",
     "variant_image": "Variant Image",
+    "product_details": "Product Details",
+    "variant_options": "Variant Options",
     "or_select_from_uploaded": "Or select from uploaded",
     "variant_images_info_title": "Upload Images Per Variant",
     "variant_images_info_description": "In advanced mode, you can upload a specific image for each variant. Expand a variant row below to upload its image.",

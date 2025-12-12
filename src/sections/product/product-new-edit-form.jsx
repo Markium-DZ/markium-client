@@ -696,7 +696,7 @@ export default function ProductNewEditForm({ currentProduct }) {
                   startAdornment: (
                     <InputAdornment position="start">
                       <Box component="span" sx={{ color: 'text.disabled' }}>
-                        $
+                        DZD
                       </Box>
                     </InputAdornment>
                   ),
@@ -713,7 +713,7 @@ export default function ProductNewEditForm({ currentProduct }) {
                   startAdornment: (
                     <InputAdornment position="start">
                       <Box component="span" sx={{ color: 'text.disabled' }}>
-                        $
+                        DZD
                       </Box>
                     </InputAdornment>
                   ),

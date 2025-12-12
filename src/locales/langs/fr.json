@@ -149,6 +149,8 @@
   "sku": "SKU",
   "sku_placeholder": "ex: TSHIRT-001",
   "variant_image": "Image de la Variante",
+  "product_details": "Détails du Produit",
+  "variant_options": "Options de Variante",
   "or_select_from_uploaded": "Ou sélectionner parmi les téléchargées",
   "variant_images_info_title": "Télécharger des Images Par Variante",
   "variant_images_info_description": "En mode avancé, vous pouvez télécharger une image spécifique pour chaque variante. Développez une ligne de variante ci-dessous pour télécharger son image.",

@@ -1,4 +1,4 @@
-import { Box, Button, Card, FormControlLabel, FormGroup, Grid, IconButton, MenuItem, Stack, Switch, Tooltip, Typography, Avatar, Chip } from '@mui/material';
+import { Box, Button, Card, FormControlLabel, FormGroup, Grid, IconButton, MenuItem, Stack, Switch, Tooltip, Typography, Avatar, Chip, Dialog, DialogTitle, DialogContent, Divider } from '@mui/material';
 import { t } from 'i18next';
 import { set } from 'lodash'; // [keep for later use]
 import { enqueueSnackbar, useSnackbar } from 'notistack';
@@ -49,124 +49,331 @@ import { HOST_API } from 'src/config-global';
 
 // ----------------------------------------------------------------------
 
-// Product Items Display Component
-function OrderItemsCell({ items, order }) {
-    // Handle old data structure (backward compatibility)
-    if (!items || items.length === 0) {
-        // Fallback to old structure: order.product and order.variant
-        if (order?.product) {
-            const mediaUrl = order.variant?.media?.url
-                ? `${HOST_API}/${order.variant.media.url}`
-                : order.product?.media?.[0]?.url
-                    ? `${HOST_API}/${order.product.media[0].url}`
-                    : null;
+// Order Item Details Dialog Component
+function OrderItemDetailsDialog({ open, onClose, item }) {
+    if (!item) return null;
 
-            const variantText = order.variant?.options?.join(' / ') || '';
+    const mediaUrl = item.variant?.media?.full_url || item.variant?.media?.url || null;
+    const variantOptions = item.variant?.options || [];
 
-            return (
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                    {mediaUrl && (
-                        <Avatar
-                            src={mediaUrl}
-                            variant="rounded"
-                            sx={{ width: 48, height: 48 }}
-                        />
-                    )}
-                    <Box>
-                        <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                            {order.product?.name}
-                        </Typography>
-                        {variantText && (
-                            <Typography variant="caption" color="text.secondary" display="block">
-                                {variantText}
-                            </Typography>
-                        )}
-                        {order.quantity && (
-                            <Typography variant="caption" color="text.disabled" display="block">
-                                {t('quantity')}: {order.quantity}
-                            </Typography>
-                        )}
-                    </Box>
-                </Box>
-            );
-        }
-        return <Typography variant="caption" color="text.disabled">-</Typography>;
-    }
-
-    // If single item, show full details (new structure)
-    if (items.length === 1) {
-        const item = items[0];
-        const mediaUrl = item.variant?.media?.url
-            ? `${HOST_API}/${item.variant.media.url}`
-            : item.product?.media?.[0]?.url
-                ? `${HOST_API}/${item.product.media[0].url}`
-                : null;
-
-        const variantText = item.variant?.option_values
-            ?.map(ov => ov.value)
-            .join(' / ') || '';
-
-        return (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                {mediaUrl && (
+    const content = (
+        <Stack spacing={2}>
+            {/* Product Image */}
+            {mediaUrl && (
+                <Box
+                    sx={{
+                        display: 'flex',
+                        justifyContent: 'center',
+                        p: 2,
+                        bgcolor: (theme) => theme.palette.grey[50],
+                        borderRadius: 2,
+                    }}
+                >
                     <Avatar
                         src={mediaUrl}
                         variant="rounded"
-                        sx={{ width: 48, height: 48 }}
+                        sx={{
+                            width: '100%',
+                            height: 220,
+                            maxWidth: 300,
+                            boxShadow: 3,
+                        }}
                     />
-                )}
+                </Box>
+            )}
+
+            {/* Product Name */}
+            <Box>
+                <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
+                    {t('product')}
+                </Typography>
+                <Typography variant="h6" sx={{ fontWeight: 700, lineHeight: 1.4 }}>
+                    {item.product?.name}
+                </Typography>
+            </Box>
+
+            {/* Variant Options */}
+            {variantOptions.length > 0 && (
                 <Box>
-                    <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                        {item.product?.name}
+                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem', mb: 1, display: 'block' }}>
+                        {t('variant_options')}
                     </Typography>
-                    {variantText && (
-                        <Typography variant="caption" color="text.secondary" display="block">
-                            {variantText}
+                    <Stack spacing={1}>
+                        {variantOptions.map((opt, idx) => (
+                            <Box
+                                key={idx}
+                                sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 1.5,
+                                    p: 1,
+                                    bgcolor: (theme) => theme.palette.grey[100],
+                                    borderRadius: 1,
+                                }}
+                            >
+                                <Typography variant="body2" sx={{ fontWeight: 600, minWidth: 70 }}>
+                                    {opt.definition_name}:
+                                </Typography>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                    {opt.color_hex && (
+                                        <Box
+                                            sx={{
+                                                width: 20,
+                                                height: 20,
+                                                borderRadius: '50%',
+                                                bgcolor: opt.color_hex,
+                                                border: (theme) => `2px solid ${theme.palette.divider}`,
+                                            }}
+                                        />
+                                    )}
+                                    <Typography variant="body2">
+                                        {opt.value}
+                                    </Typography>
+                                </Box>
+                            </Box>
+                        ))}
+                    </Stack>
+                </Box>
+            )}
+
+            <Divider />
+
+            {/* Quantity */}
+            <Box>
+                <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem', mb: 0.5, display: 'block' }}>
+                    {t('quantity')}
+                </Typography>
+                <Chip
+                    label={`×${item.quantity}`}
+                    color="error"
+                    size="medium"
+                    sx={{ fontWeight: 700, height: 28 }}
+                />
+            </Box>
+
+            <Divider />
+
+            {/* Pricing */}
+            <Box
+                sx={{
+                    p: 2,
+                    bgcolor: (theme) => theme.palette.primary.lighter,
+                    borderRadius: 1.5,
+                    borderLeft: (theme) => `4px solid ${theme.palette.primary.main}`,
+                }}
+            >
+                <Typography variant="caption" color="primary.main" sx={{ fontWeight: 600, fontSize: '0.75rem' }}>
+                    {t('price')}
+                </Typography>
+                <Stack direction="row" spacing={1.5} alignItems="baseline" flexWrap="wrap" sx={{ mt: 0.5 }}>
+                    <Typography variant="h5" color="primary.main" sx={{ fontWeight: 700 }}>
+                        {item.unit_price ? `${item.unit_price.toFixed(2)} DA` : '-'}
+                    </Typography>
+                    {item.quantity > 1 && (
+                        <Typography variant="body2" color="text.secondary">
+                            {t('total')}: <Box component="span" sx={{ fontWeight: 700, color: 'primary.dark' }}>
+                                {item.total_price ? `${item.total_price.toFixed(2)} DA` :
+                                (item.unit_price ? `${(item.unit_price * item.quantity).toFixed(2)} DA` : '-')}
+                            </Box>
                         </Typography>
                     )}
-                    <Typography variant="caption" color="text.disabled" display="block">
-                        {t('quantity')}: {item.quantity}
-                    </Typography>
-                </Box>
+                </Stack>
             </Box>
+        </Stack>
+    );
+
+    return (
+        <ContentDialog
+            open={open}
+            onClose={onClose}
+            title={t('product_details')}
+            maxWidth="sm"
+            content={content}
+        />
+    );
+}
+
+// Product Items Display Component
+function OrderItemsCell({ items, order }) {
+    const [dialogOpen, setDialogOpen] = useState(false);
+    const [selectedItem, setSelectedItem] = useState(null);
+
+    const handleItemClick = (item) => {
+        setSelectedItem(item);
+        setDialogOpen(true);
+    };
+
+    const handleCloseDialog = () => {
+        setDialogOpen(false);
+        setSelectedItem(null);
+    };
+
+    // Handle missing items
+    if (!items || items.length === 0) {
+        return <Typography variant="caption" color="text.disabled">-</Typography>;
+    }
+
+    // If single item, show full details with quantity badge
+    if (items.length === 1) {
+        const item = items[0];
+        const mediaUrl = item.variant?.media?.full_url || item.variant?.media?.url || null;
+
+        // Extract variant options - handle both old and new formats
+        const variantText = item.variant?.options
+            ?.map(opt => opt.value || opt)
+            .filter(Boolean)
+            .join(' / ') || '';
+
+        return (
+            <>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                    {mediaUrl && (
+                        <Box
+                            sx={{
+                                position: 'relative',
+                                cursor: 'pointer',
+                                '&:hover': {
+                                    transform: 'scale(1.05)',
+                                    zIndex: 1,
+                                },
+                                transition: 'transform 0.2s'
+                            }}
+                            onClick={() => handleItemClick(item)}
+                        >
+                            <Avatar
+                                src={mediaUrl}
+                                variant="rounded"
+                                sx={{ width: 48, height: 48 }}
+                            />
+                            {/* Quantity Badge */}
+                            <Box
+                                sx={{
+                                    position: 'absolute',
+                                    top: -4,
+                                    right: -4,
+                                    minWidth: 20,
+                                    height: 20,
+                                    borderRadius: '50%',
+                                    bgcolor: 'error.main',
+                                    color: 'white',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    fontSize: '0.7rem',
+                                    fontWeight: 700,
+                                    px: 0.5,
+                                    border: (theme) => `2px solid ${theme.palette.background.paper}`,
+                                    boxShadow: 1,
+                                }}
+                            >
+                                {item.quantity}
+                            </Box>
+                        </Box>
+                    )}
+                </Box>
+                <OrderItemDetailsDialog open={dialogOpen} onClose={handleCloseDialog} item={selectedItem} />
+            </>
         );
     }
 
-    // If multiple items, show count with tooltip
+    // If multiple items, show images horizontally with quantity badges
     return (
-        <Tooltip
-            title={
-                <Stack spacing={1} sx={{ p: 0.5 }}>
-                    {items.map((item, idx) => {
-                        const variantText = item.variant?.option_values
-                            ?.map(ov => ov.value)
-                            .join(' / ') || '';
+        <>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                {items.slice(0, 3).map((item, idx) => {
+                    const mediaUrl = item.variant?.media?.full_url || item.variant?.media?.url || null;
 
-                        return (
-                            <Box key={idx}>
+                    return (
+                        <Tooltip
+                            key={idx}
+                            title={
                                 <Typography variant="caption" sx={{ fontWeight: 500 }}>
-                                    {item.quantity}× {item.product?.name}
+                                    {item.product?.name}
                                 </Typography>
-                                {variantText && (
-                                    <Typography variant="caption" display="block" sx={{ opacity: 0.8 }}>
-                                        {variantText}
-                                    </Typography>
-                                )}
+                            }
+                            arrow
+                        >
+                            <Box
+                                sx={{
+                                    position: 'relative',
+                                    cursor: 'pointer',
+                                    '&:hover': {
+                                        transform: 'scale(1.05)',
+                                        zIndex: 1,
+                                    },
+                                    transition: 'transform 0.2s'
+                                }}
+                                onClick={() => handleItemClick(item)}
+                            >
+                                <Avatar
+                                    src={mediaUrl}
+                                    variant="rounded"
+                                    sx={{
+                                        width: 40,
+                                        height: 40,
+                                        border: (theme) => `2px solid ${theme.palette.background.paper}`,
+                                    }}
+                                >
+                                    {!mediaUrl && item.product?.name?.charAt(0)}
+                                </Avatar>
+                                {/* Quantity Badge */}
+                                <Box
+                                    sx={{
+                                        position: 'absolute',
+                                        top: -4,
+                                        right: -4,
+                                        minWidth: 18,
+                                        height: 18,
+                                        borderRadius: '50%',
+                                        bgcolor: 'error.main',
+                                        color: 'white',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        fontSize: '0.65rem',
+                                        fontWeight: 700,
+                                        px: 0.5,
+                                        border: (theme) => `2px solid ${theme.palette.background.paper}`,
+                                        boxShadow: 1,
+                                    }}
+                                >
+                                    {item.quantity}
+                                </Box>
                             </Box>
-                        );
-                    })}
-                </Stack>
-            }
-            arrow
-        >
-            <Chip
-                label={t('multiple_items', { count: items.length })}
-                size="small"
-                color="primary"
-                variant="outlined"
-                sx={{ cursor: 'pointer' }}
-            />
-        </Tooltip>
+                        </Tooltip>
+                    );
+                })}
+                {items.length > 3 && (
+                    <Tooltip
+                        title={
+                            <Stack spacing={0.5} sx={{ p: 0.5 }}>
+                                {items.slice(3).map((item, idx) => (
+                                    <Typography key={idx} variant="caption" sx={{ fontWeight: 500 }}>
+                                        {item.quantity}× {item.product?.name}
+                                    </Typography>
+                                ))}
+                            </Stack>
+                        }
+                        arrow
+                    >
+                        <Avatar
+                            variant="rounded"
+                            sx={{
+                                width: 40,
+                                height: 40,
+                                bgcolor: 'primary.main',
+                                fontSize: '0.75rem',
+                                cursor: 'pointer',
+                                border: (theme) => `2px solid ${theme.palette.background.paper}`,
+                            }}
+                        >
+                            +{items.length - 3}
+                        </Avatar>
+                    </Tooltip>
+                )}
+            </Box>
+            <OrderItemDetailsDialog open={dialogOpen} onClose={handleCloseDialog} item={selectedItem} />
+        </>
     );
 }
 
@@ -188,10 +395,10 @@ export default function OrdersListView({ product_id }) {
     const [dataFiltered, setDataFiltered] = useState([]);
 
     let TABLE_HEAD = [
-        { id: 'ref', label: t('order_ref'), type: "text", width: 140 },
+        // { id: 'ref', label: t('order_ref'), type: "text", width: 140 },
+        { id: 'product_items', label: t('product'), type: "render", render: (item) => <OrderItemsCell items={item.items} order={item} />, width: 150 },
         { id: 'name', label: t('customer'), type: "text", width: 180 },
         { id: 'phone', label: t('phone'), type: "text", width: 140 },
-        { id: 'product_items', label: t('product'), type: "custom", component: (item) => <OrderItemsCell items={item.items} order={item} />, width: 250 },
         { id: 'total', label: t('total'), type: "text", width: 120 },
         { id: 'c_status', label: t('status'), type: "label", width: 100 },
         { id: 'full_address', label: t('address'), type: "long_text", length: 2, width: 200 },
@@ -235,7 +442,7 @@ export default function OrdersListView({ product_id }) {
                 name: item?.customer?.full_name,
                 phone: item?.customer?.phone,
                 total_items: item?.total_items || item?.items?.length || 0,
-                total: item?.total ? `${item.total.toFixed(2)} DA` : '-',
+                total: item?.total_price ? `${item.total_price.toFixed(2)} DA` : item?.total ? `${item.total.toFixed(2)} DA` : '-',
                 products_summary: itemsSummary,
                 c_status: translatedStatus,
                 full_address: currentLang?.value === "ar"
@@ -386,7 +593,7 @@ const ElementActions = ({ item, setTableData }) => {
                 // Update order status - use first item's product_id if backend requires it
                 const productId = item.items?.[0]?.product?.id || item.product_id;
                 console.log("item : ", item)
-                await updateOrder(productId, item.id, { status: selectedStatus.key })
+                await updateOrder(item.id, { status: selectedStatus.key })
                 console.log("Changing order status:", { orderId: item?.id, newStatus: selectedStatus.key });
 
                 // Update table data optimistically

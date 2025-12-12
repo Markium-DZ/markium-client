@@ -269,7 +269,7 @@ export default function ProductVariantsManager({ options, variants, onChange, im
               value={bulkValues.price}
               onChange={(e) => setBulkValues({ ...bulkValues, price: e.target.value })}
               InputProps={{
-                startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                startAdornment: <InputAdornment position="start">DZD</InputAdornment>,
               }}
             />
             <TextField
@@ -279,7 +279,7 @@ export default function ProductVariantsManager({ options, variants, onChange, im
               value={bulkValues.compare_at_price}
               onChange={(e) => setBulkValues({ ...bulkValues, compare_at_price: e.target.value })}
               InputProps={{
-                startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                startAdornment: <InputAdornment position="start">DZD</InputAdornment>,
               }}
             />
             <TextField
@@ -425,14 +425,14 @@ function VariantRow({ variant, index, expanded, onToggleExpand, onUpdate, images
         {/* Price */}
         <TableCell>
           <Typography variant="body2" fontWeight={500}>
-            ${variant.price || '0.00'}
+            DZD {variant.price || '0.00'}
           </Typography>
         </TableCell>
 
         {/* Compare Price */}
         <TableCell>
           <Typography variant="body2" color="text.secondary">
-            ${variant.compare_at_price || '0.00'}
+            DZD {variant.compare_at_price || '0.00'}
           </Typography>
         </TableCell>
 
@@ -511,7 +511,7 @@ function VariantRow({ variant, index, expanded, onToggleExpand, onUpdate, images
                     value={variant.price}
                     onChange={(e) => onUpdate(variant.id, 'price', parseFloat(e.target.value) || 0)}
                     InputProps={{
-                      startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                      startAdornment: <InputAdornment position="start">DZD</InputAdornment>,
                     }}
                   />
                   <TextField
@@ -527,7 +527,7 @@ function VariantRow({ variant, index, expanded, onToggleExpand, onUpdate, images
                         : ''
                     }
                     InputProps={{
-                      startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                      startAdornment: <InputAdornment position="start">DZD</InputAdornment>,
                     }}
                   />
                   <TextField
