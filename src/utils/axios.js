@@ -103,6 +103,14 @@ export const endpoints = {
   },
   utils: { values: '/values' },
   media: { root: '/media' },
+  inventory: {
+    root: '/inventory',
+    lowStock: '/inventory/low-stock',
+    tracking: (id) => `/inventory/${id}/tracking`,
+    transactions: (id) => `/inventory/${id}/transactions`,
+    items: (id) => `/inventory/${id}/items`,
+    itemTracking: (inventoryId, itemId) => `/inventory/${inventoryId}/items/${itemId}/tracking`,
+  },
   company: {
     list: '/company',
     statistics: "/company/statistics"

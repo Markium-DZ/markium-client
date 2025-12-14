@@ -54,7 +54,7 @@ export default function NavVertical({ openNav, onCloseNav }) {
     >
       <Box display="flex" alignItems="center" sx={{ mt: 3, ml: 4, mb: 1 }}>
         <Logo user={user} />
-        <Typography color="primary" mx={1} fontWeight="500" fontFamily={"font-serif italic"}>
+        <Typography color="primary" mx={1} fontWeight="500" >
         {user?.store?.name  || t("markium")}
         </Typography>
       </Box>

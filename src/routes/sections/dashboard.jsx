@@ -31,6 +31,15 @@ const ProductUploadAssetsPage = lazy(() => import('src/pages/dashboard/product/u
 const ProductOrdersListPage = lazy(() => import('src/pages/dashboard/order/product-orders'));
 const OrderListPage = lazy(() => import('src/pages/dashboard/order/list'));
 const OrderDetailsPage = lazy(() => import('src/pages/dashboard/order/details'));
+// MEDIA
+const MediaListPage = lazy(() => import('src/pages/dashboard/media/list'));
+// INVENTORY
+const InventoryListPage = lazy(() => import('src/pages/dashboard/inventory/list'));
+const LowStockInventoryPage = lazy(() => import('src/pages/dashboard/inventory/low-stock'));
+const InventoryDetailsPage = lazy(() => import('src/pages/dashboard/inventory/details'));
+const InventoryTrackingPage = lazy(() => import('src/pages/dashboard/inventory/tracking'));
+const InventoryItemsPage = lazy(() => import('src/pages/dashboard/inventory/items'));
+const ItemTrackingPage = lazy(() => import('src/pages/dashboard/inventory/item-tracking'));
 // ORDER
 const MainSpecListPage = lazy(() => import('src/pages/dashboard/settings/pm'));
 const ClaimCreatePage = lazy(() => import('src/pages/dashboard/clients/claims-new'));
@@ -307,6 +316,25 @@ export const dashboardRoutes = [
           { element: <OrderListPage />, index: true },
           { path: 'list', element: <OrderListPage /> },
           { path: ':id', element: <OrderDetailsPage /> },
+        ],
+      },
+      {
+        path: 'media',
+        children: [
+          { element: <MediaListPage />, index: true },
+          { path: 'list', element: <MediaListPage /> },
+        ],
+      },
+      {
+        path: 'inventory',
+        children: [
+          { element: <InventoryListPage />, index: true },
+          { path: 'list', element: <InventoryListPage /> },
+          { path: 'low-stock', element: <LowStockInventoryPage /> },
+          { path: ':id', element: <InventoryDetailsPage /> },
+          { path: ':id/tracking', element: <InventoryTrackingPage /> },
+          { path: ':id/items', element: <InventoryItemsPage /> },
+          { path: ':id/items/:itemId/tracking', element: <ItemTrackingPage /> },
         ],
       },
       {

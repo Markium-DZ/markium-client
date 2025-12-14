@@ -2,11 +2,15 @@ import PropTypes from 'prop-types';
 
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
+import Chip from '@mui/material/Chip';
 import Stack from '@mui/material/Stack';
 import Avatar from '@mui/material/Avatar';
 import CardHeader from '@mui/material/CardHeader';
 import IconButton from '@mui/material/IconButton';
+import Typography from '@mui/material/Typography';
 import ListItemText from '@mui/material/ListItemText';
+
+import { useTranslate } from 'src/locales';
 
 import { fCurrency } from 'src/utils/format-number';
 
@@ -17,12 +21,13 @@ import Scrollbar from 'src/components/scrollbar';
 
 export default function OrderDetailsItems({
   items,
-  taxes,
   shipping,
   discount,
   subTotal,
   totalAmount,
 }) {
+  const { t } = useTranslate();
+
   const renderTotal = (
     <Stack
       spacing={2}
@@ -30,24 +35,24 @@ export default function OrderDetailsItems({
       sx={{ my: 3, textAlign: 'right', typography: 'body2' }}
     >
       <Stack direction="row">
-        <Box sx={{ color: 'text.secondary' }}>Subtotal</Box>
+        <Box sx={{ color: 'text.secondary' }}>{t('subtotal')}</Box>
         <Box sx={{ width: 160, typography: 'subtitle2' }}>{fCurrency(subTotal) || '-'}</Box>
       </Stack>
 
       <Stack direction="row">
-        <Box sx={{ color: 'text.secondary' }}>Shipping</Box>
+        <Box sx={{ color: 'text.secondary' }}>{t('shipping')}</Box>
         <Box
           sx={{
             width: 160,
-            ...(shipping && { color: 'error.main' }),
+            ...(shipping && { color: 'success.main' }),
           }}
         >
-          {shipping ? `- ${fCurrency(shipping)}` : '-'}
+          {shipping ? fCurrency(shipping) : '-'}
         </Box>
       </Stack>
 
       <Stack direction="row">
-        <Box sx={{ color: 'text.secondary' }}>Discount</Box>
+        <Box sx={{ color: 'text.secondary' }}>{t('discount')}</Box>
         <Box
           sx={{
             width: 160,
@@ -58,13 +63,8 @@ export default function OrderDetailsItems({
         </Box>
       </Stack>
 
-      <Stack direction="row">
-        <Box sx={{ color: 'text.secondary' }}>Taxes</Box>
-        <Box sx={{ width: 160 }}>{taxes ? fCurrency(taxes) : '-'}</Box>
-      </Stack>
-
       <Stack direction="row" sx={{ typography: 'subtitle1' }}>
-        <Box>Total</Box>
+        <Box>{t('total')}</Box>
         <Box sx={{ width: 160 }}>{fCurrency(totalAmount) || '-'}</Box>
       </Stack>
     </Stack>
@@ -73,12 +73,7 @@ export default function OrderDetailsItems({
   return (
     <Card>
       <CardHeader
-        title="Details"
-        action={
-          <IconButton>
-            <Iconify icon="solar:pen-bold" />
-          </IconButton>
-        }
+        title={t('details')}
       />
 
       <Stack
@@ -86,41 +81,69 @@ export default function OrderDetailsItems({
           px: 3,
         }}
       >
-        <Scrollbar>
-          {items?.map((item) => (
-            <Stack
-              key={item.id}
-              direction="row"
-              alignItems="center"
-              sx={{
-                py: 3,
-                minWidth: 640,
-                borderBottom: (theme) => `dashed 2px ${theme.palette.background.neutral}`,
-              }}
-            >
-              <Avatar src={item.coverUrl} variant="rounded" sx={{ width: 48, height: 48, mr: 2 }} />
+        {/* <Scrollbar> */}
+          {items?.map((item) => {
+            const mediaUrl = item.variant?.media?.full_url || item.variant?.media?.url || null;
+            const variantOptions = item.variant?.options || [];
 
-              <ListItemText
-                primary={item.name}
-                secondary={item.sku}
-                primaryTypographyProps={{
-                  typography: 'body2',
+            return (
+              <Stack
+                key={item.id}
+                direction="row"
+                alignItems="center"
+                sx={{
+                  py: 3,
+                  // minWidth: 640,
+                  borderBottom: (theme) => `dashed 2px ${theme.palette.background.neutral}`,
                 }}
-                secondaryTypographyProps={{
-                  component: 'span',
-                  color: 'text.disabled',
-                  mt: 0.5,
-                }}
-              />
+              >
+                <Avatar src={mediaUrl} variant="rounded" sx={{ width: 48, height: 48, mr: 2 }} />
 
-              <Box sx={{ typography: 'body2' }}>x{item.quantity}</Box>
+                <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
+                    {item.product?.name}
+                  </Typography>
 
-              <Box sx={{ width: 110, textAlign: 'right', typography: 'subtitle2' }}>
-                {fCurrency(item.price)}
-              </Box>
-            </Stack>
-          ))}
-        </Scrollbar>
+                  {variantOptions.length > 0 && (
+                    <Stack direction="row" spacing={0.5} flexWrap="wrap" sx={{ mt: 0.5 }}>
+                      {variantOptions.map((opt, idx) => (
+                        <Chip
+                          key={idx}
+                          size="small"
+                          label={
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                              {opt.color_hex && (
+                                <Box
+                                  sx={{
+                                    width: 12,
+                                    height: 12,
+                                    borderRadius: '50%',
+                                    bgcolor: opt.color_hex,
+                                    border: (theme) => `1px solid ${theme.palette.divider}`,
+                                  }}
+                                />
+                              )}
+                              <Typography variant="caption">
+                                {opt.definition_name}: {opt.value}
+                              </Typography>
+                            </Box>
+                          }
+                          sx={{ height: 20 }}
+                        />
+                      ))}
+                    </Stack>
+                  )}
+                </Box>
+
+                <Box sx={{ typography: 'body2', mx: 2 }}>×{item.quantity}</Box>
+
+                <Box sx={{ width: 110, textAlign: 'right', typography: 'subtitle2' }}>
+                  {fCurrency(item.unit_price)}
+                </Box>
+              </Stack>
+            );
+          })}
+        {/* </Scrollbar> */}
 
         {renderTotal}
       </Stack>
@@ -133,6 +156,5 @@ OrderDetailsItems.propTypes = {
   items: PropTypes.array,
   shipping: PropTypes.number,
   subTotal: PropTypes.number,
-  taxes: PropTypes.number,
   totalAmount: PropTypes.number,
 };

@@ -49,6 +49,8 @@ const ICONS = {
   document: <Iconify icon="carbon:document" />,
   driver: <Iconify icon="healthicons:truck-driver" />,
   support: <Iconify icon="solar:chat-round-call-bold-duotone" />,
+  media: <Iconify icon="solar:gallery-bold" />,
+  inventory: <Iconify icon="solar:box-bold" />,
 };
 
 // ----------------------------------------------------------------------
@@ -107,6 +109,20 @@ export function useNavData() {
               // {title: t('details'),path: paths.dashboard.product.demo.details,},
               // { title: t('create'), path: paths.dashboard.product.new },
               { title: t('list'), path: paths.dashboard.order.root },
+            ],
+          },
+          {
+            title: t('media'),
+            path: paths.dashboard.media.root,
+            icon: ICONS.media,
+          },
+          {
+            title: t('inventory'),
+            path: paths.dashboard.inventory.root,
+            icon: ICONS.inventory,
+            children: [
+              { title: t('list'), path: paths.dashboard.inventory.root },
+              { title: t('low_stock'), path: paths.dashboard.inventory.lowStock },
             ],
           },
 

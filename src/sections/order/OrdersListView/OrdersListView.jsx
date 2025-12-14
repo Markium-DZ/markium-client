@@ -43,6 +43,7 @@ import { useGetProducts } from 'src/api/product';
 import { updateOrder, useGetOrders, useGetOrdersByProduct } from 'src/api/orders';
 import ExportOrdersButton from './ExportOrdersButton';
 import { HOST_API } from 'src/config-global';
+import { getOrderStatusOptions } from 'src/constants/order-status';
 
 
 
@@ -378,6 +379,8 @@ function OrderItemsCell({ items, order }) {
 }
 
 // ----------------------------------------------------------------------
+
+
 export default function OrdersListView({ product_id }) {
     // Call hooks unconditionally at the top level
     const { orders: ordersByProduct, ordersLoading: loadingByProduct } = useGetOrdersByProduct(product_id);
@@ -395,8 +398,56 @@ export default function OrdersListView({ product_id }) {
     let TABLE_HEAD = [
         // { id: 'ref', label: t('order_ref'), type: "text", width: 140 },
         { id: 'product_items', label: t('product'), type: "render", render: (item) => <OrderItemsCell items={item.items} order={item} />, width: 150 },
-        { id: 'name', label: t('customer'), type: "text", width: 180 },
-        { id: 'phone', label: t('phone'), type: "text", width: 140 },
+        {
+            id: 'name',
+            label: t('customer'),
+            type: "render",
+            render: (item) => (
+                <Typography
+                    component={RouterLink}
+                    to={paths.dashboard.order.details(item.id)}
+                    variant="body2"
+                    sx={{
+                        color: 'primary.main',
+                        textDecoration: 'none',
+                        fontWeight: 500,
+                        '&:hover': {
+                            textDecoration: 'underline',
+                        },
+                    }}
+                >
+                    {item.name || '-'}
+                </Typography>
+            ),
+            width: 180
+        },
+        {
+            id: 'phone',
+            label: t('phone'),
+            type: "render",
+            render: (item) => (
+                <Typography
+                    component="a"
+                    href={`tel:${item.phone}`}
+                    variant="body2"
+                    sx={{
+                        color: 'text.primary',
+                        textDecoration: 'none',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 0.5,
+                        '&:hover': {
+                            color: 'primary.main',
+                            textDecoration: 'underline',
+                        },
+                    }}
+                >
+                    <Iconify icon="solar:phone-bold" width={16} />
+                    {item.phone || '-'}
+                </Typography>
+            ),
+            width: 140
+        },
         { id: 'total', label: t('total'), type: "text", width: 120 },
         { id: 'c_status', label: t('status'), type: "label", width: 100 },
         { id: 'full_address', label: t('address'), type: "long_text", length: 2, width: 200 },
@@ -500,6 +551,17 @@ export default function OrdersListView({ product_id }) {
     // Filter by status (pending, confirmed, shipped, delivered, cancelled)
     const items = [
         { key: 'all', label: t('all'), match: () => true },
+        {
+            key: 'today',
+            label: t('today'),
+            match: (item) => {
+                if (!item?.created_at) return false;
+                const orderDate = new Date(item.created_at);
+                const today = new Date();
+                return orderDate.toDateString() === today.toDateString();
+            },
+            color: 'primary'
+        },
         { key: 'pending', label: t('pending'), match: (item) => item?.status === 'pending', color: 'warning' },
         { key: 'confirmed', label: t('confirmed'), match: (item) => item?.status === 'confirmed', color: 'secondary' },
         { key: 'shipped', label: t('shipped'), match: (item) => item?.status === 'shipped', color: 'info' },
@@ -566,14 +628,8 @@ const ElementActions = ({ item, setTableData }) => {
     const [postloader, setPostloader] = useState(false)
     const [selectedStatus, setSelectedStatus] = useState(null)
 
-    // Define all possible statuses with their colors and icons
-    const statuses = [
-        { key: 'pending', label: t('pending'), color: 'warning', icon: 'solar:clock-circle-bold' },
-        { key: 'confirmed', label: t('confirmed'), color: 'secondary', icon: 'solar:check-circle-bold' },
-        { key: 'shipped', label: t('shipped'), color: 'info', icon: 'solar:box-bold' },
-        { key: 'delivered', label: t('delivered'), color: 'success', icon: 'solar:verified-check-bold' },
-        { key: 'cancelled', label: t('cancelled'), color: 'error', icon: 'solar:close-circle-bold' },
-    ];
+    // Get statuses with translations using centralized configuration
+    const statuses = getOrderStatusOptions(t);
 
     const handleStatusClick = (status) => {
         setSelectedStatus(status);
@@ -629,6 +685,23 @@ const ElementActions = ({ item, setTableData }) => {
                 arrow="right-top"
                 sx={{ width: 220 }}
             >
+                <MenuItem
+                    component={RouterLink}
+                    to={paths.dashboard.order.details(item.id)}
+                    onClick={popover.onClose}
+                    sx={{
+                        color: 'text.primary',
+                        '&:hover': {
+                            backgroundColor: 'action.hover',
+                        }
+                    }}
+                >
+                    <Iconify icon="solar:eye-bold" sx={{ mr: 1 }} />
+                    {t('overview')}
+                </MenuItem>
+
+                <Divider sx={{ borderStyle: 'dashed', my: 0.5 }} />
+
                 {statuses
                     .filter(status => status.key !== item?.status) // Don't show current status
                     .map((status) => (

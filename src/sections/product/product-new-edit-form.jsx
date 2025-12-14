@@ -39,9 +39,10 @@ import FormProvider, {
 import { createProduct, updateProduct, createMedia } from 'src/api/product';
 import showError from 'src/utils/show_error';
 import { useGetSystemCategories } from 'src/api/settings';
-import { MenuItem } from '@mui/material';
+import { IconButton, MenuItem } from '@mui/material';
 import Iconify from 'src/components/iconify';
 import { ConfirmDialog } from 'src/components/custom-dialog';
+import { MediaPickerDialog } from 'src/components/media-picker';
 import OptionDefinitionBuilder from './components/option-definition-builder';
 import ProductVariantsManager from './components/product-variants-manager';
 
@@ -58,6 +59,7 @@ export default function ProductNewEditForm({ currentProduct }) {
 
   const [advancedMode, setAdvancedMode] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState({ open: false, type: '' });
+  const [mediaPickerOpen, setMediaPickerOpen] = useState(false);
   const [optionDefinitions, setOptionDefinitions] = useState([]);
   const [variants, setVariants] = useState([
     {
@@ -367,86 +369,11 @@ export default function ProductNewEditForm({ currentProduct }) {
 
       console.info('Submitting product data:', payload);
 
-      // Always use FormData when creating (for image upload support)
-      const formData = new FormData();
-
-      // Append basic fields
-      formData.append('name', payload.name);
-      formData.append('description', payload.description);
-      formData.append('content', payload.content);
-
-      if (payload.category_id) {
-        formData.append('category_id', payload.category_id);
-      }
-
-      // Append tags as array
-      if (payload.tags && payload.tags.length > 0) {
-        payload.tags.forEach((tag) => {
-          formData.append('tags[]', tag);
-        });
-      }
-
-      // Append option_definitions - Laravel/PHP array format
-      if (payload.option_definitions && payload.option_definitions.length > 0) {
-        payload.option_definitions.forEach((option, index) => {
-          formData.append(`option_definitions[${index}][name]`, option.name);
-          formData.append(`option_definitions[${index}][type]`, option.type);
-          formData.append(`option_definitions[${index}][style]`, option.style);
-
-          option.values.forEach((val, valIndex) => {
-            formData.append(`option_definitions[${index}][values][${valIndex}][value]`, val.value);
-            if (val.color_hex) {
-              formData.append(
-                `option_definitions[${index}][values][${valIndex}][color_hex]`,
-                val.color_hex
-              );
-            }
-          });
-        });
-      }
-
-      // Append variants - Laravel/PHP array format
-      if (payload.variants && payload.variants.length > 0) {
-        payload.variants.forEach((variant, index) => {
-          // Include variant ID if updating
-          if (variant.id) {
-            formData.append(`variants[${index}][id]`, variant.id);
-          }
-
-          formData.append(`variants[${index}][price]`, variant.price);
-          formData.append(`variants[${index}][compare_at_price]`, variant.compare_at_price);
-          formData.append(`variants[${index}][quantity]`, variant.quantity);
-          formData.append(`variants[${index}][sku]`, variant.sku);
-          formData.append(`variants[${index}][is_default]`, variant.is_default ? '1' : '0');
-          formData.append(`variants[${index}][position]`, variant.position);
-          formData.append(`variants[${index}][is_active]`, variant.is_active ? '1' : '0');
-
-          if (variant.media_id) {
-            formData.append(`variants[${index}][media_id]`, variant.media_id);
-          }
-
-          // Append option_values array for this variant
-          if (variant.option_values && variant.option_values.length > 0) {
-            variant.option_values.forEach((optVal, optIndex) => {
-              formData.append(`variants[${index}][option_values][${optIndex}]`, optVal);
-            });
-          }
-        });
-      }
-
-      // NOTE: Images are already uploaded to /media and media_ids are attached to variants
-      // No need to send images[] in FormData anymore
-
-      console.info('FormData entries:');
-      for (let pair of formData.entries()) {
-        console.log(pair[0] + ':', pair[1]);
-      }
-
-      // Step 3: Submit product to API
+      // Step 3: Submit product to API as JSON
       if (currentProduct?.id) {
-        await updateProduct(currentProduct.id, formData);
+        await updateProduct(currentProduct.id, payload);
       } else {
-        await createProduct(formData);
+        await createProduct(payload);
       }
 
       enqueueSnackbar(currentProduct ? t('update_success') : t('create_success'));
@@ -497,6 +424,35 @@ export default function ProductNewEditForm({ currentProduct }) {
   const handleRemoveAllFiles = useCallback(() => {
     setValue('images', []);
   }, [setValue]);
+
+  const handleMediaSelect = useCallback(
+    async (selectedMedia) => {
+      const files = values.images || [];
+
+      // Convert media items to File objects with preview URLs
+      const newFiles = await Promise.all(
+        selectedMedia.map(async (media, index) => {
+          // Create a pseudo-File object with the media data
+          const mediaFile = {
+            id: media.id,
+            preview: media.full_url,
+            name: media.alt_text || `media-${media.id}`,
+            size: media.file_size,
+            type: 'image/*',
+            // Store the media ID so we can use it during form submission
+            media_id: media.id,
+            // Mark as existing media (not a new upload)
+            isExisting: true,
+          };
+          return mediaFile;
+        })
+      );
+
+      setValue('images', [...files, ...newFiles], { shouldValidate: true });
+      setMediaPickerOpen(false);
+    },
+    [setValue, values.images]
+  );
 
   const renderModeToggle = (
     <Grid xs={12} md={10}>
@@ -566,7 +522,88 @@ export default function ProductNewEditForm({ currentProduct }) {
             {!advancedMode && (
               <Stack spacing={1.5}>
                 <Typography variant="subtitle2">{t('images')}</Typography>
-                <RHFUpload
+
+                {/* Media Picker Button styled like upload */}
+                <Box
+                  onClick={() => setMediaPickerOpen(true)}
+                  sx={{
+                    p: 5,
+                    outline: 'none',
+                    borderRadius: 1,
+                    cursor: 'pointer',
+                    overflow: 'hidden',
+                    position: 'relative',
+                    bgcolor: (theme) => alpha(theme.palette.grey[500], 0.08),
+                    border: (theme) => `1px dashed ${alpha(theme.palette.grey[500], 0.2)}`,
+                    transition: (theme) => theme.transitions.create(['opacity', 'padding']),
+                    '&:hover': { opacity: 0.72 },
+                  }}
+                >
+                  <Stack spacing={3} alignItems="center" justifyContent="center">
+                    <Iconify icon="solar:gallery-bold" width={48} sx={{ color: 'primary.main' }} />
+                    <Typography variant="h6">{t('select_from_media_library')}</Typography>
+                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                      {t('click_to_browse_existing_media')}
+                    </Typography>
+                  </Stack>
+                </Box>
+
+                {/* Show selected media images with ability to remove */}
+                {values.images && values.images.length > 0 && (
+                  <Box sx={{ my: 3 }}>
+                    <Stack direction="row" flexWrap="wrap" spacing={1}>
+                      {values.images.map((file, index) => (
+                        <Stack
+                          key={file.id || index}
+                          alignItems="center"
+                          display="inline-flex"
+                          justifyContent="center"
+                          sx={{
+                            m: 0.5,
+                            width: 80,
+                            height: 80,
+                            borderRadius: 1.25,
+                            overflow: 'hidden',
+                            position: 'relative',
+                            border: (theme) => `solid 1px ${alpha(theme.palette.grey[500], 0.16)}`,
+                          }}
+                        >
+                          <Box
+                            component="img"
+                            src={file.preview || file.full_url}
+                            alt={file.name || 'Image'}
+                            sx={{
+                              width: '100%',
+                              height: '100%',
+                              objectFit: 'cover',
+                              position: 'absolute',
+                            }}
+                          />
+
+                          <IconButton
+                            size="small"
+                            onClick={() => handleRemoveFile(file)}
+                            sx={{
+                              p: 0.5,
+                              top: 4,
+                              right: 4,
+                              position: 'absolute',
+                              color: 'common.white',
+                              bgcolor: (theme) => alpha(theme.palette.grey[900], 0.48),
+                              '&:hover': {
+                                bgcolor: (theme) => alpha(theme.palette.grey[900], 0.72),
+                              },
+                            }}
+                          >
+                            <Iconify icon="mingcute:close-line" width={14} />
+                          </IconButton>
+                        </Stack>
+                      ))}
+                    </Stack>
+                  </Box>
+                )}
+
+                {/* <RHFUpload
                   multiple
                   thumbnail
                   name="images"
@@ -575,7 +612,7 @@ export default function ProductNewEditForm({ currentProduct }) {
                   onRemove={handleRemoveFile}
                   onRemoveAll={handleRemoveAllFiles}
                   onUpload={() => console.info('ON UPLOAD')}
-                />
+                /> */}
               </Stack>
             )}
 
@@ -828,6 +865,14 @@ export default function ProductNewEditForm({ currentProduct }) {
             {t('confirm')}
           </Button>
         }
+      />
+
+      <MediaPickerDialog
+        open={mediaPickerOpen}
+        onClose={() => setMediaPickerOpen(false)}
+        onSelect={handleMediaSelect}
+        multiple
+        title={t('select_product_images')}
       />
     </div>
   );

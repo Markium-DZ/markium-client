@@ -1,13 +1,13 @@
 import { _mock } from './_mock';
+import { ORDER_STATUSES } from 'src/constants/order-status';
 
 // ----------------------------------------------------------------------
 
-export const ORDER_STATUS_OPTIONS = [
-  { value: 'pending', label: 'Pending' },
-  { value: 'completed', label: 'Completed' },
-  { value: 'cancelled', label: 'Cancelled' },
-  { value: 'refunded', label: 'Refunded' },
-];
+// Use centralized order status configuration
+export const ORDER_STATUS_OPTIONS = ORDER_STATUSES.map((status) => ({
+  value: status.key,
+  label: status.labelKey.charAt(0).toUpperCase() + status.labelKey.slice(1),
+}));
 
 const ITEMS = [...Array(3)].map((_, index) => ({
   id: _mock.id(index),

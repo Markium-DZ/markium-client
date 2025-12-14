@@ -13,6 +13,8 @@ import { fDateTime } from 'src/utils/format-time';
 import Label from 'src/components/label';
 import Iconify from 'src/components/iconify';
 import CustomPopover, { usePopover } from 'src/components/custom-popover';
+import { getOrderStatusColor } from 'src/constants/order-status';
+import { t } from 'i18next';
 
 // ----------------------------------------------------------------------
 
@@ -42,17 +44,12 @@ export default function OrderDetailsToolbar({
 
           <Stack spacing={0.5}>
             <Stack spacing={1} direction="row" alignItems="center">
-              <Typography variant="h4"> Order {orderNumber} </Typography>
+              <Typography variant="h4"> {t('order')} {orderNumber} </Typography>
               <Label
                 variant="soft"
-                color={
-                  (status === 'completed' && 'success') ||
-                  (status === 'pending' && 'warning') ||
-                  (status === 'cancelled' && 'error') ||
-                  'default'
-                }
+                color={getOrderStatusColor(status)}
               >
-                {status}
+                {t(status)}
               </Label>
             </Stack>
 
@@ -76,7 +73,7 @@ export default function OrderDetailsToolbar({
             onClick={popover.onOpen}
             sx={{ textTransform: 'capitalize' }}
           >
-            {status}
+            {t(status)}
           </Button>
 
           <Button
@@ -84,11 +81,7 @@ export default function OrderDetailsToolbar({
             variant="outlined"
             startIcon={<Iconify icon="solar:printer-minimalistic-bold" />}
           >
-            Print
-          </Button>
-
-          <Button color="inherit" variant="contained" startIcon={<Iconify icon="solar:pen-bold" />}>
-            Edit
+            {t('print')}
           </Button>
         </Stack>
       </Stack>
@@ -97,7 +90,7 @@ export default function OrderDetailsToolbar({
         open={popover.open}
         onClose={popover.onClose}
         arrow="top-right"
-        sx={{ width: 140 }}
+        sx={{ minWidth: 140 }}
       >
         {statusOptions.map((option) => (
           <MenuItem
@@ -108,7 +101,7 @@ export default function OrderDetailsToolbar({
               onChangeStatus(option.value);
             }}
           >
-            {option.label}
+           {t('change_to')} {option.label}
           </MenuItem>
         ))}
       </CustomPopover>

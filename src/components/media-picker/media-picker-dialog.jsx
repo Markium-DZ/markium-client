@@ -1,0 +1,271 @@
+import { useState, useCallback } from 'react';
+import PropTypes from 'prop-types';
+
+import Box from '@mui/material/Box';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+import Button from '@mui/material/Button';
+import Stack from '@mui/material/Stack';
+import Grid from '@mui/material/Grid';
+import Card from '@mui/material/Card';
+import Typography from '@mui/material/Typography';
+import CircularProgress from '@mui/material/CircularProgress';
+import Divider from '@mui/material/Divider';
+import { alpha } from '@mui/material/styles';
+
+import { useTranslate } from 'src/locales';
+import { useGetMedia, uploadMedia } from 'src/api/media';
+import { useSnackbar } from 'src/components/snackbar';
+import Iconify from 'src/components/iconify';
+import { Upload } from 'src/components/upload';
+import { fData } from 'src/utils/format-number';
+
+// ----------------------------------------------------------------------
+
+export default function MediaPickerDialog({ open, onClose, onSelect, multiple = false, title }) {
+  const { t } = useTranslate();
+  const { enqueueSnackbar } = useSnackbar();
+
+  const [selectedMedia, setSelectedMedia] = useState([]);
+  const [uploadedFiles, setUploadedFiles] = useState([]);
+  const [uploading, setUploading] = useState(false);
+
+  const { media, mediaLoading, mutate } = useGetMedia(1, 100);
+
+  const handleToggleMedia = useCallback((mediaItem) => {
+    setSelectedMedia((prev) => {
+      const isSelected = prev.some((item) => item.id === mediaItem.id);
+
+      if (multiple) {
+        if (isSelected) {
+          return prev.filter((item) => item.id !== mediaItem.id);
+        }
+        return [...prev, mediaItem];
+      }
+
+      // Single selection
+      return isSelected ? [] : [mediaItem];
+    });
+  }, [multiple]);
+
+  const handleDrop = useCallback(async (acceptedFiles) => {
+    try {
+      setUploading(true);
+      await uploadMedia(acceptedFiles);
+
+      // Refresh media list
+      mutate();
+
+      enqueueSnackbar(t('media_uploaded_successfully'), { variant: 'success' });
+    } catch (error) {
+      console.error('Failed to upload media:', error);
+      enqueueSnackbar(error.message || t('failed_to_upload_media'), { variant: 'error' });
+    } finally {
+      setUploading(false);
+    }
+  }, [mutate, enqueueSnackbar, t]);
+
+  const handleSelect = useCallback(() => {
+    onSelect(multiple ? selectedMedia : selectedMedia[0]);
+
+    // Reset state
+    setSelectedMedia([]);
+    setUploadedFiles([]);
+
+    onClose();
+  }, [selectedMedia, multiple, onSelect, onClose]);
+
+  const handleCancel = useCallback(() => {
+    setSelectedMedia([]);
+    setUploadedFiles([]);
+    onClose();
+  }, [onClose]);
+
+  return (
+    <Dialog
+      open={open}
+      onClose={handleCancel}
+      maxWidth="md"
+      fullWidth
+      PaperProps={{
+        sx: { height: '80vh' },
+      }}
+    >
+      <DialogTitle>
+        {title || t('select_media')}
+      </DialogTitle>
+
+      <DialogContent sx={{ p: 3 }}>
+        <Stack spacing={3}>
+          {/* Upload Section */}
+          <Box>
+            <Upload
+              multiple
+              onDrop={handleDrop}
+              disabled={uploading}
+              accept={{ 'image/*': [] }}
+            />
+
+            {uploading && (
+              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 3 }}>
+                <CircularProgress />
+                <Typography sx={{ ml: 2 }}>{t('uploading')}</Typography>
+              </Box>
+            )}
+          </Box>
+
+          <Divider />
+
+          {/* Media Library Section */}
+          <Box>
+            <Typography variant="h6" sx={{ mb: 2 }}>
+              {t('media_library')}
+            </Typography>
+
+            {mediaLoading ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', py: 5 }}>
+                <CircularProgress />
+              </Box>
+            ) : media && media.length > 0 ? (
+              <Grid container spacing={2}>
+                {media.map((item) => (
+                  <Grid item xs={6} sm={4} md={3} key={item.id}>
+                    <MediaCard
+                      item={item}
+                      selected={selectedMedia.some((m) => m.id === item.id)}
+                      onToggle={() => handleToggleMedia(item)}
+                    />
+                  </Grid>
+                ))}
+              </Grid>
+            ) : (
+              <Box sx={{ textAlign: 'center', py: 5 }}>
+                <Iconify icon="solar:gallery-bold" width={64} sx={{ color: 'text.disabled', mb: 2 }} />
+                <Typography variant="h6" color="text.secondary">
+                  {t('no_media_found')}
+                </Typography>
+                <Typography variant="body2" color="text.disabled" sx={{ mt: 1 }}>
+                  {t('upload_media_to_get_started')}
+                </Typography>
+              </Box>
+            )}
+          </Box>
+        </Stack>
+      </DialogContent>
+
+      <DialogActions sx={{ px: 3, py: 2 }}>
+        <Button onClick={handleCancel} color="inherit">
+          {t('cancel')}
+        </Button>
+        <Button
+          onClick={handleSelect}
+          variant="contained"
+          disabled={selectedMedia.length === 0}
+        >
+          {t('select')} {selectedMedia.length > 0 && `(${selectedMedia.length})`}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
+
+MediaPickerDialog.propTypes = {
+  open: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  onSelect: PropTypes.func.isRequired,
+  multiple: PropTypes.bool,
+  title: PropTypes.string,
+};
+
+// ----------------------------------------------------------------------
+
+function MediaCard({ item, selected, onToggle }) {
+  return (
+    <Card
+      onClick={onToggle}
+      sx={{
+        position: 'relative',
+        cursor: 'pointer',
+        transition: 'all 0.2s',
+        border: (theme) => `2px solid ${selected ? theme.palette.primary.main : 'transparent'}`,
+        '&:hover': {
+          boxShadow: (theme) => theme.customShadows.z8,
+        },
+      }}
+    >
+      <Box
+        sx={{
+          position: 'relative',
+          width: '100%',
+          paddingTop: '100%',
+          overflow: 'hidden',
+        }}
+      >
+        <Box
+          component="img"
+          src={item.full_url}
+          alt={item.alt_text || 'Media'}
+          loading="lazy"
+          sx={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+          }}
+        />
+
+        {selected && (
+          <Box
+            sx={{
+              position: 'absolute',
+              top: 8,
+              right: 8,
+              width: 24,
+              height: 24,
+              borderRadius: '50%',
+              bgcolor: 'primary.main',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Iconify icon="eva:checkmark-fill" width={16} sx={{ color: 'white' }} />
+          </Box>
+        )}
+
+        <Box
+          sx={{
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            bgcolor: (theme) => alpha(theme.palette.common.black, 0.6),
+            p: 0.5,
+          }}
+        >
+          <Typography
+            variant="caption"
+            sx={{
+              color: 'white',
+              fontSize: '0.65rem',
+              display: 'block',
+              textAlign: 'center',
+            }}
+          >
+            {item.width} × {item.height} • {fData(item.file_size)}
+          </Typography>
+        </Box>
+      </Box>
+    </Card>
+  );
+}
+
+MediaCard.propTypes = {
+  item: PropTypes.object.isRequired,
+  selected: PropTypes.bool.isRequired,
+  onToggle: PropTypes.func.isRequired,
+};

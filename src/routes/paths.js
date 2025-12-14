@@ -295,6 +295,17 @@ export const paths = {
         details: `${ROOTS.DASHBOARD}/order/${MOCK_ID}`,
       },
     },
+    media: {
+      root: `${ROOTS.DASHBOARD}/media`,
+    },
+    inventory: {
+      root: `${ROOTS.DASHBOARD}/inventory`,
+      lowStock: `${ROOTS.DASHBOARD}/inventory/low-stock`,
+      details: (id) => `${ROOTS.DASHBOARD}/inventory/${id}`,
+      tracking: (id) => `${ROOTS.DASHBOARD}/inventory/${id}/tracking`,
+      items: (id) => `${ROOTS.DASHBOARD}/inventory/${id}/items`,
+      itemTracking: (id, itemId) => `${ROOTS.DASHBOARD}/inventory/${id}/items/${itemId}/tracking`,
+    },
     job: {
       root: `${ROOTS.DASHBOARD}/job`,
       new: `${ROOTS.DASHBOARD}/job/new`,

@@ -25,6 +25,7 @@ import { alpha } from '@mui/material/styles';
 import Iconify from 'src/components/iconify';
 import { useTranslate } from 'src/locales';
 import Image from 'src/components/image';
+import { MediaPickerDialog } from 'src/components/media-picker';
 
 // ----------------------------------------------------------------------
 
@@ -78,7 +79,6 @@ export default function ProductVariantsManager({ options, variants, onChange, im
         price: 0,
         compare_at_price: 0,
         quantity: 0,
-        sku: '',
         option_values: [],
         media_id: null,
         is_default: true,
@@ -96,15 +96,11 @@ export default function ProductVariantsManager({ options, variants, onChange, im
         return existingVariant;
       }
 
-      // Generate SKU from option values
-      const sku = optionValues.join('-').toUpperCase().replace(/\s+/g, '-');
-
       return {
         id: Date.now() + index,
         price: 0,
         compare_at_price: 0,
         quantity: 0,
-        sku,
         option_values: optionValues,
         media_id: null,
         is_default: index === 0,
@@ -120,22 +116,25 @@ export default function ProductVariantsManager({ options, variants, onChange, im
   }, [syncedVariants, variants, onChange]);
 
   const handleUpdateVariant = useCallback((variantId, field, value) => {
-    onChange(
-      syncedVariants.map((variant) => {
-        if (variant.id === variantId) {
-          // If setting is_default to true, set all others to false
-          if (field === 'is_default' && value === true) {
-            return { ...variant, [field]: value };
-          }
+    const updatedVariants = syncedVariants.map((variant) => {
+      if (variant.id === variantId) {
+        // Handle media_data special case - spread both fields at once
+        if (field === 'media_data') {
+          return { ...variant, ...value };
+        }
+        // If setting is_default to true, set all others to false
+        if (field === 'is_default' && value === true) {
           return { ...variant, [field]: value };
         }
-        // Unset other defaults
-        if (field === 'is_default' && value === true) {
-          return { ...variant, is_default: false };
-        }
-        return variant;
-      })
-    );
+        return { ...variant, [field]: value };
+      }
+      // Unset other defaults
+      if (field === 'is_default' && value === true) {
+        return { ...variant, is_default: false };
+      }
+      return variant;
+    });
+    onChange(updatedVariants);
   }, [syncedVariants, onChange]);
 
   const handleBulkApply = () => {
@@ -151,14 +150,6 @@ export default function ProductVariantsManager({ options, variants, onChange, im
     setBulkValues({ price: '', compare_at_price: '', quantity: '' });
   };
 
-  const handleGenerateSKUs = () => {
-    onChange(
-      syncedVariants.map((variant) => {
-        const sku = variant.option_values.join('-').toUpperCase().replace(/\s+/g, '-');
-        return { ...variant, sku };
-      })
-    );
-  };
 
   if (possibleVariants.length === 0 && options.length > 0) {
     return (
@@ -209,21 +200,6 @@ export default function ProductVariantsManager({ options, variants, onChange, im
 
         {syncedVariants.length > 1 && (
           <Box sx={{ display: 'flex', gap: 1 }}>
-            <Button
-              variant="outlined"
-              size="small"
-              startIcon={<Iconify icon="mdi:magic-staff" />}
-              onClick={handleGenerateSKUs}
-              sx={{
-                borderColor: (theme) => alpha(theme.palette.primary.main, 0.24),
-                '&:hover': {
-                  borderColor: 'primary.main',
-                  bgcolor: (theme) => alpha(theme.palette.primary.main, 0.04),
-                },
-              }}
-            >
-              {t('generate_skus')}
-            </Button>
             <Button
               variant="outlined"
               size="small"
@@ -377,13 +353,30 @@ ProductVariantsManager.propTypes = {
 
 function VariantRow({ variant, index, expanded, onToggleExpand, onUpdate, images }) {
   const { t } = useTranslate();
+  const [mediaPickerOpen, setMediaPickerOpen] = useState(false);
 
   const variantLabel = variant.option_values.length > 0
     ? variant.option_values.join(' / ')
     : t('default_variant');
 
-  // Show variant's own uploaded image first, then fall back to selected from gallery
-  const selectedImage = variant.image_file || images?.find((img) => img.id === variant.media_id || img.preview);
+  // Show variant's own uploaded image first, then selected_media from gallery, then fall back to images array
+  const selectedImage = variant.image_file || variant.selected_media || images?.find((img) => img.id === variant.media_id || img.preview);
+
+  const handleMediaSelect = useCallback((selectedMedia) => {
+    // Handle both array and single object
+    let media;
+    if (Array.isArray(selectedMedia)) {
+      media = selectedMedia[0];
+    } else {
+      media = selectedMedia;
+    }
+
+    if (media) {
+      // Update variant with both media_id and the media object
+      onUpdate(variant.id, 'media_data', { media_id: media.id, selected_media: media });
+    }
+    setMediaPickerOpen(false);
+  }, [variant.id, onUpdate]);
 
   return (
     <>
@@ -417,9 +410,6 @@ function VariantRow({ variant, index, expanded, onToggleExpand, onUpdate, images
               <Chip label={t('default')} size="small" color="primary" sx={{ height: 20 }} />
             )}
           </Box>
-          <Typography variant="caption" color="text.disabled">
-            SKU: {variant.sku || t('not_set')}
-          </Typography>
         </TableCell>
 
         {/* Price */}
@@ -450,7 +440,7 @@ function VariantRow({ variant, index, expanded, onToggleExpand, onUpdate, images
         <TableCell align="center">
           {selectedImage ? (
             <Image
-              src={selectedImage.preview || selectedImage.url}
+              src={selectedImage.preview || selectedImage.full_url || selectedImage.url}
               alt={variantLabel}
               sx={{
                 width: 40,
@@ -537,13 +527,6 @@ function VariantRow({ variant, index, expanded, onToggleExpand, onUpdate, images
                     value={variant.quantity}
                     onChange={(e) => onUpdate(variant.id, 'quantity', parseInt(e.target.value, 10) || 0)}
                   />
-                  <TextField
-                    size="small"
-                    label={t('sku')}
-                    value={variant.sku}
-                    onChange={(e) => onUpdate(variant.id, 'sku', e.target.value)}
-                    placeholder={t('sku_placeholder')}
-                  />
                 </Box>
 
                 {/* Image Upload & Selection */}
@@ -553,9 +536,9 @@ function VariantRow({ variant, index, expanded, onToggleExpand, onUpdate, images
                   </Typography>
 
                   <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
-                    {/* Upload Button */}
+                    {/* Media Picker Button */}
                     <Box
-                      component="label"
+                      onClick={() => setMediaPickerOpen(true)}
                       sx={{
                         width: 60,
                         height: 60,
@@ -573,38 +556,22 @@ function VariantRow({ variant, index, expanded, onToggleExpand, onUpdate, images
                         },
                       }}
                     >
-                      <input
-                        type="file"
-                        accept="image/*"
-                        hidden
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) {
-                            // Create preview
-                            const fileWithPreview = Object.assign(file, {
-                              preview: URL.createObjectURL(file),
-                            });
-                            // Update variant with the file object
-                            onUpdate(variant.id, 'image_file', fileWithPreview);
-                          }
-                        }}
-                      />
                       <Iconify icon="eva:plus-fill" width={24} color="text.disabled" />
                     </Box>
 
-                    {/* Show variant-specific uploaded image */}
-                    {variant.image_file && (
+                    {/* Show selected media if any */}
+                    {variant.media_id && variant.selected_media && (
                       <Box
                         sx={{
                           position: 'relative',
-                          border: (theme) => `2px solid ${theme.palette.success.main}`,
+                          border: (theme) => `2px solid ${theme.palette.primary.main}`,
                           borderRadius: 1,
                           overflow: 'hidden',
                         }}
                       >
                         <Image
-                          src={variant.image_file.preview}
-                          alt="Variant image"
+                          src={variant.selected_media.full_url}
+                          alt={variant.selected_media.alt_text || 'Selected media'}
                           sx={{ width: 60, height: 60, objectFit: 'cover' }}
                         />
                         <Box
@@ -612,7 +579,7 @@ function VariantRow({ variant, index, expanded, onToggleExpand, onUpdate, images
                             position: 'absolute',
                             top: 4,
                             right: 4,
-                            bgcolor: 'success.main',
+                            bgcolor: 'primary.main',
                             borderRadius: '50%',
                             width: 20,
                             height: 20,
@@ -625,7 +592,10 @@ function VariantRow({ variant, index, expanded, onToggleExpand, onUpdate, images
                         </Box>
                         <IconButton
                           size="small"
-                          onClick={() => onUpdate(variant.id, 'image_file', null)}
+                          onClick={() => {
+                            onUpdate(variant.id, 'media_id', null);
+                            onUpdate(variant.id, 'selected_media', null);
+                          }}
                           sx={{
                             position: 'absolute',
                             top: 2,
@@ -643,60 +613,6 @@ function VariantRow({ variant, index, expanded, onToggleExpand, onUpdate, images
                         </IconButton>
                       </Box>
                     )}
-
-                    {/* Show existing media if no file uploaded */}
-                    {!variant.image_file && images && images.length > 0 && (
-                      <>
-                        <Divider orientation="vertical" flexItem sx={{ mx: 0.5 }} />
-                        <Typography variant="caption" color="text.disabled" sx={{ mr: 0.5 }}>
-                          {t('or_select_from_uploaded')}:
-                        </Typography>
-                        {images.map((img, idx) => (
-                          <Box
-                            key={idx}
-                            onClick={() => onUpdate(variant.id, 'media_id', img.id || idx)}
-                            sx={{
-                              position: 'relative',
-                              cursor: 'pointer',
-                              border: (theme) =>
-                                variant.media_id === (img.id || idx)
-                                  ? `2px solid ${theme.palette.primary.main}`
-                                  : `2px solid ${alpha(theme.palette.grey[500], 0.24)}`,
-                              borderRadius: 1,
-                              overflow: 'hidden',
-                              transition: 'all 0.2s',
-                              '&:hover': {
-                                borderColor: 'primary.main',
-                              },
-                            }}
-                          >
-                            <Image
-                              src={img.preview || img.url}
-                              alt={`Image ${idx + 1}`}
-                              sx={{ width: 60, height: 60, objectFit: 'cover' }}
-                            />
-                            {variant.media_id === (img.id || idx) && (
-                              <Box
-                                sx={{
-                                  position: 'absolute',
-                                  top: 4,
-                                  right: 4,
-                                  bgcolor: 'primary.main',
-                                  borderRadius: '50%',
-                                  width: 20,
-                                  height: 20,
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                }}
-                              >
-                                <Iconify icon="eva:checkmark-fill" width={14} color="white" />
-                              </Box>
-                            )}
-                          </Box>
-                        ))}
-                      </>
-                    )}
                   </Box>
                 </Box>
               </Stack>
@@ -704,6 +620,14 @@ function VariantRow({ variant, index, expanded, onToggleExpand, onUpdate, images
           </Collapse>
         </TableCell>
       </TableRow>
+
+      <MediaPickerDialog
+        open={mediaPickerOpen}
+        onClose={() => setMediaPickerOpen(false)}
+        onSelect={handleMediaSelect}
+        multiple={false}
+        title={t('select_variant_image')}
+      />
     </>
   );
 }
