@@ -17,13 +17,10 @@ import CustomBreadcrumbs from 'src/components/custom-breadcrumbs';
 import { t } from 'i18next';
 import { Divider, Link } from '@mui/material';
 import Iconify from 'src/components/iconify';
-import PermissionsContext from 'src/auth/context/permissions/permissions-context';
-
 // ----------------------------------------------------------------------
 
 export default function SettingsView() {
   const settings = useSettingsContext();
-
   const [role, setRole] = useState('admin');
 
   const groups = [
