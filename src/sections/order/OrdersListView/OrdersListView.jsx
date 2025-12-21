@@ -646,8 +646,8 @@ const ElementActions = ({ item, setTableData }) => {
                 loading.onTrue()
                 // Update order status - use first item's product_id if backend requires it
                 const productId = item.items?.[0]?.product?.id || item.product_id;
-                console.log("item : ", item)
-                await updateOrder(item.id, { status: selectedStatus.key })
+                console.log("new status : ", { status: selectedStatus.value })
+                await updateOrder(item.id, { status: selectedStatus.value })
                 console.log("Changing order status:", { orderId: item?.id, newStatus: selectedStatus.key });
 
                 // Update table data optimistically

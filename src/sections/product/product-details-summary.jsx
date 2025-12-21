@@ -30,6 +30,8 @@ import IncrementerButton from './common/incrementer-button';
 export default function ProductDetailsSummary({
   items,
   product,
+  selectedVariant,
+  onVariantChange,
   onAddCart,
   onGotoStep,
   disabledActions,
@@ -41,31 +43,34 @@ export default function ProductDetailsSummary({
   const {
     id,
     name,
-    variations = [],
-    real_price,
-    images = [],
-    colors = [],
-    quantity,
-    sale_price,
-    status,
+    variants = [],
+    option_definitions = [],
     has_discount,
     discount_percentage,
     is_in_stock,
     description,
   } = product || {};
 
-  const price = parseFloat(sale_price || real_price) || 0;
-  const priceSale = has_discount ? parseFloat(real_price) : null;
-  const coverUrl = images?.[0] || '';
-  const available = quantity || 0;
-  const sizes = variations || [];
-  const colorsArray = colors || [];
-  const inventoryType = is_in_stock ? (quantity > 10 ? 'in_stock' : 'low_stock') : 'out_of_stock';
+  // Get current variant or default to first variant
+  const currentVariant = selectedVariant || variants?.[0];
+
+  const price = parseFloat(currentVariant?.price) || 0;
+  const priceSale = has_discount && currentVariant?.compare_at_price
+    ? parseFloat(currentVariant.compare_at_price)
+    : null;
+  const available = currentVariant?.available_quantity || 0;
+  const quantity = currentVariant?.quantity || 0;
+  const coverUrl = currentVariant?.media?.full_url || currentVariant?.media?.url || '';
+  const inventoryType = currentVariant?.is_in_stock
+    ? (available > 10 ? 'in_stock' : 'low_stock')
+    : 'out_of_stock';
   const subDescription = description;
   const totalRatings = 0;
   const totalReviews = 0;
   const newLabel = { enabled: false, content: '' };
-  const saleLabel = has_discount ? { enabled: true, content: `${Math.round(discount_percentage || 0)}% OFF` } : { enabled: false, content: '' };
+  const saleLabel = has_discount
+    ? { enabled: true, content: `${Math.round(discount_percentage || 0)}% OFF` }
+    : { enabled: false, content: '' };
 
   const existProduct = !!items?.length && items.map((item) => item.id).includes(id);
 
@@ -73,15 +78,24 @@ export default function ProductDetailsSummary({
     !!items?.length &&
     items.filter((item) => item.id === id).map((item) => item.quantity)[0] >= available;
 
+  // Build initial selected options from current variant
+  const initialOptions = {};
+  option_definitions.forEach((optDef) => {
+    const optionValue = currentVariant?.options?.find((opt) => opt.option_definition_id === optDef.id);
+    if (optionValue) {
+      initialOptions[`option_${optDef.id}`] = optionValue.value_id;
+    }
+  });
+
   const defaultValues = {
     id,
     name,
     coverUrl,
     available,
     price,
-    colors: colorsArray[0] || '',
-    size: sizes[0] || '',
+    variantId: currentVariant?.id,
     quantity: available < 1 ? 0 : 1,
+    ...initialOptions,
   };
 
   const methods = useForm({
@@ -93,27 +107,35 @@ export default function ProductDetailsSummary({
   const values = watch();
 
   useEffect(() => {
-    if (product) {
+    if (product && currentVariant) {
+      const newOptions = {};
+      option_definitions.forEach((optDef) => {
+        const optionValue = currentVariant?.options?.find((opt) => opt.option_definition_id === optDef.id);
+        if (optionValue) {
+          newOptions[`option_${optDef.id}`] = optionValue.value_id;
+        }
+      });
+
       reset({
         id,
         name,
         coverUrl,
         available,
         price,
-        colors: colorsArray[0] || '',
-        size: sizes[0] || '',
+        variantId: currentVariant?.id,
         quantity: available < 1 ? 0 : 1,
+        ...newOptions,
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [product]);
+  }, [product, currentVariant]);
 
   const onSubmit = handleSubmit(async (data) => {
     try {
       if (!existProduct) {
         onAddCart?.({
           ...data,
-          colors: [values.colors],
+          variant: currentVariant,
           subTotal: data.price * data.quantity,
         });
       }
@@ -128,13 +150,40 @@ export default function ProductDetailsSummary({
     try {
       onAddCart?.({
         ...values,
-        colors: [values.colors],
+        variant: currentVariant,
         subTotal: values.price * values.quantity,
       });
     } catch (error) {
       console.error(error);
     }
-  }, [onAddCart, values]);
+  }, [onAddCart, values, currentVariant]);
+
+  // Handle option selection change
+  const handleOptionChange = useCallback((optionDefId, valueId) => {
+    // Build selected options map
+    const selectedOptions = {};
+    option_definitions.forEach((optDef) => {
+      if (optDef.id === optionDefId) {
+        selectedOptions[optDef.id] = valueId;
+      } else {
+        selectedOptions[optDef.id] = values[`option_${optDef.id}`];
+      }
+    });
+
+    // Find matching variant
+    const matchingVariant = variants.find((variant) => {
+      if (!variant.is_active) return false;
+
+      return option_definitions.every((optDef) => {
+        const variantOption = variant.options?.find((opt) => opt.option_definition_id === optDef.id);
+        return variantOption?.value_id === selectedOptions[optDef.id];
+      });
+    });
+
+    if (matchingVariant && onVariantChange) {
+      onVariantChange(matchingVariant);
+    }
+  }, [option_definitions, variants, values, onVariantChange]);
 
   const renderPrice = (
     <Box sx={{ typography: 'h5' }}>
@@ -195,58 +244,65 @@ export default function ProductDetailsSummary({
     </Stack>
   );
 
-  const renderColorOptions = colorsArray.length > 0 ? (
-    <Stack direction="row">
-      <Typography variant="subtitle2" sx={{ flexGrow: 1 }}>
-        {t('color')}
-      </Typography>
+  // Render option definitions dynamically
+  const renderOptionDefinitions = option_definitions.map((optionDef) => {
+    const fieldName = `option_${optionDef.id}`;
 
-      <Controller
-        name="colors"
-        control={control}
-        render={({ field }) => (
-          <ColorPicker
-            colors={colorsArray}
-            selected={field?.value}
-            onSelectColor={(color) => field.onChange(color)}
-            limit={4}
+    // Color style option
+    if (optionDef.style === 'color') {
+      const colors = optionDef.values?.map((val) => val.color_hex || val.value) || [];
+      const colorValues = optionDef.values || [];
+
+      return (
+        <Stack direction="row" key={optionDef.id}>
+          <Typography variant="subtitle2" sx={{ flexGrow: 1 }}>
+            {optionDef.name}
+          </Typography>
+
+          <Controller
+            name={fieldName}
+            control={control}
+            render={({ field }) => (
+              <ColorPicker
+                colors={colors}
+                selected={colorValues.find((v) => v.id === field.value)?.color_hex || ''}
+                onSelectColor={(color) => {
+                  const selectedValue = colorValues.find((v) => v.color_hex === color);
+                  if (selectedValue) {
+                    field.onChange(selectedValue.id);
+                    handleOptionChange(optionDef.id, selectedValue.id);
+                  }
+                }}
+                limit={4}
+              />
+            )}
           />
-        )}
-      />
-    </Stack>
-  ) : null;
+        </Stack>
+      );
+    }
 
-  const renderSizeOptions = sizes.length > 0 ? (
-    <Stack direction="row">
-      <Typography variant="subtitle2" sx={{ flexGrow: 1 }}>
-        {t('size')}
-      </Typography>
+    // Dropdown/Button style option
+    return (
+      <Stack direction="row" key={optionDef.id}>
+        <Typography variant="subtitle2" sx={{ flexGrow: 1 }}>
+          {optionDef.name}
+        </Typography>
 
-      <RHFSelect
-        name="size"
-        size="small"
-        helperText={
-          <Link underline="always" color="textPrimary">
-            {t('size_chart')}
-          </Link>
-        }
-        sx={{
-          maxWidth: 88,
-          [`& .${formHelperTextClasses.root}`]: {
-            mx: 0,
-            mt: 1,
-            textAlign: 'right',
-          },
-        }}
-      >
-        {sizes.map((size) => (
-          <MenuItem key={size} value={size}>
-            {size}
-          </MenuItem>
-        ))}
-      </RHFSelect>
-    </Stack>
-  ) : null;
+        <RHFSelect
+          name={fieldName}
+          size="small"
+          sx={{ maxWidth: 120 }}
+          onChange={(e) => handleOptionChange(optionDef.id, e.target.value)}
+        >
+          {optionDef.values?.map((optValue) => (
+            <MenuItem key={optValue.id} value={optValue.id}>
+              {optValue.value}
+            </MenuItem>
+          ))}
+        </RHFSelect>
+      </Stack>
+    );
+  });
 
   const renderQuantity = (
     <Stack direction="row">
@@ -357,9 +413,7 @@ export default function ProductDetailsSummary({
 
         <Divider sx={{ borderStyle: 'dashed' }} />
 
-        {renderColorOptions}
-
-        {renderSizeOptions}
+        {renderOptionDefinitions}
 
         {renderQuantity}
 
@@ -378,5 +432,7 @@ ProductDetailsSummary.propTypes = {
   disabledActions: PropTypes.bool,
   onAddCart: PropTypes.func,
   onGotoStep: PropTypes.func,
+  onVariantChange: PropTypes.func,
   product: PropTypes.object,
+  selectedVariant: PropTypes.object,
 };

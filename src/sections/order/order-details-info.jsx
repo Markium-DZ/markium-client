@@ -5,18 +5,57 @@ import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
 import Avatar from '@mui/material/Avatar';
 import Divider from '@mui/material/Divider';
-import IconButton from '@mui/material/IconButton';
 import CardHeader from '@mui/material/CardHeader';
 import Typography from '@mui/material/Typography';
 
 import { useTranslate } from 'src/locales';
+import { useLocales } from 'src/locales';
 
 import Iconify from 'src/components/iconify';
 
 // ----------------------------------------------------------------------
 
+// Helper function to get localized name based on current language
+const getLocalizedName = (item, currentLang) => {
+  if (!item) return '';
+
+  const langValue = currentLang?.value || 'en';
+
+  switch (langValue) {
+    case 'ar':
+      return item.name_ar || item.name || item.key;
+    case 'fr':
+      return item.name || item.key;
+    case 'en':
+    default:
+      return item.key || item.name;
+  }
+};
+
 export default function OrderDetailsInfo({ customer, shippingAddress }) {
   const { t } = useTranslate();
+  const { currentLang } = useLocales();
+
+  // Build localized full address
+  const getLocalizedFullAddress = () => {
+    if (!shippingAddress) return '';
+
+    const parts = [];
+
+    if (shippingAddress.street_address) {
+      parts.push(shippingAddress.street_address);
+    }
+
+    if (shippingAddress.commune) {
+      parts.push(getLocalizedName(shippingAddress.commune, currentLang));
+    }
+
+    if (shippingAddress.wilaya) {
+      parts.push(getLocalizedName(shippingAddress.wilaya, currentLang));
+    }
+
+    return parts.filter(Boolean).join(', ');
+  };
 
   const renderCustomer = (
     <>
@@ -93,7 +132,7 @@ export default function OrderDetailsInfo({ customer, shippingAddress }) {
                     {t('commune')}
                   </Typography>
                   <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                    {shippingAddress.commune.name}
+                    {getLocalizedName(shippingAddress.commune, currentLang)}
                   </Typography>
                 </Box>
               </Stack>
@@ -107,7 +146,7 @@ export default function OrderDetailsInfo({ customer, shippingAddress }) {
                     {t('wilaya')}
                   </Typography>
                   <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                    {shippingAddress.wilaya.name} ({shippingAddress.wilaya.code})
+                    {getLocalizedName(shippingAddress.wilaya, currentLang)} ({shippingAddress.wilaya.code})
                   </Typography>
                 </Box>
               </Stack>
@@ -115,7 +154,7 @@ export default function OrderDetailsInfo({ customer, shippingAddress }) {
           </Stack>
         )}
 
-        {shippingAddress?.full_address && (
+        {shippingAddress && (
           <Box sx={{
             p: 1.5,
             bgcolor: (theme) => theme.palette.grey[100],
@@ -126,7 +165,7 @@ export default function OrderDetailsInfo({ customer, shippingAddress }) {
               {t('full_address')}
             </Typography>
             <Typography variant="body2" sx={{ fontWeight: 500 }}>
-              {shippingAddress.full_address}
+              {getLocalizedFullAddress()}
             </Typography>
           </Box>
         )}

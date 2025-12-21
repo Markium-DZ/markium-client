@@ -32,7 +32,7 @@ export default function MediaPickerDialog({ open, onClose, onSelect, multiple = 
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
 
-  const { media, mediaLoading, mutate } = useGetMedia(1, 100);
+  const { media, mediaLoading, mediaValidating, mutate } = useGetMedia(1, 100);
 
   const handleToggleMedia = useCallback((mediaItem) => {
     setSelectedMedia((prev) => {
@@ -83,6 +83,10 @@ export default function MediaPickerDialog({ open, onClose, onSelect, multiple = 
     onClose();
   }, [onClose]);
 
+  const handleRefresh = useCallback(() => {
+    mutate();
+  }, [mutate]);
+
   return (
     <Dialog
       open={open}
@@ -120,9 +124,19 @@ export default function MediaPickerDialog({ open, onClose, onSelect, multiple = 
 
           {/* Media Library Section */}
           <Box>
-            <Typography variant="h6" sx={{ mb: 2 }}>
-              {t('media_library')}
-            </Typography>
+            <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
+              <Typography variant="h6">
+                {t('media_library')}
+              </Typography>
+              <Button
+                size="small"
+                startIcon={<Iconify icon="solar:refresh-bold" />}
+                onClick={handleRefresh}
+                disabled={mediaLoading || mediaValidating}
+              >
+                {mediaValidating ? t('refreshing') : t('refresh')}
+              </Button>
+            </Stack>
 
             {mediaLoading ? (
               <Box sx={{ display: 'flex', justifyContent: 'center', py: 5 }}>

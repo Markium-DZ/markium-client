@@ -29,7 +29,7 @@ export function useGetProducts() {
 export function useGetProduct(productId) {
   const URL = endpoints.product.root ;
 
-  const { data, isLoading, error, isValidating } = useSWR(URL, fetcher);
+  const { data, isLoading, error, isValidating, mutate } = useSWR(URL, fetcher);
 
   const memoizedValue = useMemo(
     () => ({
@@ -37,8 +37,9 @@ export function useGetProduct(productId) {
       productLoading: isLoading,
       productError: error,
       productValidating: isValidating,
+      productMutate: mutate,
     }),
-    [data?.data, error, isLoading, isValidating, productId]
+    [data?.data, error, isLoading, isValidating, productId, mutate]
   );
 
   return memoizedValue;
@@ -102,4 +103,11 @@ export async function createMedia(files) {
       'Content-Type': 'multipart/form-data',
     },
   });
+}
+
+// ----------------------------------------------------------------------
+
+export async function updateProductVariant(productId, variantId, data) {
+  const URL = `/products/${productId}/variants/${variantId}`;
+  return await axios.put(URL, data);
 }

@@ -112,11 +112,6 @@ export function useNavData() {
             ],
           },
           {
-            title: t('media'),
-            path: paths.dashboard.media.root,
-            icon: ICONS.media,
-          },
-          {
             title: t('inventory'),
             path: paths.dashboard.inventory.root,
             icon: ICONS.inventory,
@@ -124,6 +119,11 @@ export function useNavData() {
               { title: t('list'), path: paths.dashboard.inventory.root },
               { title: t('low_stock'), path: paths.dashboard.inventory.lowStock },
             ],
+          },
+          {
+            title: t('media'),
+            path: paths.dashboard.media.root,
+            icon: ICONS.media,
           },
 
         ],
@@ -133,11 +133,11 @@ export function useNavData() {
       {
         subheader: t('other_cases'),
         items: [
-           {
+          {
             title: t('settings'),
             path: paths.dashboard.settings.root,
             icon: ICONS.settings,
-            permissions:["read.color","read.car_company","read.car_model","read.spec","read.attahcment_name","read.country","read.neighborhood","read.state"],
+            permissions: ["read.color", "read.car_company", "read.car_model", "read.spec", "read.attahcment_name", "read.country", "read.neighborhood", "read.state"],
             roles: ['admin', 'manager'],
             // permissions:"read.system_settings",
           },

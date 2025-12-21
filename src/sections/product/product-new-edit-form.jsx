@@ -89,8 +89,8 @@ export default function ProductNewEditForm({ currentProduct }) {
           // because variants are stored in state, not in form data
         }
       : {
-          // Simple mode validation
-          images: Yup.array().min(1, t('images_is_required')),
+          // Simple mode validation - require exactly 1 image
+          images: Yup.array().min(1, t('image_is_required')).max(1, t('only_one_image_allowed')),
           sale_price: Yup.number().moreThan(0, t('sale_price_required')),
           real_price: Yup.number(),
           quantity: Yup.number(),
@@ -106,11 +106,25 @@ export default function ProductNewEditForm({ currentProduct }) {
     // Extract default variant for simple mode values
     const defaultVariant = currentProduct?.variants?.find(v => v.is_default) || currentProduct?.variants?.[0];
 
+    // For basic mode, use variant's media as the image
+    let images = [];
+    if (defaultVariant?.media && typeof defaultVariant.media === 'object') {
+      images = [{
+        id: defaultVariant.media.id,
+        preview: defaultVariant.media.full_url || defaultVariant.media.url,
+        name: defaultVariant.media.alt_text || `media-${defaultVariant.media.id}`,
+        size: defaultVariant.media.file_size,
+        full_url: defaultVariant.media.full_url || defaultVariant.media.url,
+        media_id: defaultVariant.media.id,
+        isExisting: true,
+      }];
+    }
+
     return {
       name: currentProduct?.name || '',
       description: currentProduct?.description || '',
       content: currentProduct?.content || '',
-      images: currentProduct?.images || [],
+      images: images,
       category_id: currentProduct?.category_id || '',
       tags: currentProduct?.tags || [],
       // Simple mode fields - extracted from default variant
@@ -200,7 +214,7 @@ export default function ProductNewEditForm({ currentProduct }) {
         quantity: values.quantity || 0,
         sku: '',
         option_values: [],
-        media_id: values.images?.[0]?.id || null,
+        media_id: values.images?.[0]?.media_id || values.images?.[0]?.id || null,
         is_default: true,
       };
       setVariants([simpleVariant]);
@@ -347,13 +361,18 @@ export default function ProductNewEditForm({ currentProduct }) {
         });
       } else {
         // Simple mode: create single variant from simple fields
+        // Get media_id from either: existing media selection, newly uploaded media, or null
+        const mediaId = data.images?.[0]?.media_id || // From existing media (isExisting: true)
+                        uploadedMedia[0]?.id ||        // From newly uploaded files
+                        null;
+
         const simpleVariant = {
           price: parseFloat(data.sale_price) || 0,
           compare_at_price: parseFloat(data.real_price) || 0,
           quantity: parseInt(data.quantity, 10) || 0,
           sku: '',
           option_values: [],
-          media_id: uploadedMedia[0]?.id || null,
+          media_id: mediaId,
           is_default: true,
           position: 0, // First variant
           is_active: true, // Default to active
@@ -370,14 +389,14 @@ export default function ProductNewEditForm({ currentProduct }) {
       console.info('Submitting product data:', payload);
 
       // Step 3: Submit product to API as JSON
-      if (currentProduct?.id) {
-        await updateProduct(currentProduct.id, payload);
-      } else {
-        await createProduct(payload);
-      }
+      // if (currentProduct?.id) {
+      //   await updateProduct(currentProduct.id, payload);
+      // } else {
+      //   await createProduct(payload);
+      // }
 
       enqueueSnackbar(currentProduct ? t('update_success') : t('create_success'));
-      router.push(paths.dashboard.product.root);
+      // router.push(paths.dashboard.product.root);
     } catch (error) {
       console.log('Caught error:', error);
       showError(error);
@@ -427,31 +446,28 @@ export default function ProductNewEditForm({ currentProduct }) {
 
   const handleMediaSelect = useCallback(
     async (selectedMedia) => {
-      const files = values.images || [];
+      // In basic mode, only allow one media selection
+      const media = Array.isArray(selectedMedia) ? selectedMedia[0] : selectedMedia;
 
-      // Convert media items to File objects with preview URLs
-      const newFiles = await Promise.all(
-        selectedMedia.map(async (media, index) => {
-          // Create a pseudo-File object with the media data
-          const mediaFile = {
-            id: media.id,
-            preview: media.full_url,
-            name: media.alt_text || `media-${media.id}`,
-            size: media.file_size,
-            type: 'image/*',
-            // Store the media ID so we can use it during form submission
-            media_id: media.id,
-            // Mark as existing media (not a new upload)
-            isExisting: true,
-          };
-          return mediaFile;
-        })
-      );
+      if (!media) return;
 
-      setValue('images', [...files, ...newFiles], { shouldValidate: true });
+      // Create a pseudo-File object with the media data
+      const mediaFile = {
+        id: media.id,
+        preview: media.full_url,
+        name: media.alt_text || `media-${media.id}`,
+        size: media.file_size,
+        type: 'image/*',
+        // Store the media ID so we can use it during form submission
+        media_id: media.id,
+        // Mark as existing media (not a new upload)
+        isExisting: true,
+      };
+
+      setValue('images', [mediaFile], { shouldValidate: true });
       setMediaPickerOpen(false);
     },
-    [setValue, values.images]
+    [setValue]
   );
 
   const renderModeToggle = (
@@ -521,98 +537,47 @@ export default function ProductNewEditForm({ currentProduct }) {
             {/* Only show main image upload in Simple Mode */}
             {!advancedMode && (
               <Stack spacing={1.5}>
-                <Typography variant="subtitle2">{t('images')}</Typography>
+                <Typography variant="subtitle2">{t('variant_image')}</Typography>
 
-                {/* Media Picker Button styled like upload */}
-                <Box
-                  onClick={() => setMediaPickerOpen(true)}
-                  sx={{
-                    p: 5,
-                    outline: 'none',
-                    borderRadius: 1,
-                    cursor: 'pointer',
-                    overflow: 'hidden',
-                    position: 'relative',
-                    bgcolor: (theme) => alpha(theme.palette.grey[500], 0.08),
-                    border: (theme) => `1px dashed ${alpha(theme.palette.grey[500], 0.2)}`,
-                    transition: (theme) => theme.transitions.create(['opacity', 'padding']),
-                    '&:hover': { opacity: 0.72 },
-                  }}
-                >
-                  <Stack spacing={3} alignItems="center" justifyContent="center">
-                    <Iconify icon="solar:gallery-bold" width={48} sx={{ color: 'primary.main' }} />
-                    <Typography variant="h6">{t('select_from_media_library')}</Typography>
-                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                      {t('click_to_browse_existing_media')}
-                    </Typography>
-                  </Stack>
-                </Box>
-
-                {/* Show selected media images with ability to remove */}
-                {values.images && values.images.length > 0 && (
-                  <Box sx={{ my: 3 }}>
-                    <Stack direction="row" flexWrap="wrap" spacing={1}>
-                      {values.images.map((file, index) => (
-                        <Stack
-                          key={file.id || index}
-                          alignItems="center"
-                          display="inline-flex"
-                          justifyContent="center"
-                          sx={{
-                            m: 0.5,
-                            width: 80,
-                            height: 80,
-                            borderRadius: 1.25,
-                            overflow: 'hidden',
-                            position: 'relative',
-                            border: (theme) => `solid 1px ${alpha(theme.palette.grey[500], 0.16)}`,
-                          }}
-                        >
-                          <Box
-                            component="img"
-                            src={file.preview || file.full_url}
-                            alt={file.name || 'Image'}
-                            sx={{
-                              width: '100%',
-                              height: '100%',
-                              objectFit: 'cover',
-                              position: 'absolute',
-                            }}
-                          />
-
-                          <IconButton
-                            size="small"
-                            onClick={() => handleRemoveFile(file)}
-                            sx={{
-                              p: 0.5,
-                              top: 4,
-                              right: 4,
-                              position: 'absolute',
-                              color: 'common.white',
-                              bgcolor: (theme) => alpha(theme.palette.grey[900], 0.48),
-                              '&:hover': {
-                                bgcolor: (theme) => alpha(theme.palette.grey[900], 0.72),
-                              },
-                            }}
-                          >
-                            <Iconify icon="mingcute:close-line" width={14} />
-                          </IconButton>
-                        </Stack>
-                      ))}
+                {/* Show selected media or picker button */}
+                {values.images && values.images.length > 0 ? (
+                  <Card sx={{ p: 2, position: 'relative' }}>
+                    <Stack direction="row" spacing={2} alignItems="center">
+                      <Box
+                        component="img"
+                        src={values.images[0].preview || values.images[0].full_url}
+                        alt={values.images[0].name || 'Product Image'}
+                        sx={{
+                          width: 80,
+                          height: 80,
+                          borderRadius: 1,
+                          objectFit: 'cover',
+                        }}
+                      />
+                      <Box sx={{ flexGrow: 1 }}>
+                        <Typography variant="body2">{t('media_selected')}</Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {values.images[0].name}
+                        </Typography>
+                      </Box>
+                      <IconButton
+                        onClick={() => handleRemoveFile(values.images[0])}
+                        size="small"
+                      >
+                        <Iconify icon="eva:close-fill" />
+                      </IconButton>
                     </Stack>
-                  </Box>
+                  </Card>
+                ) : (
+                  <Button
+                    fullWidth
+                    variant="outlined"
+                    startIcon={<Iconify icon="eva:image-outline" />}
+                    onClick={() => setMediaPickerOpen(true)}
+                  >
+                    {t('select_image')}
+                  </Button>
                 )}
-
-                {/* <RHFUpload
-                  multiple
-                  thumbnail
-                  name="images"
-                  maxSize={31457210}
-                  onDrop={handleDrop}
-                  onRemove={handleRemoveFile}
-                  onRemoveAll={handleRemoveAllFiles}
-                  onUpload={() => console.info('ON UPLOAD')}
-                /> */}
               </Stack>
             )}
 
@@ -871,8 +836,8 @@ export default function ProductNewEditForm({ currentProduct }) {
         open={mediaPickerOpen}
         onClose={() => setMediaPickerOpen(false)}
         onSelect={handleMediaSelect}
-        multiple
-        title={t('select_product_images')}
+        multiple={false}
+        title={t('select_product_image')}
       />
     </div>
   );

@@ -27,13 +27,13 @@ export default function SettingsView() {
   const [role, setRole] = useState('admin');
 
   const groups = [
-    {
-      title: "account_settings",
-      icon: "solar:user-bold-duotone",
-      items: [
-        { type: "account", header: "account_details", subheader: "manage_your_account_information", href: paths?.dashboard.settings.account },
-      ]
-    },
+    // {
+    //   title: "account_settings",
+    //   icon: "solar:user-bold-duotone",
+    //   items: [
+    //     { type: "account", header: "account_details", subheader: "manage_your_account_information", href: paths?.dashboard.settings.account },
+    //   ]
+    // },
     {
       title: "store_settings",
       icon: "solar:shop-bold-duotone",

@@ -28,13 +28,14 @@ import ProductDetailsSummary from '../product-details-summary';
 import ProductDetailsToolbar from '../product-details-toolbar';
 import ProductDetailsCarousel from '../product-details-carousel';
 import ProductDetailsDescription from '../product-details-description';
+import ProductDetailsVariants from '../product-details-variants';
 
 // ----------------------------------------------------------------------
 
 // ----------------------------------------------------------------------
 
 export default function ProductDetailsView({ id }) {
-  const { product, productLoading, productError } = useGetProduct(id);
+  const { product, productLoading, productError, productMutate } = useGetProduct(id);
   console.log("product :" ,product)
 
   const settings = useSettingsContext();
@@ -58,13 +59,18 @@ export default function ProductDetailsView({ id }) {
     },
   ];
 
-  const [currentTab, setCurrentTab] = useState('description');
+  const [currentTab, setCurrentTab] = useState('variants');
 
   const [publish, setPublish] = useState('');
+
+  const [selectedVariant, setSelectedVariant] = useState(null);
 
   useEffect(() => {
     if (product) {
       setPublish(product?.status || product?.publish || '');
+      // Set default variant
+      const defaultVar = product?.variants?.find((v) => v.is_default) || product?.variants?.[0];
+      setSelectedVariant(defaultVar);
     }
   }, [product]);
 
@@ -113,7 +119,12 @@ export default function ProductDetailsView({ id }) {
         </Grid>
 
         <Grid xs={12} md={6} lg={5}>
-          <ProductDetailsSummary disabledActions product={product} />
+          <ProductDetailsSummary
+            disabledActions
+            product={product}
+            selectedVariant={selectedVariant}
+            onVariantChange={setSelectedVariant}
+          />
         </Grid>
       </Grid>
 
@@ -126,7 +137,7 @@ export default function ProductDetailsView({ id }) {
         }}
         sx={{ my: 10 }}
       >
-        {SUMMARY.map((item) => (
+        {/* {SUMMARY.map((item) => (
           <Box key={item.title} sx={{ textAlign: 'center', px: 5 }}>
             <Iconify icon={item.icon} width={32} sx={{ color: 'primary.main' }} />
 
@@ -138,7 +149,7 @@ export default function ProductDetailsView({ id }) {
               {item.description}
             </Typography>
           </Box>
-        ))}
+        ))} */}
       </Box>
 
       <Card>
@@ -151,6 +162,10 @@ export default function ProductDetailsView({ id }) {
           }}
         >
           {[
+            {
+              value: 'variants',
+              label: `${t('variants')} (${product?.variants?.length || 0})`,
+            },
             {
               value: 'description',
               label: t('product_description'),
@@ -165,7 +180,23 @@ export default function ProductDetailsView({ id }) {
         </Tabs>
 
         {currentTab === 'description' && (
-          <ProductDetailsDescription description={product?.description} />
+          <ProductDetailsDescription
+            description={
+              typeof product?.content === 'string'
+                ? product.content
+                : typeof product?.description === 'string'
+                ? product.description
+                : ''
+            }
+          />
+        )}
+
+        {currentTab === 'variants' && (
+          <ProductDetailsVariants
+            product={product}
+            optionDefinitions={product?.option_definitions || []}
+            onRefresh={productMutate}
+          />
         )}
 
         {currentTab === 'reviews' && (

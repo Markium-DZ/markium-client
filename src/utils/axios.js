@@ -9,6 +9,13 @@ const axiosInstance = axios.create({ baseURL: HOST_API });
 axiosInstance.interceptors.response.use(
   (res) => res,
   (error) => {
+    // Log the error for debugging
+    console.error('Axios error intercepted:', {
+      status: error.response?.status,
+      data: error.response?.data,
+      url: error.config?.url,
+    });
+
     // Check for 401 status and redirect to login
     if (error.response?.status === 401) {
       // Clear session data
@@ -19,7 +26,18 @@ axiosInstance.interceptors.response.use(
       window.location.href = '/auth/jwt/login';
     }
 
-    // Throw the error with consistent structure
+    // Handle 422 validation errors explicitly
+    if (error.response?.status === 422) {
+      const errorData = error.response?.data || {
+        message: 'Validation error',
+        errors: {}
+      };
+      // Ensure we reject with the error data so show_error can handle it
+      console.error('422 Validation Error:', errorData);
+      return Promise.reject(errorData);
+    }
+
+    // Throw the error with consistent structure for all other errors
     const errorData = error.response?.data || { message: 'Something went wrong' };
     return Promise.reject(errorData);
   }
@@ -194,5 +212,24 @@ export const endpoints = {
     logo: '/store/logo',
     root: '/store',
     slug: (slug)=>`/stores/${slug}`,
+  },
+  shipping: {
+    providers: '/shipping/providers',
+    connections: '/shipping/connections',
+    updateConnection: (connectionId) => `/shipping/connections/${connectionId}`,
+    validateConnection: (connectionId) => `/shipping/connections/${connectionId}/validate`,
+    setDefaultConnection: (connectionId) => `/shipping/connections/${connectionId}/set-default`,
+    deleteConnection: (connectionId) => `/shipping/connections/${connectionId}`,
+    orderRates: (orderId) => `/shipping/orders/${orderId}/rates`,
+    orderRatesByProvider: (orderId) => `/shipping/orders/${orderId}/rates/by-provider`,
+    refreshOrderRates: (orderId) => `/shipping/orders/${orderId}/rates/refresh`,
+  },
+  payment: {
+    providers: '/payment/providers',
+    connections: '/payment/connections',
+    updateConnection: (connectionId) => `/payment/connections/${connectionId}`,
+    validateConnection: (connectionId) => `/payment/connections/${connectionId}/validate`,
+    setDefaultConnection: (connectionId) => `/payment/connections/${connectionId}/set-default`,
+    deleteConnection: (connectionId) => `/payment/connections/${connectionId}`,
   },
 };

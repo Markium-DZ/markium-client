@@ -64,8 +64,27 @@ const StyledThumbnailsContainer = styled('div')(({ length, theme }) => ({
 export default function ProductDetailsCarousel({ product }) {
   const theme = useTheme();
 
-  const slides = product?.images?.map((img) => ({
-    src: img,
+  // Collect all variant media images
+  let mediaSource = [];
+
+  if (product?.variants && product.variants.length > 0) {
+    // Get all media from all variants
+    product.variants.forEach((variant) => {
+      if (variant.media && typeof variant.media === 'object') {
+        mediaSource.push(variant.media);
+      }
+    });
+  }
+
+  // If no variant media, fall back to product images
+  if (mediaSource.length === 0 && product?.images) {
+    mediaSource = Array.isArray(product.images)
+      ? product.images
+      : [product.images];
+  }
+
+  const slides = mediaSource.map((img) => ({
+    src: typeof img === 'string' ? img : img?.full_url || img?.url || img?.src || '',
   }));
 
   const lightbox = useLightBox(slides);
@@ -97,7 +116,7 @@ export default function ProductDetailsCarousel({ product }) {
     }
   }, [carouselLarge, lightbox.open, lightbox.selected]);
 
-  const renderLargeImg = (
+  const renderLargeImg = slides?.length > 0 ? (
     <Box
       sx={{
         mb: 3,
@@ -111,7 +130,7 @@ export default function ProductDetailsCarousel({ product }) {
         asNavFor={carouselThumb.nav}
         ref={carouselLarge.carouselRef}
       >
-        {slides?.map((slide) => (
+        {slides.map((slide) => (
           <Image
             key={slide.src}
             alt={slide.src}
@@ -125,21 +144,21 @@ export default function ProductDetailsCarousel({ product }) {
 
       <CarouselArrowIndex
         index={carouselLarge.currentIndex}
-        total={slides?.length}
+        total={slides.length}
         onNext={carouselThumb.onNext}
         onPrev={carouselThumb.onPrev}
       />
     </Box>
-  );
+  ) : null;
 
-  const renderThumbnails = (
-    <StyledThumbnailsContainer length={slides?.length}>
+  const renderThumbnails = slides?.length > 0 ? (
+    <StyledThumbnailsContainer length={slides.length}>
       <Carousel
         {...carouselThumb.carouselSettings}
         asNavFor={carouselLarge.nav}
         ref={carouselThumb.carouselRef}
       >
-        {slides?.map((item, index) => (
+        {slides.map((item, index) => (
           <Box key={item.src} sx={{ px: 0.5 }}>
             <Avatar
               key={item.src}
@@ -161,7 +180,7 @@ export default function ProductDetailsCarousel({ product }) {
         ))}
       </Carousel>
     </StyledThumbnailsContainer>
-  );
+  ) : null;
 
   return (
     <Box

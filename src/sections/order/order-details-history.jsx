@@ -14,10 +14,11 @@ import TimelineConnector from '@mui/lab/TimelineConnector';
 import TimelineItem, { timelineItemClasses } from '@mui/lab/TimelineItem';
 
 import { fDateTime } from 'src/utils/format-time';
+import { t } from 'i18next';
 
 // ----------------------------------------------------------------------
 
-export default function OrderDetailsHistory({ history }) {
+export default function OrderDetailsHistory({ currentOrder,history }) {
   const renderSummary = (
     <Stack
       spacing={2}
@@ -34,19 +35,19 @@ export default function OrderDetailsHistory({ history }) {
     >
       <Stack spacing={0.5}>
         <Box sx={{ color: 'text.disabled' }}>Order time</Box>
-        {fDateTime(history?.orderTime)}
+        {fDateTime(currentOrder?.created_at)}
       </Stack>
       <Stack spacing={0.5}>
         <Box sx={{ color: 'text.disabled' }}>Payment time</Box>
-        {fDateTime(history?.orderTime)}
+        {fDateTime(currentOrder?.updated_at)}
       </Stack>
       <Stack spacing={0.5}>
         <Box sx={{ color: 'text.disabled' }}>Delivery time for the carrier</Box>
-        {fDateTime(history?.orderTime)}
+        {fDateTime(currentOrder?.updated_at)}
       </Stack>
       <Stack spacing={0.5}>
         <Box sx={{ color: 'text.disabled' }}>Completion time</Box>
-        {fDateTime(history?.orderTime)}
+        {fDateTime(currentOrder?.updated_at)}
       </Stack>
     </Stack>
   );
@@ -89,7 +90,7 @@ export default function OrderDetailsHistory({ history }) {
 
   return (
     <Card>
-      <CardHeader title="History" />
+      <CardHeader title={t("history")} />
       <Stack
         spacing={3}
         alignItems={{ md: 'flex-start' }}

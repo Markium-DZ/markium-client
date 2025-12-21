@@ -28,28 +28,23 @@ import FormProvider, {
   RHFSwitch,
 } from 'src/components/hook-form';
 import showError from 'src/utils/show_error';
-import { updateStoreConfig, useGetMyStore } from 'src/api/store';
 import { AuthContext } from 'src/auth/context/jwt';
 import {
-  useGetShippingProviders,
-  useGetShippingConnections,
-  createShippingConnection,
-  updateShippingConnection,
-  validateShippingConnection,
-  setDefaultShippingConnection,
-} from 'src/api/shipping';
-import Image from 'src/components/image';
-import { LoadingScreen } from 'src/components/loading-screen';
+  useGetPaymentProviders,
+  useGetPaymentConnections,
+  createPaymentConnection,
+  updatePaymentConnection,
+  validatePaymentConnection,
+  setDefaultPaymentConnection,
+} from 'src/api/payment';
 
 // ----------------------------------------------------------------------
 
-export default function DeliveryCompaniesForm() {
+export default function PaymentMethodsForm() {
   const { user } = useContext(AuthContext);
-  const { store } = useGetMyStore(user?.store?.slug);
-  const { providers, providersLoading, providersError } = useGetShippingProviders();
-  const { connections, connectionsLoading, connectionsError, mutate: mutateConnections } = useGetShippingConnections();
+  const { providers, providersLoading, providersError } = useGetPaymentProviders();
+  const { connections, connectionsLoading, connectionsError, mutate: mutateConnections } = useGetPaymentConnections();
 
-  console.log("store", store);
   console.log("providers", providers);
   console.log("connections", connections);
 
@@ -60,12 +55,11 @@ export default function DeliveryCompaniesForm() {
   const [validatingConnection, setValidatingConnection] = useState(null);
 
   // Transform API providers to component structure and merge with existing connections
-  const deliveryCompanies = useMemo(() => {
+  const paymentMethods = useMemo(() => {
     if (!providers || providers.length === 0) return [];
 
     return providers.map((provider) => {
       // Find existing connection for this provider
-      // Connection has nested provider object with id and identifier
       const existingConnection = connections?.find(
         (conn) => conn.provider?.id === provider.id || conn.provider?.identifier === provider.identifier
       );
@@ -84,10 +78,10 @@ export default function DeliveryCompaniesForm() {
         id: provider.identifier,
         providerId: provider.id,
         name: provider.name,
-        image: provider.logo || '/assets/images/delivery/default.png',
-        color: '#4ECDC4', // Default color, can be customized per provider
+        image: provider.logo || '/assets/images/payment/default.png',
+        color: '#4ECDC4', // Default color
         fields,
-        description: `${provider.name} - ${provider.supported_countries.join(', ')}`,
+        description: `${provider.name}${provider.supported_countries?.length > 0 ? ` - ${provider.supported_countries.join(', ')}` : ''}`,
         capabilities: provider.capabilities,
         isSandboxAvailable: provider.is_sandbox_available,
         // Connection data
@@ -100,23 +94,19 @@ export default function DeliveryCompaniesForm() {
         isSandbox: existingConnection?.is_sandbox || false,
         lastUsedAt: existingConnection?.last_used_at,
         validatedAt: existingConnection?.credentials_validated_at,
-        // Note: Credentials are not returned in the response for security
         credentials: {},
       };
     });
   }, [providers, connections]);
 
   // Build dynamic Yup schema
-  // Make all fields optional - we'll validate in submit handler based on connection state
   const buildValidationSchema = () => {
     const schemaFields = {};
 
-    deliveryCompanies.forEach((company) => {
-      // Add enabled field
-      schemaFields[`${company.id}_enabled`] = Yup.boolean();
+    paymentMethods.forEach((method) => {
+      schemaFields[`${method.id}_enabled`] = Yup.boolean();
 
-      // Add all credential fields as optional strings
-      company.fields.forEach((field) => {
+      method.fields.forEach((field) => {
         schemaFields[field.name] = Yup.string();
       });
     });
@@ -124,20 +114,16 @@ export default function DeliveryCompaniesForm() {
     return Yup.object().shape(schemaFields);
   };
 
-  const DeliveryCompaniesSchema = useMemo(() => buildValidationSchema(), [deliveryCompanies]);
+  const PaymentMethodsSchema = useMemo(() => buildValidationSchema(), [paymentMethods]);
 
   // Build default values
   const buildDefaultValues = () => {
     const defaults = {};
 
-    deliveryCompanies.forEach((company) => {
-      // Set enabled based on connection status (is_active from API)
-      defaults[`${company.id}_enabled`] = company.isConnected && company.isActive;
+    paymentMethods.forEach((method) => {
+      defaults[`${method.id}_enabled`] = method.isConnected && method.isActive;
 
-      // Set all credential fields to empty
-      // Note: API doesn't return credentials for security reasons
-      // Users will need to re-enter credentials when updating
-      company.fields.forEach((field) => {
+      method.fields.forEach((field) => {
         defaults[field.name] = '';
       });
     });
@@ -145,10 +131,10 @@ export default function DeliveryCompaniesForm() {
     return defaults;
   };
 
-  const defaultValues = useMemo(() => buildDefaultValues(), [store, deliveryCompanies]);
+  const defaultValues = useMemo(() => buildDefaultValues(), [paymentMethods]);
 
   const methods = useForm({
-    resolver: yupResolver(DeliveryCompaniesSchema),
+    resolver: yupResolver(PaymentMethodsSchema),
     defaultValues,
   });
 
@@ -163,59 +149,53 @@ export default function DeliveryCompaniesForm() {
 
   // Reset form when data changes
   useEffect(() => {
-    if (deliveryCompanies.length > 0) {
+    if (paymentMethods.length > 0) {
       reset(defaultValues);
     }
-  }, [defaultValues, deliveryCompanies, reset]);
+  }, [defaultValues, paymentMethods, reset]);
 
   // Validate connection handler
-  const handleValidateConnection = async (company) => {
-    if (!company.connectionId) {
+  const handleValidateConnection = async (method) => {
+    if (!method.connectionId) {
       enqueueSnackbar(t('save_connection_first'), { variant: 'warning' });
       return;
     }
 
     try {
-      setValidatingConnection(company.id);
-      const response = await validateShippingConnection(company.connectionId);
-      // console.log("response : ",response);
+      setValidatingConnection(method.id);
+      const response = await validatePaymentConnection(method.connectionId);
 
-      // Check various possible response structures
-      // const isValid = response.data?.valid || response.data?.success || response.success;
+      const isValid = response.data?.valid || response.data?.success || response.success;
 
-      // if (isValid) {
-      //   enqueueSnackbar(t('connection_validated_successfully', { name: company.name }), { variant: 'success' });
-      // } else {
-      //   const errorMessage = response.data?.message || response.message;
-      //   enqueueSnackbar(
-      //     errorMessage || t('connection_validation_failed', { name: company.name }),
-      //     { variant: 'error' }
-      //   );
-      // }
+      if (isValid) {
+        enqueueSnackbar(t('connection_validated_successfully', { name: method.name }), { variant: 'success' });
+      } else {
+        const errorMessage = response.data?.message || response.message;
+        enqueueSnackbar(
+          errorMessage || t('connection_validation_failed', { name: method.name }),
+          { variant: 'error' }
+        );
+      }
 
-      // Refresh connections to get updated validation status
       await mutateConnections();
     } catch (error) {
-      console.log("error L ", error);
       showError(error);
-    }
-    finally {
+    } finally {
       setValidatingConnection(null);
     }
   };
 
   // Set as default handler
-  const handleSetAsDefault = async (company) => {
-    if (!company.connectionId) {
+  const handleSetAsDefault = async (method) => {
+    if (!method.connectionId) {
       enqueueSnackbar(t('save_connection_first'), { variant: 'warning' });
       return;
     }
 
     try {
-      await setDefaultShippingConnection(company.connectionId);
-      enqueueSnackbar(t('default_provider_set', { name: company.name }), { variant: 'success' });
+      await setDefaultPaymentConnection(method.connectionId);
+      enqueueSnackbar(t('default_payment_method_set', { name: method.name }), { variant: 'success' });
 
-      // Refresh connections to get updated default status
       await mutateConnections();
     } catch (error) {
       showError(error);
@@ -226,71 +206,60 @@ export default function DeliveryCompaniesForm() {
     try {
       setLoading(true);
 
-      // Process each delivery company
-      for (const company of deliveryCompanies) {
-        const isEnabled = data[`${company.id}_enabled`];
+      for (const method of paymentMethods) {
+        const isEnabled = data[`${method.id}_enabled`];
 
-        // Extract credentials for this company (remove provider prefix to get exact API field names)
         const credentials = {};
-        company.fields.forEach((field) => {
-          const fieldKey = field.name.replace(`${company.id}_`, ''); // This gets the exact credential key (e.g., 'id', 'token')
+        method.fields.forEach((field) => {
+          const fieldKey = field.name.replace(`${method.id}_`, '');
           const fieldValue = data[field.name];
-          if (fieldValue) { // Only include non-empty credentials
+          if (fieldValue) {
             credentials[fieldKey] = fieldValue;
           }
         });
 
-        // Check if user entered any credentials
         const hasCredentials = Object.keys(credentials).length > 0;
-
-        // Check if the enabled state has actually changed
-        const wasEnabled = company.isConnected && company.isActive;
+        const wasEnabled = method.isConnected && method.isActive;
         const enabledStateChanged = isEnabled !== wasEnabled;
 
-        // Determine if we need to take action on this provider
         const needsAction =
-          (isEnabled && hasCredentials) || // New credentials entered (create or update)
-          (enabledStateChanged && company.connectionId); // Enabled state changed for existing connection
+          (isEnabled && hasCredentials) ||
+          (enabledStateChanged && method.connectionId);
 
         if (!needsAction) {
-          // Skip providers that haven't changed or don't need action
           continue;
         }
 
         if (isEnabled) {
-          // Determine auth method based on provider's supported methods
-          const provider = providers.find(p => p.id === company.providerId);
+          const provider = providers.find(p => p.id === method.providerId);
           const authMethod = provider?.supported_auth_methods?.[0] || 'api_key';
 
-          if (company.connectionId) {
-            // Update existing connection only if credentials were provided
+          if (method.connectionId) {
             if (hasCredentials) {
               const updateBody = {
                 credentials,
-                name: `${company.name} Connection`,
+                name: `${method.name} Connection`,
                 auth_method: authMethod,
                 is_enabled: true,
               };
 
               console.log('Update connection payload:', updateBody);
-              await updateShippingConnection(company.connectionId, updateBody);
+              await updatePaymentConnection(method.connectionId, updateBody);
             } else {
-              // Just ensure it's enabled (no credential changes)
-              await updateShippingConnection(company.connectionId, { is_enabled: true });
+              await updatePaymentConnection(method.connectionId, { is_enabled: true });
             }
           } else {
-            // Create new connection - credentials are required
             if (!hasCredentials) {
               enqueueSnackbar(
-                t('credentials_required_for_new_connection', { name: company.name }),
+                t('credentials_required_for_new_connection', { name: method.name }),
                 { variant: 'warning' }
               );
-              continue; // Skip this provider
+              continue;
             }
 
             const connectionBody = {
-              shipping_provider_id: company.providerId,
-              name: `${company.name} Connection`,
+              payment_provider_id: method.providerId,
+              name: `${method.name} Connection`,
               auth_method: authMethod,
               credentials,
               is_enabled: true,
@@ -300,19 +269,17 @@ export default function DeliveryCompaniesForm() {
             };
 
             console.log('Create connection payload:', connectionBody);
-            await createShippingConnection(connectionBody);
+            await createPaymentConnection(connectionBody);
           }
-        } else if (company.connectionId && !isEnabled) {
-          // Disable existing connection
-          console.log('Disable connection:', company.connectionId);
-          await updateShippingConnection(company.connectionId, { is_enabled: false });
+        } else if (method.connectionId && !isEnabled) {
+          console.log('Disable connection:', method.connectionId);
+          await updatePaymentConnection(method.connectionId, { is_enabled: false });
         }
       }
 
-      // Refresh connections data
       await mutateConnections();
 
-      enqueueSnackbar(t('delivery_companies_saved_successfully'), { variant: 'success' });
+      enqueueSnackbar(t('payment_methods_saved_successfully'), { variant: 'success' });
       setLoading(false);
     } catch (error) {
       setLoading(false);
@@ -324,9 +291,7 @@ export default function DeliveryCompaniesForm() {
   if (providersLoading || connectionsLoading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
-        {/* <CircularProgress /> */}
-        <LoadingScreen sx={{ my: 8 }} color='primary' />
-
+        <CircularProgress />
       </Box>
     );
   }
@@ -336,18 +301,18 @@ export default function DeliveryCompaniesForm() {
     return (
       <Alert severity="error">
         <Typography variant="body2">
-          {t('error_loading_providers')}
+          {t('error_loading_payment_providers')}
         </Typography>
       </Alert>
     );
   }
 
   // Show empty state
-  if (!deliveryCompanies || deliveryCompanies.length === 0) {
+  if (!paymentMethods || paymentMethods.length === 0) {
     return (
       <Alert severity="warning">
         <Typography variant="body2">
-          {t('no_providers_available')}
+          {t('no_payment_providers_available')}
         </Typography>
       </Alert>
     );
@@ -368,19 +333,20 @@ export default function DeliveryCompaniesForm() {
             </LoadingButton>
           </Stack>
         </Grid>
+
         {/* Information Alert */}
         <Grid xs={12}>
           <Alert severity="info">
             <Typography variant="body2">
-              {t('delivery_companies_info_message')}
+              {t('payment_methods_info_message')}
             </Typography>
           </Alert>
         </Grid>
 
-        {/* Delivery Companies Sections */}
+        {/* Payment Methods Sections */}
         <Grid xs={12} display="flex" flexDirection="column" gap={4}>
-          {deliveryCompanies.map((company) => (
-            <Card xs={12} key={company.id} width="100%">
+          {paymentMethods.map((method) => (
+            <Card xs={12} key={method.id} width="100%">
               <Accordion>
                 <AccordionSummary
                   expandIcon={<Iconify icon="eva:arrow-ios-downward-fill" />}
@@ -393,8 +359,8 @@ export default function DeliveryCompaniesForm() {
                 >
                   <Stack direction="row" spacing={2} alignItems="center" sx={{ width: '100%' }}>
                     <Avatar
-                      src={company.image}
-                      alt={company.name}
+                      src={method.image}
+                      alt={method.name}
                       variant="rounded"
                       sx={{
                         width: 48,
@@ -403,22 +369,10 @@ export default function DeliveryCompaniesForm() {
                         border: (theme) => `1px solid ${theme.palette.divider}`,
                       }}
                     />
-                    {/* <Image
-                      src={company.image}
-                      alt={company.name}
-                      variant="rounded"
-                      sx={{
-                        scale:0.1,
-                        // width: 48,
-                        // height: 48,
-                        // bgcolor: 'background.neutral',
-                        // border: (theme) => `1px solid ${theme.palette.divider}`,
-                      }}
-                    /> */}
                     <Box sx={{ flexGrow: 1 }}>
                       <Stack direction="row" spacing={1} alignItems="center">
-                        <Typography variant="h6">{company.name}</Typography>
-                        {company.isDefault && (
+                        <Typography variant="h6">{method.name}</Typography>
+                        {method.isDefault && (
                           <Chip
                             label={t('default')}
                             size="small"
@@ -426,7 +380,7 @@ export default function DeliveryCompaniesForm() {
                             variant="outlined"
                           />
                         )}
-                        {company.isValidated && (
+                        {method.isValidated && (
                           <Chip
                             label={t('validated')}
                             size="small"
@@ -437,16 +391,16 @@ export default function DeliveryCompaniesForm() {
                         )}
                       </Stack>
                       <Typography variant="caption" color="text.secondary">
-                        {company.description}
+                        {method.description}
                       </Typography>
                     </Box>
-                    <RHFSwitch name={`${company.id}_enabled`} label={t('enabled')} sx={{ mr: 2 }} />
+                    <RHFSwitch name={`${method.id}_enabled`} label={t('enabled')} sx={{ mr: 2 }} />
                   </Stack>
                 </AccordionSummary>
                 <AccordionDetails>
                   <Stack spacing={3}>
                     {/* Connection Info */}
-                    {company.isConnected && (
+                    {method.isConnected && (
                       <Alert severity="info" sx={{ mb: 1 }}>
                         <Typography variant="caption">
                           {t('connection_exists_message') || 'Connection already exists. Leave fields empty to keep existing credentials, or enter new values to update.'}
@@ -455,16 +409,16 @@ export default function DeliveryCompaniesForm() {
                     )}
 
                     {/* Dynamic Fields */}
-                    {company.fields.map((field) => (
+                    {method.fields.map((field) => (
                       <RHFTextField
                         key={field.name}
                         name={field.name}
                         label={field.label}
                         type={field.type}
                         placeholder={field.placeholder}
-                        disabled={!values[`${company.id}_enabled`]}
+                        disabled={!values[`${method.id}_enabled`]}
                         helperText={
-                          !values[`${company.id}_enabled`]
+                          !values[`${method.id}_enabled`]
                             ? t('enable_to_configure')
                             : field.description || (field.required
                               ? t('required_field')
@@ -483,25 +437,25 @@ export default function DeliveryCompaniesForm() {
                     ))}
 
                     {/* Action Buttons */}
-                    {values[`${company.id}_enabled`] && (
+                    {values[`${method.id}_enabled`] && (
                       <Stack direction="row" spacing={2}>
                         <LoadingButton
                           variant="outlined"
                           color="info"
                           size="small"
-                          loading={validatingConnection === company.id}
-                          onClick={() => handleValidateConnection(company)}
+                          loading={validatingConnection === method.id}
+                          onClick={() => handleValidateConnection(method)}
                           startIcon={<Iconify icon="eva:shield-checkmark-fill" />}
                         >
                           {t('validate_connection')}
                         </LoadingButton>
 
-                        {!company.isDefault && company.connectionId && (
+                        {!method.isDefault && method.connectionId && (
                           <Button
                             variant="outlined"
                             color="primary"
                             size="small"
-                            onClick={() => handleSetAsDefault(company)}
+                            onClick={() => handleSetAsDefault(method)}
                             startIcon={<Iconify icon="eva:star-fill" />}
                           >
                             {t('set_as_default')}
@@ -517,24 +471,21 @@ export default function DeliveryCompaniesForm() {
         </Grid>
 
         {/* Instructions Card */}
-        {/* <Grid xs={12}>
+        <Grid xs={12}>
           <Card sx={{ p: 3 }}>
             <Typography variant="h6" sx={{ mb: 2 }}>
               {t('integration_instructions')}
             </Typography>
             <Divider sx={{ mb: 2 }} />
             <Stack spacing={2}>
-              {deliveryCompanies.map((company, index) => (
-                <Typography key={company.id} variant="body2">
-                  <strong>{index + 1}. {company.name}:</strong> {t(`${company.id}_integration_instructions`)}
+              {paymentMethods.map((method, index) => (
+                <Typography key={method.id} variant="body2">
+                  <strong>{index + 1}. {method.name}:</strong> {t(`${method.id}_integration_instructions`)}
                 </Typography>
               ))}
             </Stack>
           </Card>
-        </Grid> */}
-
-        {/* Actions */}
-
+        </Grid>
       </Grid>
     </FormProvider>
   );

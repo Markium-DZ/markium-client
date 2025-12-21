@@ -13,7 +13,7 @@ import { fDateTime } from 'src/utils/format-time';
 import Label from 'src/components/label';
 import Iconify from 'src/components/iconify';
 import CustomPopover, { usePopover } from 'src/components/custom-popover';
-import { getOrderStatusColor } from 'src/constants/order-status';
+import { getOrderStatusColor, getOrderStatusOptions } from 'src/constants/order-status';
 import { t } from 'i18next';
 
 // ----------------------------------------------------------------------
@@ -27,6 +27,7 @@ export default function OrderDetailsToolbar({
   onChangeStatus,
 }) {
   const popover = usePopover();
+  const statuses = getOrderStatusOptions(t);
 
   return (
     <>
@@ -92,7 +93,7 @@ export default function OrderDetailsToolbar({
         arrow="top-right"
         sx={{ minWidth: 140 }}
       >
-        {statusOptions.map((option) => (
+        {statuses.map((option) => (
           <MenuItem
             key={option.value}
             selected={option.value === status}
@@ -100,8 +101,15 @@ export default function OrderDetailsToolbar({
               popover.onClose();
               onChangeStatus(option.value);
             }}
+            sx={{
+              color: `${option.color}.main`,
+              '&:hover': {
+                backgroundColor: `${option.color}.lighter`,
+              }
+            }}
           >
-           {t('change_to')} {option.label}
+            <Iconify icon={option.icon} sx={{ mr: 1 }} />
+            {t('change_to')} {option.label}
           </MenuItem>
         ))}
       </CustomPopover>
