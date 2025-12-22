@@ -21,6 +21,7 @@ import { useSnackbar } from 'src/components/snackbar';
 import Iconify from 'src/components/iconify';
 import { Upload } from 'src/components/upload';
 import { fData } from 'src/utils/format-number';
+import { STORAGE_API } from 'src/config-global';
 
 // ----------------------------------------------------------------------
 
@@ -219,7 +220,7 @@ function MediaCard({ item, selected, onToggle }) {
       >
         <Box
           component="img"
-          src={item.full_url}
+          src={STORAGE_API+item.url}
           alt={item.alt_text || 'Media'}
           loading="lazy"
           sx={{

@@ -1454,6 +1454,7 @@
     "store_slug_max_length": "Store subdomain must be at most 30 characters",
     "store_slug_invalid_format": "Only lowercase letters, numbers, and hyphens are allowed",
     "store_slug_no_hyphen_edges": "Subdomain cannot start or end with a hyphen",
+    "store_slug_reserved": "This subdomain is reserved and cannot be used. Please choose a different one.",
     "your_store_url": "Your store URL",
     "store_email": "Store Email",
     "store_phone": "Store Phone",

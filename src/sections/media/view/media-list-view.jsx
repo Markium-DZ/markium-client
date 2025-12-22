@@ -24,6 +24,7 @@ import { fData } from 'src/utils/format-number';
 import CustomPopover, { usePopover } from 'src/components/custom-popover';
 import { ConfirmDialog } from 'src/components/custom-dialog';
 import showError from 'src/utils/show_error';
+import { STORAGE_API } from 'src/config-global';
 
 // ----------------------------------------------------------------------
 
@@ -247,7 +248,7 @@ function MediaItem({ item, onDelete }) {
       >
         <Box
           component="img"
-          src={item.full_url}
+          src={STORAGE_API+item.url}
           alt={item.alt_text || 'Media'}
           loading="lazy"
           sx={{

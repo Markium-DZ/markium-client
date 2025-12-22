@@ -1396,6 +1396,7 @@
     "store_slug_max_length": "Le sous-domaine doit contenir au maximum 30 caractères",
     "store_slug_invalid_format": "Seules les lettres minuscules, les chiffres et les tirets sont autorisés",
     "store_slug_no_hyphen_edges": "Le sous-domaine ne peut pas commencer ou se terminer par un tiret",
+    "store_slug_reserved": "Ce sous-domaine est réservé et ne peut pas être utilisé. Veuillez en choisir un autre.",
     "your_store_url": "URL de votre boutique",
     "store_email": "E-mail de la boutique",
     "store_phone": "Téléphone de la boutique",

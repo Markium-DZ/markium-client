@@ -79,6 +79,42 @@ export default function JwtRegisterView() {
     return phone;
   };
 
+  // Reserved subdomains that cannot be used
+  const RESERVED_SUBDOMAINS = [
+    'be',
+    'be-test',
+    'staging',
+    'admin',
+    'api',
+    'www',
+    'mail',
+    'ftp',
+    'smtp',
+    'pop',
+    'imap',
+    'webmail',
+    'dashboard',
+    'app',
+    'test',
+    'dev',
+    'development',
+    'production',
+    'prod',
+    'demo',
+    'beta',
+    'alpha',
+    'support',
+    'help',
+    'docs',
+    'status',
+    'blog',
+    'cdn',
+    'static',
+    'assets',
+    'media',
+    'uploads',
+  ];
+
   const RegisterSchema = Yup.object().shape({
     name: Yup.string().required(t('name_required')),
     phone: Yup.string()
@@ -101,6 +137,10 @@ export default function JwtRegisterView() {
       .test('no-start-end-hyphen', t('store_slug_no_hyphen_edges'), (value) => {
         if (!value) return false;
         return !value.startsWith('-') && !value.endsWith('-');
+      })
+      .test('not-reserved', t('store_slug_reserved'), (value) => {
+        if (!value) return false;
+        return !RESERVED_SUBDOMAINS.includes(value.toLowerCase());
       }),
   });
 

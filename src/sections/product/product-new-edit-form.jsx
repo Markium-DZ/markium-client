@@ -389,14 +389,14 @@ export default function ProductNewEditForm({ currentProduct }) {
       console.info('Submitting product data:', payload);
 
       // Step 3: Submit product to API as JSON
-      // if (currentProduct?.id) {
-      //   await updateProduct(currentProduct.id, payload);
-      // } else {
-      //   await createProduct(payload);
-      // }
+      if (currentProduct?.id) {
+        await updateProduct(currentProduct.id, payload);
+      } else {
+        await createProduct(payload);
+      }
 
       enqueueSnackbar(currentProduct ? t('update_success') : t('create_success'));
-      // router.push(paths.dashboard.product.root);
+      router.push(paths.dashboard.product.root);
     } catch (error) {
       console.log('Caught error:', error);
       showError(error);
