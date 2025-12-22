@@ -229,6 +229,9 @@ export default function JwtRegisterView() {
         name="phone"
         label={t('phone')}
         placeholder="555123456"
+        inputProps={{
+          dir: 'ltr',
+        }}
         InputProps={{
           startAdornment: (
             <InputAdornment position="start">
@@ -301,6 +304,9 @@ export default function JwtRegisterView() {
         name="password"
         label={t('password')}
         type={password.value ? 'text' : 'password'}
+        inputProps={{
+          dir: 'ltr',
+        }}
         InputProps={{
           endAdornment: (
             <InputAdornment position="end">
@@ -316,6 +322,9 @@ export default function JwtRegisterView() {
         name="password_confirmation"
         label={t('confirm_password')}
         type={confirmPassword.value ? 'text' : 'password'}
+        inputProps={{
+          dir: 'ltr',
+        }}
         InputProps={{
           endAdornment: (
             <InputAdornment position="end">

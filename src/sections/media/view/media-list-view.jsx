@@ -175,12 +175,12 @@ export default function MediaListView() {
 
         {Object.entries(groupedMedia).map(([date, items]) => (
           <Box key={date} sx={{ mb: 4 }}>
-            
+
             <Divider orientation="horizontal" sx={{ mt: 4, display: 'flex' }} />
-              <Typography variant="subtitle1" color={"text.secondary"} sx={{ mb: 2, mt: 2, display: "flex", alignItems: "center", fontWeight: 600 }} >
-                <Iconify icon="solar:calendar-bold" width="20px" height="20px" sx={{ mr: 1, color: 'primary.main' }} />
-                {date}
-              </Typography>
+            <Typography variant="subtitle1" color={"text.secondary"} sx={{ mb: 2, mt: 2, display: "flex", alignItems: "center", fontWeight: 600 }} >
+              <Iconify icon="solar:calendar-bold" width="20px" height="20px" sx={{ mr: 1, color: 'primary.main' }} />
+              {date}
+            </Typography>
 
             <Grid container spacing={2}>
               {items.map((item) => (
@@ -208,7 +208,6 @@ function MediaItem({ item, onDelete }) {
   const { t } = useTranslate();
   const popover = usePopover();
   const [confirmDelete, setConfirmDelete] = useState(false);
-
   const handleDeleteClick = useCallback(() => {
     popover.onClose();
     setConfirmDelete(true);
@@ -226,129 +225,129 @@ function MediaItem({ item, onDelete }) {
   return (
     <>
       <Card
-      sx={{
-        position: 'relative',
-        cursor: 'pointer',
-        transition: 'all 0.2s',
-        '&:hover': {
-          boxShadow: (theme) => theme.customShadows.z8,
-          '& .media-overlay': {
-            opacity: 1,
-          },
-        },
-      }}
-    >
-      <Box
         sx={{
           position: 'relative',
-          width: '100%',
-          paddingTop: '100%', // 1:1 aspect ratio
-          overflow: 'hidden',
+          cursor: 'pointer',
+          transition: 'all 0.2s',
+          '&:hover': {
+            boxShadow: (theme) => theme.customShadows.z8,
+            '& .media-overlay': {
+              opacity: 1,
+            },
+          },
         }}
       >
         <Box
-          component="img"
-          src={STORAGE_API+item.url}
-          alt={item.alt_text || 'Media'}
-          loading="lazy"
           sx={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
+            position: 'relative',
             width: '100%',
-            height: '100%',
-            objectFit: 'cover',
-          }}
-        />
-
-        <Box
-          className="media-overlay"
-          sx={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: (theme) =>
-              `linear-gradient(to bottom, ${alpha(theme.palette.common.black, 0.0)} 0%, ${alpha(theme.palette.common.black, 0.8)} 100%)`,
-            opacity: 0,
-            transition: 'opacity 0.2s',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-            p: 1.5,
+            paddingTop: '100%', // 1:1 aspect ratio
+            overflow: 'hidden',
           }}
         >
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <IconButton
-              size="small"
-              onClick={popover.onOpen}
-              sx={{
-                color: 'white',
-                bgcolor: (theme) => alpha(theme.palette.common.black, 0.4),
-                '&:hover': {
-                  bgcolor: (theme) => alpha(theme.palette.common.black, 0.6),
-                },
-              }}
-            >
-              <Iconify icon="eva:more-vertical-fill" width={18} />
-            </IconButton>
-          </Box>
+          <Box
+            component="img"
+            src={item.full_url}
+            alt={item.alt_text || 'Media'}
+            loading="lazy"
+            sx={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+            }}
+          />
 
-          <Stack spacing={0.5}>
-            {item.alt_text && (
-              <Typography
-                variant="caption"
+          <Box
+            className="media-overlay"
+            sx={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: (theme) =>
+                `linear-gradient(to bottom, ${alpha(theme.palette.common.black, 0.0)} 0%, ${alpha(theme.palette.common.black, 0.8)} 100%)`,
+              opacity: 0,
+              transition: 'opacity 0.2s',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              p: 1.5,
+            }}
+          >
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <IconButton
+                size="small"
+                onClick={popover.onOpen}
                 sx={{
                   color: 'white',
-                  fontWeight: 600,
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
+                  bgcolor: (theme) => alpha(theme.palette.common.black, 0.4),
+                  '&:hover': {
+                    bgcolor: (theme) => alpha(theme.palette.common.black, 0.6),
+                  },
                 }}
               >
-                {item.alt_text}
-              </Typography>
-            )}
+                <Iconify icon="eva:more-vertical-fill" width={18} />
+              </IconButton>
+            </Box>
 
-            <Stack direction="row" spacing={1} sx={{ typography: 'caption', color: 'grey.400', fontSize: '0.7rem' }}>
-              <Box>
-                {item.width} × {item.height}
-              </Box>
-              <Box>{fData(item.file_size)}</Box>
+            <Stack spacing={0.5}>
+              {item.alt_text && (
+                <Typography
+                  variant="caption"
+                  sx={{
+                    color: 'white',
+                    fontWeight: 600,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {item.alt_text}
+                </Typography>
+              )}
+
+              <Stack direction="row" spacing={1} sx={{ typography: 'caption', color: 'grey.400', fontSize: '0.7rem' }}>
+                <Box>
+                  {item.width} × {item.height}
+                </Box>
+                <Box>{fData(item.file_size)}</Box>
+              </Stack>
             </Stack>
-          </Stack>
+          </Box>
         </Box>
-      </Box>
-    </Card>
+      </Card>
 
-    <CustomPopover
-      open={popover.open}
-      onClose={popover.onClose}
-      arrow="right-top"
-      sx={{ width: 140 }}
-    >
-      <MenuItem
-        onClick={handleDeleteClick}
-        sx={{ color: 'error.main' }}
+      <CustomPopover
+        open={popover.open}
+        onClose={popover.onClose}
+        arrow="right-top"
+        sx={{ width: 140 }}
       >
-        <Iconify icon="solar:trash-bin-trash-bold" />
-        {t('delete')}
-      </MenuItem>
-    </CustomPopover>
-
-    <ConfirmDialog
-      open={confirmDelete}
-      onClose={handleCancelDelete}
-      title={t('delete_media')}
-      content={t('are_you_sure_delete_media')}
-      action={
-        <Button variant="contained" color="error" onClick={handleConfirmDelete}>
+        <MenuItem
+          onClick={handleDeleteClick}
+          sx={{ color: 'error.main' }}
+        >
+          <Iconify icon="solar:trash-bin-trash-bold" />
           {t('delete')}
-        </Button>
-      }
-    />
-  </>
+        </MenuItem>
+      </CustomPopover>
+
+      <ConfirmDialog
+        open={confirmDelete}
+        onClose={handleCancelDelete}
+        title={t('delete_media')}
+        content={t('are_you_sure_delete_media')}
+        action={
+          <Button variant="contained" color="error" onClick={handleConfirmDelete}>
+            {t('delete')}
+          </Button>
+        }
+      />
+    </>
   );
 }
 

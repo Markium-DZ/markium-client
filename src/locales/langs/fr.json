@@ -176,6 +176,7 @@
     "in_stock": "En stock",
     "low_stock": "Stock faible",
     "out_of_stock": "Rupture de stock",
+    "inventory": "Inventaire",
     "back": "Retour",
     "go_live": "Publier",
     "loading": "Chargement en cours...",
