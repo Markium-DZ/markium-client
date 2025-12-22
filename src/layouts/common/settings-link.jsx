@@ -9,26 +9,29 @@ import Iconify from 'src/components/iconify';
 import { varHover } from 'src/components/animate';
 import { useSettingsContext } from 'src/components/settings';
 import { useTranslate } from 'src/locales';
+import { useRouter } from 'src/routes/hooks';
+import { paths } from 'src/routes/paths';
 
 // ----------------------------------------------------------------------
 
-export default function SettingsButton({ sx }) {
+export default function SettingsLink({ sx }) {
   const settings = useSettingsContext();
-  const {t} = useTranslate();
+  const router = useRouter()
+  const { t } = useTranslate();
 
   return (
-    <Badge
-      color="error"
-      variant="dot"
-      invisible={!settings.canReset}
-      sx={{
-        [`& .${badgeClasses.badge}`]: {
-          top: 8,
-          right: 8,
-        },
-        ...sx,
-      }}
-    >
+    // <Badge
+    //   color="error"
+    //   variant="dot"
+    //   invisible={!settings.canReset}
+    //   sx={{
+    //     [`& .${badgeClasses.badge}`]: {
+    //       top: 8,
+    //       right: 8,
+    //     },
+    //     ...sx,
+    //   }}
+    // >
       <Box
         component={m.div}
         // animate={{
@@ -46,20 +49,20 @@ export default function SettingsButton({ sx }) {
           whileHover="hover"
           variants={varHover(1.05)}
           aria-label={t("settings")}
-          onClick={settings.onToggle}
+          onClick={()=>{router.push(paths?.dashboard.settings.root)}}
           sx={{
             width: 40,
             height: 40,
           }}
         >
-          {/* <Iconify icon="solar:settings-bold-duotone" width={24} /> */}
-          <Iconify icon="solar:archive-down-minimlistic-bold-duotone" width={24} />
+          <Iconify icon="solar:settings-bold-duotone" width={24} />
+          {/* <Iconify icon="solar:archive-down-minimlistic-bold-duotone" width={24} /> */}
         </IconButton>
       </Box>
-    </Badge>
+    // {/* </Badge> */}
   );
 }
 
-SettingsButton.propTypes = {
+SettingsLink.propTypes = {
   sx: PropTypes.object,
 };

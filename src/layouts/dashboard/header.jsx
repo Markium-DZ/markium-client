@@ -5,6 +5,7 @@ import AppBar from '@mui/material/AppBar';
 import Toolbar from '@mui/material/Toolbar';
 import { useTheme } from '@mui/material/styles';
 import IconButton from '@mui/material/IconButton';
+import { paths } from 'src/routes/paths';
 
 import { useOffSetTop } from 'src/hooks/use-off-set-top';
 import { useResponsive } from 'src/hooks/use-responsive';
@@ -28,6 +29,8 @@ import { useState } from 'react';
 
 import Iconify from 'src/components/iconify';
 import { Icon } from '@iconify/react';
+import { Link } from '@mui/material';
+import SettingsLink from '../common/settings-link';
 
 // ----------------------------------------------------------------------
 
@@ -74,16 +77,16 @@ export default function Header({ onOpenNav }) {
         spacing={{ xs: 0.5, sm: 1 }}
       >
 
-       
-        <div style={{display:"flex",alignItems:"center"}}>
+
+        <div style={{ display: "flex", alignItems: "center" }}>
           {darkMode == "dark" ?
-            <m.button  initial={{ opacity: 0 }}  animate={{ opacity: 1 }} transition={{duration: 0.2}} onClick={Toggle} style={{background:"none",border:"none"}}>
-              <Icon icon="duo-icons:moon-stars" width={24} height={24} style={{color: "#fffefe"}} />
+            <m.button initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }} onClick={Toggle} style={{ background: "none", border: "none" }}>
+              <Icon icon="duo-icons:moon-stars" width={24} height={24} style={{ color: "#fffefe" }} />
             </m.button>
             :
             null}
           {darkMode == "light" ?
-            <m.button initial={{ opacity: 0 }}  animate={{ opacity: 1 }} transition={{duration: 0.2}} onClick={Toggle} style={{background:"none",border:"none"}}>
+            <m.button initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }} onClick={Toggle} style={{ background: "none", border: "none" }}>
               <Icon icon="duo-icons:sun" width={24} height={24} />
             </m.button>
             :
@@ -105,7 +108,11 @@ export default function Header({ onOpenNav }) {
 
         {/* <ContactsPopover /> */}
 
-        <SettingsButton />
+        {/* <SettingsButton /> */}
+        {/* <Link  href={paths?.dashboard.settings.root} >
+          <Iconify icon="solar:settings-bold-duotone" width={24} />
+        </Link> */}
+        <SettingsLink />
         <SettingsButton />
 
 

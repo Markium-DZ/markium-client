@@ -287,6 +287,8 @@
     "phone": "Numéro de téléphone",
     "phone_is_required": "Le numéro de téléphone est requis",
     "phone_is_invalid": "Veuillez entrer un numéro de téléphone valide",
+    "phone_helper": "Entrez votre numéro de téléphone algérien (05XX, 06XX ou 07XX). Le préfixe +213 sera ajouté automatiquement.",
+    "will_be_saved_as": "Sera enregistré comme",
     "please_check_your_phone_and_password": "Veuillez vérifier votre numéro de téléphone et votre mot de passe",
     "store_name": "Nom de la boutique",
     "store_name_required": "Le nom de la boutique est obligatoire",

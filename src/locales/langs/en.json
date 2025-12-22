@@ -299,6 +299,8 @@
     "phone": "Phone Number",
     "phone_is_required": "Phone number is required",
     "phone_is_invalid": "Please enter a valid phone number",
+    "phone_helper": "Enter your Algerian phone number (05XX, 06XX, or 07XX). The +213 prefix will be added automatically.",
+    "will_be_saved_as": "Will be saved as",
     "please_check_your_phone_and_password": "Please check your phone number and password",
     "store_name": "Store Name",
     "store_name_required": "Store name is required",
