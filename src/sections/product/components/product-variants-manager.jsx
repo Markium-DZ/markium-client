@@ -80,7 +80,7 @@ export default function ProductVariantsManager({ options, variants, onChange, im
         compare_at_price: 0,
         quantity: 0,
         option_values: [],
-        media_id: null,
+        media_ids: [],
         is_default: true,
       }];
     }
@@ -102,7 +102,7 @@ export default function ProductVariantsManager({ options, variants, onChange, im
         compare_at_price: 0,
         quantity: 0,
         option_values: optionValues,
-        media_id: null,
+        media_ids: [],
         is_default: index === 0,
       };
     });
@@ -118,7 +118,7 @@ export default function ProductVariantsManager({ options, variants, onChange, im
   const handleUpdateVariant = useCallback((variantId, field, value) => {
     const updatedVariants = syncedVariants.map((variant) => {
       if (variant.id === variantId) {
-        // Handle media_data special case - spread both fields at once
+        // Handle media_data special case - for multiple media
         if (field === 'media_data') {
           return { ...variant, ...value };
         }
@@ -359,24 +359,35 @@ function VariantRow({ variant, index, expanded, onToggleExpand, onUpdate, images
     ? variant.option_values.join(' / ')
     : t('default_variant');
 
-  // Show variant's own uploaded image first, then selected_media from gallery, then fall back to images array
-  const selectedImage = variant.image_file || variant.selected_media || images?.find((img) => img.id === variant.media_id || img.preview);
+  // Get selected media array from variant
+  const selectedImages = variant.selected_media || [];
 
   const handleMediaSelect = useCallback((selectedMedia) => {
     // Handle both array and single object
-    let media;
-    if (Array.isArray(selectedMedia)) {
-      media = selectedMedia[0];
-    } else {
-      media = selectedMedia;
-    }
+    const mediaArray = Array.isArray(selectedMedia) ? selectedMedia : [selectedMedia];
 
-    if (media) {
-      // Update variant with both media_id and the media object
-      onUpdate(variant.id, 'media_data', { media_id: media.id, selected_media: media });
+    if (mediaArray.length > 0) {
+      // Extract media IDs
+      const mediaIds = mediaArray.map(m => m.id);
+
+      // Update variant with both media_ids array and selected_media array
+      onUpdate(variant.id, 'media_data', {
+        media_ids: mediaIds,
+        selected_media: mediaArray
+      });
     }
     setMediaPickerOpen(false);
   }, [variant.id, onUpdate]);
+
+  const handleRemoveMedia = useCallback((mediaId) => {
+    const updatedMediaIds = variant.media_ids?.filter(id => id !== mediaId) || [];
+    const updatedSelectedMedia = variant.selected_media?.filter(m => m.id !== mediaId) || [];
+
+    onUpdate(variant.id, 'media_data', {
+      media_ids: updatedMediaIds,
+      selected_media: updatedSelectedMedia
+    });
+  }, [variant.id, variant.media_ids, variant.selected_media, onUpdate]);
 
   return (
     <>
@@ -438,17 +449,36 @@ function VariantRow({ variant, index, expanded, onToggleExpand, onUpdate, images
 
         {/* Image */}
         <TableCell align="center">
-          {selectedImage ? (
-            <Image
-              src={selectedImage.preview || selectedImage.full_url || selectedImage.url}
-              alt={variantLabel}
-              sx={{
-                width: 40,
-                height: 40,
-                borderRadius: 1,
-                objectFit: 'cover',
-              }}
-            />
+          {selectedImages.length > 0 ? (
+            <Box sx={{ position: 'relative', display: 'inline-block' }}>
+              <Image
+                src={selectedImages[0].preview || selectedImages[0].full_url || selectedImages[0].url}
+                alt={variantLabel}
+                sx={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 1,
+                  objectFit: 'cover',
+                }}
+              />
+              {selectedImages.length > 1 && (
+                <Chip
+                  label={`+${selectedImages.length - 1}`}
+                  size="small"
+                  sx={{
+                    position: 'absolute',
+                    bottom: -4,
+                    right: -4,
+                    height: 18,
+                    minWidth: 18,
+                    fontSize: '0.65rem',
+                    bgcolor: 'primary.main',
+                    color: 'white',
+                    '& .MuiChip-label': { px: 0.5 },
+                  }}
+                />
+              )}
+            </Box>
           ) : (
             <Box
               sx={{
@@ -532,7 +562,7 @@ function VariantRow({ variant, index, expanded, onToggleExpand, onUpdate, images
                 {/* Image Upload & Selection */}
                 <Box>
                   <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
-                    {t('variant_image')}
+                    {t('variant_images')} ({selectedImages.length})
                   </Typography>
 
                   <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
@@ -559,9 +589,10 @@ function VariantRow({ variant, index, expanded, onToggleExpand, onUpdate, images
                       <Iconify icon="eva:plus-fill" width={24} color="text.disabled" />
                     </Box>
 
-                    {/* Show selected media if any */}
-                    {variant.media_id && variant.selected_media && (
+                    {/* Show all selected media */}
+                    {selectedImages.map((media) => (
                       <Box
+                        key={media.id}
                         sx={{
                           position: 'relative',
                           border: (theme) => `2px solid ${theme.palette.primary.main}`,
@@ -570,36 +601,17 @@ function VariantRow({ variant, index, expanded, onToggleExpand, onUpdate, images
                         }}
                       >
                         <Image
-                          src={variant.selected_media.full_url}
-                          alt={variant.selected_media.alt_text || 'Selected media'}
+                          src={media.full_url || media.url}
+                          alt={media.alt_text || 'Selected media'}
                           sx={{ width: 60, height: 60, objectFit: 'cover' }}
                         />
-                        <Box
-                          sx={{
-                            position: 'absolute',
-                            top: 4,
-                            right: 4,
-                            bgcolor: 'primary.main',
-                            borderRadius: '50%',
-                            width: 20,
-                            height: 20,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                          }}
-                        >
-                          <Iconify icon="eva:checkmark-fill" width={14} color="white" />
-                        </Box>
                         <IconButton
                           size="small"
-                          onClick={() => {
-                            onUpdate(variant.id, 'media_id', null);
-                            onUpdate(variant.id, 'selected_media', null);
-                          }}
+                          onClick={() => handleRemoveMedia(media.id)}
                           sx={{
                             position: 'absolute',
                             top: 2,
-                            left: 2,
+                            right: 2,
                             bgcolor: 'rgba(0,0,0,0.6)',
                             color: 'white',
                             width: 20,
@@ -612,7 +624,7 @@ function VariantRow({ variant, index, expanded, onToggleExpand, onUpdate, images
                           <Iconify icon="eva:close-fill" width={14} />
                         </IconButton>
                       </Box>
-                    )}
+                    ))}
                   </Box>
                 </Box>
               </Stack>
@@ -625,8 +637,8 @@ function VariantRow({ variant, index, expanded, onToggleExpand, onUpdate, images
         open={mediaPickerOpen}
         onClose={() => setMediaPickerOpen(false)}
         onSelect={handleMediaSelect}
-        multiple={false}
-        title={t('select_variant_image')}
+        multiple={true}
+        title={t('select_variant_images')}
       />
     </>
   );

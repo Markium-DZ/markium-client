@@ -69,7 +69,7 @@ export default function ProductNewEditForm({ currentProduct }) {
       quantity: 0,
       sku: '',
       option_values: [],
-      media_id: null,
+      media_ids: [],
       is_default: true,
     },
   ]);
@@ -89,8 +89,8 @@ export default function ProductNewEditForm({ currentProduct }) {
           // because variants are stored in state, not in form data
         }
       : {
-          // Simple mode validation - require exactly 1 image
-          images: Yup.array().min(1, t('image_is_required')).max(1, t('only_one_image_allowed')),
+          // Simple mode validation - require at least 1 image
+          images: Yup.array().min(1, t('image_is_required')),
           sale_price: Yup.number().moreThan(0, t('sale_price_required')),
           real_price: Yup.number(),
           quantity: Yup.number(),
@@ -106,9 +106,20 @@ export default function ProductNewEditForm({ currentProduct }) {
     // Extract default variant for simple mode values
     const defaultVariant = currentProduct?.variants?.find(v => v.is_default) || currentProduct?.variants?.[0];
 
-    // For basic mode, use variant's media as the image
+    // For basic mode, use variant's media array as images
     let images = [];
-    if (defaultVariant?.media && typeof defaultVariant.media === 'object') {
+    if (defaultVariant?.media && Array.isArray(defaultVariant.media)) {
+      images = defaultVariant.media.map(mediaItem => ({
+        id: mediaItem.id,
+        preview: mediaItem.full_url || mediaItem.url,
+        name: mediaItem.alt_text || `media-${mediaItem.id}`,
+        size: mediaItem.file_size,
+        full_url: mediaItem.full_url || mediaItem.url,
+        media_id: mediaItem.id,
+        isExisting: true,
+      }));
+    } else if (defaultVariant?.media && typeof defaultVariant.media === 'object') {
+      // Fallback for single media object (backwards compatibility)
       images = [{
         id: defaultVariant.media.id,
         preview: defaultVariant.media.full_url || defaultVariant.media.url,
@@ -176,7 +187,11 @@ export default function ProductNewEditForm({ currentProduct }) {
           sku: v.sku || '',
           // Extract option values from backend format: [{definition: "Size", value: "M"}] -> ["M"]
           option_values: v.option_values?.map(ov => ov.value) || v.options || [],
-          media_id: v.media?.id || null,
+          // Support both media array and single media object
+          media_ids: Array.isArray(v.media)
+            ? v.media.map(m => m.id)
+            : (v.media?.id ? [v.media.id] : []),
+          selected_media: Array.isArray(v.media) ? v.media : (v.media ? [v.media] : []),
           is_default: v.is_default || false,
         }));
         setVariants(mappedVariants);
@@ -207,6 +222,10 @@ export default function ProductNewEditForm({ currentProduct }) {
       setAdvancedMode(false);
     } else if (confirmDialog.type === 'toAdvanced') {
       // Convert simple pricing to first variant
+      const mediaIds = values.images
+        ?.map(img => img.media_id || img.id)
+        .filter(Boolean) || [];
+
       const simpleVariant = {
         id: Date.now(),
         price: values.sale_price || 0,
@@ -214,7 +233,7 @@ export default function ProductNewEditForm({ currentProduct }) {
         quantity: values.quantity || 0,
         sku: '',
         option_values: [],
-        media_id: values.images?.[0]?.media_id || values.images?.[0]?.id || null,
+        media_ids: mediaIds,
         is_default: true,
       };
       setVariants([simpleVariant]);
@@ -306,10 +325,13 @@ export default function ProductNewEditForm({ currentProduct }) {
             imagesToUpload.forEach((item, index) => {
               const mediaId = uploadedMedia[index]?.id;
               if (mediaId && item.variantId) {
-                // Find variant and update its media_id
+                // Find variant and add media_id to its media_ids array
                 const variantIndex = variants.findIndex((v) => v.id === item.variantId);
                 if (variantIndex !== -1) {
-                  variants[variantIndex].media_id = mediaId;
+                  if (!variants[variantIndex].media_ids) {
+                    variants[variantIndex].media_ids = [];
+                  }
+                  variants[variantIndex].media_ids.push(mediaId);
                 }
               }
             });
@@ -346,7 +368,7 @@ export default function ProductNewEditForm({ currentProduct }) {
             quantity: parseInt(variant.quantity, 10) || 0,
             sku: variant.sku || '',
             option_values: variant.option_values || [],
-            media_id: variant.media_id || null,
+            media_ids: variant.media_ids || [],
             is_default: variant.is_default || false,
             position: index, // Auto-assign position based on array index
             is_active: true, // Default to active
@@ -361,10 +383,13 @@ export default function ProductNewEditForm({ currentProduct }) {
         });
       } else {
         // Simple mode: create single variant from simple fields
-        // Get media_id from either: existing media selection, newly uploaded media, or null
-        const mediaId = data.images?.[0]?.media_id || // From existing media (isExisting: true)
-                        uploadedMedia[0]?.id ||        // From newly uploaded files
-                        null;
+        // Get media_ids from either: existing media selection, newly uploaded media, or empty array
+        const existingMediaIds = data.images
+          ?.filter(img => img.isExisting && img.media_id)
+          .map(img => img.media_id) || [];
+
+        const uploadedMediaIds = uploadedMedia.map(media => media.id) || [];
+        const mediaIds = [...existingMediaIds, ...uploadedMediaIds];
 
         const simpleVariant = {
           price: parseFloat(data.sale_price) || 0,
@@ -372,7 +397,7 @@ export default function ProductNewEditForm({ currentProduct }) {
           quantity: parseInt(data.quantity, 10) || 0,
           sku: '',
           option_values: [],
-          media_id: mediaId,
+          media_ids: mediaIds,
           is_default: true,
           position: 0, // First variant
           is_active: true, // Default to active
@@ -446,13 +471,13 @@ export default function ProductNewEditForm({ currentProduct }) {
 
   const handleMediaSelect = useCallback(
     async (selectedMedia) => {
-      // In basic mode, only allow one media selection
-      const media = Array.isArray(selectedMedia) ? selectedMedia[0] : selectedMedia;
+      // Handle both single media and array of media
+      const mediaArray = Array.isArray(selectedMedia) ? selectedMedia : [selectedMedia];
 
-      if (!media) return;
+      if (mediaArray.length === 0) return;
 
-      // Create a pseudo-File object with the media data
-      const mediaFile = {
+      // Convert all selected media to pseudo-File objects
+      const mediaFiles = mediaArray.map(media => ({
         id: media.id,
         preview: media.full_url,
         name: media.alt_text || `media-${media.id}`,
@@ -462,9 +487,13 @@ export default function ProductNewEditForm({ currentProduct }) {
         media_id: media.id,
         // Mark as existing media (not a new upload)
         isExisting: true,
-      };
+      }));
 
-      setValue('images', [mediaFile], { shouldValidate: true });
+      // Get existing images
+      const existingImages = values.images || [];
+
+      // Append new media to existing images
+      setValue('images', [...existingImages, ...mediaFiles], { shouldValidate: true });
       setMediaPickerOpen(false);
     },
     [setValue]
@@ -537,47 +566,17 @@ export default function ProductNewEditForm({ currentProduct }) {
             {/* Only show main image upload in Simple Mode */}
             {!advancedMode && (
               <Stack spacing={1.5}>
-                <Typography variant="subtitle2">{t('variant_image')}</Typography>
-
-                {/* Show selected media or picker button */}
-                {values.images && values.images.length > 0 ? (
-                  <Card sx={{ p: 2, position: 'relative' }}>
-                    <Stack direction="row" spacing={2} alignItems="center">
-                      <Box
-                        component="img"
-                        src={values.images[0].preview || values.images[0].full_url}
-                        alt={values.images[0].name || 'Product Image'}
-                        sx={{
-                          width: 80,
-                          height: 80,
-                          borderRadius: 1,
-                          objectFit: 'cover',
-                        }}
-                      />
-                      <Box sx={{ flexGrow: 1 }}>
-                        <Typography variant="body2">{t('media_selected')}</Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {values.images[0].name}
-                        </Typography>
-                      </Box>
-                      <IconButton
-                        onClick={() => handleRemoveFile(values.images[0])}
-                        size="small"
-                      >
-                        <Iconify icon="eva:close-fill" />
-                      </IconButton>
-                    </Stack>
-                  </Card>
-                ) : (
-                  <Button
-                    fullWidth
-                    variant="outlined"
-                    startIcon={<Iconify icon="eva:image-outline" />}
-                    onClick={() => setMediaPickerOpen(true)}
-                  >
-                    {t('select_image')}
-                  </Button>
-                )}
+                <Typography variant="subtitle2">{t('images')}</Typography>
+                <RHFUpload
+                  multiple
+                  thumbnail
+                  name="images"
+                  maxSize={3145728}
+                  onDrop={handleDrop}
+                  onRemove={handleRemoveFile}
+                  onRemoveAll={handleRemoveAllFiles}
+                  onUpload={() => console.log('ON UPLOAD')}
+                />
               </Stack>
             )}
 
@@ -836,8 +835,8 @@ export default function ProductNewEditForm({ currentProduct }) {
         open={mediaPickerOpen}
         onClose={() => setMediaPickerOpen(false)}
         onSelect={handleMediaSelect}
-        multiple={false}
-        title={t('select_product_image')}
+        multiple={true}
+        title={t('select_product_images')}
       />
     </div>
   );

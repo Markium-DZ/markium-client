@@ -142,32 +142,40 @@ export default function InventoryDetailsView() {
                   overflow: 'hidden',
                 }}
               >
-                {inventoryItem.variant?.media?.full_url ? (
-                  <Box
-                    component="img"
-                    src={inventoryItem.variant.media.full_url}
-                    alt={inventoryItem.product?.name}
-                    sx={{
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover',
-                    }}
-                  />
-                ) : (
-                  <Box
-                    sx={{
-                      position: 'absolute',
-                      top: '50%',
-                      left: '50%',
-                      transform: 'translate(-50%, -50%)',
-                    }}
-                  >
-                    <Iconify icon="solar:box-bold" width={64} sx={{ color: 'text.disabled' }} />
-                  </Box>
-                )}
+                {(() => {
+                  // Handle media as array or single object
+                  const mediaArray = Array.isArray(inventoryItem.variant?.media)
+                    ? inventoryItem.variant.media
+                    : (inventoryItem.variant?.media ? [inventoryItem.variant.media] : []);
+                  const mediaUrl = mediaArray.length > 0 ? mediaArray[0]?.full_url : null;
+
+                  return mediaUrl ? (
+                    <Box
+                      component="img"
+                      src={mediaUrl}
+                      alt={inventoryItem.product?.name}
+                      sx={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                      }}
+                    />
+                  ) : (
+                    <Box
+                      sx={{
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                      }}
+                    >
+                      <Iconify icon="solar:box-bold" width={64} sx={{ color: 'text.disabled' }} />
+                    </Box>
+                  );
+                })()}
               </Box>
 
               {/* Product Name */}

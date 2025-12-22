@@ -23,7 +23,6 @@ import { useSettingsContext } from 'src/components/settings';
 import { useTranslate } from 'src/locales';
 
 import { ProductDetailsSkeleton } from '../product-skeleton';
-import ProductDetailsReview from '../product-details-review';
 import ProductDetailsSummary from '../product-details-summary';
 import ProductDetailsToolbar from '../product-details-toolbar';
 import ProductDetailsCarousel from '../product-details-carousel';
@@ -170,10 +169,6 @@ export default function ProductDetailsView({ id }) {
               value: 'description',
               label: t('product_description'),
             },
-            {
-              value: 'reviews',
-              label: `${t('product_reviews')} (${product?.reviews?.length || 0})`,
-            },
           ].map((tab) => (
             <Tab key={tab.value} value={tab.value} label={tab.label} />
           ))}
@@ -196,15 +191,6 @@ export default function ProductDetailsView({ id }) {
             product={product}
             optionDefinitions={product?.option_definitions || []}
             onRefresh={productMutate}
-          />
-        )}
-
-        {currentTab === 'reviews' && (
-          <ProductDetailsReview
-            ratings={product?.ratings || []}
-            reviews={product?.reviews || []}
-            totalRatings={product?.totalRatings || 0}
-            totalReviews={product?.totalReviews || 0}
           />
         )}
       </Card>

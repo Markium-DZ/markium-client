@@ -138,13 +138,19 @@ export default function InventoryListView() {
   const reformulateTable = (data) => {
     return data.map((item) => {
       const stockStatus = getStockStatus(item);
+      // Handle media as array or single object
+      const mediaArray = Array.isArray(item.variant?.media)
+        ? item.variant.media
+        : (item.variant?.media ? [item.variant.media] : []);
+      const mediaUrl = mediaArray.length > 0 ? mediaArray[0]?.full_url : null;
+
       return {
         ...item,
         id: item.id,
         product_info: (
           <Stack direction="row" alignItems="center" spacing={2}>
             <Avatar
-              src={item.variant?.media?.full_url}
+              src={mediaUrl}
               alt={item.product?.name}
               variant="rounded"
               sx={{ width: 48, height: 48 }}

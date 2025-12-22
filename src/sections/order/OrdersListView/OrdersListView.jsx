@@ -43,7 +43,7 @@ import { useGetProducts } from 'src/api/product';
 import { updateOrder, useGetOrders, useGetOrdersByProduct } from 'src/api/orders';
 import ExportOrdersButton from './ExportOrdersButton';
 import { HOST_API } from 'src/config-global';
-import { getOrderStatusOptions } from 'src/constants/order-status';
+import { getOrderStatusOptions, getOrderStatus } from 'src/constants/order-status';
 
 
 
@@ -457,26 +457,10 @@ export default function OrdersListView({ product_id }) {
 
     const RformulateTable = (data) => {
         return data?.map((item) => {
-            let color = "default";
-            let translatedStatus = "";
-
-            // Apply status conditions: pending, confirmed, shipped, delivered, cancelled
-            if (item?.status === "delivered") {
-                color = "success";
-                translatedStatus = t("delivered");
-            } else if (item?.status === "shipped") {
-                color = "info";
-                translatedStatus = t("shipped");
-            } else if (item?.status === "confirmed") {
-                color = "secondary";
-                translatedStatus = t("confirmed");
-            } else if (item?.status === "pending") {
-                color = "warning";
-                translatedStatus = t("pending");
-            } else if (item?.status === "cancelled") {
-                color = "error";
-                translatedStatus = t("cancelled");
-            }
+            // Use centralized order status configuration
+            const statusConfig = getOrderStatus(item?.status);
+            const color = statusConfig?.color || "default";
+            const translatedStatus = statusConfig ? t(statusConfig.labelKey) : "";
 
             // Handle multiple items - show summary
             const itemsSummary = item?.items?.length === 1
@@ -648,11 +632,11 @@ const ElementActions = ({ item, setTableData }) => {
                 const productId = item.items?.[0]?.product?.id || item.product_id;
                 console.log("new status : ", { status: selectedStatus.value })
                 await updateOrder(item.id, { status: selectedStatus.value })
-                console.log("Changing order status:", { orderId: item?.id, newStatus: selectedStatus.key });
+                console.log("Changing order status:", { orderId: item?.id, newStatus: selectedStatus.value });
 
                 // Update table data optimistically
                 setTableData(prev => prev?.map(order =>
-                    order.id == item?.id ? { ...order, status: selectedStatus.key, color: selectedStatus?.color, c_status: t(selectedStatus.key) } : order
+                    order.id == item?.id ? { ...order, status: selectedStatus.value, color: selectedStatus?.color, c_status: selectedStatus.label } : order
                 ))
 
                 enqueueSnackbar(t("operation_success"));
@@ -703,10 +687,10 @@ const ElementActions = ({ item, setTableData }) => {
                 <Divider sx={{ borderStyle: 'dashed', my: 0.5 }} />
 
                 {statuses
-                    .filter(status => status.key !== item?.status) // Don't show current status
+                    .filter(status => status.value !== item?.status) // Don't show current status
                     .map((status) => (
                         <MenuItem
-                            key={status.key}
+                            key={status.value}
                             onClick={() => handleStatusClick(status)}
                             disabled={postloader}
                             sx={{

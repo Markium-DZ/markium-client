@@ -142,7 +142,7 @@ function VariantCard({ variant, optionDefinitions, onEdit, onDelete }) {
       >
         {/* Variant Image */}
         <Avatar
-          src={variant.media?.full_url  || ''}
+          src={variant.media && variant.media.length > 0 ? (variant.media[0]?.full_url || '') : ''}
           variant="rounded"
           sx={{
             width: { xs: '100%', sm: 120 },

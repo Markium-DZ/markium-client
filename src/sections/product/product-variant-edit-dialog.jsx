@@ -29,7 +29,7 @@ export default function ProductVariantEditDialog({ open, onClose, variant, produ
   const { enqueueSnackbar } = useSnackbar();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [openMediaPicker, setOpenMediaPicker] = useState(false);
-  const [selectedMedia, setSelectedMedia] = useState(null);
+  const [selectedMedia, setSelectedMedia] = useState([]);
 
   const {
     register,
@@ -42,27 +42,28 @@ export default function ProductVariantEditDialog({ open, onClose, variant, produ
       price: variant?.price || '',
       compare_at_price: variant?.compare_at_price || '',
       quantity: variant?.quantity || '',
-      media_id: variant?.media?.id || '',
+      media_ids: [],
     },
   });
 
   useEffect(() => {
     if (variant) {
+      // Handle media as array
+      const mediaArray = Array.isArray(variant.media) ? variant.media : (variant.media ? [variant.media] : []);
+
       reset({
         price: variant.price || '',
         compare_at_price: variant.compare_at_price || '',
         quantity: variant.quantity || '',
-        media_id: variant.media?.id || '',
+        media_ids: mediaArray.map(m => m.id) || [],
       });
-      // Set selected media from variant
-      if (variant.media && typeof variant.media === 'object') {
-        setSelectedMedia({
-          id: variant.media.id,
-          full_url: variant.media.full_url || variant.media.url || '',
-        });
-      } else {
-        setSelectedMedia(null);
-      }
+
+      // Set selected media array from variant
+      setSelectedMedia(mediaArray.map(m => ({
+        id: m.id,
+        full_url: m.full_url || m.url || '',
+        alt_text: m.alt_text || '',
+      })));
     }
   }, [variant, reset]);
 
@@ -75,7 +76,9 @@ export default function ProductVariantEditDialog({ open, onClose, variant, produ
       if (data.price) updateData.price = parseFloat(data.price);
       if (data.compare_at_price) updateData.compare_at_price = parseFloat(data.compare_at_price);
       if (data.quantity !== '') updateData.quantity = parseInt(data.quantity, 10);
-      if (data.media_id) updateData.media_id = parseInt(data.media_id, 10);
+      if (data.media_ids && data.media_ids.length > 0) {
+        updateData.media_ids = data.media_ids.map(id => parseInt(id, 10));
+      }
 
       await updateProductVariant(productId, variant.id, updateData);
 
@@ -102,14 +105,17 @@ export default function ProductVariantEditDialog({ open, onClose, variant, produ
   };
 
   const handleMediaSelect = (media) => {
-    setSelectedMedia(media);
-    setValue('media_id', media.id);
+    // Handle both single and multiple media
+    const mediaArray = Array.isArray(media) ? media : [media];
+    setSelectedMedia(mediaArray);
+    setValue('media_ids', mediaArray.map(m => m.id));
     setOpenMediaPicker(false);
   };
 
-  const handleRemoveMedia = () => {
-    setSelectedMedia(null);
-    setValue('media_id', '');
+  const handleRemoveMedia = (mediaId) => {
+    const updated = selectedMedia.filter(m => m.id !== mediaId);
+    setSelectedMedia(updated);
+    setValue('media_ids', updated.map(m => m.id));
   };
 
   return (
@@ -179,35 +185,49 @@ export default function ProductVariantEditDialog({ open, onClose, variant, produ
             {/* Media Selection */}
             <Box>
               <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                {t('variant_image')}
+                {t('variant_images')} ({selectedMedia.length})
               </Typography>
 
-              {selectedMedia ? (
-                <Card sx={{ p: 2, position: 'relative' }}>
-                  <Stack direction="row" spacing={2} alignItems="center">
+              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
+                {/* Add Media Button */}
+                <Button
+                  variant="outlined"
+                  startIcon={<Iconify icon="eva:plus-fill" />}
+                  onClick={handleOpenMediaPicker}
+                  sx={{ minHeight: 80 }}
+                >
+                  {t('select_images')}
+                </Button>
+
+                {/* Show all selected media */}
+                {selectedMedia.map((media) => (
+                  <Card key={media.id} sx={{ p: 1, position: 'relative' }}>
                     <Avatar
-                      src={selectedMedia.full_url}
+                      src={media.full_url}
                       variant="rounded"
                       sx={{ width: 80, height: 80 }}
                     />
-                    <Box sx={{ flexGrow: 1 }}>
-                      <Typography variant="body2">{t('media_selected')}</Typography>
-                    </Box>
-                    <IconButton onClick={handleRemoveMedia} size="small">
-                      <Iconify icon="eva:close-fill" />
+                    <IconButton
+                      onClick={() => handleRemoveMedia(media.id)}
+                      size="small"
+                      sx={{
+                        position: 'absolute',
+                        top: 4,
+                        right: 4,
+                        bgcolor: 'rgba(0,0,0,0.6)',
+                        color: 'white',
+                        width: 24,
+                        height: 24,
+                        '&:hover': {
+                          bgcolor: 'rgba(0,0,0,0.8)',
+                        },
+                      }}
+                    >
+                      <Iconify icon="eva:close-fill" width={16} />
                     </IconButton>
-                  </Stack>
-                </Card>
-              ) : (
-                <Button
-                  fullWidth
-                  variant="outlined"
-                  startIcon={<Iconify icon="eva:image-outline" />}
-                  onClick={handleOpenMediaPicker}
-                >
-                  {t('select_image')}
-                </Button>
-              )}
+                  </Card>
+                ))}
+              </Box>
             </Box>
           </Stack>
         </Box>
@@ -231,8 +251,8 @@ export default function ProductVariantEditDialog({ open, onClose, variant, produ
         open={openMediaPicker}
         onClose={() => setOpenMediaPicker(false)}
         onSelect={handleMediaSelect}
-        multiple={false}
-        title={t('select_variant_image')}
+        multiple={true}
+        title={t('select_variant_images')}
       />
     </Dialog>
   );

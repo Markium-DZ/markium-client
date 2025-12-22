@@ -83,7 +83,11 @@ export default function OrderDetailsItems({
       >
         {/* <Scrollbar> */}
           {items?.map((item) => {
-            const mediaUrl = item.variant?.media?.full_url || item.variant?.media?.url || null;
+            // Handle media as array or single object
+            const mediaArray = Array.isArray(item.variant?.media)
+              ? item.variant.media
+              : (item.variant?.media ? [item.variant.media] : []);
+            const mediaUrl = mediaArray.length > 0 ? (mediaArray[0]?.full_url || mediaArray[0]?.url || null) : null;
             const variantOptions = item.variant?.options || [];
 
             return (

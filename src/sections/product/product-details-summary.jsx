@@ -60,7 +60,11 @@ export default function ProductDetailsSummary({
     : null;
   const available = currentVariant?.available_quantity || 0;
   const quantity = currentVariant?.quantity || 0;
-  const coverUrl = currentVariant?.media?.full_url || currentVariant?.media?.url || '';
+  // Handle media as array or single object
+  const mediaArray = Array.isArray(currentVariant?.media)
+    ? currentVariant.media
+    : (currentVariant?.media ? [currentVariant.media] : []);
+  const coverUrl = mediaArray.length > 0 ? (mediaArray[0]?.full_url || mediaArray[0]?.url || '') : '';
   const inventoryType = currentVariant?.is_in_stock
     ? (available > 10 ? 'in_stock' : 'low_stock')
     : 'out_of_stock';
@@ -204,149 +208,63 @@ export default function ProductDetailsSummary({
     </Box>
   );
 
-  const renderShare = (
-    <Stack direction="row" spacing={3} justifyContent="center">
-      <Link
-        variant="subtitle2"
-        sx={{
-          color: 'text.secondary',
-          display: 'inline-flex',
-          alignItems: 'center',
-        }}
-      >
-        <Iconify icon="mingcute:add-line" width={16} sx={{ mr: 1 }} />
-        {t('compare')}
-      </Link>
+  // Removed share options
 
-      <Link
-        variant="subtitle2"
-        sx={{
-          color: 'text.secondary',
-          display: 'inline-flex',
-          alignItems: 'center',
-        }}
-      >
-        <Iconify icon="solar:heart-bold" width={16} sx={{ mr: 1 }} />
-        {t('favorite')}
-      </Link>
-
-      <Link
-        variant="subtitle2"
-        sx={{
-          color: 'text.secondary',
-          display: 'inline-flex',
-          alignItems: 'center',
-        }}
-      >
-        <Iconify icon="solar:share-bold" width={16} sx={{ mr: 1 }} />
-        {t('share')}
-      </Link>
-    </Stack>
-  );
-
-  // Render option definitions dynamically
-  const renderOptionDefinitions = option_definitions.map((optionDef) => {
-    const fieldName = `option_${optionDef.id}`;
-
-    // Color style option
-    if (optionDef.style === 'color') {
-      const colors = optionDef.values?.map((val) => val.color_hex || val.value) || [];
-      const colorValues = optionDef.values || [];
-
-      return (
-        <Stack direction="row" key={optionDef.id}>
-          <Typography variant="subtitle2" sx={{ flexGrow: 1 }}>
-            {optionDef.name}
+  // Render variant information including SKU and options
+  const renderVariantInfo = (
+    <Stack spacing={2}>
+      {/* SKU */}
+      {currentVariant?.sku && (
+        <Stack direction="row" spacing={2}>
+          <Typography variant="subtitle2" sx={{ color: 'text.secondary', minWidth: 100 }}>
+            {t('sku')}:
           </Typography>
+          <Typography variant="body2" sx={{ fontWeight: 600, fontFamily: 'monospace' }}>
+            {currentVariant.sku}
+          </Typography>
+        </Stack>
+      )}
 
-          <Controller
-            name={fieldName}
-            control={control}
-            render={({ field }) => (
-              <ColorPicker
-                colors={colors}
-                selected={colorValues.find((v) => v.id === field.value)?.color_hex || ''}
-                onSelectColor={(color) => {
-                  const selectedValue = colorValues.find((v) => v.color_hex === color);
-                  if (selectedValue) {
-                    field.onChange(selectedValue.id);
-                    handleOptionChange(optionDef.id, selectedValue.id);
-                  }
+      {/* Variant Options */}
+      {currentVariant?.options && currentVariant.options.length > 0 && currentVariant.options.map((option, idx) => (
+        <Stack direction="row" key={idx} spacing={2}>
+          <Typography variant="subtitle2" sx={{ color: 'text.secondary', minWidth: 100 }}>
+            {option.definition_name || option.name}:
+          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            {option.color_hex && (
+              <Box
+                sx={{
+                  width: 20,
+                  height: 20,
+                  borderRadius: '50%',
+                  bgcolor: option.color_hex,
+                  border: (theme) => `2px solid ${theme.palette.divider}`,
                 }}
-                limit={4}
               />
             )}
-          />
+            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+              {option.value}
+            </Typography>
+          </Box>
         </Stack>
-      );
-    }
+      ))}
+    </Stack>
+  );
 
-    // Dropdown/Button style option
-    return (
-      <Stack direction="row" key={optionDef.id}>
-        <Typography variant="subtitle2" sx={{ flexGrow: 1 }}>
-          {optionDef.name}
-        </Typography>
-
-        <RHFSelect
-          name={fieldName}
-          size="small"
-          sx={{ maxWidth: 120 }}
-          onChange={(e) => handleOptionChange(optionDef.id, e.target.value)}
-        >
-          {optionDef.values?.map((optValue) => (
-            <MenuItem key={optValue.id} value={optValue.id}>
-              {optValue.value}
-            </MenuItem>
-          ))}
-        </RHFSelect>
-      </Stack>
-    );
-  });
-
+  // Display available quantity as read-only
   const renderQuantity = (
-    <Stack direction="row">
-      <Typography variant="subtitle2" sx={{ flexGrow: 1 }}>
-        {t('quantity')}
-      </Typography>
-
-      <Stack spacing={1}>
-        <IncrementerButton
-          name="quantity"
-          quantity={values.quantity}
-          disabledDecrease={values.quantity <= 1}
-          disabledIncrease={values.quantity >= available}
-          onIncrease={() => setValue('quantity', values.quantity + 1)}
-          onDecrease={() => setValue('quantity', values.quantity - 1)}
-        />
-
-        <Typography variant="caption" component="div" sx={{ textAlign: 'right' }}>
-          {t('available')}: {available}
-        </Typography>
-      </Stack>
-    </Stack>
-  );
-
-  const renderActions = (
     <Stack direction="row" spacing={2}>
-      <Button
-        fullWidth
-        disabled={isMaxQuantity || disabledActions}
-        size="large"
-        color="warning"
-        variant="contained"
-        startIcon={<Iconify icon="solar:cart-plus-bold" width={24} />}
-        onClick={handleAddCart}
-        sx={{ whiteSpace: 'nowrap' }}
-      >
-        {t('add_to_cart')}
-      </Button>
-
-      <Button fullWidth size="large" type="submit" variant="contained" disabled={disabledActions}>
-        {t('buy_now')}
-      </Button>
+      <Typography variant="subtitle2" sx={{ color: 'text.secondary', minWidth: 100 }}>
+        {t('available')}:
+      </Typography>
+      <Typography variant="body2" sx={{ fontWeight: 600, color: available > 0 ? 'success.main' : 'error.main' }}>
+        {available} {t('units')}
+      </Typography>
     </Stack>
   );
+
+  // Removed action buttons (add to cart, buy now)
 
   const renderSubDescription = (
     <Typography variant="body2" sx={{ color: 'text.secondary' }}>
@@ -354,19 +272,7 @@ export default function ProductDetailsSummary({
     </Typography>
   );
 
-  const renderRating = (
-    <Stack
-      direction="row"
-      alignItems="center"
-      sx={{
-        color: 'text.disabled',
-        typography: 'body2',
-      }}
-    >
-      <Rating size="small" value={totalRatings} precision={0.1} readOnly sx={{ mr: 1 }} />
-      {`(${fShortenNumber(totalReviews)} ${t('reviews')})`}
-    </Stack>
-  );
+  // Removed rating display
 
   const renderLabels = (newLabel?.enabled || saleLabel?.enabled) && (
     <Stack direction="row" alignItems="center" spacing={1}>
@@ -395,35 +301,25 @@ export default function ProductDetailsSummary({
   }
 
   return (
-    <FormProvider methods={methods} onSubmit={onSubmit}>
-      <Stack spacing={3} sx={{ pt: 3 }} {...other}>
-        <Stack spacing={2} alignItems="flex-start">
-          {renderLabels}
+    <Stack spacing={3} sx={{ pt: 3 }} {...other}>
+      <Stack spacing={2} alignItems="flex-start">
+        {renderLabels}
 
-          {renderInventoryType}
+        {renderInventoryType}
 
-          <Typography variant="h5">{name}</Typography>
+        <Typography variant="h5">{name}</Typography>
 
-          {renderRating}
+        {renderPrice}
 
-          {renderPrice}
-
-          {renderSubDescription}
-        </Stack>
-
-        <Divider sx={{ borderStyle: 'dashed' }} />
-
-        {renderOptionDefinitions}
-
-        {renderQuantity}
-
-        <Divider sx={{ borderStyle: 'dashed' }} />
-
-        {renderActions}
-
-        {renderShare}
+        {renderSubDescription}
       </Stack>
-    </FormProvider>
+
+      <Divider sx={{ borderStyle: 'dashed' }} />
+
+      {renderVariantInfo}
+
+      {renderQuantity}
+    </Stack>
   );
 }
 

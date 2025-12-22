@@ -70,7 +70,11 @@ export default function ProductDetailsCarousel({ product }) {
   if (product?.variants && product.variants.length > 0) {
     // Get all media from all variants
     product.variants.forEach((variant) => {
-      if (variant.media && typeof variant.media === 'object') {
+      if (variant.media && Array.isArray(variant.media)) {
+        // Media is an array, add all items
+        mediaSource.push(...variant.media);
+      } else if (variant.media && typeof variant.media === 'object') {
+        // Backwards compatibility: single media object
         mediaSource.push(variant.media);
       }
     });
