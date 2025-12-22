@@ -220,7 +220,7 @@ function MediaCard({ item, selected, onToggle }) {
       >
         <Box
           component="img"
-          src={STORAGE_API+item.url}
+          src={item.full_url}
           alt={item.alt_text || 'Media'}
           loading="lazy"
           sx={{

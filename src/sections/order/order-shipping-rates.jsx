@@ -183,7 +183,7 @@ export default function OrderShippingRates({ quotesGroupedByProvider, loading, e
                               {/* Price */}
                               <Box sx={{ textAlign: 'right' }}>
                                 <Typography variant="h6" color="primary">
-                                  {fCurrency(quote.price)} {quote.currency}
+                                  {fCurrency(quote.price)} 
                                 </Typography>
                                 {quote.metadata?.base_fee && quote.metadata?.base_fee !== quote.price && (
                                   <Typography variant="caption" color="text.secondary">
