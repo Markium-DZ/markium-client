@@ -111,6 +111,38 @@ export default function MediaPickerDialog({ open, onClose, onSelect, multiple = 
               onDrop={handleDrop}
               disabled={uploading}
               accept={{ 'image/*': [] }}
+              placeholder={
+                <Stack spacing={2.5} alignItems="center" sx={{ py: 2 }}>
+                  {/* Upload Icon */}
+                  <Box
+                    sx={{
+                      width: 80,
+                      height: 80,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderRadius: '50%',
+                      bgcolor: (theme) => alpha(theme.palette.primary.main, 0.08),
+                    }}
+                  >
+                    <Iconify
+                      icon="eva:cloud-upload-fill"
+                      width={40}
+                      sx={{ color: 'primary.main' }}
+                    />
+                  </Box>
+
+                  {/* Upload Text */}
+                  <Stack spacing={0.5} alignItems="center">
+                    <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                      {t('drop_or_select_file')}
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                      {t('supported_formats')}: JPG, PNG, GIF (max 3MB)
+                    </Typography>
+                  </Stack>
+                </Stack>
+              }
             />
 
             {uploading && (

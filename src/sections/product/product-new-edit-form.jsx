@@ -32,7 +32,6 @@ import { useSnackbar } from 'src/components/snackbar';
 import FormProvider, {
   RHFSelect,
   RHFEditor,
-  RHFUpload,
   RHFTextField,
   RHFAutocomplete,
 } from 'src/components/hook-form';
@@ -441,22 +440,6 @@ export default function ProductNewEditForm({ currentProduct }) {
     }
   });
 
-  const handleDrop = useCallback(
-    (acceptedFiles) => {
-      const files = values.images || [];
-
-      const newFiles = acceptedFiles.map((file, index) =>
-        Object.assign(file, {
-          id: Date.now() + index,
-          preview: URL.createObjectURL(file),
-        })
-      );
-
-      setValue('images', [...files, ...newFiles], { shouldValidate: true });
-    },
-    [setValue, values.images]
-  );
-
   const handleRemoveFile = useCallback(
     (inputFile) => {
       const filtered = values.images && values.images?.filter((file) => file !== inputFile);
@@ -470,7 +453,7 @@ export default function ProductNewEditForm({ currentProduct }) {
   }, [setValue]);
 
   const handleMediaSelect = useCallback(
-    async (selectedMedia) => {
+    (selectedMedia) => {
       // Handle both single media and array of media
       const mediaArray = Array.isArray(selectedMedia) ? selectedMedia : [selectedMedia];
 
@@ -496,7 +479,7 @@ export default function ProductNewEditForm({ currentProduct }) {
       setValue('images', [...existingImages, ...mediaFiles], { shouldValidate: true });
       setMediaPickerOpen(false);
     },
-    [setValue]
+    [setValue, values.images]
   );
 
   const renderModeToggle = (
@@ -567,16 +550,119 @@ export default function ProductNewEditForm({ currentProduct }) {
             {!advancedMode && (
               <Stack spacing={1.5}>
                 <Typography variant="subtitle2">{t('images')}</Typography>
-                <RHFUpload
-                  multiple
-                  thumbnail
-                  name="images"
-                  maxSize={3145728}
-                  onDrop={handleDrop}
-                  onRemove={handleRemoveFile}
-                  onRemoveAll={handleRemoveAllFiles}
-                  onUpload={() => console.log('ON UPLOAD')}
-                />
+
+                {/* Selected Images Preview */}
+                {values.images && values.images.length > 0 && (
+                  <Box sx={{ mb: 2 }}>
+                    <Grid container spacing={2}>
+                      {values.images.map((image, index) => (
+                        <Grid item xs={6} sm={4} md={3} key={image.id || index}>
+                          <Card sx={{ position: 'relative' }}>
+                            <Box
+                              sx={{
+                                position: 'relative',
+                                width: '100%',
+                                paddingTop: '100%',
+                                overflow: 'hidden',
+                              }}
+                            >
+                              <Box
+                                component="img"
+                                src={image.preview || image.full_url}
+                                alt={image.name || image.alt_text}
+                                sx={{
+                                  position: 'absolute',
+                                  top: 0,
+                                  left: 0,
+                                  width: '100%',
+                                  height: '100%',
+                                  objectFit: 'cover',
+                                }}
+                              />
+                              <IconButton
+                                size="small"
+                                onClick={() => handleRemoveFile(image)}
+                                sx={{
+                                  position: 'absolute',
+                                  top: 4,
+                                  right: 4,
+                                  bgcolor: 'rgba(0,0,0,0.6)',
+                                  color: 'white',
+                                  width: 24,
+                                  height: 24,
+                                  '&:hover': {
+                                    bgcolor: 'rgba(0,0,0,0.8)',
+                                  },
+                                }}
+                              >
+                                <Iconify icon="eva:close-fill" width={16} />
+                              </IconButton>
+                            </Box>
+                          </Card>
+                        </Grid>
+                      ))}
+                    </Grid>
+
+                    <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
+                      <Button
+                        variant="outlined"
+                        color="inherit"
+                        size="small"
+                        onClick={handleRemoveAllFiles}
+                      >
+                        {t('remove_all')}
+                      </Button>
+                    </Stack>
+                  </Box>
+                )}
+
+                {/* Add Images Button - Modern Placeholder */}
+                <Box
+                  onClick={() => setMediaPickerOpen(true)}
+                  sx={{
+                    p: 5,
+                    outline: 'none',
+                    borderRadius: 1,
+                    cursor: 'pointer',
+                    overflow: 'hidden',
+                    position: 'relative',
+                    bgcolor: (theme) => alpha(theme.palette.grey[500], 0.08),
+                    border: (theme) => `1px dashed ${alpha(theme.palette.grey[500], 0.2)}`,
+                    transition: (theme) => theme.transitions.create(['opacity', 'padding']),
+                    '&:hover': { opacity: 0.72 },
+                  }}
+                >
+                  <Stack spacing={2.5} alignItems="center">
+                    {/* Upload Icon */}
+                    <Box
+                      sx={{
+                        width: 80,
+                        height: 80,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        borderRadius: '50%',
+                        bgcolor: (theme) => alpha(theme.palette.primary.main, 0.08),
+                      }}
+                    >
+                      <Iconify
+                        icon="solar:gallery-bold"
+                        width={40}
+                        sx={{ color: 'primary.main' }}
+                      />
+                    </Box>
+
+                    {/* Upload Text */}
+                    <Stack spacing={0.5} alignItems="center">
+                      <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                        {t('click_to_browse_media_library')}
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                        {t('select_from_existing_media_or_upload_new')}
+                      </Typography>
+                    </Stack>
+                  </Stack>
+                </Box>
               </Stack>
             )}
 
