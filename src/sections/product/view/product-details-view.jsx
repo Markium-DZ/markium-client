@@ -5,11 +5,13 @@ import Tab from '@mui/material/Tab';
 import Box from '@mui/material/Box';
 import Tabs from '@mui/material/Tabs';
 import Card from '@mui/material/Card';
+import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
+import Tooltip from '@mui/material/Tooltip';
+import IconButton from '@mui/material/IconButton';
 import { alpha } from '@mui/material/styles';
 import Container from '@mui/material/Container';
 import Grid from '@mui/material/Unstable_Grid2';
-import Typography from '@mui/material/Typography';
 
 import { paths } from 'src/routes/paths';
 import { RouterLink } from 'src/routes/components';
@@ -21,6 +23,9 @@ import Iconify from 'src/components/iconify';
 import EmptyContent from 'src/components/empty-content';
 import { useSettingsContext } from 'src/components/settings';
 import { useTranslate } from 'src/locales';
+import { useAuthContext } from 'src/auth/hooks';
+import { useSnackbar } from 'src/components/snackbar';
+import { useCopyToClipboard } from 'src/hooks/use-copy-to-clipboard';
 
 import { ProductDetailsSkeleton } from '../product-skeleton';
 import ProductDetailsSummary from '../product-details-summary';
@@ -39,6 +44,20 @@ export default function ProductDetailsView({ id }) {
 
   const settings = useSettingsContext();
   const { t } = useTranslate();
+  const { user } = useAuthContext();
+  const { enqueueSnackbar } = useSnackbar();
+  const { copy } = useCopyToClipboard();
+
+  const publicProductUrl = user?.store?.slug
+    ? `https://${user.store.slug}.markium.online/?product=${id}`
+    : '';
+
+  const handleCopyLink = useCallback(() => {
+    if (publicProductUrl) {
+      copy(publicProductUrl);
+      enqueueSnackbar(t('link_copied_to_clipboard'), { variant: 'success' });
+    }
+  }, [publicProductUrl, copy, enqueueSnackbar, t]);
 
   const SUMMARY = [
     {
@@ -111,6 +130,47 @@ export default function ProductDetailsView({ id }) {
         onChangePublish={handleChangePublish}
         publishOptions={PRODUCT_PUBLISH_OPTIONS}
       />
+
+      {publicProductUrl && (
+        <Stack
+          direction="row"
+          alignItems="center"
+          spacing={0.5}
+          sx={{ mb: 2 }}
+        >
+          <Tooltip title={t('copy_link')}>
+            <Button
+              size="small"
+              variant="soft"
+              color="primary"
+              onClick={handleCopyLink}
+              startIcon={<Iconify icon="eva:link-2-fill" width={16} />}
+              endIcon={<Iconify icon="eva:copy-fill" width={14} />}
+              sx={{
+                px: 1.5,
+                py: 0.5,
+                fontSize: '0.75rem',
+                fontWeight: 500,
+              }}
+            >
+              {t('copy_product_link')}
+            </Button>
+          </Tooltip>
+          <Tooltip title={t('open_in_new_tab')}>
+            <IconButton
+              component="a"
+              href={publicProductUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              size="small"
+              color="primary"
+              sx={{ p: 0.5 }}
+            >
+              <Iconify icon="eva:external-link-fill" width={16} />
+            </IconButton>
+          </Tooltip>
+        </Stack>
+      )}
 
       <Grid container spacing={{ xs: 3, md: 5, lg: 8 }}>
         <Grid xs={12} md={6} lg={7}>

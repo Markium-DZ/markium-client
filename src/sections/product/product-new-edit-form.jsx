@@ -91,7 +91,9 @@ export default function ProductNewEditForm({ currentProduct }) {
           // Simple mode validation - require at least 1 image
           images: Yup.array().min(1, t('image_is_required')),
           sale_price: Yup.number().moreThan(0, t('sale_price_required')),
-          real_price: Yup.number(),
+          real_price: Yup.number().nullable().transform((value, originalValue) =>
+            originalValue === '' || originalValue === null || originalValue === undefined ? null : value
+          ),
           quantity: Yup.number(),
         }),
     // Common fields
@@ -139,7 +141,7 @@ export default function ProductNewEditForm({ currentProduct }) {
       tags: currentProduct?.tags || [],
       // Simple mode fields - extracted from default variant
       quantity: defaultVariant?.quantity || 1,
-      real_price: defaultVariant?.compare_at_price || 0,
+      real_price: defaultVariant?.compare_at_price || '',
       sale_price: defaultVariant?.price || 0,
       // Advanced mode fields
       option_definitions: currentProduct?.option_definitions || [],
@@ -392,7 +394,7 @@ export default function ProductNewEditForm({ currentProduct }) {
 
         const simpleVariant = {
           price: parseFloat(data.sale_price) || 0,
-          compare_at_price: parseFloat(data.real_price) || 0,
+          compare_at_price: data.real_price ? parseFloat(data.real_price) : null,
           quantity: parseInt(data.quantity, 10) || 0,
           sku: '',
           option_values: [],

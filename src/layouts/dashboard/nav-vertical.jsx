@@ -18,15 +18,22 @@ import { NAV } from '../config-layout';
 // import NavUpgrade from '../common/nav-upgrade';
 import { useNavData } from './config-navigation';
 import NavToggleButton from '../common/nav-toggle-button';
-import { Typography } from '@mui/material';
+import { IconButton, Tooltip, Typography } from '@mui/material';
 import { t } from 'i18next';
 import { AuthContext } from 'src/auth/context/jwt';
+import { useAuthContext } from 'src/auth/hooks';
+import Iconify from 'src/components/iconify';
 
 // ----------------------------------------------------------------------
 
 export default function NavVertical({ openNav, onCloseNav }) {
   // const { user } = useMockedUser();
-  const { user } = useContext(AuthContext);
+  // const { user } = useContext(AuthContext);
+  const { user } = useAuthContext();
+
+  const publicProductUrl = user?.store?.slug
+    ? `https://${user.store.slug}.markium.online/?store=${user?.store?.slug}`
+    : '';
 
   const pathname = usePathname();
 
@@ -55,8 +62,21 @@ export default function NavVertical({ openNav, onCloseNav }) {
       <Box display="flex" alignItems="center" sx={{ mt: 3, ml: 4, mb: 1 }}>
         <Logo user={user} />
         <Typography color="primary" mx={1} fontWeight="500" >
-        {user?.store?.name  || t("markium")}
+          {user?.store?.name || t("markium")}
         </Typography>
+        <Tooltip title={t('open_in_new_tab')}>
+          <IconButton
+            component="a"
+            href={publicProductUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            size="small"
+            color="primary"
+            sx={{ p: 0.5 }}
+          >
+            <Iconify icon="eva:external-link-fill" width={16} />
+          </IconButton>
+        </Tooltip>
       </Box>
 
       <NavSectionVertical

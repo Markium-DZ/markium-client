@@ -56,8 +56,9 @@ export default function DeliveryCompaniesForm() {
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslate();
 
-  const [loading, setLoading] = useState(false);
+  const [savingProvider, setSavingProvider] = useState(null);
   const [validatingConnection, setValidatingConnection] = useState(null);
+  const [editingProviders, setEditingProviders] = useState({});
 
   // Transform API providers to component structure and merge with existing connections
   const deliveryCompanies = useMemo(() => {
@@ -155,8 +156,6 @@ export default function DeliveryCompaniesForm() {
   const {
     reset,
     watch,
-    handleSubmit,
-    formState: { isSubmitting },
   } = methods;
 
   const values = watch();
@@ -178,26 +177,28 @@ export default function DeliveryCompaniesForm() {
     try {
       setValidatingConnection(company.id);
       const response = await validateShippingConnection(company.connectionId);
-      // console.log("response : ",response);
+      console.log("validateShippingConnection response:", response);
 
-      // Check various possible response structures
-      // const isValid = response.data?.valid || response.data?.success || response.success;
+      // Check response for success - handle various response structures
+      const responseData = response?.data || response;
+      const isValid = responseData?.success === true || responseData?.valid === true;
 
-      // if (isValid) {
-      //   enqueueSnackbar(t('connection_validated_successfully', { name: company.name }), { variant: 'success' });
-      // } else {
-      //   const errorMessage = response.data?.message || response.message;
-      //   enqueueSnackbar(
-      //     errorMessage || t('connection_validation_failed', { name: company.name }),
-      //     { variant: 'error' }
-      //   );
-      // }
+      if (isValid) {
+        enqueueSnackbar(t('connection_validated_successfully', { name: company.name }), { variant: 'success' });
+      } else {
+        // Get error message from response
+        const errorMessage = responseData?.message || responseData?.error || t('connection_validation_failed', { name: company.name });
+        enqueueSnackbar(errorMessage, { variant: 'error' });
+      }
 
       // Refresh connections to get updated validation status
       await mutateConnections();
     } catch (error) {
-      console.log("error L ", error);
-      showError(error);
+      console.log("validateShippingConnection error:", error);
+      // Handle error response from API (e.g., 422 status)
+      const errorData = error?.response?.data || error?.data || {};
+      const errorMessage = errorData?.message || errorData?.error || t('connection_validation_failed', { name: company.name });
+      enqueueSnackbar(errorMessage, { variant: 'error' });
     }
     finally {
       setValidatingConnection(null);
@@ -222,103 +223,105 @@ export default function DeliveryCompaniesForm() {
     }
   };
 
-  const onSubmit = handleSubmit(async (data) => {
+  // Toggle edit mode for a provider
+  const handleToggleEditMode = (companyId) => {
+    setEditingProviders(prev => ({
+      ...prev,
+      [companyId]: !prev[companyId]
+    }));
+  };
+
+  // Cancel edit mode
+  const handleCancelEdit = (company) => {
+    // Clear the form fields for this provider
+    company.fields.forEach((field) => {
+      methods.setValue(field.name, '');
+    });
+    setEditingProviders(prev => ({
+      ...prev,
+      [company.id]: false
+    }));
+  };
+
+  // Save individual provider handler
+  const handleSaveProvider = async (company) => {
     try {
-      setLoading(true);
+      setSavingProvider(company.id);
 
-      // Process each delivery company
-      for (const company of deliveryCompanies) {
-        const isEnabled = data[`${company.id}_enabled`];
+      const data = methods.getValues();
+      const isEnabled = data[`${company.id}_enabled`];
 
-        // Extract credentials for this company (remove provider prefix to get exact API field names)
-        const credentials = {};
-        company.fields.forEach((field) => {
-          const fieldKey = field.name.replace(`${company.id}_`, ''); // This gets the exact credential key (e.g., 'id', 'token')
-          const fieldValue = data[field.name];
-          if (fieldValue) { // Only include non-empty credentials
-            credentials[fieldKey] = fieldValue;
-          }
-        });
+      // Extract credentials for this company
+      const credentials = {};
+      company.fields.forEach((field) => {
+        const fieldKey = field.name.replace(`${company.id}_`, '');
+        const fieldValue = data[field.name];
+        if (fieldValue) {
+          credentials[fieldKey] = fieldValue;
+        }
+      });
 
-        // Check if user entered any credentials
-        const hasCredentials = Object.keys(credentials).length > 0;
+      const hasCredentials = Object.keys(credentials).length > 0;
 
-        // Check if the enabled state has actually changed
-        const wasEnabled = company.isConnected && company.isActive;
-        const enabledStateChanged = isEnabled !== wasEnabled;
+      // Determine auth method based on provider's supported methods
+      const provider = providers.find(p => p.id === company.providerId);
+      const authMethod = provider?.supported_auth_methods?.[0] || 'api_key';
 
-        // Determine if we need to take action on this provider
-        const needsAction =
-          (isEnabled && hasCredentials) || // New credentials entered (create or update)
-          (enabledStateChanged && company.connectionId); // Enabled state changed for existing connection
+      if (company.connectionId) {
+        // Update existing connection
+        const updateBody = {
+          name: `${company.name} Connection`,
+          auth_method: authMethod,
+          is_enabled: isEnabled,
+        };
 
-        if (!needsAction) {
-          // Skip providers that haven't changed or don't need action
-          continue;
+        if (hasCredentials) {
+          updateBody.credentials = credentials;
         }
 
-        if (isEnabled) {
-          // Determine auth method based on provider's supported methods
-          const provider = providers.find(p => p.id === company.providerId);
-          const authMethod = provider?.supported_auth_methods?.[0] || 'api_key';
-
-          if (company.connectionId) {
-            // Update existing connection only if credentials were provided
-            if (hasCredentials) {
-              const updateBody = {
-                credentials,
-                name: `${company.name} Connection`,
-                auth_method: authMethod,
-                is_enabled: true,
-              };
-
-              console.log('Update connection payload:', updateBody);
-              await updateShippingConnection(company.connectionId, updateBody);
-            } else {
-              // Just ensure it's enabled (no credential changes)
-              await updateShippingConnection(company.connectionId, { is_enabled: true });
-            }
-          } else {
-            // Create new connection - credentials are required
-            if (!hasCredentials) {
-              enqueueSnackbar(
-                t('credentials_required_for_new_connection', { name: company.name }),
-                { variant: 'warning' }
-              );
-              continue; // Skip this provider
-            }
-
-            const connectionBody = {
-              shipping_provider_id: company.providerId,
-              name: `${company.name} Connection`,
-              auth_method: authMethod,
-              credentials,
-              is_enabled: true,
-              is_default: false,
-              is_sandbox: false,
-              settings: {}
-            };
-
-            console.log('Create connection payload:', connectionBody);
-            await createShippingConnection(connectionBody);
-          }
-        } else if (company.connectionId && !isEnabled) {
-          // Disable existing connection
-          console.log('Disable connection:', company.connectionId);
-          await updateShippingConnection(company.connectionId, { is_enabled: false });
+        console.log('Update connection payload:', updateBody);
+        await updateShippingConnection(company.connectionId, updateBody);
+        enqueueSnackbar(t('connection_saved_successfully', { name: company.name }), { variant: 'success' });
+      } else {
+        // Create new connection - credentials are required
+        if (!hasCredentials) {
+          enqueueSnackbar(
+            t('credentials_required_for_new_connection', { name: company.name }),
+            { variant: 'warning' }
+          );
+          setSavingProvider(null);
+          return;
         }
+
+        const connectionBody = {
+          shipping_provider_id: company.providerId,
+          name: `${company.name} Connection`,
+          auth_method: authMethod,
+          credentials,
+          is_enabled: isEnabled,
+          is_default: false,
+          is_sandbox: false,
+          settings: {}
+        };
+
+        console.log('Create connection payload:', connectionBody);
+        await createShippingConnection(connectionBody);
+        enqueueSnackbar(t('connection_created_successfully', { name: company.name }), { variant: 'success' });
       }
 
       // Refresh connections data
       await mutateConnections();
-
-      enqueueSnackbar(t('delivery_companies_saved_successfully'), { variant: 'success' });
-      setLoading(false);
+      // Exit edit mode after successful save
+      setEditingProviders(prev => ({
+        ...prev,
+        [company.id]: false
+      }));
+      setSavingProvider(null);
     } catch (error) {
-      setLoading(false);
+      setSavingProvider(null);
       showError(error);
     }
-  });
+  };
 
   // Show loading state
   if (providersLoading || connectionsLoading) {
@@ -354,20 +357,8 @@ export default function DeliveryCompaniesForm() {
   }
 
   return (
-    <FormProvider methods={methods} onSubmit={onSubmit}>
+    <FormProvider methods={methods}>
       <Grid container spacing={3}>
-        <Grid xs={12}>
-          <Stack direction="row" justifyContent="flex-end" spacing={2}>
-            <LoadingButton
-              type="submit"
-              variant="contained"
-              size="large"
-              loading={isSubmitting || loading}
-            >
-              {t('save_changes')}
-            </LoadingButton>
-          </Stack>
-        </Grid>
         {/* Information Alert */}
         <Grid xs={12}>
           <Alert severity="info">
@@ -440,74 +431,133 @@ export default function DeliveryCompaniesForm() {
                         {company.description}
                       </Typography>
                     </Box>
-                    <RHFSwitch name={`${company.id}_enabled`} label={t('enabled')} sx={{ mr: 2 }} />
+                    <Box onClick={(e) => e.stopPropagation()} sx={{ mr: 2 }}>
+                      <RHFSwitch name={`${company.id}_enabled`} label={t('enabled')} />
+                    </Box>
                   </Stack>
                 </AccordionSummary>
                 <AccordionDetails>
                   <Stack spacing={3}>
-                    {/* Connection Info */}
-                    {company.isConnected && (
-                      <Alert severity="info" sx={{ mb: 1 }}>
-                        <Typography variant="caption">
-                          {t('connection_exists_message') || 'Connection already exists. Leave fields empty to keep existing credentials, or enter new values to update.'}
-                        </Typography>
-                      </Alert>
-                    )}
+                    {/* Connected State - Show connection info and action buttons */}
+                    {company.isConnected && !editingProviders[company.id] ? (
+                      <>
+                        {/* Connection Status */}
+                        <Alert severity="success" icon={<Iconify icon="eva:checkmark-circle-2-fill" />}>
+                          <Typography variant="body2">
+                            {t('connection_configured')}
+                          </Typography>
+                        </Alert>
 
-                    {/* Dynamic Fields */}
-                    {company.fields.map((field) => (
-                      <RHFTextField
-                        key={field.name}
-                        name={field.name}
-                        label={field.label}
-                        type={field.type}
-                        placeholder={field.placeholder}
-                        disabled={!values[`${company.id}_enabled`]}
-                        helperText={
-                          !values[`${company.id}_enabled`]
-                            ? t('enable_to_configure')
-                            : field.description || (field.required
-                              ? t('required_field')
-                              : t('optional_field'))
-                        }
-                        InputProps={{
-                          startAdornment: (
-                            <Iconify
-                              icon="solar:key-bold"
-                              width={20}
-                              sx={{ mr: 1, color: 'text.disabled' }}
-                            />
-                          ),
-                        }}
-                      />
-                    ))}
+                        {/* Action Buttons for connected state */}
+                        {values[`${company.id}_enabled`] && (
+                          <Stack direction="row" spacing={2} flexWrap="wrap" gap={1}>
+                            {/* Update Button - shows inputs when clicked */}
+                            <Button
+                              variant="contained"
+                              color="warning"
+                              size="small"
+                              onClick={() => handleToggleEditMode(company.id)}
+                              startIcon={<Iconify icon="eva:edit-fill" />}
+                            >
+                              {t('update')}
+                            </Button>
 
-                    {/* Action Buttons */}
-                    {values[`${company.id}_enabled`] && (
-                      <Stack direction="row" spacing={2}>
-                        <LoadingButton
-                          variant="outlined"
-                          color="info"
-                          size="small"
-                          loading={validatingConnection === company.id}
-                          onClick={() => handleValidateConnection(company)}
-                          startIcon={<Iconify icon="eva:shield-checkmark-fill" />}
-                        >
-                          {t('validate_connection')}
-                        </LoadingButton>
+                            {/* Verify Connection Button */}
+                            <LoadingButton
+                              variant="outlined"
+                              color="info"
+                              size="small"
+                              loading={validatingConnection === company.id}
+                              onClick={() => handleValidateConnection(company)}
+                              startIcon={<Iconify icon="eva:shield-checkmark-fill" />}
+                            >
+                              {t('verify_connection')}
+                            </LoadingButton>
 
-                        {!company.isDefault && company.connectionId && (
-                          <Button
-                            variant="outlined"
-                            color="primary"
-                            size="small"
-                            onClick={() => handleSetAsDefault(company)}
-                            startIcon={<Iconify icon="eva:star-fill" />}
-                          >
-                            {t('set_as_default')}
-                          </Button>
+                            {/* Set as Default Button */}
+                            {!company.isDefault && (
+                              <Button
+                                variant="outlined"
+                                color="primary"
+                                size="small"
+                                onClick={() => handleSetAsDefault(company)}
+                                startIcon={<Iconify icon="eva:star-fill" />}
+                              >
+                                {t('set_as_default')}
+                              </Button>
+                            )}
+                          </Stack>
                         )}
-                      </Stack>
+                      </>
+                    ) : (
+                      <>
+                        {/* Edit Mode or New Connection - Show input fields */}
+                        {company.isConnected && editingProviders[company.id] && (
+                          <Alert severity="info" sx={{ mb: 1 }}>
+                            <Typography variant="caption">
+                              {t('update_credentials_message')}
+                            </Typography>
+                          </Alert>
+                        )}
+
+                        {/* Dynamic Fields */}
+                        {company.fields.map((field) => (
+                          <RHFTextField
+                            key={field.name}
+                            name={field.name}
+                            label={field.label}
+                            type={field.type}
+                            placeholder={field.placeholder}
+                            disabled={!values[`${company.id}_enabled`]}
+                            helperText={
+                              !values[`${company.id}_enabled`]
+                                ? t('enable_to_configure')
+                                : field.description || (field.required
+                                  ? t('required_field')
+                                  : t('optional_field'))
+                            }
+                            InputProps={{
+                              startAdornment: (
+                                <Iconify
+                                  icon="solar:key-bold"
+                                  width={20}
+                                  sx={{ mr: 1, color: 'text.disabled' }}
+                                />
+                              ),
+                            }}
+                          />
+                        ))}
+
+                        {/* Action Buttons for edit/create mode */}
+                        {values[`${company.id}_enabled`] && (
+                          <Stack direction="row" spacing={2} flexWrap="wrap" gap={1}>
+                            {/* Submit/Create Button */}
+                            <LoadingButton
+                              variant="contained"
+                              color={company.isConnected ? "primary" : "success"}
+                              size="small"
+                              loading={savingProvider === company.id}
+                              onClick={() => handleSaveProvider(company)}
+                              startIcon={<Iconify icon={company.isConnected ? "eva:save-fill" : "eva:plus-fill"} />}
+                            >
+                              {company.isConnected ? t('submit') : t('create')}
+                            </LoadingButton>
+
+                            {/* Cancel Button - only show in edit mode */}
+                            {company.isConnected && editingProviders[company.id] && (
+                              <Button
+                                variant="outlined"
+                                color="inherit"
+                                size="small"
+                                onClick={() => handleCancelEdit(company)}
+                                startIcon={<Iconify icon="eva:close-fill" />}
+                              >
+                                {t('cancel')}
+                              </Button>
+                            )}
+                          </Stack>
+                        )}
+                      </>
                     )}
                   </Stack>
                 </AccordionDetails>

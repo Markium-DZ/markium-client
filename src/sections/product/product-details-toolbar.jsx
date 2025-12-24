@@ -63,7 +63,7 @@ export default function ProductDetailsToolbar({
             <Iconify icon="solar:pen-bold" />
           </IconButton>
         </Tooltip>
-
+{/* 
         <LoadingButton
           color="inherit"
           variant="contained"
@@ -74,7 +74,7 @@ export default function ProductDetailsToolbar({
           sx={{ textTransform: 'capitalize' }}
         >
           {publish}
-        </LoadingButton>
+        </LoadingButton> */}
       </Stack>
 
       <CustomPopover

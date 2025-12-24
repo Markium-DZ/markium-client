@@ -67,7 +67,7 @@ export async function createShippingConnection(body) {
 
 export async function updateShippingConnection(connectionId, body) {
   const URL = endpoints.shipping.updateConnection(connectionId);
-  return await axios.patch(URL, body);
+  return await axios.put(URL, body);
 }
 
 export async function validateShippingConnection(connectionId) {

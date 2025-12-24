@@ -17,6 +17,8 @@ export const StyledEditor = styled(Box)(({ theme }) => ({
     minHeight: 160,
     maxHeight: 640,
     backgroundColor: alpha(theme.palette.grey[500], 0.08),
+    direction: theme.direction,
+    textAlign: theme.direction === 'rtl' ? 'right' : 'left',
     '&.ql-blank:before': {
       fontStyle: 'normal',
       color: theme.palette.text.disabled,
