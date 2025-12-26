@@ -16,7 +16,8 @@ import Grid from '@mui/material/Unstable_Grid2';
 import { paths } from 'src/routes/paths';
 import { RouterLink } from 'src/routes/components';
 
-import { useGetProduct } from 'src/api/product';
+import { useGetProduct, deployProduct } from 'src/api/product';
+import showError from 'src/utils/show_error';
 import { PRODUCT_PUBLISH_OPTIONS } from 'src/_mock';
 
 import Iconify from 'src/components/iconify';
@@ -26,6 +27,9 @@ import { useTranslate } from 'src/locales';
 import { useAuthContext } from 'src/auth/hooks';
 import { useSnackbar } from 'src/components/snackbar';
 import { useCopyToClipboard } from 'src/hooks/use-copy-to-clipboard';
+import { useBoolean } from 'src/hooks/use-boolean';
+import { ConfirmDialog } from 'src/components/custom-dialog';
+import LoadingButton from '@mui/lab/LoadingButton';
 
 import { ProductDetailsSkeleton } from '../product-skeleton';
 import ProductDetailsSummary from '../product-details-summary';
@@ -81,7 +85,11 @@ export default function ProductDetailsView({ id }) {
 
   const [publish, setPublish] = useState('');
 
+  const [publishLoading, setPublishLoading] = useState(false);
+
   const [selectedVariant, setSelectedVariant] = useState(null);
+
+  const publishConfirm = useBoolean();
 
   useEffect(() => {
     if (product) {
@@ -93,8 +101,30 @@ export default function ProductDetailsView({ id }) {
   }, [product]);
 
   const handleChangePublish = useCallback((newValue) => {
-    setPublish(newValue);
-  }, []);
+    // If selecting 'published', show confirm dialog
+    if (newValue === 'published' && publish !== 'published') {
+      publishConfirm.onTrue();
+    } else {
+      // For draft, just update local state (or implement unpublish API if available)
+      setPublish(newValue);
+    }
+  }, [publish, publishConfirm]);
+
+  const handleConfirmPublish = useCallback(async () => {
+    try {
+      setPublishLoading(true);
+      await deployProduct(id);
+      setPublish('published');
+      enqueueSnackbar(t('product_published_successfully'), { variant: 'success' });
+      productMutate(); // Refresh product data
+      publishConfirm.onFalse();
+    } catch (error) {
+      console.error('Deploy error:', error);
+      showError(error);
+    } finally {
+      setPublishLoading(false);
+    }
+  }, [id, enqueueSnackbar, t, productMutate, publishConfirm]);
 
   const handleChangeTab = useCallback((event, newValue) => {
     setCurrentTab(newValue);
@@ -126,7 +156,7 @@ export default function ProductDetailsView({ id }) {
         backLink={paths.dashboard.product.root}
         editLink={paths.dashboard.product.edit(`${product?.id}`)}
         liveLink={paths.product.details(`${product?.id}`)}
-        publish={publish || ''}
+        publish={publishLoading ? '' : (publish || '')}
         onChangePublish={handleChangePublish}
         publishOptions={PRODUCT_PUBLISH_OPTIONS}
       />
@@ -258,13 +288,32 @@ export default function ProductDetailsView({ id }) {
   );
 
   return (
-    <Container maxWidth={settings.themeStretch ? false : 'lg'}>
-      {productLoading && renderSkeleton}
+    <>
+      <Container maxWidth={settings.themeStretch ? false : 'lg'}>
+        {productLoading && renderSkeleton}
 
-      {productError && renderError}
+        {productError && renderError}
 
-      {product && renderProduct}
-    </Container>
+        {product && renderProduct}
+      </Container>
+
+      <ConfirmDialog
+        open={publishConfirm.value}
+        onClose={publishConfirm.onFalse}
+        title={t('publish_product')}
+        content={t('are_you_sure_you_want_to_publish_this_product')}
+        action={
+          <LoadingButton
+            variant="contained"
+            color="success"
+            loading={publishLoading}
+            onClick={handleConfirmPublish}
+          >
+            {t('publish')}
+          </LoadingButton>
+        }
+      />
+    </>
   );
 }
 

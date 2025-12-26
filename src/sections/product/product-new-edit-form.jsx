@@ -38,7 +38,7 @@ import FormProvider, {
 import { createProduct, updateProduct, createMedia } from 'src/api/product';
 import showError from 'src/utils/show_error';
 import { useGetSystemCategories } from 'src/api/settings';
-import { IconButton, MenuItem } from '@mui/material';
+import { IconButton, ListSubheader, MenuItem } from '@mui/material';
 import Iconify from 'src/components/iconify';
 import { ConfirmDialog } from 'src/components/custom-dialog';
 import { MediaPickerDialog } from 'src/components/media-picker';
@@ -74,6 +74,21 @@ export default function ProductNewEditForm({ currentProduct }) {
   ]);
 
   const { items: categories } = useGetSystemCategories();
+
+  // Organize categories into parent groups with children
+  const groupedCategories = useMemo(() => {
+    if (!categories) return [];
+
+    // Separate parent categories (no parent_id) from child categories
+    const parentCategories = categories.filter((cat) => !cat.parent_id);
+    const childCategories = categories.filter((cat) => cat.parent_id);
+
+    // Build grouped structure
+    return parentCategories.map((parent) => ({
+      ...parent,
+      children: childCategories.filter((child) => child.parent_id === parent.id),
+    }));
+  }, [categories]);
 
   // Recreate schema when advancedMode changes
   const NewProductSchema = useMemo(() => Yup.object().shape({
@@ -719,11 +734,40 @@ export default function ProductNewEditForm({ currentProduct }) {
               <RHFSelect name="category_id" label={t('category')}>
                 <MenuItem value="">{t('select_category')}</MenuItem>
                 <Divider sx={{ borderStyle: 'dashed' }} />
-                {categories?.map((category) => (
-                  <MenuItem key={category.id} value={category.id}>
-                    {category?.name}
-                  </MenuItem>
-                ))}
+                {groupedCategories?.map((parentCategory) => [
+                  // Parent category as group header (also selectable)
+                  <ListSubheader
+                    key={`header-${parentCategory.id}`}
+                    sx={{
+                      bgcolor: 'background.neutral',
+                      color: 'text.primary',
+                      fontWeight: 600,
+                      lineHeight: '36px',
+                    }}
+                  >
+                    {parentCategory.name}
+                  </ListSubheader>,
+                  // If parent has no children, make it selectable
+                  parentCategory.children?.length === 0 && (
+                    <MenuItem
+                      key={parentCategory.id}
+                      value={parentCategory.id}
+                      sx={{ pl: 3 }}
+                    >
+                      {parentCategory.name}
+                    </MenuItem>
+                  ),
+                  // Children categories
+                  ...(parentCategory.children?.map((child) => (
+                    <MenuItem
+                      key={child.id}
+                      value={child.id}
+                      sx={{ pl: 3 }}
+                    >
+                      {child.name}
+                    </MenuItem>
+                  )) || []),
+                ])}
               </RHFSelect>
             </Box>
 
