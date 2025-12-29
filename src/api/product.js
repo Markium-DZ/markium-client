@@ -8,7 +8,7 @@ import { HOST_API } from 'src/config-global';
 
 export function useGetProducts() {
   const URL = endpoints.product.root;
-  const { data, isLoading, error, isValidating } = useSWR( URL, fetcher);
+  const { data, isLoading, error, isValidating, mutate } = useSWR( URL, fetcher);
 
   const memoizedValue = useMemo(
     () => ({
@@ -17,8 +17,9 @@ export function useGetProducts() {
       productsError: error,
       productsValidating: isValidating,
       productsEmpty: !isLoading && !data?.data?.length,
+      productsMutate: mutate,
     }),
-    [data?.data, error, isLoading, isValidating]
+    [data?.data, error, isLoading, isValidating, mutate]
   );
 
   return memoizedValue;

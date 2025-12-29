@@ -60,6 +60,9 @@ export default function ProductDetailsSummary({
     : null;
   const available = currentVariant?.available_quantity || 0;
   const quantity = currentVariant?.quantity || 0;
+
+  // Calculate total quantity across all variants
+  const totalQuantity = variants?.reduce((sum, v) => sum + (v.available_quantity || 0), 0) || 0;
   // Handle media as array or single object
   const mediaArray = Array.isArray(currentVariant?.media)
     ? currentVariant.media
@@ -252,14 +255,14 @@ export default function ProductDetailsSummary({
     </Stack>
   );
 
-  // Display available quantity as read-only
+  // Display total available quantity across all variants
   const renderQuantity = (
     <Stack direction="row" spacing={2}>
       <Typography variant="subtitle2" sx={{ color: 'text.secondary', minWidth: 100 }}>
         {t('available')}:
       </Typography>
-      <Typography variant="body2" sx={{ fontWeight: 600, color: available > 0 ? 'success.main' : 'error.main' }}>
-        {available} {t('units')}
+      <Typography variant="body2" sx={{ fontWeight: 600, color: totalQuantity > 0 ? 'success.main' : 'error.main' }}>
+        {totalQuantity} {t('units')}
       </Typography>
     </Stack>
   );

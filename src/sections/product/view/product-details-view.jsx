@@ -91,9 +91,14 @@ export default function ProductDetailsView({ id }) {
 
   const publishConfirm = useBoolean();
 
+  // Check if product is already deployed
+  const isDeployed = product?.status === 'deployed' || product?.status === 'published';
+
   useEffect(() => {
     if (product) {
-      setPublish(product?.status || product?.publish || '');
+      // Map 'deployed' status to 'published' for the toolbar display
+      const status = product?.status === 'deployed' ? 'published' : (product?.status || product?.publish || '');
+      setPublish(status);
       // Set default variant
       const defaultVar = product?.variants?.find((v) => v.is_default) || product?.variants?.[0];
       setSelectedVariant(defaultVar);
@@ -101,14 +106,17 @@ export default function ProductDetailsView({ id }) {
   }, [product]);
 
   const handleChangePublish = useCallback((newValue) => {
-    // If selecting 'published', show confirm dialog
-    if (newValue === 'published' && publish !== 'published') {
+    // If selecting 'published' and product is not already deployed, show confirm dialog
+    if (newValue === 'published' && !isDeployed) {
       publishConfirm.onTrue();
+    } else if (newValue === 'published' && isDeployed) {
+      // Product is already deployed, show info message
+      enqueueSnackbar(t('product_already_published'), { variant: 'info' });
     } else {
       // For draft, just update local state (or implement unpublish API if available)
       setPublish(newValue);
     }
-  }, [publish, publishConfirm]);
+  }, [isDeployed, publishConfirm, enqueueSnackbar, t]);
 
   const handleConfirmPublish = useCallback(async () => {
     try {

@@ -66,7 +66,7 @@ export default function ProductDetailsToolbar({
         <Box sx={{ flexGrow: 1 }} />
 
         <Stack direction="row" spacing={0.5} alignItems="center">
-          {isPublished && (
+          {/* {isPublished && (
             <Tooltip title={t('go_live')} arrow>
               <IconButton
                 component={RouterLink}
@@ -83,7 +83,7 @@ export default function ProductDetailsToolbar({
                 <Iconify icon="eva:external-link-fill" width={18} />
               </IconButton>
             </Tooltip>
-          )}
+          )} */}
 
           <Tooltip title={t('edit')} arrow>
             <IconButton

@@ -189,6 +189,7 @@ export const paths = {
     },
     settings: {
       root: `${ROOTS.DASHBOARD}/settings`,
+      general: `${ROOTS.DASHBOARD}/settings/general`,
       account: `${ROOTS.DASHBOARD}/settings/account`,
       store_logo: `${ROOTS.DASHBOARD}/settings/store-logo`,
       store_data: `${ROOTS.DASHBOARD}/settings/store-data`,

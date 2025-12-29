@@ -118,10 +118,24 @@ export default function StoreLanguageForm() {
       <Grid container spacing={3}>
         {/* Information Alert */}
         <Grid xs={12}>
+          <Stack direction="row" justifyContent="flex-end" spacing={2}>
+            <LoadingButton
+              type="submit"
+              variant="contained"
+              size="large"
+              loading={isSubmitting || loading}
+              startIcon={<Iconify icon="solar:check-circle-bold" />}
+            >
+              {t('save_changes')}
+            </LoadingButton>
+          </Stack>
+        </Grid>
+        <Grid xs={12}>
           <Alert severity="info" icon={<Iconify icon="solar:info-circle-bold" width={24} />}>
             <Typography variant="body2">{t('store_language_info_message')}</Typography>
           </Alert>
         </Grid>
+
 
         {/* Language Selection */}
         <Grid xs={12}>
@@ -264,19 +278,7 @@ export default function StoreLanguageForm() {
         </Grid>
 
         {/* Actions */}
-        <Grid xs={12}>
-          <Stack direction="row" justifyContent="flex-end" spacing={2}>
-            <LoadingButton
-              type="submit"
-              variant="contained"
-              size="large"
-              loading={isSubmitting || loading}
-              startIcon={<Iconify icon="solar:check-circle-bold" />}
-            >
-              {t('save_changes')}
-            </LoadingButton>
-          </Stack>
-        </Grid>
+
       </Grid>
     </FormProvider>
   );

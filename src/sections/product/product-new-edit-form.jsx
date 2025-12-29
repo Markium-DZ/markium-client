@@ -771,32 +771,37 @@ export default function ProductNewEditForm({ currentProduct }) {
               </RHFSelect>
             </Box>
 
-            <RHFAutocomplete
-              name="tags"
-              label={t('tags')}
-              placeholder={`+ ${t('tags')}`}
-              multiple
-              freeSolo
-              options={_tags.map((option) => t(`tag_${option.toLowerCase()}`))}
-              getOptionLabel={(option) => option}
-              renderOption={(props, option) => (
-                <li {...props} key={option}>
-                  {option}
-                </li>
-              )}
-              renderTags={(selected, getTagProps) =>
-                selected.map((option, index) => (
-                  <Chip
-                    {...getTagProps({ index })}
-                    key={option}
-                    label={option}
-                    size="small"
-                    color="info"
-                    variant="soft"
-                  />
-                ))
-              }
-            />
+            <Stack spacing={1}>
+              <RHFAutocomplete
+                name="tags"
+                label={`${t('tags')} (${t('optional')})`}
+                placeholder={`+ ${t('tags')}`}
+                multiple
+                freeSolo
+                options={_tags.map((option) => t(`tag_${option.toLowerCase()}`))}
+                getOptionLabel={(option) => option}
+                renderOption={(props, option) => (
+                  <li {...props} key={option}>
+                    {option}
+                  </li>
+                )}
+                renderTags={(selected, getTagProps) =>
+                  selected.map((option, index) => (
+                    <Chip
+                      {...getTagProps({ index })}
+                      key={option}
+                      label={option}
+                      size="small"
+                      color="info"
+                      variant="soft"
+                    />
+                  ))
+                }
+              />
+              <Typography variant="caption" sx={{ color: 'text.secondary', px: 1.5 }}>
+                {t('tags_helper_text')}
+              </Typography>
+            </Stack>
           </Stack>
         </Card>
       </Grid>
@@ -836,22 +841,27 @@ export default function ProductNewEditForm({ currentProduct }) {
                 }}
               />
 
-              <RHFTextField
-                name="real_price"
-                label={t('compare_at_price')}
-                placeholder="0.00"
-                type="number"
-                InputLabelProps={{ shrink: true }}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Box component="span" sx={{ color: 'text.disabled' }}>
-                        DZD
-                      </Box>
-                    </InputAdornment>
-                  ),
-                }}
-              />
+              <Stack spacing={1}>
+                <RHFTextField
+                  name="real_price"
+                  label={`${t('compare_at_price')} (${t('optional')})`}
+                  placeholder="0.00"
+                  type="number"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <Box component="span" sx={{ color: 'text.disabled' }}>
+                          DZD
+                        </Box>
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+                <Typography variant="caption" sx={{ color: 'text.secondary', px: 1.5 }}>
+                  {t('compare_at_price_helper_text')}
+                </Typography>
+              </Stack>
 
               <RHFTextField
                 name="quantity"

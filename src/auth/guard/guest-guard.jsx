@@ -1,8 +1,9 @@
 import PropTypes from 'prop-types';
 import { useEffect, useCallback } from 'react';
 
-import { paths } from 'src/routes/paths';
 import { useRouter, useSearchParams } from 'src/routes/hooks';
+
+import { PATH_AFTER_LOGIN } from 'src/config-global';
 
 import { SplashScreen } from 'src/components/loading-screen';
 
@@ -27,7 +28,7 @@ function Container({ children }) {
 
   const searchParams = useSearchParams();
 
-  const returnTo = searchParams.get('returnTo') || '/auth/jwt/login';
+  const returnTo = searchParams.get('returnTo') || PATH_AFTER_LOGIN;
 
   const { authenticated } = useAuthContext();
 

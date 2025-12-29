@@ -83,6 +83,7 @@ const DeliveryCompaniesView = lazy(() => import('src/pages/dashboard/settings/de
 const ContactsSocialView = lazy(() => import('src/pages/dashboard/settings/contacts-social-view'));
 const ColorPaletteView = lazy(() => import('src/pages/dashboard/settings/color-palette-view'));
 const StoreLanguageView = lazy(() => import('src/pages/dashboard/settings/store-language-view'));
+const GeneralSettingsView = lazy(() => import('src/pages/dashboard/settings/general-settings-view'));
 const ContactSupportView = lazy(() => import('src/pages/dashboard/contact-support-view'));
 
 
@@ -341,6 +342,7 @@ export const dashboardRoutes = [
         path: 'settings',
         children: [
           { element: <SettingsView />, index: true },
+          { path: 'general', element: <GeneralSettingsView /> },
           { path: 'account', element: <AccountSettingsView /> },
           { path: 'store-logo', element: <StoreLogoView /> },
           { path: 'store-data', element: <StoreDataView /> },

@@ -30,10 +30,13 @@ export default function MediaPickerDialog({ open, onClose, onSelect, multiple = 
   const { enqueueSnackbar } = useSnackbar();
 
   const [selectedMedia, setSelectedMedia] = useState([]);
-  const [uploadedFiles, setUploadedFiles] = useState([]);
+  const [localPreviews, setLocalPreviews] = useState([]); // Local previews for immediate display
   const [uploading, setUploading] = useState(false);
 
   const { media, mediaLoading, mediaValidating, mutate } = useGetMedia(1, 100);
+
+  // Combine local previews with server media (local previews first)
+  const allMedia = [...localPreviews, ...(media || [])];
 
   const handleToggleMedia = useCallback((mediaItem) => {
     setSelectedMedia((prev) => {
@@ -54,33 +57,62 @@ export default function MediaPickerDialog({ open, onClose, onSelect, multiple = 
   const handleDrop = useCallback(async (acceptedFiles) => {
     try {
       setUploading(true);
+
+      // Create local previews immediately for instant feedback
+      const previews = acceptedFiles.map((file, index) => ({
+        id: `local-${Date.now()}-${index}`,
+        full_url: URL.createObjectURL(file),
+        alt_text: file.name,
+        width: 0,
+        height: 0,
+        file_size: file.size,
+        isLocal: true, // Flag to identify local previews
+      }));
+      setLocalPreviews((prev) => [...previews, ...prev]);
+
       await uploadMedia(acceptedFiles);
 
-      // Refresh media list
+      // Refresh media list immediately
       mutate();
+
+      // Auto-refresh after delay to ensure media is fully created on backend
+      // Then remove local previews as server data should be available
+      setTimeout(() => {
+        mutate();
+      }, 1500);
+
+      setTimeout(() => {
+        mutate();
+        // Remove local previews after server data is likely available
+        setLocalPreviews([]);
+      }, 3000);
 
       enqueueSnackbar(t('media_uploaded_successfully'), { variant: 'success' });
     } catch (error) {
       console.error('Failed to upload media:', error);
       enqueueSnackbar(error.message || t('failed_to_upload_media'), { variant: 'error' });
+      // Remove local previews on error
+      setLocalPreviews([]);
     } finally {
       setUploading(false);
     }
   }, [mutate, enqueueSnackbar, t]);
 
   const handleSelect = useCallback(() => {
-    onSelect(multiple ? selectedMedia : selectedMedia[0]);
+    // Filter out local previews from selection (they can't be used as actual media)
+    const validSelection = selectedMedia.filter((item) => !item.isLocal);
+    onSelect(multiple ? validSelection : validSelection[0]);
 
     // Reset state
     setSelectedMedia([]);
-    setUploadedFiles([]);
+    setLocalPreviews([]);
 
     onClose();
   }, [selectedMedia, multiple, onSelect, onClose]);
 
   const handleCancel = useCallback(() => {
     setSelectedMedia([]);
-    setUploadedFiles([]);
+    setLocalPreviews([]);
     onClose();
   }, [onClose]);
 
@@ -171,18 +203,19 @@ export default function MediaPickerDialog({ open, onClose, onSelect, multiple = 
               </Button>
             </Stack>
 
-            {mediaLoading ? (
+            {mediaLoading && localPreviews.length === 0 ? (
               <Box sx={{ display: 'flex', justifyContent: 'center', py: 5 }}>
                 <CircularProgress />
               </Box>
-            ) : media && media.length > 0 ? (
+            ) : allMedia.length > 0 ? (
               <Grid container spacing={2}>
-                {media.map((item) => (
+                {allMedia.map((item) => (
                   <Grid item xs={6} sm={4} md={3} key={item.id}>
                     <MediaCard
                       item={item}
                       selected={selectedMedia.some((m) => m.id === item.id)}
                       onToggle={() => handleToggleMedia(item)}
+                      isLocal={item.isLocal}
                     />
                   </Grid>
                 ))}
@@ -228,17 +261,18 @@ MediaPickerDialog.propTypes = {
 
 // ----------------------------------------------------------------------
 
-function MediaCard({ item, selected, onToggle }) {
+function MediaCard({ item, selected, onToggle, isLocal }) {
   return (
     <Card
-      onClick={onToggle}
+      onClick={isLocal ? undefined : onToggle}
       sx={{
         position: 'relative',
-        cursor: 'pointer',
+        cursor: isLocal ? 'default' : 'pointer',
         transition: 'all 0.2s',
         border: (theme) => `2px solid ${selected ? theme.palette.primary.main : 'transparent'}`,
+        opacity: isLocal ? 0.7 : 1,
         '&:hover': {
-          boxShadow: (theme) => theme.customShadows.z8,
+          boxShadow: isLocal ? 'none' : (theme) => theme.customShadows.z8,
         },
       }}
     >
@@ -265,7 +299,26 @@ function MediaCard({ item, selected, onToggle }) {
           }}
         />
 
-        {selected && (
+        {/* Loading overlay for local previews */}
+        {isLocal && (
+          <Box
+            sx={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              bgcolor: (theme) => alpha(theme.palette.common.black, 0.4),
+            }}
+          >
+            <CircularProgress size={24} sx={{ color: 'white' }} />
+          </Box>
+        )}
+
+        {selected && !isLocal && (
           <Box
             sx={{
               position: 'absolute',
@@ -303,7 +356,7 @@ function MediaCard({ item, selected, onToggle }) {
               textAlign: 'center',
             }}
           >
-            {item.width} × {item.height} • {fData(item.file_size)}
+            {isLocal ? item.alt_text : `${item.width} × ${item.height} • ${fData(item.file_size)}`}
           </Typography>
         </Box>
       </Box>
@@ -315,4 +368,5 @@ MediaCard.propTypes = {
   item: PropTypes.object.isRequired,
   selected: PropTypes.bool.isRequired,
   onToggle: PropTypes.func.isRequired,
+  isLocal: PropTypes.bool,
 };

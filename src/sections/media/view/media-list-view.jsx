@@ -25,6 +25,7 @@ import CustomPopover, { usePopover } from 'src/components/custom-popover';
 import { ConfirmDialog } from 'src/components/custom-dialog';
 import showError from 'src/utils/show_error';
 import { STORAGE_API } from 'src/config-global';
+import { LoadingScreen } from 'src/components/loading-screen';
 
 // ----------------------------------------------------------------------
 
@@ -194,7 +195,8 @@ export default function MediaListView() {
 
         {mediaLoading && (
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
-            <CircularProgress />
+            {/* <CircularProgress /> */}
+            <LoadingScreen />
           </Box>
         )}
       </Box>

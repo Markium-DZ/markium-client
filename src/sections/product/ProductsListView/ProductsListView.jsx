@@ -1,4 +1,4 @@
-import { Box, Button, Card, FormControlLabel, FormGroup, Grid, IconButton, MenuItem, Stack, Switch, Tooltip, Typography } from '@mui/material';
+import { Avatar, Box, Button, Card, FormControlLabel, FormGroup, Grid, IconButton, Link, ListItemText, MenuItem, Stack, Switch, Tooltip, Typography } from '@mui/material';
 import { t } from 'i18next';
 import { set } from 'lodash'; // [keep for later use]
 import { enqueueSnackbar, useSnackbar } from 'notistack';
@@ -60,7 +60,7 @@ export default function ProductsListView({ }) {
     const [dataFiltered, setDataFiltered] = useState([]);
 
     let TABLE_HEAD = [
-        { id: 'name', label: t('name'), type: "two-lines-link", first: (row) => { return row?.name }, second: (row) => { }, link: (row) => { return paths.dashboard.product.details(row.id) }, width: 180 },
+        { id: 'name', label: t('name'), type: "render", render: (item) => <ProductNameCell item={item} />, width: 250 },
         // { id: 'phone_number', label: t('phone_number'), type: "text", width: 140 },
         { id: 'quantity', label: t('quantity'), type: "text", width: 140 },
         // { id: 'birth_date', label: t('birth_date'), type: "text", width: 140 },
@@ -492,4 +492,58 @@ const OrdersDropdown = ({ item }) => {
     );
 };
 
+
+// ----------------------------------------------------------------------
+
+const ProductNameCell = ({ item }) => {
+    const router = useRouter();
+
+    // Get the default variant or first variant
+    const defaultVariant = item?.variants?.find((v) => v.is_default) || item?.variants?.[0];
+
+    // Get the first image from variant's media (can be array or single object)
+    const variantMedia = defaultVariant?.media;
+    let imageUrl = '';
+
+    if (Array.isArray(variantMedia) && variantMedia.length > 0) {
+        imageUrl = variantMedia[0]?.full_url || variantMedia[0]?.url || '';
+    } else if (variantMedia && typeof variantMedia === 'object') {
+        imageUrl = variantMedia.full_url || variantMedia.url || '';
+    } else if (item?.images?.[0]) {
+        // Fallback to legacy images array
+        imageUrl = item.images[0];
+    }
+
+    return (
+        <Stack direction="row" alignItems="center" spacing={2}>
+            <Avatar
+                alt={item?.name}
+                src={imageUrl}
+                variant="rounded"
+                sx={{ width: 48, height: 48, cursor: 'pointer' }}
+                onClick={() => router.push(paths.dashboard.product.details(item?.id))}
+            />
+            <ListItemText
+                primary={
+                    <Link
+                        noWrap
+                        color="inherit"
+                        variant="subtitle2"
+                        onClick={() => router.push(paths.dashboard.product.details(item?.id))}
+                        sx={{ cursor: 'pointer', '&:hover': { textDecoration: 'underline' } }}
+                    >
+                        {item?.name}
+                    </Link>
+                }
+                secondary={
+                    <Typography variant="caption" sx={{ color: 'text.disabled' }} noWrap>
+                        {item?.description?.substring(0, 50)}{item?.description?.length > 50 ? '...' : ''}
+                    </Typography>
+                }
+                primaryTypographyProps={{ typography: 'body2' }}
+                secondaryTypographyProps={{ component: 'span' }}
+            />
+        </Stack>
+    );
+};
 

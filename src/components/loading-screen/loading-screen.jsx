@@ -20,7 +20,7 @@ export default function LoadingScreen({ sx, ...other }) {
       }}
       {...other}
     >
-      <LinearProgress color="inherit" sx={{ width: 1, maxWidth: 360 }} />
+      <LinearProgress color="primary" sx={{ width: 1, maxWidth: 360 }} />
     </Box>
   );
 }

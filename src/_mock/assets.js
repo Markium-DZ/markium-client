@@ -297,7 +297,7 @@ export const _postTitles = [
 // ----------------------------------------------------------------------
 
 export const _productNames = [
-  'Nike Air Force 1 NDESTRUKT',
+  'Ramadane is closer',
   'Foundations Matte Flip Flop',
   'Nike Air Zoom Pegasus 37 A.I.R. Chaz Bear',
   'Arizona Soft Footbed Sandal',

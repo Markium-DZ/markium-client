@@ -78,16 +78,16 @@ function CarouselItem({ item }) {
         }}
       >
         <Typography variant="overline" sx={{ opacity: 0.48 }}>
-          {t('new')}
+          {t('ranamade')}
         </Typography>
 
         <Typography noWrap variant="h5" sx={{ mt: 1, mb: 3 }}>
           {name}
         </Typography>
 
-        <Button color="primary" variant="contained">
+        {/* <Button color="primary" variant="contained">
           {t('buy_now')}
-        </Button>
+        </Button> */}
       </CardContent>
 
       {renderImg}

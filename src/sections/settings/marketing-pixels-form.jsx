@@ -269,6 +269,18 @@ export default function MarketingPixelsForm() {
     <FormProvider methods={methods} onSubmit={onSubmit}>
       <Grid container spacing={3}>
         {/* Information Alert */}
+         <Grid xs={12}>
+          <Stack direction="row" justifyContent="flex-end" spacing={2}>
+            <LoadingButton
+              type="submit"
+              variant="contained"
+              size="large"
+              loading={isSubmitting || loading}
+            >
+              {t('save_changes')}
+            </LoadingButton>
+          </Stack>
+        </Grid>
         <Grid xs={12}>
           <Alert severity="info">
             <Typography variant="body2">
@@ -344,18 +356,7 @@ export default function MarketingPixelsForm() {
         </Grid>
 
         {/* Actions */}
-        <Grid xs={12}>
-          <Stack direction="row" justifyContent="flex-end" spacing={2}>
-            <LoadingButton
-              type="submit"
-              variant="contained"
-              size="large"
-              loading={isSubmitting || loading}
-            >
-              {t('save_changes')}
-            </LoadingButton>
-          </Stack>
-        </Grid>
+       
       </Grid>
     </FormProvider>
   );
