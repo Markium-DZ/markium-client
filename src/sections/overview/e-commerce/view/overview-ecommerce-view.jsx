@@ -20,7 +20,7 @@ import { MotivationIllustration } from 'src/assets/illustrations';
 
 
 import EcommerceWelcome from '../ecommerce-welcome';
-import EcommerceNewProducts from '../ecommerce-new-products';
+import EcommerceEventsCalendar from '../ecommerce-events-calendar';
 import EcommerceYearlySales from '../ecommerce-yearly-sales';
 import EcommerceSaleByGender from '../ecommerce-sale-by-gender';
 import EcommerceWidgetSummary from '../ecommerce-widget-summary';
@@ -75,15 +75,9 @@ export default function OverviewEcommerceView() {
           />
         </Grid>
 
-        {/* Product Banner */}
+        {/* Events Calendar */}
         <Grid xs={12} md={4}>
-          <EcommerceNewProducts list={[
-            {
-              id: 'ramadan-2025',
-              name: t('ramadan_reminder'),
-              coverUrl: '/assets/events/ramadane.png',
-            }
-          ]} />
+          <EcommerceEventsCalendar />
         </Grid>
 
         {/* Setup Checklist - Only for new users or incomplete setup */}
