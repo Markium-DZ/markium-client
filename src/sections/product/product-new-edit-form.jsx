@@ -75,19 +75,10 @@ export default function ProductNewEditForm({ currentProduct }) {
 
   const { items: categories } = useGetSystemCategories();
 
-  // Organize categories into parent groups with children
+  // Categories now come with children already nested from the API
   const groupedCategories = useMemo(() => {
     if (!categories) return [];
-
-    // Separate parent categories (no parent_id) from child categories
-    const parentCategories = categories.filter((cat) => !cat.parent_id);
-    const childCategories = categories.filter((cat) => cat.parent_id);
-
-    // Build grouped structure
-    return parentCategories.map((parent) => ({
-      ...parent,
-      children: childCategories.filter((child) => child.parent_id === parent.id),
-    }));
+    return categories;
   }, [categories]);
 
   // Recreate schema when advancedMode changes

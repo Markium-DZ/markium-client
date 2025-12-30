@@ -179,6 +179,7 @@ export const endpoints = {
   settings: {
     items: (slug)=>`/${slug}`,
     categories: '/categories',
+    categoriesList: '/categories/list',
     visibility: '/system-settings/visibility',
     mainspecs: '/maintenance/specifications',
     new: "/contract/claims",
