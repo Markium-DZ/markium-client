@@ -10,6 +10,7 @@ import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import LoadingButton from '@mui/lab/LoadingButton';
 import InputAdornment from '@mui/material/InputAdornment';
+import Box from '@mui/material/Box';
 
 import { useTranslation } from 'react-i18next';
 
@@ -151,11 +152,41 @@ export default function JwtLoginView() {
 
   const renderForm = (
     <Stack spacing={2.5}>
-      <RHFTextField name="phone" label={t('phone')} />
+      <RHFTextField
+        name="phone"
+        label={t('phone')}
+        placeholder="555123456"
+        // inputProps={{
+        //   dir: 'ltr',
+        // }}
+        InputProps={{
+          startAdornment: (
+            <InputAdornment position="start">
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <Box
+                  component="span"
+                  sx={{
+                    fontSize: '1.2rem',
+                    lineHeight: 1,
+                  }}
+                >
+                  🇩🇿
+                </Box>
+                <Typography variant="body2" sx={{ color: 'text.secondary', fontWeight: 500 }}>
+                  +213
+                </Typography>
+              </Box>
+            </InputAdornment>
+          ),
+        }}
+      />
       <RHFTextField
         name="password"
         label={t('password')}
         type={password.value ? 'text' : 'password'}
+        // inputProps={{
+        //   dir: 'ltr',
+        // }}
         InputProps={{
           endAdornment: (
             <InputAdornment position="end">

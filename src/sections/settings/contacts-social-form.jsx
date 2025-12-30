@@ -26,9 +26,9 @@ import { AuthContext } from 'src/auth/context/jwt';
 // ----------------------------------------------------------------------
 
 export default function ContactsSocialForm() {
-    const { user } = useContext(AuthContext)
-    const { store } = useGetMyStore(user?.store?.slug);
-    console.log("store :store : ",store);
+  const { user } = useContext(AuthContext)
+  const { store } = useGetMyStore(user?.store?.slug);
+  console.log("store :store : ", store);
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslate();
 
@@ -106,7 +106,7 @@ export default function ContactsSocialForm() {
       // Console log the structured data
       console.log('Contacts & Social Media data:', structuredData);
 
-      await updateStoreConfig({ config: {contacts_social:structuredData} });
+      await updateStoreConfig({ config: { contacts_social: structuredData } });
 
       enqueueSnackbar(t('contacts_social_saved_successfully'), { variant: 'success' });
       setLoading(false);
@@ -134,6 +134,19 @@ export default function ContactsSocialForm() {
     <FormProvider methods={methods} onSubmit={onSubmit}>
       <Grid container spacing={3}>
         {/* Information Alert */}
+        <Grid xs={12}>
+          <Stack direction="row" justifyContent="flex-end" spacing={2}>
+            <LoadingButton
+              type="submit"
+              variant="contained"
+              size="large"
+              loading={isSubmitting || loading}
+            >
+              {t('save_changes')}
+            </LoadingButton>
+          </Stack>
+        </Grid>
+
         <Grid xs={12}>
           <Alert severity="info" icon={<Iconify icon="solar:info-circle-bold" width={24} />}>
             <Typography variant="body2">
@@ -223,18 +236,7 @@ export default function ContactsSocialForm() {
         </Grid>
 
         {/* Actions */}
-        <Grid xs={12}>
-          <Stack direction="row" justifyContent="flex-end" spacing={2}>
-            <LoadingButton
-              type="submit"
-              variant="contained"
-              size="large"
-              loading={isSubmitting || loading}
-            >
-              {t('save_changes')}
-            </LoadingButton>
-          </Stack>
-        </Grid>
+
       </Grid>
     </FormProvider>
   );

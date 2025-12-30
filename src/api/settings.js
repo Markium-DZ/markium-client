@@ -89,7 +89,8 @@ export function useGetSystemVisibleItem(type) {
 
 export function useGetSystemCategories(page = 1, perPage = 100) {
     const params = new URLSearchParams({ page, per_page: perPage });
-    const url = `${endpoints.settings?.categories}?${params.toString()}`;
+    // const url = `${endpoints.settings?.categoriesList}?${params.toString()}`;
+    const url = endpoints.settings?.categoriesList;
 
     const { data, isLoading, error, isValidating, mutate } = useSWR(
         url,
@@ -99,11 +100,11 @@ export function useGetSystemCategories(page = 1, perPage = 100) {
 
     const memoizedValue = useMemo(
         () => ({
-            items: data?.data?.categories || [],
+            items: data?.data || [],
             itemsLoading: isLoading,
             itemsError: error,
             itemsValidating: isValidating,
-            itemsEmpty: !isLoading && !data?.data?.categories?.length,
+            itemsEmpty: !isLoading && !data?.data?.length,
             mutate,
         }),
         [data, error, isLoading, isValidating]

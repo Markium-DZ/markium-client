@@ -1,4 +1,4 @@
-import { Box, Button, Card, FormControlLabel, FormGroup, Grid, IconButton, MenuItem, Stack, Switch, Tooltip, Typography } from '@mui/material';
+import { Box, Button, Card, FormControlLabel, FormGroup, Grid, IconButton, MenuItem, Stack, Switch, Tooltip, Typography, Avatar, Chip, Dialog, DialogTitle, DialogContent, Divider } from '@mui/material';
 import { t } from 'i18next';
 import { set } from 'lodash'; // [keep for later use]
 import { enqueueSnackbar, useSnackbar } from 'notistack';
@@ -42,9 +42,341 @@ import { LoadingScreen } from 'src/components/loading-screen';
 import { useGetProducts } from 'src/api/product';
 import { updateOrder, useGetOrders, useGetOrdersByProduct } from 'src/api/orders';
 import ExportOrdersButton from './ExportOrdersButton';
+import { HOST_API } from 'src/config-global';
+import { getOrderStatusOptions, getOrderStatus } from 'src/constants/order-status';
 
 
 
+
+// ----------------------------------------------------------------------
+
+// Order Item Details Dialog Component
+function OrderItemDetailsDialog({ open, onClose, item }) {
+    if (!item) return null;
+
+    const mediaUrl = item.variant?.media?.full_url || item.variant?.media?.url || null;
+    const variantOptions = item.variant?.options || [];
+
+    const content = (
+        <Stack spacing={2}>
+            {/* Product Image */}
+            {mediaUrl && (
+                <Box
+                    sx={{
+                        display: 'flex',
+                        justifyContent: 'center',
+                        p: 2,
+                        bgcolor: (theme) => theme.palette.grey[50],
+                        borderRadius: 2,
+                    }}
+                >
+                    <Avatar
+                        src={mediaUrl}
+                        variant="rounded"
+                        sx={{
+                            width: '100%',
+                            height: 220,
+                            maxWidth: 300,
+                            boxShadow: 3,
+                        }}
+                    />
+                </Box>
+            )}
+
+            {/* Product Name */}
+            <Box>
+                <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
+                    {t('product')}
+                </Typography>
+                <Typography variant="h6" sx={{ fontWeight: 700, lineHeight: 1.4 }}>
+                    {item.product?.name}
+                </Typography>
+            </Box>
+
+            {/* Variant Options */}
+            {variantOptions.length > 0 && (
+                <Box>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem', mb: 1, display: 'block' }}>
+                        {t('variant_options')}
+                    </Typography>
+                    <Stack spacing={1}>
+                        {variantOptions.map((opt, idx) => (
+                            <Box
+                                key={idx}
+                                sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 1.5,
+                                    p: 1,
+                                    bgcolor: (theme) => theme.palette.grey[100],
+                                    borderRadius: 1,
+                                }}
+                            >
+                                <Typography variant="body2" sx={{ fontWeight: 600, minWidth: 70 }}>
+                                    {opt.definition_name}:
+                                </Typography>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                    {opt.color_hex && (
+                                        <Box
+                                            sx={{
+                                                width: 20,
+                                                height: 20,
+                                                borderRadius: '50%',
+                                                bgcolor: opt.color_hex,
+                                                border: (theme) => `2px solid ${theme.palette.divider}`,
+                                            }}
+                                        />
+                                    )}
+                                    <Typography variant="body2">
+                                        {opt.value}
+                                    </Typography>
+                                </Box>
+                            </Box>
+                        ))}
+                    </Stack>
+                </Box>
+            )}
+
+            <Divider />
+
+            {/* Quantity */}
+            <Box>
+                <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem', mb: 0.5, display: 'block' }}>
+                    {t('quantity')}
+                </Typography>
+                <Chip
+                    label={`×${item.quantity}`}
+                    color="error"
+                    size="medium"
+                    sx={{ fontWeight: 700, height: 28 }}
+                />
+            </Box>
+
+            <Divider />
+
+            {/* Pricing */}
+            <Box
+                sx={{
+                    p: 2,
+                    bgcolor: (theme) => theme.palette.primary.lighter,
+                    borderRadius: 1.5,
+                    borderLeft: (theme) => `4px solid ${theme.palette.primary.main}`,
+                }}
+            >
+                <Typography variant="caption" color="primary.main" sx={{ fontWeight: 600, fontSize: '0.75rem' }}>
+                    {t('price')}
+                </Typography>
+                <Stack direction="row" spacing={1.5} alignItems="baseline" flexWrap="wrap" sx={{ mt: 0.5 }}>
+                    <Typography variant="h5" color="primary.main" sx={{ fontWeight: 700 }}>
+                        {item.unit_price ? `${item.unit_price.toFixed(2)} DA` : '-'}
+                    </Typography>
+                    {item.quantity > 1 && (
+                        <Typography variant="body2" color="text.secondary">
+                            {t('total')}: <Box component="span" sx={{ fontWeight: 700, color: 'primary.dark' }}>
+                                {item.total_price ? `${item.total_price.toFixed(2)} DA` :
+                                (item.unit_price ? `${(item.unit_price * item.quantity).toFixed(2)} DA` : '-')}
+                            </Box>
+                        </Typography>
+                    )}
+                </Stack>
+            </Box>
+        </Stack>
+    );
+
+    return (
+        <ContentDialog
+            open={open}
+            onClose={onClose}
+            title={t('product_details')}
+            maxWidth="sm"
+            content={content}
+        />
+    );
+}
+
+// Product Items Display Component
+function OrderItemsCell({ items, order }) {
+    const [dialogOpen, setDialogOpen] = useState(false);
+    const [selectedItem, setSelectedItem] = useState(null);
+
+    const handleItemClick = (item) => {
+        setSelectedItem(item);
+        setDialogOpen(true);
+    };
+
+    const handleCloseDialog = () => {
+        setDialogOpen(false);
+        setSelectedItem(null);
+    };
+
+    // Handle missing items
+    if (!items || items.length === 0) {
+        return <Typography variant="caption" color="text.disabled">-</Typography>;
+    }
+
+    // If single item, show full details with quantity badge
+    if (items.length === 1) {
+        const item = items[0];
+        const mediaUrl = item.variant?.media?.full_url || item.variant?.media?.url || null;
+
+        // Extract variant options - handle both old and new formats
+        const variantText = item.variant?.options
+            ?.map(opt => opt.value || opt)
+            .filter(Boolean)
+            .join(' / ') || '';
+
+        return (
+            <>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                    {mediaUrl && (
+                        <Box
+                            sx={{
+                                position: 'relative',
+                                cursor: 'pointer',
+                                '&:hover': {
+                                    transform: 'scale(1.05)',
+                                    zIndex: 1,
+                                },
+                                transition: 'transform 0.2s'
+                            }}
+                            onClick={() => handleItemClick(item)}
+                        >
+                            <Avatar
+                                src={mediaUrl}
+                                variant="rounded"
+                                sx={{ width: 48, height: 48 }}
+                            />
+                            {/* Quantity Badge */}
+                            <Box
+                                sx={{
+                                    position: 'absolute',
+                                    top: -4,
+                                    right: -4,
+                                    minWidth: 20,
+                                    height: 20,
+                                    borderRadius: '50%',
+                                    bgcolor: 'error.main',
+                                    color: 'white',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    fontSize: '0.7rem',
+                                    fontWeight: 700,
+                                    px: 0.5,
+                                    border: (theme) => `2px solid ${theme.palette.background.paper}`,
+                                    boxShadow: 1,
+                                }}
+                            >
+                                {item.quantity}
+                            </Box>
+                        </Box>
+                    )}
+                </Box>
+                <OrderItemDetailsDialog open={dialogOpen} onClose={handleCloseDialog} item={selectedItem} />
+            </>
+        );
+    }
+
+    // If multiple items, show images horizontally with quantity badges
+    return (
+        <>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                {items.slice(0, 3).map((item, idx) => {
+                    const mediaUrl = item.variant?.media?.full_url || item.variant?.media?.url || null;
+
+                    return (
+                        <Tooltip
+                            key={idx}
+                            title={
+                                <Typography variant="caption" sx={{ fontWeight: 500 }}>
+                                    {item.product?.name}
+                                </Typography>
+                            }
+                            arrow
+                        >
+                            <Box
+                                sx={{
+                                    position: 'relative',
+                                    cursor: 'pointer',
+                                    '&:hover': {
+                                        transform: 'scale(1.05)',
+                                        zIndex: 1,
+                                    },
+                                    transition: 'transform 0.2s'
+                                }}
+                                onClick={() => handleItemClick(item)}
+                            >
+                                <Avatar
+                                    src={mediaUrl}
+                                    variant="rounded"
+                                    sx={{
+                                        width: 40,
+                                        height: 40,
+                                        border: (theme) => `2px solid ${theme.palette.background.paper}`,
+                                    }}
+                                >
+                                    {!mediaUrl && item.product?.name?.charAt(0)}
+                                </Avatar>
+                                {/* Quantity Badge */}
+                                <Box
+                                    sx={{
+                                        position: 'absolute',
+                                        top: -4,
+                                        right: -4,
+                                        minWidth: 18,
+                                        height: 18,
+                                        borderRadius: '50%',
+                                        bgcolor: 'error.main',
+                                        color: 'white',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        fontSize: '0.65rem',
+                                        fontWeight: 700,
+                                        px: 0.5,
+                                        border: (theme) => `2px solid ${theme.palette.background.paper}`,
+                                        boxShadow: 1,
+                                    }}
+                                >
+                                    {item.quantity}
+                                </Box>
+                            </Box>
+                        </Tooltip>
+                    );
+                })}
+                {items.length > 3 && (
+                    <Tooltip
+                        title={
+                            <Stack spacing={0.5} sx={{ p: 0.5 }}>
+                                {items.slice(3).map((item, idx) => (
+                                    <Typography key={idx} variant="caption" sx={{ fontWeight: 500 }}>
+                                        {item.quantity}× {item.product?.name}
+                                    </Typography>
+                                ))}
+                            </Stack>
+                        }
+                        arrow
+                    >
+                        <Avatar
+                            variant="rounded"
+                            sx={{
+                                width: 40,
+                                height: 40,
+                                bgcolor: 'primary.main',
+                                fontSize: '0.75rem',
+                                cursor: 'pointer',
+                                border: (theme) => `2px solid ${theme.palette.background.paper}`,
+                            }}
+                        >
+                            +{items.length - 3}
+                        </Avatar>
+                    </Tooltip>
+                )}
+            </Box>
+            <OrderItemDetailsDialog open={dialogOpen} onClose={handleCloseDialog} item={selectedItem} />
+        </>
+    );
+}
 
 // ----------------------------------------------------------------------
 
@@ -64,13 +396,59 @@ export default function OrdersListView({ product_id }) {
     const [dataFiltered, setDataFiltered] = useState([]);
 
     let TABLE_HEAD = [
-        { id: 'name', label: t('name'), type: "text", width: 180 },
-        { id: 'phone', label: t('phone'), type: "text", width: 140 },
-        { id: 'quantity', label: t('quantity'), type: "text", width: 60 },
-        { id: 'product', label: t('product'), type: "text", width: 140 },
-        // { id: 'birth_date', label: t('birth_date'), type: "text", width: 140 },
-        // { id: 'real_price', label: t('real_price'), type: "text", width: 140 },
-        // { id: 'sale_price', label: t('sale_price'), type: "text", width: 100 },
+        // { id: 'ref', label: t('order_ref'), type: "text", width: 140 },
+        { id: 'product_items', label: t('product'), type: "render", render: (item) => <OrderItemsCell items={item.items} order={item} />, width: 150 },
+        {
+            id: 'name',
+            label: t('customer'),
+            type: "render",
+            render: (item) => (
+                <Typography
+                    component={RouterLink}
+                    to={paths.dashboard.order.details(item.id)}
+                    variant="body2"
+                    sx={{
+                        color: 'primary.main',
+                        textDecoration: 'none',
+                        fontWeight: 500,
+                        '&:hover': {
+                            textDecoration: 'underline',
+                        },
+                    }}
+                >
+                    {item.name || '-'}
+                </Typography>
+            ),
+            width: 180
+        },
+        {
+            id: 'phone',
+            label: t('phone'),
+            type: "render",
+            render: (item) => (
+                <Typography
+                    component="a"
+                    href={`tel:${item.phone}`}
+                    variant="body2"
+                    sx={{
+                        color: 'text.primary',
+                        textDecoration: 'none',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 0.5,
+                        '&:hover': {
+                            color: 'primary.main',
+                            textDecoration: 'underline',
+                        },
+                    }}
+                >
+                    <Iconify icon="solar:phone-bold" width={16} />
+                    {item.phone || '-'}
+                </Typography>
+            ),
+            width: 140
+        },
+        { id: 'total', label: t('total'), type: "text", width: 120 },
         { id: 'c_status', label: t('status'), type: "label", width: 100 },
         { id: 'full_address', label: t('address'), type: "long_text", length: 2, width: 200 },
         { id: 'actions', label: t('actions'), type: "threeDots", component: (item) => <ElementActions item={item} setTableData={setTableData} />, width: 60, align: "right" },
@@ -79,34 +457,30 @@ export default function OrdersListView({ product_id }) {
 
     const RformulateTable = (data) => {
         return data?.map((item) => {
-            let color = "default";
-            let translatedStatus = "";
+            // Use centralized order status configuration
+            const statusConfig = getOrderStatus(item?.status);
+            const color = statusConfig?.color || "default";
+            const translatedStatus = statusConfig ? t(statusConfig.labelKey) : "";
 
-            // Apply status conditions: pending, confirmed, shipped, delivered, cancelled
-            if (item?.status === "delivered") {
-                color = "success";
-                translatedStatus = t("delivered");
-            } else if (item?.status === "shipped") {
-                color = "info";
-                translatedStatus = t("shipped");
-            } else if (item?.status === "confirmed") {
-                color = "secondary";
-                translatedStatus = t("confirmed");
-            } else if (item?.status === "pending") {
-                color = "warning";
-                translatedStatus = t("pending");
-            } else if (item?.status === "cancelled") {
-                color = "error";
-                translatedStatus = t("cancelled");
-            }
+            // Handle multiple items - show summary
+            const itemsSummary = item?.items?.length === 1
+                ? item.items[0].product?.name
+                : item?.items?.length > 1
+                    ? t('multiple_items', { count: item?.items?.length })
+                    : '-';
 
             return {
                 ...item,
+                ref: item?.ref || `#${item?.id}`,
                 name: item?.customer?.full_name,
                 phone: item?.customer?.phone,
-                product: item?.product?.name,
+                total_items: item?.total_items || item?.items?.length || 0,
+                total: item?.total_price ? `${item.total_price.toFixed(2)} DA` : item?.total ? `${item.total.toFixed(2)} DA` : '-',
+                products_summary: itemsSummary,
                 c_status: translatedStatus,
-                full_address: currentLang?.value == "ar" ? item?.address?.wilaya?.name_ar + ", " + item?.address?.commune?.name_ar + " " + item?.address?.street_address : item?.address?.wilaya?.name + " " + item?.address?.commune?.name + " " + item?.address?.street_address,
+                full_address: currentLang?.value === "ar"
+                    ? `${item?.address?.wilaya?.name_ar || ''}, ${item?.address?.commune?.name_ar || ''} ${item?.address?.street_address || ''}`
+                    : `${item?.address?.wilaya?.name || ''}, ${item?.address?.commune?.name || ''} ${item?.address?.street_address || ''}`,
                 color,
             };
         }) || [];
@@ -115,20 +489,42 @@ export default function OrdersListView({ product_id }) {
 
     const filters = [
         {
-            key: 'search', label: t('search'), match: (item, value) =>
-                item?.customer?.full_name?.toLowerCase().includes(value?.toLowerCase()) ||
-                item?.customer?.first_name?.toLowerCase().includes(value?.toLowerCase()) ||
-                item?.customer?.last_name?.toLowerCase().includes(value?.toLowerCase()) ||
-                item?.customer?.phone?.toLowerCase().includes(value?.toLowerCase()) ||
-                item?.product?.name?.toLowerCase().includes(value?.toLowerCase()) ||
-                item?.address?.street_address?.toLowerCase().includes(value?.toLowerCase()) ||
-                item?.address?.commune?.name?.toLowerCase().includes(value?.toLowerCase()) ||
-                item?.address?.commune?.name_ar?.toLowerCase().includes(value?.toLowerCase()) ||
-                item?.address?.wilaya?.name?.toLowerCase().includes(value?.toLowerCase()) ||
-                item?.address?.wilaya?.name_ar?.toLowerCase().includes(value?.toLowerCase()) ||
-                item?.address?.full_address?.toLowerCase().includes(value?.toLowerCase()) ||
-                item?.id?.toString().includes(value) ||
-                item?.notes?.toLowerCase().includes(value?.toLowerCase()),
+            key: 'search', label: t('search'), match: (item, value) => {
+                const lowerValue = value?.toLowerCase();
+
+                // Search in customer fields
+                const customerMatch =
+                    item?.customer?.full_name?.toLowerCase().includes(lowerValue) ||
+                    item?.customer?.first_name?.toLowerCase().includes(lowerValue) ||
+                    item?.customer?.last_name?.toLowerCase().includes(lowerValue) ||
+                    item?.customer?.phone?.toLowerCase().includes(lowerValue) ||
+                    item?.customer?.email?.toLowerCase().includes(lowerValue);
+
+                // Search in all items' product names and SKUs
+                const productsMatch = item?.items?.some(orderItem =>
+                    orderItem?.product?.name?.toLowerCase().includes(lowerValue) ||
+                    orderItem?.product?.ref?.toLowerCase().includes(lowerValue) ||
+                    orderItem?.variant?.sku?.toLowerCase().includes(lowerValue)
+                );
+
+                // Search in address fields
+                const addressMatch =
+                    item?.address?.street_address?.toLowerCase().includes(lowerValue) ||
+                    item?.address?.commune?.name?.toLowerCase().includes(lowerValue) ||
+                    item?.address?.commune?.name_ar?.toLowerCase().includes(lowerValue) ||
+                    item?.address?.wilaya?.name?.toLowerCase().includes(lowerValue) ||
+                    item?.address?.wilaya?.name_ar?.toLowerCase().includes(lowerValue) ||
+                    item?.address?.full_address?.toLowerCase().includes(lowerValue);
+
+                // Search in other fields
+                const otherMatch =
+                    item?.ref?.toLowerCase().includes(lowerValue) ||
+                    item?.id?.toString().includes(value) ||
+                    item?.store?.name?.toLowerCase().includes(lowerValue) ||
+                    item?.notes?.toLowerCase().includes(lowerValue);
+
+                return customerMatch || productsMatch || addressMatch || otherMatch;
+            },
         },
     ];
 
@@ -139,6 +535,17 @@ export default function OrdersListView({ product_id }) {
     // Filter by status (pending, confirmed, shipped, delivered, cancelled)
     const items = [
         { key: 'all', label: t('all'), match: () => true },
+        {
+            key: 'today',
+            label: t('today'),
+            match: (item) => {
+                if (!item?.created_at) return false;
+                const orderDate = new Date(item.created_at);
+                const today = new Date();
+                return orderDate.toDateString() === today.toDateString();
+            },
+            color: 'primary'
+        },
         { key: 'pending', label: t('pending'), match: (item) => item?.status === 'pending', color: 'warning' },
         { key: 'confirmed', label: t('confirmed'), match: (item) => item?.status === 'confirmed', color: 'secondary' },
         { key: 'shipped', label: t('shipped'), match: (item) => item?.status === 'shipped', color: 'info' },
@@ -205,14 +612,8 @@ const ElementActions = ({ item, setTableData }) => {
     const [postloader, setPostloader] = useState(false)
     const [selectedStatus, setSelectedStatus] = useState(null)
 
-    // Define all possible statuses with their colors and icons
-    const statuses = [
-        { key: 'pending', label: t('pending'), color: 'warning', icon: 'solar:clock-circle-bold' },
-        { key: 'confirmed', label: t('confirmed'), color: 'secondary', icon: 'solar:check-circle-bold' },
-        { key: 'shipped', label: t('shipped'), color: 'info', icon: 'solar:box-bold' },
-        { key: 'delivered', label: t('delivered'), color: 'success', icon: 'solar:verified-check-bold' },
-        { key: 'cancelled', label: t('cancelled'), color: 'error', icon: 'solar:close-circle-bold' },
-    ];
+    // Get statuses with translations using centralized configuration
+    const statuses = getOrderStatusOptions(t);
 
     const handleStatusClick = (status) => {
         setSelectedStatus(status);
@@ -227,15 +628,15 @@ const ElementActions = ({ item, setTableData }) => {
             setPostloader(true)
             try {
                 loading.onTrue()
-                // TODO: Implement API call to update order status
-                console.log("item : ", item)
-                await updateOrder(item.product_id, item.id, { status: selectedStatus.key })
-                // const res = await updateOrderStatus(item?.id, selectedStatus.key);
-                console.log("Changing order status:", { orderId: item?.id, newStatus: selectedStatus.key });
+                // Update order status - use first item's product_id if backend requires it
+                const productId = item.items?.[0]?.product?.id || item.product_id;
+                console.log("new status : ", { status: selectedStatus.value })
+                await updateOrder(item.id, { status: selectedStatus.value })
+                console.log("Changing order status:", { orderId: item?.id, newStatus: selectedStatus.value });
 
                 // Update table data optimistically
                 setTableData(prev => prev?.map(order =>
-                    order.id == item?.id ? { ...order, status: selectedStatus.key, color: selectedStatus?.color, c_status: t(selectedStatus.key) } : order
+                    order.id == item?.id ? { ...order, status: selectedStatus.value, color: selectedStatus?.color, c_status: selectedStatus.label } : order
                 ))
 
                 enqueueSnackbar(t("operation_success"));
@@ -270,18 +671,26 @@ const ElementActions = ({ item, setTableData }) => {
             >
                 <MenuItem
                     component={RouterLink}
-                    href={paths.dashboard.order.details(item?.product_id,item?.id)}
+                    to={paths.dashboard.order.details(item.id)}
                     onClick={popover.onClose}
+                    sx={{
+                        color: 'text.primary',
+                        '&:hover': {
+                            backgroundColor: 'action.hover',
+                        }
+                    }}
                 >
                     <Iconify icon="solar:eye-bold" sx={{ mr: 1 }} />
                     {t('overview')}
                 </MenuItem>
 
+                <Divider sx={{ borderStyle: 'dashed', my: 0.5 }} />
+
                 {statuses
-                    .filter(status => status.key !== item?.status) // Don't show current status
+                    .filter(status => status.value !== item?.status) // Don't show current status
                     .map((status) => (
                         <MenuItem
-                            key={status.key}
+                            key={status.value}
                             onClick={() => handleStatusClick(status)}
                             disabled={postloader}
                             sx={{

@@ -15,19 +15,22 @@ import Iconify from 'src/components/iconify';
 
 const CARDS = [
   {
-    icon: ' /assets/icons/home/ic_make_brand.svg',
+    icon: 'mdi:package-variant',
     title: t("create_products_title"),
     description: t("create_products_desc"),
+    color: 'primary',
   },
   {
-    icon: ' /assets/icons/home/ic_design.svg',
+    icon: 'mdi:clipboard-list-outline',
     title: t("manage_orders_title"),
     description: t("manage_orders_desc"),
+    color: 'info',
   },
   {
-    icon: ' /assets/icons/home/ic_development.svg',
+    icon: 'mdi:truck-fast-outline',
     title: t("track_delivery_title"),
     description: t("track_delivery_desc"),
+    color: 'success',
   },
 ];
 
@@ -78,6 +81,14 @@ export default function HomeMinimal() {
                 boxShadow: { md: 'none' },
                 bgcolor: 'background.default',
                 p: (theme) => theme.spacing(10, 5),
+                transition: 'all 0.3s ease-in-out',
+                '&:hover': {
+                  transform: 'translateY(-8px)',
+                  boxShadow: (theme) => theme.customShadows.z24,
+                  '& .icon-container': {
+                    transform: 'scale(1.1) rotate(5deg)',
+                  },
+                },
                 ...(index === 1 && {
                   boxShadow: (theme) => ({
                     md: `-40px 40px 80px ${theme.palette.mode === 'light'
@@ -88,15 +99,78 @@ export default function HomeMinimal() {
                 }),
               }}
             >
+              {/* 3D Icon Container */}
               <Box
-                component="img"
-                src={card.icon}
-                alt={card.title}
-                sx={{ mx: 'auto', width: 48, height: 48 }}
-              />
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  mb: 3,
+                }}
+              >
+                <Box
+                  sx={{
+                    position: 'relative',
+                    '&::before': {
+                      content: '""',
+                      position: 'absolute',
+                      inset: -12,
+                      borderRadius: '50%',
+                      background: (theme) =>
+                        `radial-gradient(circle, ${alpha(
+                          theme.palette[card.color].main,
+                          0.2
+                        )}, transparent 70%)`,
+                      zIndex: 0,
+                    },
+                    '&::after': {
+                      content: '""',
+                      position: 'absolute',
+                      inset: -20,
+                      borderRadius: '50%',
+                      background: (theme) =>
+                        `radial-gradient(circle, ${alpha(
+                          theme.palette[card.color].main,
+                          0.1
+                        )}, transparent 60%)`,
+                      zIndex: -1,
+                    },
+                  }}
+                >
+                  <Box
+                    className="icon-container"
+                    sx={{
+                      width: 80,
+                      height: 80,
+                      borderRadius: '50%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      position: 'relative',
+                      zIndex: 1,
+                      background: (theme) =>
+                        `linear-gradient(135deg, ${alpha(
+                          theme.palette[card.color].main,
+                          0.3
+                        )}, ${alpha(theme.palette[card.color].dark, 0.3)})`,
+                      boxShadow: (theme) =>
+                        `0 12px 24px ${alpha(theme.palette[card.color].main, 0.3)},
+                         0 6px 12px ${alpha(theme.palette[card.color].main, 0.2)}`,
+                      transition: 'all 0.3s ease-in-out',
+                    }}
+                  >
+                    <Iconify
+                      icon={card.icon}
+                      width={40}
+                      sx={{
+                        color: `${card.color}.main`,
+                        filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))',
+                      }}
+                    />
+                  </Box>
+                </Box>
+              </Box>
 
-              {/* <Iconify icon="ion:car-sport" width="512" height="512"  /> */}
-              <Typography variant="h5" sx={{ mt: 8, mb: 2 }}>
+              <Typography variant="h5" sx={{ mt: 5, mb: 2 }}>
                 {card.title}
               </Typography>
 

@@ -30,6 +30,8 @@ import IncrementerButton from './common/incrementer-button';
 export default function ProductDetailsSummary({
   items,
   product,
+  selectedVariant,
+  onVariantChange,
   onAddCart,
   onGotoStep,
   disabledActions,
@@ -41,31 +43,41 @@ export default function ProductDetailsSummary({
   const {
     id,
     name,
-    variations = [],
-    real_price,
-    images = [],
-    colors = [],
-    quantity,
-    sale_price,
-    status,
+    variants = [],
+    option_definitions = [],
     has_discount,
     discount_percentage,
     is_in_stock,
     description,
   } = product || {};
 
-  const price = parseFloat(sale_price || real_price) || 0;
-  const priceSale = has_discount ? parseFloat(real_price) : null;
-  const coverUrl = images?.[0] || '';
-  const available = quantity || 0;
-  const sizes = variations || [];
-  const colorsArray = colors || [];
-  const inventoryType = is_in_stock ? (quantity > 10 ? 'in_stock' : 'low_stock') : 'out_of_stock';
+  // Get current variant or default to first variant
+  const currentVariant = selectedVariant || variants?.[0];
+
+  const price = parseFloat(currentVariant?.price) || 0;
+  const priceSale = has_discount && currentVariant?.compare_at_price
+    ? parseFloat(currentVariant.compare_at_price)
+    : null;
+  const available = currentVariant?.available_quantity || 0;
+  const quantity = currentVariant?.quantity || 0;
+
+  // Calculate total quantity across all variants
+  const totalQuantity = variants?.reduce((sum, v) => sum + (v.available_quantity || 0), 0) || 0;
+  // Handle media as array or single object
+  const mediaArray = Array.isArray(currentVariant?.media)
+    ? currentVariant.media
+    : (currentVariant?.media ? [currentVariant.media] : []);
+  const coverUrl = mediaArray.length > 0 ? (mediaArray[0]?.full_url || mediaArray[0]?.url || '') : '';
+  const inventoryType = currentVariant?.is_in_stock
+    ? (available > 10 ? 'in_stock' : 'low_stock')
+    : 'out_of_stock';
   const subDescription = description;
   const totalRatings = 0;
   const totalReviews = 0;
   const newLabel = { enabled: false, content: '' };
-  const saleLabel = has_discount ? { enabled: true, content: `${Math.round(discount_percentage || 0)}% OFF` } : { enabled: false, content: '' };
+  const saleLabel = has_discount
+    ? { enabled: true, content: `${Math.round(discount_percentage || 0)}% OFF` }
+    : { enabled: false, content: '' };
 
   const existProduct = !!items?.length && items.map((item) => item.id).includes(id);
 
@@ -73,15 +85,24 @@ export default function ProductDetailsSummary({
     !!items?.length &&
     items.filter((item) => item.id === id).map((item) => item.quantity)[0] >= available;
 
+  // Build initial selected options from current variant
+  const initialOptions = {};
+  option_definitions.forEach((optDef) => {
+    const optionValue = currentVariant?.options?.find((opt) => opt.option_definition_id === optDef.id);
+    if (optionValue) {
+      initialOptions[`option_${optDef.id}`] = optionValue.value_id;
+    }
+  });
+
   const defaultValues = {
     id,
     name,
     coverUrl,
     available,
     price,
-    colors: colorsArray[0] || '',
-    size: sizes[0] || '',
+    variantId: currentVariant?.id,
     quantity: available < 1 ? 0 : 1,
+    ...initialOptions,
   };
 
   const methods = useForm({
@@ -93,27 +114,35 @@ export default function ProductDetailsSummary({
   const values = watch();
 
   useEffect(() => {
-    if (product) {
+    if (product && currentVariant) {
+      const newOptions = {};
+      option_definitions.forEach((optDef) => {
+        const optionValue = currentVariant?.options?.find((opt) => opt.option_definition_id === optDef.id);
+        if (optionValue) {
+          newOptions[`option_${optDef.id}`] = optionValue.value_id;
+        }
+      });
+
       reset({
         id,
         name,
         coverUrl,
         available,
         price,
-        colors: colorsArray[0] || '',
-        size: sizes[0] || '',
+        variantId: currentVariant?.id,
         quantity: available < 1 ? 0 : 1,
+        ...newOptions,
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [product]);
+  }, [product, currentVariant]);
 
   const onSubmit = handleSubmit(async (data) => {
     try {
       if (!existProduct) {
         onAddCart?.({
           ...data,
-          colors: [values.colors],
+          variant: currentVariant,
           subTotal: data.price * data.quantity,
         });
       }
@@ -128,13 +157,40 @@ export default function ProductDetailsSummary({
     try {
       onAddCart?.({
         ...values,
-        colors: [values.colors],
+        variant: currentVariant,
         subTotal: values.price * values.quantity,
       });
     } catch (error) {
       console.error(error);
     }
-  }, [onAddCart, values]);
+  }, [onAddCart, values, currentVariant]);
+
+  // Handle option selection change
+  const handleOptionChange = useCallback((optionDefId, valueId) => {
+    // Build selected options map
+    const selectedOptions = {};
+    option_definitions.forEach((optDef) => {
+      if (optDef.id === optionDefId) {
+        selectedOptions[optDef.id] = valueId;
+      } else {
+        selectedOptions[optDef.id] = values[`option_${optDef.id}`];
+      }
+    });
+
+    // Find matching variant
+    const matchingVariant = variants.find((variant) => {
+      if (!variant.is_active) return false;
+
+      return option_definitions.every((optDef) => {
+        const variantOption = variant.options?.find((opt) => opt.option_definition_id === optDef.id);
+        return variantOption?.value_id === selectedOptions[optDef.id];
+      });
+    });
+
+    if (matchingVariant && onVariantChange) {
+      onVariantChange(matchingVariant);
+    }
+  }, [option_definitions, variants, values, onVariantChange]);
 
   const renderPrice = (
     <Box sx={{ typography: 'h5' }}>
@@ -155,142 +211,63 @@ export default function ProductDetailsSummary({
     </Box>
   );
 
-  const renderShare = (
-    <Stack direction="row" spacing={3} justifyContent="center">
-      <Link
-        variant="subtitle2"
-        sx={{
-          color: 'text.secondary',
-          display: 'inline-flex',
-          alignItems: 'center',
-        }}
-      >
-        <Iconify icon="mingcute:add-line" width={16} sx={{ mr: 1 }} />
-        {t('compare')}
-      </Link>
+  // Removed share options
 
-      <Link
-        variant="subtitle2"
-        sx={{
-          color: 'text.secondary',
-          display: 'inline-flex',
-          alignItems: 'center',
-        }}
-      >
-        <Iconify icon="solar:heart-bold" width={16} sx={{ mr: 1 }} />
-        {t('favorite')}
-      </Link>
+  // Render variant information including SKU and options
+  const renderVariantInfo = (
+    <Stack spacing={2}>
+      {/* SKU */}
+      {currentVariant?.sku && (
+        <Stack direction="row" spacing={2}>
+          <Typography variant="subtitle2" sx={{ color: 'text.secondary', minWidth: 100 }}>
+            {t('sku')}:
+          </Typography>
+          <Typography variant="body2" sx={{ fontWeight: 600, fontFamily: 'monospace' }}>
+            {currentVariant.sku}
+          </Typography>
+        </Stack>
+      )}
 
-      <Link
-        variant="subtitle2"
-        sx={{
-          color: 'text.secondary',
-          display: 'inline-flex',
-          alignItems: 'center',
-        }}
-      >
-        <Iconify icon="solar:share-bold" width={16} sx={{ mr: 1 }} />
-        {t('share')}
-      </Link>
+      {/* Variant Options */}
+      {currentVariant?.options && currentVariant.options.length > 0 && currentVariant.options.map((option, idx) => (
+        <Stack direction="row" key={idx} spacing={2}>
+          <Typography variant="subtitle2" sx={{ color: 'text.secondary', minWidth: 100 }}>
+            {option.definition_name || option.name}:
+          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            {option.color_hex && (
+              <Box
+                sx={{
+                  width: 20,
+                  height: 20,
+                  borderRadius: '50%',
+                  bgcolor: option.color_hex,
+                  border: (theme) => `2px solid ${theme.palette.divider}`,
+                }}
+              />
+            )}
+            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+              {option.value}
+            </Typography>
+          </Box>
+        </Stack>
+      ))}
     </Stack>
   );
 
-  const renderColorOptions = colorsArray.length > 0 ? (
-    <Stack direction="row">
-      <Typography variant="subtitle2" sx={{ flexGrow: 1 }}>
-        {t('color')}
-      </Typography>
-
-      <Controller
-        name="colors"
-        control={control}
-        render={({ field }) => (
-          <ColorPicker
-            colors={colorsArray}
-            selected={field?.value}
-            onSelectColor={(color) => field.onChange(color)}
-            limit={4}
-          />
-        )}
-      />
-    </Stack>
-  ) : null;
-
-  const renderSizeOptions = sizes.length > 0 ? (
-    <Stack direction="row">
-      <Typography variant="subtitle2" sx={{ flexGrow: 1 }}>
-        {t('size')}
-      </Typography>
-
-      <RHFSelect
-        name="size"
-        size="small"
-        helperText={
-          <Link underline="always" color="textPrimary">
-            {t('size_chart')}
-          </Link>
-        }
-        sx={{
-          maxWidth: 88,
-          [`& .${formHelperTextClasses.root}`]: {
-            mx: 0,
-            mt: 1,
-            textAlign: 'right',
-          },
-        }}
-      >
-        {sizes.map((size) => (
-          <MenuItem key={size} value={size}>
-            {size}
-          </MenuItem>
-        ))}
-      </RHFSelect>
-    </Stack>
-  ) : null;
-
+  // Display total available quantity across all variants
   const renderQuantity = (
-    <Stack direction="row">
-      <Typography variant="subtitle2" sx={{ flexGrow: 1 }}>
-        {t('quantity')}
-      </Typography>
-
-      <Stack spacing={1}>
-        <IncrementerButton
-          name="quantity"
-          quantity={values.quantity}
-          disabledDecrease={values.quantity <= 1}
-          disabledIncrease={values.quantity >= available}
-          onIncrease={() => setValue('quantity', values.quantity + 1)}
-          onDecrease={() => setValue('quantity', values.quantity - 1)}
-        />
-
-        <Typography variant="caption" component="div" sx={{ textAlign: 'right' }}>
-          {t('available')}: {available}
-        </Typography>
-      </Stack>
-    </Stack>
-  );
-
-  const renderActions = (
     <Stack direction="row" spacing={2}>
-      <Button
-        fullWidth
-        disabled={isMaxQuantity || disabledActions}
-        size="large"
-        color="warning"
-        variant="contained"
-        startIcon={<Iconify icon="solar:cart-plus-bold" width={24} />}
-        onClick={handleAddCart}
-        sx={{ whiteSpace: 'nowrap' }}
-      >
-        {t('add_to_cart')}
-      </Button>
-
-      <Button fullWidth size="large" type="submit" variant="contained" disabled={disabledActions}>
-        {t('buy_now')}
-      </Button>
+      <Typography variant="subtitle2" sx={{ color: 'text.secondary', minWidth: 100 }}>
+        {t('available')}:
+      </Typography>
+      <Typography variant="body2" sx={{ fontWeight: 600, color: totalQuantity > 0 ? 'success.main' : 'error.main' }}>
+        {totalQuantity} {t('units')}
+      </Typography>
     </Stack>
   );
+
+  // Removed action buttons (add to cart, buy now)
 
   const renderSubDescription = (
     <Typography variant="body2" sx={{ color: 'text.secondary' }}>
@@ -298,19 +275,7 @@ export default function ProductDetailsSummary({
     </Typography>
   );
 
-  const renderRating = (
-    <Stack
-      direction="row"
-      alignItems="center"
-      sx={{
-        color: 'text.disabled',
-        typography: 'body2',
-      }}
-    >
-      <Rating size="small" value={totalRatings} precision={0.1} readOnly sx={{ mr: 1 }} />
-      {`(${fShortenNumber(totalReviews)} ${t('reviews')})`}
-    </Stack>
-  );
+  // Removed rating display
 
   const renderLabels = (newLabel?.enabled || saleLabel?.enabled) && (
     <Stack direction="row" alignItems="center" spacing={1}>
@@ -339,37 +304,25 @@ export default function ProductDetailsSummary({
   }
 
   return (
-    <FormProvider methods={methods} onSubmit={onSubmit}>
-      <Stack spacing={3} sx={{ pt: 3 }} {...other}>
-        <Stack spacing={2} alignItems="flex-start">
-          {renderLabels}
+    <Stack spacing={3} sx={{ pt: 3 }} {...other}>
+      <Stack spacing={2} alignItems="flex-start">
+        {renderLabels}
 
-          {renderInventoryType}
+        {renderInventoryType}
 
-          <Typography variant="h5">{name}</Typography>
+        <Typography variant="h5">{name}</Typography>
 
-          {renderRating}
+        {renderPrice}
 
-          {renderPrice}
-
-          {renderSubDescription}
-        </Stack>
-
-        <Divider sx={{ borderStyle: 'dashed' }} />
-
-        {renderColorOptions}
-
-        {renderSizeOptions}
-
-        {renderQuantity}
-
-        <Divider sx={{ borderStyle: 'dashed' }} />
-
-        {renderActions}
-
-        {renderShare}
+        {renderSubDescription}
       </Stack>
-    </FormProvider>
+
+      <Divider sx={{ borderStyle: 'dashed' }} />
+
+      {renderVariantInfo}
+
+      {renderQuantity}
+    </Stack>
   );
 }
 
@@ -378,5 +331,7 @@ ProductDetailsSummary.propTypes = {
   disabledActions: PropTypes.bool,
   onAddCart: PropTypes.func,
   onGotoStep: PropTypes.func,
+  onVariantChange: PropTypes.func,
   product: PropTypes.object,
+  selectedVariant: PropTypes.object,
 };

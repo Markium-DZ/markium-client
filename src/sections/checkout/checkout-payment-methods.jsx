@@ -71,7 +71,7 @@ CheckoutPaymentMethods.propTypes = {
 // ----------------------------------------------------------------------
 
 function OptionItem({ option, cardOptions, selected, isCredit, onOpen, ...other }) {
-  const { value, label, description } = option;
+  const { value, label, description, icons = [] } = option;
 
   return (
     <Paper
@@ -94,14 +94,9 @@ function OptionItem({ option, cardOptions, selected, isCredit, onOpen, ...other 
               {label}
             </Box>
             <Stack spacing={1} direction="row" alignItems="center">
-              {value === 'credit' && (
-                <>
-                  <Iconify icon="logos:mastercard" width={24} />,
-                  <Iconify icon="logos:visa" width={24} />
-                </>
-              )}
-              {value === 'paypal' && <Iconify icon="logos:paypal" width={24} />}
-              {value === 'cash' && <Iconify icon="solar:wad-of-money-bold" width={32} />}
+              {icons && icons.length > 0 && icons.map((icon, index) => (
+                <Iconify key={index} icon={icon} width={24} />
+              ))}
             </Stack>
           </Stack>
         }

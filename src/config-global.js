@@ -11,14 +11,12 @@ export const api_version = "v1"
 
 
 // export const HOST_API = 'http://172.105.83.136:8044/api';
-// export const STORAGE_API = 'http://172.105.83.136:8044/storage';
 // export const HOST_API = `http://8.222.151.11:80/api/${api_version}`;
-// export const STORAGE_API = 'http://172.233.43.164:8000/storage';
 // export const HOST_API = 'http://127.0.0.1:8000/api'; 
-// export const STORAGE_API = 'http://127.0.0.1:8000/storage';
 export const HOST_API = `https://be.markium.online/api/${api_version}`;
-export const STORAGE_API = 'https://be.markium.online/storage';
+// export const HOST_API = `https://be-test.markium.online/api/${api_version}`;
 export const ASSETS_API = import.meta.env.VITE_ASSETS_API;
+export const STORAGE_API = 'https://s3.markium.online/'; 
 
 export const FIREBASE_API = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,

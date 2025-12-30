@@ -76,11 +76,27 @@ RenderCellStock.propTypes = {
 };
 
 export function RenderCellProduct({ params }) {
+  // Get the default variant or first variant
+  const defaultVariant = params.row.variants?.find((v) => v.is_default) || params.row.variants?.[0];
+
+  // Get the first image from variant's media (can be array or single object)
+  const variantMedia = defaultVariant?.media;
+  let imageUrl = '';
+
+  if (Array.isArray(variantMedia) && variantMedia.length > 0) {
+    imageUrl = variantMedia[0]?.full_url || variantMedia[0]?.url || '';
+  } else if (variantMedia && typeof variantMedia === 'object') {
+    imageUrl = variantMedia.full_url || variantMedia.url || '';
+  } else if (params.row.images?.[0]) {
+    // Fallback to legacy images array
+    imageUrl = params.row.images[0];
+  }
+
   return (
     <Stack direction="row" alignItems="center" sx={{ py: 2, width: 1 }}>
       <Avatar
         alt={params.row.name}
-        src={params.row.images?.[0] || ''}
+        src={imageUrl}
         variant="rounded"
         sx={{ width: 64, height: 64, mr: 2 }}
       />

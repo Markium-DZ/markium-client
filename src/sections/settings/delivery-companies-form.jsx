@@ -15,7 +15,9 @@ import Accordion from '@mui/material/Accordion';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import AccordionDetails from '@mui/material/AccordionDetails';
 import Avatar from '@mui/material/Avatar';
+import CircularProgress from '@mui/material/CircularProgress';
 import Button from '@mui/material/Button';
+import Chip from '@mui/material/Chip';
 
 import { useTranslate } from 'src/locales';
 import Iconify from 'src/components/iconify';
@@ -28,129 +30,123 @@ import FormProvider, {
 import showError from 'src/utils/show_error';
 import { updateStoreConfig, useGetMyStore } from 'src/api/store';
 import { AuthContext } from 'src/auth/context/jwt';
-import ContentDialog from 'src/components/custom-dialog/content-dialog';
-import { testDeliveryCredentials } from 'src/api/delivery';
-import CircularProgress from '@mui/material/CircularProgress';
-import { alpha } from '@mui/material/styles';
+import {
+  useGetShippingProviders,
+  useGetShippingConnections,
+  createShippingConnection,
+  updateShippingConnection,
+  validateShippingConnection,
+  setDefaultShippingConnection,
+} from 'src/api/shipping';
+import Image from 'src/components/image';
+import { LoadingScreen } from 'src/components/loading-screen';
 
 // ----------------------------------------------------------------------
 
 export default function DeliveryCompaniesForm() {
-  const { user } = useContext(AuthContext)
-    const { store } = useGetMyStore(user?.store?.slug);
-    console.log("store",store);
+  const { user } = useContext(AuthContext);
+  const { store } = useGetMyStore(user?.store?.slug);
+  const { providers, providersLoading, providersError } = useGetShippingProviders();
+  const { connections, connectionsLoading, connectionsError, mutate: mutateConnections } = useGetShippingConnections();
+
+  console.log("store", store);
+  console.log("providers", providers);
+  console.log("connections", connections);
+
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslate();
 
-  const [loading, setLoading] = useState(false);
-  const [testModal, setTestModal] = useState({
-    open: false,
-    companyId: null,
-    companyName: '',
-  });
-  const [testLoading, setTestLoading] = useState(false);
-  const [testResult, setTestResult] = useState(null);
+  const [savingProvider, setSavingProvider] = useState(null);
+  const [validatingConnection, setValidatingConnection] = useState(null);
+  const [editingProviders, setEditingProviders] = useState({});
 
-  // Define delivery companies with their required fields
-  const deliveryCompanies = [
-    {
-      id: 'yalidine',
-      name: 'Yalidine',
-      image: '/assets/images/delivery/yalidine.png',
-      color: '#FF6B6B',
-      fields: [
-        { name: 'yalidine_api_id', label: t('api_id'), type: 'text', required: true, defaultValue: 'yalidine_api_id' },
-        { name: 'yalidine_api_token', label: t('api_token'), type: 'text', required: true, defaultValue: 'yalidine_api_token' },
-        // { name: 'yalidine_center_id', label: t('center_id'), type: 'text', required: false, defaultValue: '' },
-      ],
-      description: t('yalidine_description'),
-    },
-    {
-      id: 'zrexpress',
-      name: 'ZR Express',
-      image: '/assets/images/delivery/zrexpress.png',
-      color: '#4ECDC4',
-      fields: [
-        { name: 'zrexpress_api_id', label: t('api_id'), type: 'text', required: true, defaultValue: 'zrexpress_api_id' },
-        { name: 'zrexpress_api_token', label: t('api_token'), type: 'text', required: true, defaultValue: 'zrexpress_api_token' },
-        // { name: 'zrexpress_warehouse_id', label: t('warehouse_id'), type: 'text', required: false, defaultValue: '' },
-      ],
-      description: t('zrexpress_description'),
-    },
-    {
-      id: 'maystro',
-      name: 'Maystro Delivery',
-      image: '/assets/images/delivery/maystro.png',
-      color: '#95E1D3',
-      fields: [
-        { name: 'maystro_api_id', label: t('api_id'), type: 'text', required: true, defaultValue: 'maystro_api_id' },
-        { name: 'maystro_api_token', label: t('api_token'), type: 'text', required: true, defaultValue: 'maystro_api_token' },
-        // { name: 'maystro_merchant_id', label: t('merchant_id'), type: 'text', required: false, defaultValue: '' },
-      ],
-      description: t('maystro_description'),
-    },
-    {
-      id: 'ecotrack',
-      name: 'Ecotrack',
-      image: '/assets/images/delivery/ecotrack.png',
-      color: '#F38181',
-      fields: [
-        { name: 'ecotrack_api_id', label: t('api_id'), type: 'text', required: true, defaultValue: 'ecotrack_api_id' },
-        { name: 'ecotrack_api_token', label: t('api_token'), type: 'text', required: true, defaultValue: 'ecotrack_api_token' },
-        // { name: 'ecotrack_api_key', label: t('api_key'), type: 'text', required: false, defaultValue: '' },
-      ],
-      description: t('ecotrack_description'),
-    },
-  ];
+  // Transform API providers to component structure and merge with existing connections
+  const deliveryCompanies = useMemo(() => {
+    if (!providers || providers.length === 0) return [];
+
+    return providers.map((provider) => {
+      // Find existing connection for this provider
+      // Connection has nested provider object with id and identifier
+      const existingConnection = connections?.find(
+        (conn) => conn.provider?.id === provider.id || conn.provider?.identifier === provider.identifier
+      );
+
+      // Convert required_credentials to fields array
+      const fields = Object.entries(provider.required_credentials || {}).map(([key, credential]) => ({
+        name: `${provider.identifier}_${key}`,
+        label: credential.label || key,
+        type: credential.type === 'string' ? 'text' : credential.type,
+        required: credential.required || false,
+        placeholder: credential.placeholder || '',
+        description: credential.description || '',
+      }));
+
+      return {
+        id: provider.identifier,
+        providerId: provider.id,
+        name: provider.name,
+        image: provider.logo || '/assets/images/delivery/default.png',
+        color: '#4ECDC4', // Default color, can be customized per provider
+        fields,
+        description: `${provider.name} - ${provider.supported_countries.join(', ')}`,
+        capabilities: provider.capabilities,
+        isSandboxAvailable: provider.is_sandbox_available,
+        // Connection data
+        connectionId: existingConnection?.id,
+        connectionName: existingConnection?.name,
+        isConnected: !!existingConnection,
+        isActive: existingConnection?.is_active || false,
+        isDefault: existingConnection?.is_default || false,
+        isValidated: !!existingConnection?.credentials_validated_at,
+        isSandbox: existingConnection?.is_sandbox || false,
+        lastUsedAt: existingConnection?.last_used_at,
+        validatedAt: existingConnection?.credentials_validated_at,
+        // Note: Credentials are not returned in the response for security
+        credentials: {},
+      };
+    });
+  }, [providers, connections]);
 
   // Build dynamic Yup schema
+  // Make all fields optional - we'll validate in submit handler based on connection state
   const buildValidationSchema = () => {
     const schemaFields = {};
 
     deliveryCompanies.forEach((company) => {
       // Add enabled field
       schemaFields[`${company.id}_enabled`] = Yup.boolean();
-      // Add dynamic fields with conditional validation
+
+      // Add all credential fields as optional strings
       company.fields.forEach((field) => {
-        if (field.required) {
-          schemaFields[field.name] = Yup.string().when(`${company.id}_enabled`, {
-            is: true,
-            then: (schema) => schema.required(t(`${field.name}_required`)),
-            otherwise: (schema) => schema,
-          });
-        } else {
-          schemaFields[field.name] = Yup.string();
-        }
+        schemaFields[field.name] = Yup.string();
       });
     });
 
     return Yup.object().shape(schemaFields);
   };
 
-  const DeliveryCompaniesSchema = buildValidationSchema();
+  const DeliveryCompaniesSchema = useMemo(() => buildValidationSchema(), [deliveryCompanies]);
 
   // Build default values
   const buildDefaultValues = () => {
     const defaults = {};
 
     deliveryCompanies.forEach((company) => {
-      // Load from store data if available
-      const companyData = store?.config?.delivery?.[company.id];
+      // Set enabled based on connection status (is_active from API)
+      defaults[`${company.id}_enabled`] = company.isConnected && company.isActive;
 
-      // Handle both string "true"/"false" and boolean values
-      const enabledValue = companyData?.enabled;
-      defaults[`${company.id}_enabled`] = enabledValue === true || enabledValue === "true";
-
+      // Set all credential fields to empty
+      // Note: API doesn't return credentials for security reasons
+      // Users will need to re-enter credentials when updating
       company.fields.forEach((field) => {
-        const fieldKey = field.name.replace(`${company.id}_`, '');
-        defaults[field.name] = companyData?.[fieldKey] || '';
+        defaults[field.name] = '';
       });
     });
 
     return defaults;
   };
 
-  const defaultValues = useMemo(() => buildDefaultValues(), [store]);
+  const defaultValues = useMemo(() => buildDefaultValues(), [store, deliveryCompanies]);
 
   const methods = useForm({
     resolver: yupResolver(DeliveryCompaniesSchema),
@@ -160,111 +156,208 @@ export default function DeliveryCompaniesForm() {
   const {
     reset,
     watch,
-    handleSubmit,
-    formState: { isSubmitting },
   } = methods;
 
   const values = watch();
 
-  // Reset form when store data is loaded
+  // Reset form when data changes
   useEffect(() => {
-    if (store) {
+    if (deliveryCompanies.length > 0) {
       reset(defaultValues);
     }
-  }, [store, reset, defaultValues]);
+  }, [defaultValues, deliveryCompanies, reset]);
 
-  const handleOpenTestModal = (company) => {
-    setTestModal({
-      open: true,
-      companyId: company.id,
-      companyName: company.name,
-    });
-    setTestResult(null);
-  };
+  // Validate connection handler
+  const handleValidateConnection = async (company) => {
+    if (!company.connectionId) {
+      enqueueSnackbar(t('save_connection_first'), { variant: 'warning' });
+      return;
+    }
 
-  const handleCloseTestModal = () => {
-    setTestModal({
-      open: false,
-      companyId: null,
-      companyName: '',
-    });
-    setTestLoading(false);
-    setTestResult(null);
-  };
-
-  const handleTestCredentials = async () => {
     try {
-      setTestLoading(true);
-      setTestResult(null);
+      setValidatingConnection(company.id);
+      const response = await validateShippingConnection(company.connectionId);
+      console.log("validateShippingConnection response:", response);
 
-      const companyId = testModal.companyId;
-      const apiId = values[`${companyId}_api_id`];
-      const apiToken = values[`${companyId}_api_token`];
+      // Check response for success - handle various response structures
+      const responseData = response?.data || response;
+      const isValid = responseData?.success === true || responseData?.valid === true;
 
-      // Call the test API
-      const result = await testDeliveryCredentials(companyId, apiId, apiToken);
-
-      setTestResult(result);
-      setTestLoading(false);
-
-      // Show snackbar notification
-      if (result.success) {
-        enqueueSnackbar(t('credentials_test_passed'), { variant: 'success' });
+      if (isValid) {
+        enqueueSnackbar(t('connection_validated_successfully', { name: company.name }), { variant: 'success' });
       } else {
-        enqueueSnackbar(t('credentials_test_failed'), { variant: 'error' });
+        // Get error message from response
+        const errorMessage = responseData?.message || responseData?.error || t('connection_validation_failed', { name: company.name });
+        enqueueSnackbar(errorMessage, { variant: 'error' });
       }
+
+      // Refresh connections to get updated validation status
+      await mutateConnections();
     } catch (error) {
-      setTestLoading(false);
-      setTestResult({
-        success: false,
-        message: 'Test failed',
-        error: error.message || 'Unknown error occurred',
-      });
+      console.log("validateShippingConnection error:", error);
+      // Handle error response from API (e.g., 422 status)
+      const errorData = error?.response?.data || error?.data || {};
+      const errorMessage = errorData?.message || errorData?.error || t('connection_validation_failed', { name: company.name });
+      enqueueSnackbar(errorMessage, { variant: 'error' });
+    }
+    finally {
+      setValidatingConnection(null);
+    }
+  };
+
+  // Set as default handler
+  const handleSetAsDefault = async (company) => {
+    if (!company.connectionId) {
+      enqueueSnackbar(t('save_connection_first'), { variant: 'warning' });
+      return;
+    }
+
+    try {
+      await setDefaultShippingConnection(company.connectionId);
+      enqueueSnackbar(t('default_provider_set', { name: company.name }), { variant: 'success' });
+
+      // Refresh connections to get updated default status
+      await mutateConnections();
+    } catch (error) {
       showError(error);
     }
   };
 
-  const onSubmit = handleSubmit(async (data) => {
+  // Toggle edit mode for a provider
+  const handleToggleEditMode = (companyId) => {
+    setEditingProviders(prev => ({
+      ...prev,
+      [companyId]: !prev[companyId]
+    }));
+  };
+
+  // Cancel edit mode
+  const handleCancelEdit = (company) => {
+    // Clear the form fields for this provider
+    company.fields.forEach((field) => {
+      methods.setValue(field.name, '');
+    });
+    setEditingProviders(prev => ({
+      ...prev,
+      [company.id]: false
+    }));
+  };
+
+  // Save individual provider handler
+  const handleSaveProvider = async (company) => {
     try {
-      setLoading(true);
+      setSavingProvider(company.id);
 
-      // Transform flat form data into structured delivery company objects
-      const structuredData = {};
+      const data = methods.getValues();
+      const isEnabled = data[`${company.id}_enabled`];
 
-      deliveryCompanies.forEach((company) => {
-        const companyData = {
-          enabled: data[`${company.id}_enabled`],
+      // Extract credentials for this company
+      const credentials = {};
+      company.fields.forEach((field) => {
+        const fieldKey = field.name.replace(`${company.id}_`, '');
+        const fieldValue = data[field.name];
+        if (fieldValue) {
+          credentials[fieldKey] = fieldValue;
+        }
+      });
+
+      const hasCredentials = Object.keys(credentials).length > 0;
+
+      // Determine auth method based on provider's supported methods
+      const provider = providers.find(p => p.id === company.providerId);
+      const authMethod = provider?.supported_auth_methods?.[0] || 'api_key';
+
+      if (company.connectionId) {
+        // Update existing connection
+        const updateBody = {
+          name: `${company.name} Connection`,
+          auth_method: authMethod,
+          is_enabled: isEnabled,
         };
 
-        // Extract company-specific fields
-        company.fields.forEach((field) => {
-          const fieldKey = field.name.replace(`${company.id}_`, ''); // Remove prefix
-          companyData[fieldKey] = data[field.name];
-        });
+        if (hasCredentials) {
+          updateBody.credentials = credentials;
+        }
 
-        structuredData[company.id] = companyData;
-      });
+        console.log('Update connection payload:', updateBody);
+        await updateShippingConnection(company.connectionId, updateBody);
+        enqueueSnackbar(t('connection_saved_successfully', { name: company.name }), { variant: 'success' });
+      } else {
+        // Create new connection - credentials are required
+        if (!hasCredentials) {
+          enqueueSnackbar(
+            t('credentials_required_for_new_connection', { name: company.name }),
+            { variant: 'warning' }
+          );
+          setSavingProvider(null);
+          return;
+        }
 
-      // Console log the structured data
-      console.log('Delivery companies data:', structuredData);
-      await updateStoreConfig({ config: { delivery: structuredData } })
+        const connectionBody = {
+          shipping_provider_id: company.providerId,
+          name: `${company.name} Connection`,
+          auth_method: authMethod,
+          credentials,
+          is_enabled: isEnabled,
+          is_default: false,
+          is_sandbox: false,
+          settings: {}
+        };
 
-      // TODO: Implement API call to save delivery companies settings
-      // await updateDeliveryCompanies(structuredData);
+        console.log('Create connection payload:', connectionBody);
+        await createShippingConnection(connectionBody);
+        enqueueSnackbar(t('connection_created_successfully', { name: company.name }), { variant: 'success' });
+      }
 
-      // Simulated API call
-      // await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      enqueueSnackbar(t('delivery_companies_saved_successfully'), { variant: 'success' });
-      setLoading(false);
+      // Refresh connections data
+      await mutateConnections();
+      // Exit edit mode after successful save
+      setEditingProviders(prev => ({
+        ...prev,
+        [company.id]: false
+      }));
+      setSavingProvider(null);
     } catch (error) {
-      setLoading(false);
+      setSavingProvider(null);
       showError(error);
     }
-  });
+  };
+
+  // Show loading state
+  if (providersLoading || connectionsLoading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
+        {/* <CircularProgress /> */}
+        <LoadingScreen sx={{ my: 8 }} color='primary' />
+
+      </Box>
+    );
+  }
+
+  // Show error state
+  if (providersError) {
+    return (
+      <Alert severity="error">
+        <Typography variant="body2">
+          {t('error_loading_providers')}
+        </Typography>
+      </Alert>
+    );
+  }
+
+  // Show empty state
+  if (!deliveryCompanies || deliveryCompanies.length === 0) {
+    return (
+      <Alert severity="warning">
+        <Typography variant="body2">
+          {t('no_providers_available')}
+        </Typography>
+      </Alert>
+    );
+  }
 
   return (
-    <FormProvider methods={methods} onSubmit={onSubmit}>
+    <FormProvider methods={methods}>
       <Grid container spacing={3}>
         {/* Information Alert */}
         <Grid xs={12}>
@@ -301,64 +394,170 @@ export default function DeliveryCompaniesForm() {
                         border: (theme) => `1px solid ${theme.palette.divider}`,
                       }}
                     />
+                    {/* <Image
+                      src={company.image}
+                      alt={company.name}
+                      variant="rounded"
+                      sx={{
+                        scale:0.1,
+                        // width: 48,
+                        // height: 48,
+                        // bgcolor: 'background.neutral',
+                        // border: (theme) => `1px solid ${theme.palette.divider}`,
+                      }}
+                    /> */}
                     <Box sx={{ flexGrow: 1 }}>
-                      <Typography variant="h6">{company.name}</Typography>
+                      <Stack direction="row" spacing={1} alignItems="center">
+                        <Typography variant="h6">{company.name}</Typography>
+                        {company.isDefault && (
+                          <Chip
+                            label={t('default')}
+                            size="small"
+                            color="primary"
+                            variant="outlined"
+                          />
+                        )}
+                        {company.isValidated && (
+                          <Chip
+                            label={t('validated')}
+                            size="small"
+                            color="success"
+                            variant="outlined"
+                            icon={<Iconify icon="eva:checkmark-circle-2-fill" />}
+                          />
+                        )}
+                      </Stack>
                       <Typography variant="caption" color="text.secondary">
                         {company.description}
                       </Typography>
                     </Box>
-                    <RHFSwitch name={`${company.id}_enabled`} label={t('enabled')} sx={{ mr: 2 }} />
+                    <Box onClick={(e) => e.stopPropagation()} sx={{ mr: 2 }}>
+                      <RHFSwitch name={`${company.id}_enabled`} label={t('enabled')} />
+                    </Box>
                   </Stack>
                 </AccordionSummary>
                 <AccordionDetails>
                   <Stack spacing={3}>
-                    {/* Dynamic Fields */}
-                    {company.fields.map((field) => (
-                      <RHFTextField
-                        key={field.name}
-                        name={field.name}
-                        label={field.label}
-                        type={field.type}
-                        disabled={!values[`${company.id}_enabled`]}
-                        helperText={
-                          !values[`${company.id}_enabled`]
-                            ? t('enable_to_configure')
-                            : field.required
-                            ? t('required_field')
-                            : t('optional_field')
-                        }
-                        InputProps={{
-                          startAdornment: (
-                            <Iconify
-                              icon="solar:key-bold"
-                              width={20}
-                              sx={{ mr: 1, color: 'text.disabled' }}
-                            />
-                          ),
-                        }}
-                      />
-                    ))}
+                    {/* Connected State - Show connection info and action buttons */}
+                    {company.isConnected && !editingProviders[company.id] ? (
+                      <>
+                        {/* Connection Status */}
+                        <Alert severity="success" icon={<Iconify icon="eva:checkmark-circle-2-fill" />}>
+                          <Typography variant="body2">
+                            {t('connection_configured')}
+                          </Typography>
+                        </Alert>
 
-                    {/* Test Credentials Button */}
-                    {values[`${company.id}_enabled`] &&
-                     values[`${company.id}_api_id`] &&
-                     values[`${company.id}_api_token`] && (
-                      <Button
-                        variant="outlined"
-                        size="large"
-                        onClick={() => handleOpenTestModal(company)}
-                        startIcon={<Iconify icon="solar:test-tube-bold" />}
-                        sx={{
-                          borderStyle: 'dashed',
-                          borderWidth: 2,
-                          '&:hover': {
-                            borderStyle: 'dashed',
-                            borderWidth: 2,
-                          },
-                        }}
-                      >
-                        {t('test_credentials')}
-                      </Button>
+                        {/* Action Buttons for connected state */}
+                        {values[`${company.id}_enabled`] && (
+                          <Stack direction="row" spacing={2} flexWrap="wrap" gap={1}>
+                            {/* Update Button - shows inputs when clicked */}
+                            <Button
+                              variant="contained"
+                              color="warning"
+                              size="small"
+                              onClick={() => handleToggleEditMode(company.id)}
+                              startIcon={<Iconify icon="eva:edit-fill" />}
+                            >
+                              {t('update')}
+                            </Button>
+
+                            {/* Verify Connection Button */}
+                            <LoadingButton
+                              variant="outlined"
+                              color="info"
+                              size="small"
+                              loading={validatingConnection === company.id}
+                              onClick={() => handleValidateConnection(company)}
+                              startIcon={<Iconify icon="eva:shield-checkmark-fill" />}
+                            >
+                              {t('verify_connection')}
+                            </LoadingButton>
+
+                            {/* Set as Default Button */}
+                            {!company.isDefault && (
+                              <Button
+                                variant="outlined"
+                                color="primary"
+                                size="small"
+                                onClick={() => handleSetAsDefault(company)}
+                                startIcon={<Iconify icon="eva:star-fill" />}
+                              >
+                                {t('set_as_default')}
+                              </Button>
+                            )}
+                          </Stack>
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        {/* Edit Mode or New Connection - Show input fields */}
+                        {company.isConnected && editingProviders[company.id] && (
+                          <Alert severity="info" sx={{ mb: 1 }}>
+                            <Typography variant="caption">
+                              {t('update_credentials_message')}
+                            </Typography>
+                          </Alert>
+                        )}
+
+                        {/* Dynamic Fields */}
+                        {company.fields.map((field) => (
+                          <RHFTextField
+                            key={field.name}
+                            name={field.name}
+                            label={field.label}
+                            type={field.type}
+                            placeholder={field.placeholder}
+                            disabled={!values[`${company.id}_enabled`]}
+                            helperText={
+                              !values[`${company.id}_enabled`]
+                                ? t('enable_to_configure')
+                                : field.description || (field.required
+                                  ? t('required_field')
+                                  : t('optional_field'))
+                            }
+                            InputProps={{
+                              startAdornment: (
+                                <Iconify
+                                  icon="solar:key-bold"
+                                  width={20}
+                                  sx={{ mr: 1, color: 'text.disabled' }}
+                                />
+                              ),
+                            }}
+                          />
+                        ))}
+
+                        {/* Action Buttons for edit/create mode */}
+                        {values[`${company.id}_enabled`] && (
+                          <Stack direction="row" spacing={2} flexWrap="wrap" gap={1}>
+                            {/* Submit/Create Button */}
+                            <LoadingButton
+                              variant="contained"
+                              color={company.isConnected ? "primary" : "success"}
+                              size="small"
+                              loading={savingProvider === company.id}
+                              onClick={() => handleSaveProvider(company)}
+                              startIcon={<Iconify icon={company.isConnected ? "eva:save-fill" : "eva:plus-fill"} />}
+                            >
+                              {company.isConnected ? t('submit') : t('create')}
+                            </LoadingButton>
+
+                            {/* Cancel Button - only show in edit mode */}
+                            {company.isConnected && editingProviders[company.id] && (
+                              <Button
+                                variant="outlined"
+                                color="inherit"
+                                size="small"
+                                onClick={() => handleCancelEdit(company)}
+                                startIcon={<Iconify icon="eva:close-fill" />}
+                              >
+                                {t('cancel')}
+                              </Button>
+                            )}
+                          </Stack>
+                        )}
+                      </>
                     )}
                   </Stack>
                 </AccordionDetails>
@@ -368,7 +567,7 @@ export default function DeliveryCompaniesForm() {
         </Grid>
 
         {/* Instructions Card */}
-        <Grid xs={12}>
+        {/* <Grid xs={12}>
           <Card sx={{ p: 3 }}>
             <Typography variant="h6" sx={{ mb: 2 }}>
               {t('integration_instructions')}
@@ -382,157 +581,11 @@ export default function DeliveryCompaniesForm() {
               ))}
             </Stack>
           </Card>
-        </Grid>
+        </Grid> */}
 
         {/* Actions */}
-        <Grid xs={12}>
-          <Stack direction="row" justifyContent="flex-end" spacing={2}>
-            <LoadingButton
-              type="submit"
-              variant="contained"
-              size="large"
-              loading={isSubmitting || loading}
-            >
-              {t('save_changes')}
-            </LoadingButton>
-          </Stack>
-        </Grid>
+
       </Grid>
-
-      {/* Test Credentials Dialog */}
-      <ContentDialog
-        open={testModal.open}
-        onClose={testLoading ? undefined : handleCloseTestModal}
-        title={t('test_credentials')}
-        description={testModal.companyName}
-        maxWidth="sm"
-        content={
-          <Stack spacing={3}>
-            {/* Status Box */}
-            <Box
-              sx={{
-                p: 3,
-                borderRadius: 2,
-                bgcolor: (theme) => {
-                  if (!testResult && !testLoading) return alpha(theme.palette.primary.main, 0.08);
-                  if (testLoading) return alpha(theme.palette.warning.main, 0.08);
-                  if (testResult?.success) return alpha(theme.palette.success.main, 0.08);
-                  return alpha(theme.palette.error.main, 0.08);
-                },
-                border: (theme) => {
-                  if (!testResult && !testLoading) return `1px solid ${alpha(theme.palette.primary.main, 0.24)}`;
-                  if (testLoading) return `1px solid ${alpha(theme.palette.warning.main, 0.24)}`;
-                  if (testResult?.success) return `1px solid ${alpha(theme.palette.success.main, 0.24)}`;
-                  return `1px solid ${alpha(theme.palette.error.main, 0.24)}`;
-                },
-                textAlign: 'center',
-              }}
-            >
-              <Stack spacing={2} alignItems="center">
-                {/* Icon */}
-                {testLoading ? (
-                  <CircularProgress size={48} sx={{ color: 'warning.main' }} />
-                ) : (
-                  <Box
-                    sx={{
-                      width: 56,
-                      height: 56,
-                      borderRadius: '50%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      bgcolor: (theme) => {
-                        if (!testResult) return alpha(theme.palette.primary.main, 0.12);
-                        if (testResult.success) return alpha(theme.palette.success.main, 0.12);
-                        return alpha(theme.palette.error.main, 0.12);
-                      },
-                    }}
-                  >
-                    <Iconify
-                      icon={
-                        !testResult
-                          ? 'solar:test-tube-bold'
-                          : testResult.success
-                          ? 'solar:check-circle-bold'
-                          : 'solar:close-circle-bold'
-                      }
-                      width={32}
-                      sx={{
-                        color: !testResult
-                          ? 'primary.main'
-                          : testResult.success
-                          ? 'success.main'
-                          : 'error.main',
-                      }}
-                    />
-                  </Box>
-                )}
-
-                {/* Status Text */}
-                <Box>
-                  <Typography
-                    variant="h6"
-                    sx={{
-                      color: testLoading
-                        ? 'warning.main'
-                        : !testResult
-                        ? 'primary.main'
-                        : testResult.success
-                        ? 'success.main'
-                        : 'error.main',
-                      fontWeight: 600,
-                    }}
-                  >
-                    {testLoading
-                      ? t('testing_credentials')
-                      : !testResult
-                      ? t('ready_to_test')
-                      : testResult.success
-                      ? t('credentials_valid')
-                      : t('credentials_invalid')}
-                  </Typography>
-                  {testResult?.message && (
-                    <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                      {testResult.message}
-                    </Typography>
-                  )}
-                </Box>
-              </Stack>
-            </Box>
-
-            {/* Error Details */}
-            {testResult?.error && (
-              <Alert severity="error" sx={{ textAlign: 'left' }}>
-                <Typography variant="body2">{testResult.error}</Typography>
-              </Alert>
-            )}
-
-            {/* Actions */}
-            <Stack direction="row" spacing={2} justifyContent="flex-end">
-              {!testLoading && (
-                <Button
-                  variant="outlined"
-                  onClick={handleCloseTestModal}
-                  size="large"
-                >
-                  {testResult?.success ? t('close') : t('cancel')}
-                </Button>
-              )}
-              {!testResult?.success && (
-                <LoadingButton
-                  variant="contained"
-                  onClick={handleTestCredentials}
-                  loading={testLoading}
-                  size="large"
-                  startIcon={<Iconify icon="solar:test-tube-bold" />}
-                >
-                  {t('test_now')}
-                </LoadingButton>
-              )}
-            </Stack>
-          </Stack>
-        }
-      />
     </FormProvider>
   );
 }

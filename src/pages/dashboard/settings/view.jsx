@@ -17,32 +17,29 @@ import CustomBreadcrumbs from 'src/components/custom-breadcrumbs';
 import { t } from 'i18next';
 import { Divider, Link } from '@mui/material';
 import Iconify from 'src/components/iconify';
-import PermissionsContext from 'src/auth/context/permissions/permissions-context';
-
 // ----------------------------------------------------------------------
 
 export default function SettingsView() {
   const settings = useSettingsContext();
-
   const [role, setRole] = useState('admin');
 
   const groups = [
     {
-      title: "account_settings",
+      title: "general_settings",
       icon: "solar:user-bold-duotone",
       items: [
-        { type: "account", header: "account_details", subheader: "manage_your_account_information", href: paths?.dashboard.settings.account },
+        { type: "general", header: "general_settings", subheader: "manage_store_general_settings", href: paths?.dashboard.settings.general },
       ]
     },
     {
       title: "store_settings",
       icon: "solar:shop-bold-duotone",
       items: [
-        { type: "store_logo", header: "store_logo", subheader: "upload_and_update_store_logo", href: paths?.dashboard.settings.store_logo },
+        { type: "general_settings", header: "general_settings", subheader: "manage_logo_language_contacts", href: paths?.dashboard.settings.general },
+        // { type: "store_logo", header: "store_logo", subheader: "upload_and_update_store_logo", href: paths?.dashboard.settings.store_logo },
         // { type: "store_data", header: "store_data", subheader: "manage_store_information", href: paths?.dashboard.settings.store_data },
         { type: "store_template", header: "store_template", subheader: "choose_and_update_store_theme", href: paths?.dashboard.settings.store_template },
-        { type: "store_language", header: "store_language", subheader: "set_default_store_language", href: paths?.dashboard.settings.store_language },
-        { type: "store_location", header: "store_location", subheader: "set_store_location_center_wilaya", href: paths?.dashboard.settings.store_location },
+        // { type: "store_language", header: "store_language", subheader: "set_default_store_language", href: paths?.dashboard.settings.store_language },
         { type: "color_palette", header: "color_palette", subheader: "customize_color_scheme_and_branding", href: paths?.dashboard.settings.color_palette },
         { type: "add-categories", header: "categories", subheader: "manage_product_categories", href: paths?.dashboard.settings.categories },
 

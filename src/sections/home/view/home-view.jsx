@@ -7,14 +7,17 @@ import ScrollProgress from 'src/components/scroll-progress';
 
 import HomeHero from '../home-hero';
 import HomeMinimal from '../home-minimal';
-import HomePricing from '../home-pricing';
 import HomeDarkMode from '../home-dark-mode';
-import HomeLookingFor from '../home-looking-for';
 import HomeForDesigner from '../home-for-designer';
-import HomeColorPresets from '../home-color-presets';
 import HomeAdvertisement from '../home-advertisement';
 import HomeCleanInterfaces from '../home-clean-interfaces';
 import HomeHugePackElements from '../home-hugepack-elements';
+import HomeComparison from '../home-comparison';
+import HomeMainFeatures from '../home-main-features';
+import HomeTimeline from '../home-timeline';
+import HomeTestimonials from '../home-testimonials';
+import HomePartners from '../home-partners';
+import HomePricingNew from '../home-pricing-new';
 
 // ----------------------------------------------------------------------
 
@@ -58,6 +61,10 @@ export default function HomeView() {
       >
         <HomeMinimal />
 
+        <HomeComparison />
+
+        <HomeMainFeatures />
+
         <HomeHugePackElements />
 
         <Box sx={{ position: 'relative' }}>
@@ -66,15 +73,17 @@ export default function HomeView() {
           <StyledPolygon anchor="bottom" />
         </Box>
 
-        <HomeDarkMode />
+        <HomeTimeline />
 
-        {/* <HomeColorPresets /> */}
+        <HomeDarkMode />
 
         <HomeCleanInterfaces />
 
-        {/* <HomePricing /> */}
+        <HomeTestimonials />
 
-        {/* <HomeLookingFor /> */}
+        <HomePricingNew />
+
+        <HomePartners />
 
         <HomeAdvertisement />
       </Box>

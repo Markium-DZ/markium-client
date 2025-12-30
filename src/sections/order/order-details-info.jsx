@@ -8,41 +8,95 @@ import Divider from '@mui/material/Divider';
 import CardHeader from '@mui/material/CardHeader';
 import Typography from '@mui/material/Typography';
 
-import { useTranslate, useLocales } from 'src/locales';
+import { useTranslate } from 'src/locales';
+import { useLocales } from 'src/locales';
+
 import Iconify from 'src/components/iconify';
 
 // ----------------------------------------------------------------------
 
-export default function OrderDetailsInfo({ order }) {
+// Helper function to get localized name based on current language
+const getLocalizedName = (item, currentLang) => {
+  if (!item) return '';
+
+  const langValue = currentLang?.value || 'en';
+
+  switch (langValue) {
+    case 'ar':
+      return item.name_ar || item.name || item.key;
+    case 'fr':
+      return item.name || item.key;
+    case 'en':
+    default:
+      return item.key || item.name;
+  }
+};
+
+export default function OrderDetailsInfo({ customer, shippingAddress }) {
   const { t } = useTranslate();
   const { currentLang } = useLocales();
 
-  // Get localized name for commune/wilaya
-  const getLocalizedName = (item) => {
-    if (!item) return '';
-    if (currentLang.value === 'ar') return item.name_ar || item.name;
-    return item.name_en || item.name;
+  // Build localized full address
+  const getLocalizedFullAddress = () => {
+    if (!shippingAddress) return '';
+
+    const parts = [];
+
+    if (shippingAddress.street_address) {
+      parts.push(shippingAddress.street_address);
+    }
+
+    if (shippingAddress.commune) {
+      parts.push(getLocalizedName(shippingAddress.commune, currentLang));
+    }
+
+    if (shippingAddress.wilaya) {
+      parts.push(getLocalizedName(shippingAddress.wilaya, currentLang));
+    }
+
+    return parts.filter(Boolean).join(', ');
   };
+
   const renderCustomer = (
     <>
       <CardHeader
         title={t('customer_info')}
       />
-      <Stack direction="row" sx={{ p: 3 }}>
-        <Avatar
-          alt={order?.customer?.full_name}
-          sx={{ width: 48, height: 48, mr: 2 }}
-        >
-          {order?.customer?.full_name?.charAt(0).toUpperCase()}
-        </Avatar>
+      <Stack spacing={2} sx={{ p: 3 }}>
+        <Stack direction="row" spacing={2}>
+          <Avatar
+            alt={customer?.full_name || customer?.name}
+            src={customer?.avatarUrl}
+            sx={{ width: 48, height: 48 }}
+          >
+            {customer?.full_name?.[0] || customer?.first_name?.[0] || '?'}
+          </Avatar>
 
-        <Stack spacing={0.5} alignItems="flex-start" sx={{ typography: 'body2' }}>
-          <Typography variant="subtitle2">{order?.customer?.full_name}</Typography>
+          <Stack spacing={0.5} alignItems="flex-start" sx={{ typography: 'body2', flexGrow: 1 }}>
+            <Typography variant="subtitle2">{customer?.full_name || customer?.name}</Typography>
 
-          <Box sx={{ color: 'text.secondary' }}>
-            <Iconify icon="solar:phone-bold" width={16} sx={{ mr: 0.5 }} />
-            {order?.customer?.phone}
-          </Box>
+            {(customer?.first_name || customer?.last_name) && (
+              <Box sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
+                {customer?.first_name} {customer?.last_name}
+              </Box>
+            )}
+          </Stack>
+        </Stack>
+
+        <Stack spacing={1.5}>
+          {customer?.phone && (
+            <Stack direction="row" spacing={1} alignItems="center">
+              <Iconify icon="solar:phone-bold" width={20} sx={{ color: 'text.secondary' }} />
+              <Typography variant="body2">{customer.phone}</Typography>
+            </Stack>
+          )}
+
+          {customer?.email && (
+            <Stack direction="row" spacing={1} alignItems="center">
+              <Iconify icon="solar:letter-bold" width={20} sx={{ color: 'text.secondary' }} />
+              <Typography variant="body2">{customer.email}</Typography>
+            </Stack>
+          )}
         </Stack>
       </Stack>
     </>
@@ -53,88 +107,67 @@ export default function OrderDetailsInfo({ order }) {
       <CardHeader
         title={t('shipping_address')}
       />
-      <Stack spacing={1.5} sx={{ p: 3, typography: 'body2' }}>
-        <Stack direction="row">
-          <Box component="span" sx={{ color: 'text.secondary', width: 120, flexShrink: 0 }}>
-            {t('street_address')}
-          </Box>
-          {order?.address?.street_address}
-        </Stack>
-
-        <Stack direction="row">
-          <Box component="span" sx={{ color: 'text.secondary', width: 120, flexShrink: 0 }}>
-            {t('commune')}
-          </Box>
-          {getLocalizedName(order?.address?.commune)}
-        </Stack>
-
-        <Stack direction="row">
-          <Box component="span" sx={{ color: 'text.secondary', width: 120, flexShrink: 0 }}>
-            {t('wilaya')}
-          </Box>
-          {getLocalizedName(order?.address?.wilaya)}
-        </Stack>
-
-        <Stack direction="row">
-          <Box component="span" sx={{ color: 'text.secondary', width: 120, flexShrink: 0 }}>
-            {t('full_address')}
-          </Box>
-          {order?.address?.full_address}
-        </Stack>
-      </Stack>
-    </>
-  );
-
-  const renderOrderDetails = (
-    <>
-      <CardHeader
-        title={t('order_details')}
-      />
-      <Stack spacing={1.5} sx={{ p: 3, typography: 'body2' }}>
-        <Stack direction="row" alignItems="center">
-          <Box component="span" sx={{ color: 'text.secondary', width: 120, flexShrink: 0 }}>
-            {t('quantity')}
-          </Box>
-          {order?.quantity}
-        </Stack>
-
-        {order?.color && (
-          <Stack direction="row" alignItems="center">
-            <Box component="span" sx={{ color: 'text.secondary', width: 120, flexShrink: 0 }}>
-              {t('color')}
-            </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Box
-                sx={{
-                  width: 20,
-                  height: 20,
-                  borderRadius: '50%',
-                  backgroundColor: order?.color,
-                  border: '1px solid',
-                  borderColor: 'divider',
-                }}
-              />
-              {order?.color}
+      <Stack spacing={2} sx={{ p: 3, typography: 'body2' }}>
+        {shippingAddress?.street_address && (
+          <Stack direction="row" spacing={1}>
+            <Iconify icon="solar:map-point-bold" width={20} sx={{ color: 'text.secondary', mt: 0.25 }} />
+            <Box sx={{ flexGrow: 1 }}>
+              <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
+                {t('street_address')}
+              </Typography>
+              <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                {shippingAddress.street_address}
+              </Typography>
             </Box>
           </Stack>
         )}
 
-        {order?.variation && (
-          <Stack direction="row" alignItems="center">
-            <Box component="span" sx={{ color: 'text.secondary', width: 120, flexShrink: 0 }}>
-              {t('variation')}
-            </Box>
-            {order?.variation}
+        {(shippingAddress?.commune || shippingAddress?.wilaya) && (
+          <Stack spacing={1}>
+            {shippingAddress?.commune && (
+              <Stack direction="row" spacing={1}>
+                <Box sx={{ width: 20 }} />
+                <Box sx={{ flexGrow: 1 }}>
+                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                    {t('commune')}
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                    {getLocalizedName(shippingAddress.commune, currentLang)}
+                  </Typography>
+                </Box>
+              </Stack>
+            )}
+
+            {shippingAddress?.wilaya && (
+              <Stack direction="row" spacing={1}>
+                <Box sx={{ width: 20 }} />
+                <Box sx={{ flexGrow: 1 }}>
+                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                    {t('wilaya')}
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                    {getLocalizedName(shippingAddress.wilaya, currentLang)} ({shippingAddress.wilaya.code})
+                  </Typography>
+                </Box>
+              </Stack>
+            )}
           </Stack>
         )}
 
-        {order?.notes && (
-          <Stack direction="row">
-            <Box component="span" sx={{ color: 'text.secondary', width: 120, flexShrink: 0 }}>
-              {t('notes')}
-            </Box>
-            <Box sx={{ flex: 1 }}>{order?.notes}</Box>
-          </Stack>
+        {shippingAddress && (
+          <Box sx={{
+            p: 1.5,
+            bgcolor: (theme) => theme.palette.grey[100],
+            borderRadius: 1,
+            borderLeft: (theme) => `3px solid ${theme.palette.primary.main}`
+          }}>
+            <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 0.5 }}>
+              {t('full_address')}
+            </Typography>
+            <Typography variant="body2" sx={{ fontWeight: 500 }}>
+              {getLocalizedFullAddress()}
+            </Typography>
+          </Box>
         )}
       </Stack>
     </>
@@ -147,14 +180,11 @@ export default function OrderDetailsInfo({ order }) {
       <Divider sx={{ borderStyle: 'dashed' }} />
 
       {renderShipping}
-
-      <Divider sx={{ borderStyle: 'dashed' }} />
-
-      {renderOrderDetails}
     </Card>
   );
 }
 
 OrderDetailsInfo.propTypes = {
-  order: PropTypes.object,
+  customer: PropTypes.object,
+  shippingAddress: PropTypes.object,
 };

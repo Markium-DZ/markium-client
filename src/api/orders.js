@@ -18,7 +18,7 @@ export function useGetOrdersByProduct(product_id) {
     const shouldFetch = product_id != null && product_id !== undefined;
 
     const { data, isLoading, error, isValidating, mutate } = useSWR(
-        shouldFetch ? endpoints.product.orders(product_id) : null,
+        shouldFetch ? endpoints.order.root : null,
         fetcher,
         options
     );
@@ -41,7 +41,7 @@ export function useGetOrdersByProduct(product_id) {
 
 export function useGetOrders(page = 1, perPage = 100) {
     const params = new URLSearchParams({ page, per_page: perPage });
-    const url = `${endpoints.product?.allOrders}?${params.toString()}`;
+    const url = `${endpoints.order?.root}?${params.toString()}`;
     console.log("url : ",url);
 
     const { data, isLoading, error, isValidating, mutate } = useSWR(
@@ -67,10 +67,11 @@ export function useGetOrders(page = 1, perPage = 100) {
     return memoizedValue;
 }
 
-export function useGetOrder(product_id,order_id,page = 1, perPage = 100) {
-    const params = new URLSearchParams({ page, per_page: perPage });
-    const url = `${endpoints.product?.order(product_id, order_id)}?${params.toString()}`;
-    console.log("url : ",url);
+export function useGetOrder(order_id) {
+    // const params = new URLSearchParams({ page, per_page: perPage });
+    // const url = `${endpoints.order?.root}?${params.toString()}`;
+    // console.log("url : ",url);
+    const url = endpoints.order.root + "/" + order_id;
 
     const { data, isLoading, error, isValidating, mutate } = useSWR(
         url,
@@ -82,7 +83,7 @@ export function useGetOrder(product_id,order_id,page = 1, perPage = 100) {
 
     const memoizedValue = useMemo(
         () => ({
-            order: data?.data || [],
+            order: data?.data || {},
             orderLoading: isLoading,
             orderError: error,
             orderValidating: isValidating,
@@ -94,7 +95,6 @@ export function useGetOrder(product_id,order_id,page = 1, perPage = 100) {
 
     return memoizedValue;
 }
-
 
 // ----------------------------------------------------------------------
 
@@ -111,8 +111,8 @@ export async function createProduct(body) {
 
 
 
-export async function updateOrder(product_id, order_id, body) {
-    const URL = endpoints.product.updateOrdersStatus(product_id, order_id);
+export async function updateOrder(order_id, body) {
+    const URL = endpoints.order.root+"/"+order_id;
     console.log(" URL : ", URL)
     return await axios.patch(URL, body);
 }

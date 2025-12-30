@@ -1,13 +1,20 @@
 import * as Yup from 'yup';
+import { useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 
 import Button from '@mui/material/Button';
 import Grid from '@mui/material/Unstable_Grid2';
 import LoadingButton from '@mui/lab/LoadingButton';
+import CircularProgress from '@mui/material/CircularProgress';
+import Box from '@mui/material/Box';
+import Alert from '@mui/material/Alert';
+import Typography from '@mui/material/Typography';
 
 import Iconify from 'src/components/iconify';
 import FormProvider from 'src/components/hook-form';
+import { useTranslate } from 'src/locales';
+import { useGetEnabledPaymentMethods } from 'src/api/payment';
 
 import { useCheckoutContext } from './context';
 import CheckoutSummary from './checkout-summary';
@@ -35,32 +42,42 @@ const DELIVERY_OPTIONS = [
   },
 ];
 
-const PAYMENT_OPTIONS = [
-  {
-    value: 'paypal',
-    label: 'Pay with Paypal',
-    description: 'You will be redirected to PayPal website to complete your purchase securely.',
-  },
-  {
-    value: 'credit',
-    label: 'Credit / Debit Card',
-    description: 'We support Mastercard, Visa, Discover and Stripe.',
-  },
-  {
-    value: 'cash',
-    label: 'Cash',
-    description: 'Pay with cash when your order is delivered.',
-  },
-];
-
 const CARDS_OPTIONS = [
   { value: 'ViSa1', label: '**** **** **** 1212 - Jimmy Holland' },
   { value: 'ViSa2', label: '**** **** **** 2424 - Shawn Stokes' },
   { value: 'MasterCard', label: '**** **** **** 4545 - Cole Armstrong' },
 ];
 
+// Payment method mapping for icons
+const PAYMENT_ICONS = {
+  credit_card: ['logos:mastercard', 'logos:visa'],
+  mada: ['logos:mastercard'], // Mada uses Mastercard network
+  bank: ['solar:bank-bold'],
+  cod: ['solar:wad-of-money-bold'],
+  subscription: ['solar:restart-bold'],
+};
+
 export default function CheckoutPayment() {
   const checkout = useCheckoutContext();
+  const { t } = useTranslate();
+
+  // Fetch enabled payment methods from API
+  const { paymentMethods, paymentMethodsLoading, paymentMethodsError } = useGetEnabledPaymentMethods();
+
+  // Transform API payment methods to component format
+  const paymentOptions = useMemo(() => {
+    return paymentMethods.map((connection) => {
+      const providerIdentifier = connection.provider?.identifier || '';
+      const providerName = connection.provider?.name || connection.name;
+
+      return {
+        value: providerIdentifier,
+        label: providerName,
+        description: connection.provider?.description || t(`${providerIdentifier}_description`),
+        icons: PAYMENT_ICONS[providerIdentifier] || ['solar:card-bold'],
+      };
+    });
+  }, [paymentMethods, t]);
 
   const PaymentSchema = Yup.object().shape({
     payment: Yup.string().required('Payment is required'),
@@ -91,6 +108,37 @@ export default function CheckoutPayment() {
     }
   });
 
+  // Show loading state
+  if (paymentMethodsLoading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  // Show error state
+  if (paymentMethodsError) {
+    return (
+      <Alert severity="error">
+        <Typography variant="body2">
+          {t('error_loading_payment_methods')}
+        </Typography>
+      </Alert>
+    );
+  }
+
+  // Show empty state
+  if (!paymentOptions || paymentOptions.length === 0) {
+    return (
+      <Alert severity="warning">
+        <Typography variant="body2">
+          {t('no_payment_methods_configured')}
+        </Typography>
+      </Alert>
+    );
+  }
+
   return (
     <FormProvider methods={methods} onSubmit={onSubmit}>
       <Grid container spacing={3}>
@@ -99,7 +147,7 @@ export default function CheckoutPayment() {
 
           <CheckoutPaymentMethods
             cardOptions={CARDS_OPTIONS}
-            options={PAYMENT_OPTIONS}
+            options={paymentOptions}
             sx={{ my: 3 }}
           />
 
@@ -109,7 +157,7 @@ export default function CheckoutPayment() {
             onClick={checkout.onBackStep}
             startIcon={<Iconify icon="eva:arrow-ios-back-fill" />}
           >
-            Back
+            {t('back')}
           </Button>
         </Grid>
 
@@ -131,7 +179,7 @@ export default function CheckoutPayment() {
             variant="contained"
             loading={isSubmitting}
           >
-            Complete Order
+            {t('complete_order')}
           </LoadingButton>
         </Grid>
       </Grid>

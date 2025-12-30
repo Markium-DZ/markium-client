@@ -8,17 +8,18 @@ import { HOST_API } from 'src/config-global';
 
 export function useGetProducts() {
   const URL = endpoints.product.root;
-  const { data, isLoading, error, isValidating } = useSWR( URL, fetcher);
+  const { data, isLoading, error, isValidating, mutate } = useSWR( URL, fetcher);
 
   const memoizedValue = useMemo(
     () => ({
-      products: data?.data?.products || [],
+      products: data?.data || [],
       productsLoading: isLoading,
       productsError: error,
       productsValidating: isValidating,
-      productsEmpty: !isLoading && !data?.data?.products?.length,
+      productsEmpty: !isLoading && !data?.data?.length,
+      productsMutate: mutate,
     }),
-    [data?.data?.products, error, isLoading, isValidating]
+    [data?.data, error, isLoading, isValidating, mutate]
   );
 
   return memoizedValue;
@@ -29,17 +30,17 @@ export function useGetProducts() {
 export function useGetProduct(productId) {
   const URL = endpoints.product.root ;
 
-  const { data, isLoading, error, isValidating } = useSWR(URL, fetcher);
-  console.log(" : data : ",data)
+  const { data, isLoading, error, isValidating, mutate } = useSWR(URL, fetcher);
 
   const memoizedValue = useMemo(
     () => ({
-      product: data?.data?.products?.find( p => p.id == productId) || null,
+      product: data?.data?.find( p => p.id == productId) || null,
       productLoading: isLoading,
       productError: error,
       productValidating: isValidating,
+      productMutate: mutate,
     }),
-    [data?.data, error, isLoading, isValidating, productId]
+    [data?.data, error, isLoading, isValidating, productId, mutate]
   );
 
   return memoizedValue;
@@ -87,4 +88,27 @@ export async function deployProduct(id) {
 export async function uploadProductImages(id, body) {
   const URL = endpoints.product.assets(id);
   return await axios.post(URL, body);
+}
+
+export async function createMedia(files) {
+  // const URL = '/media';
+  const URL = endpoints.media.root;
+  const formData = new FormData();
+
+  files.forEach((file) => {
+    formData.append('files[]', file);
+  });
+
+  return await axios.post(URL, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+}
+
+// ----------------------------------------------------------------------
+
+export async function updateProductVariant(productId, variantId, data) {
+  const URL = `/products/${productId}/variants/${variantId}`;
+  return await axios.put(URL, data);
 }

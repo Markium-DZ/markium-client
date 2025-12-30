@@ -31,6 +31,15 @@ const ProductUploadAssetsPage = lazy(() => import('src/pages/dashboard/product/u
 const ProductOrdersListPage = lazy(() => import('src/pages/dashboard/order/product-orders'));
 const OrderListPage = lazy(() => import('src/pages/dashboard/order/list'));
 const OrderDetailsPage = lazy(() => import('src/pages/dashboard/order/details'));
+// MEDIA
+const MediaListPage = lazy(() => import('src/pages/dashboard/media/list'));
+// INVENTORY
+const InventoryListPage = lazy(() => import('src/pages/dashboard/inventory/list'));
+const LowStockInventoryPage = lazy(() => import('src/pages/dashboard/inventory/low-stock'));
+const InventoryDetailsPage = lazy(() => import('src/pages/dashboard/inventory/details'));
+const InventoryTrackingPage = lazy(() => import('src/pages/dashboard/inventory/tracking'));
+const InventoryItemsPage = lazy(() => import('src/pages/dashboard/inventory/items'));
+const ItemTrackingPage = lazy(() => import('src/pages/dashboard/inventory/item-tracking'));
 // ORDER
 const MainSpecListPage = lazy(() => import('src/pages/dashboard/settings/pm'));
 const ClaimCreatePage = lazy(() => import('src/pages/dashboard/clients/claims-new'));
@@ -74,7 +83,7 @@ const DeliveryCompaniesView = lazy(() => import('src/pages/dashboard/settings/de
 const ContactsSocialView = lazy(() => import('src/pages/dashboard/settings/contacts-social-view'));
 const ColorPaletteView = lazy(() => import('src/pages/dashboard/settings/color-palette-view'));
 const StoreLanguageView = lazy(() => import('src/pages/dashboard/settings/store-language-view'));
-const StoreLocationView = lazy(() => import('src/pages/dashboard/settings/store-location-view'));
+const GeneralSettingsView = lazy(() => import('src/pages/dashboard/settings/general-settings-view'));
 const ContactSupportView = lazy(() => import('src/pages/dashboard/contact-support-view'));
 
 
@@ -226,15 +235,8 @@ export const dashboardRoutes = [
           { path: ':id', element: <ProductDetailsPage /> },
           { path: 'new', element: <ProductCreatePage /> },
           { path: ':id/orders', element: <ProductOrdersListPage /> },
-          { path: ':product_id/orders/:order_id', element: <ProductOrdersListPage /> },
           { path: ':id/edit', element: <ProductEditPage /> },
           { path: ':id/upload-assets', element: <ProductUploadAssetsPage /> },
-        ],
-      },
-      {
-        path: 'products',
-        children: [
-          { path: ':product_id/orders/:order_id', element: <OrderDetailsPage /> },
         ],
       },
       {
@@ -310,17 +312,37 @@ export const dashboardRoutes = [
       },
 
       {
-        path: 'orders',
+        path: 'order',
         children: [
           { element: <OrderListPage />, index: true },
           { path: 'list', element: <OrderListPage /> },
-          // { path: 'products/:product_id/orders/:order_id', element: <OrderDetailsPage /> },
+          { path: ':id', element: <OrderDetailsPage /> },
+        ],
+      },
+      {
+        path: 'media',
+        children: [
+          { element: <MediaListPage />, index: true },
+          { path: 'list', element: <MediaListPage /> },
+        ],
+      },
+      {
+        path: 'inventory',
+        children: [
+          { element: <InventoryListPage />, index: true },
+          { path: 'list', element: <InventoryListPage /> },
+          { path: 'low-stock', element: <LowStockInventoryPage /> },
+          { path: ':id', element: <InventoryDetailsPage /> },
+          { path: ':id/tracking', element: <InventoryTrackingPage /> },
+          { path: ':id/items', element: <InventoryItemsPage /> },
+          { path: ':id/items/:itemId/tracking', element: <ItemTrackingPage /> },
         ],
       },
       {
         path: 'settings',
         children: [
           { element: <SettingsView />, index: true },
+          { path: 'general', element: <GeneralSettingsView /> },
           { path: 'account', element: <AccountSettingsView /> },
           { path: 'store-logo', element: <StoreLogoView /> },
           { path: 'store-data', element: <StoreDataView /> },
@@ -332,7 +354,6 @@ export const dashboardRoutes = [
           { path: 'contacts-social', element: <ContactsSocialView /> },
           { path: 'color-palette', element: <ColorPaletteView /> },
           { path: 'store-language', element: <StoreLanguageView /> },
-          { path: 'store-location', element: <StoreLocationView /> },
           { path: "pm", element: <SystemItemListPage collection={{metadata:"Maintenance Specification",type:"maintenance_specification"}} />, index: true },
           { path: 'pm/new', element: <SystemItemCreatePage collection={{metadata:"Maintenance Specification",type:"maintenance_specification"}} /> },
           { path: 'pm/:id/edit', element: <SystemItemEditPage collection={{metadata:"Maintenance Specification",type:"maintenance_specification"}} /> },

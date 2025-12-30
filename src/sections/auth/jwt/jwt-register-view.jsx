@@ -79,6 +79,42 @@ export default function JwtRegisterView() {
     return phone;
   };
 
+  // Reserved subdomains that cannot be used
+  const RESERVED_SUBDOMAINS = [
+    'be',
+    'be-test',
+    'staging',
+    'admin',
+    'api',
+    'www',
+    'mail',
+    'ftp',
+    'smtp',
+    'pop',
+    'imap',
+    'webmail',
+    'dashboard',
+    'app',
+    'test',
+    'dev',
+    'development',
+    'production',
+    'prod',
+    'demo',
+    'beta',
+    'alpha',
+    'support',
+    'help',
+    'docs',
+    'status',
+    'blog',
+    'cdn',
+    'static',
+    'assets',
+    'media',
+    'uploads',
+  ];
+
   const RegisterSchema = Yup.object().shape({
     name: Yup.string().required(t('name_required')),
     phone: Yup.string()
@@ -101,6 +137,10 @@ export default function JwtRegisterView() {
       .test('no-start-end-hyphen', t('store_slug_no_hyphen_edges'), (value) => {
         if (!value) return false;
         return !value.startsWith('-') && !value.endsWith('-');
+      })
+      .test('not-reserved', t('store_slug_reserved'), (value) => {
+        if (!value) return false;
+        return !RESERVED_SUBDOMAINS.includes(value.toLowerCase());
       }),
   });
 
@@ -122,10 +162,13 @@ export default function JwtRegisterView() {
     reset,
     watch,
     handleSubmit,
-    formState: { isSubmitting },
+    formState: { isSubmitting, errors },
   } = methods;
 
   const storeSlugValue = watch('store_slug');
+
+  // Check if the current slug is reserved
+  const isReservedSlug = storeSlugValue && RESERVED_SUBDOMAINS.includes(storeSlugValue.toLowerCase());
 
   const onSubmit = handleSubmit(async (data) => {
     try {
@@ -182,7 +225,34 @@ export default function JwtRegisterView() {
     <Stack spacing={2.5}>
       <RHFTextField name="name" label={t('name')} />
 
-      <RHFTextField name="phone" label={t('phone')} />
+      <RHFTextField
+        name="phone"
+        label={t('phone')}
+        placeholder="555123456"
+        inputProps={{
+          dir: 'ltr',
+        }}
+        InputProps={{
+          startAdornment: (
+            <InputAdornment position="start">
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <Box
+                  component="span"
+                  sx={{
+                    fontSize: '1.2rem',
+                    lineHeight: 1,
+                  }}
+                >
+                  🇩🇿
+                </Box>
+                <Typography variant="body2" sx={{ color: 'text.secondary', fontWeight: 500 }}>
+                  +213
+                </Typography>
+              </Box>
+            </InputAdornment>
+          ),
+        }}
+      />
 
       <RHFTextField name="store_name" label={t('store_name')} />
 
@@ -191,12 +261,32 @@ export default function JwtRegisterView() {
           name="store_slug"
           label={t('store_slug')}
           placeholder="my-store"
+          error={!!errors.store_slug || isReservedSlug}
           helperText={
             <Box component="span" sx={{ display: 'block', mt: 0.5 }}>
-              <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-                {t('store_slug_helper')}
-              </Typography>
-              {storeSlugValue && (
+              {/* Show error message if slug is reserved */}
+              {isReservedSlug && !errors.store_slug && (
+                <Typography variant="caption" color="error" sx={{ display: 'block', mb: 0.5 }}>
+                  {t('store_slug_reserved')}
+                </Typography>
+              )}
+
+              {/* Show validation error if exists */}
+              {errors.store_slug && (
+                <Typography variant="caption" color="error" sx={{ display: 'block', mb: 0.5 }}>
+                  {errors.store_slug.message}
+                </Typography>
+              )}
+
+              {/* Show helper text */}
+              {!errors.store_slug && !isReservedSlug && (
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                  {t('store_slug_helper')}
+                </Typography>
+              )}
+
+              {/* Show URL preview */}
+              {storeSlugValue && !isReservedSlug && !errors.store_slug && (
                 <Typography
                   variant="caption"
                   color="primary.main"
@@ -214,6 +304,9 @@ export default function JwtRegisterView() {
         name="password"
         label={t('password')}
         type={password.value ? 'text' : 'password'}
+        inputProps={{
+          dir: 'ltr',
+        }}
         InputProps={{
           endAdornment: (
             <InputAdornment position="end">
@@ -229,6 +322,9 @@ export default function JwtRegisterView() {
         name="password_confirmation"
         label={t('confirm_password')}
         type={confirmPassword.value ? 'text' : 'password'}
+        inputProps={{
+          dir: 'ltr',
+        }}
         InputProps={{
           endAdornment: (
             <InputAdornment position="end">

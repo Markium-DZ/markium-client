@@ -127,7 +127,7 @@ const TEMPLATES = [
     preview: '/assets/templates/women-fashion.png',
   },
   {
-    id: 'hz-boutique',
+    id: 'default',
     title: 'Default',
     description: 'Stylish and sophisticated design for fashion stores',
     image: '/assets/templates/default.png',
@@ -159,8 +159,8 @@ export default function StoreTemplateForm() {
       // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      await updateTheme({theme_name:selectedTemplate})
-       await updateStoreConfig({config:{theme_name:selectedTemplate}})
+      await updateTheme({ theme_name: selectedTemplate })
+      await updateStoreConfig({ config: { theme_name: selectedTemplate } })
 
       // Update user session with new template
       // updateUser({
@@ -180,11 +180,24 @@ export default function StoreTemplateForm() {
 
   return (
     <Stack spacing={3}>
+
+
+      <Box sx={{ display: 'flex', justifyContent: 'end' }}>
+        <LoadingButton
+          size="large"
+          type="button"
+          variant="contained"
+          loading={loading}
+          onClick={handleSubmit}
+          disabled={!selectedTemplate}
+        >
+          {t('apply_template')}
+        </LoadingButton>
+      </Box>
       <Alert severity="info">
         <AlertTitle>{t('template_selection_guide')}</AlertTitle>
         {t('template_selection_description')}
       </Alert>
-
       <Card sx={{ p: 3 }}>
         <Stack spacing={3}>
           <Box sx={{ textAlign: 'center', mb: 2 }}>
@@ -195,6 +208,7 @@ export default function StoreTemplateForm() {
               {t('select_template_description')}
             </Typography>
           </Box>
+
 
           <Grid container spacing={3}>
             {TEMPLATES.map((template) => (
@@ -269,18 +283,7 @@ export default function StoreTemplateForm() {
             ))}
           </Grid>
 
-          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
-            <LoadingButton
-              size="large"
-              type="button"
-              variant="contained"
-              loading={loading}
-              onClick={handleSubmit}
-              disabled={!selectedTemplate}
-            >
-              {t('apply_template')}
-            </LoadingButton>
-          </Box>
+
         </Stack>
       </Card>
     </Stack>

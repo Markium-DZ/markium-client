@@ -36,47 +36,23 @@ const Logo = forwardRef(({ disabledLink = false, user, sx, ...other }, ref) => {
 
 
 
-  const logo = user?.store?.logo_url ?
-    <Box
-      component="img"
-      src={user?.store?.logo_url}
-      sx={{ width: 40, height: 40, cursor: 'pointer', ...sx }}
-    />
-    :
-    (
+  const logo = 
       <>
         <Box
           ref={ref}
           component="div"
           sx={{
             width: 40,
-            height: 30,
+            height: 40,
             display: 'inline-flex',
             ...sx,
           }}
           {...other}
         >
-          {/* <svg width="40" height="40" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                  <linearGradient id="grad4" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" stopColor={PRIMARY_MAIN} />
-                    <stop offset="100%" stopColor={PRIMARY_LIGHT} />
-                  </linearGradient>
-                </defs>
-                <path
-                  d="M30 80 L30 40 L45 40 L60 65 L75 40 L90 40 L90 80"
-                  fill="none"
-                  stroke="url(#grad4)"
-                  strokeWidth="6"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <circle cx="60" cy="75" r="4" fill={PRIMARY_MAIN} />
-              </svg> */}
           <Box
             component="img"
             src={`/logo/${settings.themeColorPresets}.png`}
-            sx={{ width: 40, height: 30, cursor: 'pointer', ...sx }}
+            sx={{ width: 40, height: 40, cursor: 'pointer', ...sx }}
           />
         </Box>
         {/* <Box
@@ -125,7 +101,16 @@ const Logo = forwardRef(({ disabledLink = false, user, sx, ...other }, ref) => {
           </svg>
         </Box> */}
       </>
-    );
+
+      // ?
+  //   <Box
+  //     component="img"
+  //     src={user?.store?.logo_url}
+  //     sx={{ width: 40, height: 40, cursor: 'pointer', ...sx }}
+  //   />
+  //   :
+  //   (
+    // );
 
   if (disabledLink) {
     return logo;
