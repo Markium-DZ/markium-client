@@ -9,7 +9,6 @@ import Alert from '@mui/material/Alert';
 import AlertTitle from '@mui/material/AlertTitle';
 import Grid from '@mui/material/Grid';
 import CardActionArea from '@mui/material/CardActionArea';
-import CardMedia from '@mui/material/CardMedia';
 import CardContent from '@mui/material/CardContent';
 import Radio from '@mui/material/Radio';
 import FormControlLabel from '@mui/material/FormControlLabel';
@@ -20,6 +19,7 @@ import { useSnackbar } from 'src/components/snackbar';
 import showError from 'src/utils/show_error';
 import { AuthContext } from 'src/auth/context/jwt';
 import Iconify from 'src/components/iconify';
+import { SingleFilePreviewLazy } from 'src/components/upload';
 import { createProduct } from 'src/api/orders';
 import { updateTheme } from 'src/api/theme';
 import { updateStoreConfig } from 'src/api/store';
@@ -127,7 +127,7 @@ const TEMPLATES = [
     preview: '/assets/templates/women-fashion.png',
   },
   {
-    id: 'hz-boutique',
+    id: 'default',
     title: 'Default',
     description: 'Stylish and sophisticated design for fashion stores',
     image: '/assets/templates/default.png',
@@ -228,18 +228,12 @@ export default function StoreTemplateForm() {
                   }}
                 >
                   <CardActionArea onClick={() => handleTemplateSelect(template.id)}>
-                    <CardMedia
-                      component="img"
-                      height="150"
-                      image={template.image}
+                    <SingleFilePreviewLazy
+                      imgUrl={template.image}
                       alt={template.title}
                       sx={{
-                        objectFit: 'cover',
+                        height: 150,
                         bgcolor: 'grey.200',
-                      }}
-                      onError={(e) => {
-                        // Fallback image if template image doesn't exist
-                        e.target.src = '/assets/placeholder.jpg';
                       }}
                     />
                     <CardContent>

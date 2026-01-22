@@ -10,11 +10,11 @@ import BackgroundShape from './background-shape';
 function MotivationIllustration({ ...other }) {
   const theme = useTheme();
 
-  const PRIMARY_LIGHTER = theme.palette.primary.lighter;
+  const PRIMARY_LIGHTER = theme.palette.primary.light;
 
   const PRIMARY_DARK = theme.palette.primary.dark;
 
-  const PRIMARY_DARKER = theme.palette.primary.darker;
+  const PRIMARY_DARKER = theme.palette.primary.dark;
 
   return (
     <Box
