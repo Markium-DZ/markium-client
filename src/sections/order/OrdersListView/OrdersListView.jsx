@@ -54,7 +54,11 @@ import { getOrderStatusOptions, getOrderStatus } from 'src/constants/order-statu
 function OrderItemDetailsDialog({ open, onClose, item }) {
     if (!item) return null;
 
-    const mediaUrl = item.variant?.media?.full_url || item.variant?.media?.url || null;
+    // Handle media as array or single object
+    const mediaArray = Array.isArray(item.variant?.media)
+        ? item.variant.media
+        : (item.variant?.media ? [item.variant.media] : []);
+    const mediaUrl = mediaArray.length > 0 ? (mediaArray[0]?.full_url || mediaArray[0]?.url || null) : null;
     const variantOptions = item.variant?.options || [];
 
     const content = (
@@ -217,7 +221,11 @@ function OrderItemsCell({ items, order }) {
     // If single item, show full details with quantity badge
     if (items.length === 1) {
         const item = items[0];
-        const mediaUrl = item.variant?.media?.full_url || item.variant?.media?.url || null;
+        // Handle media as array or single object
+    const mediaArray = Array.isArray(item.variant?.media)
+        ? item.variant.media
+        : (item.variant?.media ? [item.variant.media] : []);
+    const mediaUrl = mediaArray.length > 0 ? (mediaArray[0]?.full_url || mediaArray[0]?.url || null) : null;
 
         // Extract variant options - handle both old and new formats
         const variantText = item.variant?.options
@@ -282,7 +290,11 @@ function OrderItemsCell({ items, order }) {
         <>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                 {items.slice(0, 3).map((item, idx) => {
-                    const mediaUrl = item.variant?.media?.full_url || item.variant?.media?.url || null;
+                    // Handle media as array or single object
+    const mediaArray = Array.isArray(item.variant?.media)
+        ? item.variant.media
+        : (item.variant?.media ? [item.variant.media] : []);
+    const mediaUrl = mediaArray.length > 0 ? (mediaArray[0]?.full_url || mediaArray[0]?.url || null) : null;
 
                     return (
                         <Tooltip

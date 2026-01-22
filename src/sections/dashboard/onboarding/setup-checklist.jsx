@@ -195,8 +195,8 @@ export default function SetupChecklist({ productsCount = 0, ordersCount = 0, has
           {steps.map((step, index) => (
             <Stack
               key={step.id}
-              direction="row"
-              alignItems="center"
+              direction={{ xs: 'column', sm: 'row' }}
+              alignItems={{ xs: 'flex-start', sm: 'center' }}
               spacing={2}
               sx={{
                 p: 2,

@@ -127,7 +127,7 @@ const TEMPLATES = [
     preview: '/assets/templates/women-fashion.png',
   },
   {
-    id: 'hz-boutique',
+    id: 'default',
     title: 'Default',
     description: 'Stylish and sophisticated design for fashion stores',
     image: '/assets/templates/default.png',
