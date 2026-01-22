@@ -292,7 +292,7 @@ export const paths = {
     },
     order: {
       root: `${ROOTS.DASHBOARD}/order`,
-      details: (product_id, order_id) => `${ROOTS.DASHBOARD}/products/${product_id}/orders/${order_id}`,
+      details: (order_id) => `${ROOTS.DASHBOARD}/order/${order_id}`,
       demo: {
         details: `${ROOTS.DASHBOARD}/order/${MOCK_ID}`,
       },
