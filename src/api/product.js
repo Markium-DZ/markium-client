@@ -80,6 +80,11 @@ export async function updateProduct(id,body) {
   return await axios.post(URL, body);
 }
 
+export async function deleteProduct(id) {
+  const URL = endpoints.product.delete(id);
+  return await axios.delete(URL);
+}
+
 export async function deployProduct(id) {
   const URL = endpoints.product.deploy(id)
   return await axios.post(URL);
@@ -111,4 +116,9 @@ export async function createMedia(files) {
 export async function updateProductVariant(productId, variantId, data) {
   const URL = `/products/${productId}/variants/${variantId}`;
   return await axios.put(URL, data);
+}
+
+export async function deleteProductVariant(productId, variantId) {
+  const URL = `/products/${productId}/variants/${variantId}`;
+  return await axios.delete(URL);
 }

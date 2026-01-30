@@ -12,6 +12,7 @@ import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import Chip from '@mui/material/Chip';
 
+
 import { useTranslate } from 'src/locales';
 import { fCurrency } from 'src/utils/format-number';
 import Iconify from 'src/components/iconify';
@@ -28,7 +29,6 @@ export default function ProductDetailsVariants({ product, optionDefinitions, onR
 
   const [selectedVariant, setSelectedVariant] = useState(null);
   const [openEditDialog, setOpenEditDialog] = useState(false);
-
   const handleAddVariant = () => {
     console.log('Add new variant');
     // TODO: Implement add variant functionality
@@ -48,10 +48,6 @@ export default function ProductDetailsVariants({ product, optionDefinitions, onR
     onRefresh?.();
   };
 
-  const handleDeleteVariant = (variant) => {
-    console.log('Delete variant:', variant);
-    // TODO: Implement delete variant functionality
-  };
 
   return (
     <Box sx={{ p: 3 }}>
@@ -76,7 +72,6 @@ export default function ProductDetailsVariants({ product, optionDefinitions, onR
               variant={variant}
               optionDefinitions={optionDefinitions}
               onEdit={() => handleEditVariant(variant)}
-              onDelete={() => handleDeleteVariant(variant)}
             />
           ))
         ) : (
@@ -120,7 +115,7 @@ ProductDetailsVariants.propTypes = {
 
 // ----------------------------------------------------------------------
 
-function VariantCard({ variant, optionDefinitions, onEdit, onDelete }) {
+function VariantCard({ variant, optionDefinitions, onEdit }) {
   const { t } = useTranslate();
   const popover = usePopover();
 
@@ -285,19 +280,6 @@ function VariantCard({ variant, optionDefinitions, onEdit, onDelete }) {
                   <Iconify icon="solar:pen-bold" />
                   {t('edit')}
                 </MenuItem>
-
-                <Divider sx={{ borderStyle: 'dashed' }} />
-
-                <MenuItem
-                  onClick={() => {
-                    popover.onClose();
-                    onDelete();
-                  }}
-                  sx={{ color: 'error.main' }}
-                >
-                  <Iconify icon="solar:trash-bin-trash-bold" />
-                  {t('delete')}
-                </MenuItem>
               </CustomPopover>
             </Box>
           </Stack>
@@ -311,5 +293,4 @@ VariantCard.propTypes = {
   variant: PropTypes.object,
   optionDefinitions: PropTypes.array,
   onEdit: PropTypes.func,
-  onDelete: PropTypes.func,
 };

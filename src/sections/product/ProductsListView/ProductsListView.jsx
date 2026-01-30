@@ -39,7 +39,7 @@ import { deleteDriver, useGetDrivers } from 'src/api/drivers';
 import { secondary } from 'src/theme/palette';
 import { color } from 'framer-motion';
 import { LoadingScreen } from 'src/components/loading-screen';
-import { useGetProducts, deployProduct } from 'src/api/product';
+import { useGetProducts, deployProduct, deleteProduct } from 'src/api/product';
 import Label from 'src/components/label';
 import { AuthContext } from 'src/auth/context/jwt';
 
@@ -211,18 +211,15 @@ const ElementActions = ({ item, setTableData , user }) => {
     const onDeleteRow = useCallback(
         async (id) => {
             setPostloader(true)
-            console.log("id : ", id);
             try {
                 loading.onTrue()
-                const res = await deleteDriver(id);
-                console.log("res : ", res);
+                await deleteProduct(id);
                 setTableData(prev => prev?.filter(i => i.id != id))
                 enqueueSnackbar(t("operation_success"));
                 confirm.onFalse();
                 loading.onFalse()
                 setPostloader(false)
             } catch (error) {
-                console.log("error : ", error);
                 setPostloader(false)
                 loading.onFalse()
                 showError(error)
@@ -289,7 +286,7 @@ const ElementActions = ({ item, setTableData , user }) => {
                     <Iconify icon="solar:eye-bold" />
                     {t('overview')}
                 </MenuItem>
-                {item?.product_url ?
+                {/* {item?.product_url ?
                     <MenuItem
                         onClick={() => {
                             router.push(paths.dashboard.product.orders(item?.id));
@@ -301,7 +298,7 @@ const ElementActions = ({ item, setTableData , user }) => {
                     </MenuItem>
                     :
                     null
-                }
+                } */}
                 <MenuItem
                     onClick={(e) => {
                         router.push(paths.dashboard.product.edit(item?.id));
@@ -311,7 +308,7 @@ const ElementActions = ({ item, setTableData , user }) => {
                     <Iconify icon="solar:pen-bold" />
                     {t('edit')}
                 </MenuItem>
-                <MenuItem
+                {/* <MenuItem
                     onClick={(e) => {
                         router.push(paths.dashboard.product.uploadAssets(item?.id));
                         popover.onClose();
@@ -319,7 +316,7 @@ const ElementActions = ({ item, setTableData , user }) => {
                 >
                     <Iconify icon="solar:upload-bold-duotone" />
                     {t('upload_assets')}
-                </MenuItem>
+                </MenuItem> */}
                 {item?.status != "draft" ?
                     <MenuItem
                         onClick={(e) => {
@@ -345,13 +342,24 @@ const ElementActions = ({ item, setTableData , user }) => {
                         {t('deploy')}
                     </MenuItem>
                 {/* ) : null} */}
+
+                <MenuItem
+                    onClick={() => {
+                        confirm.onTrue();
+                        popover.onClose();
+                    }}
+                    sx={{ color: 'error.main' }}
+                >
+                    <Iconify icon="solar:trash-bin-trash-bold" />
+                    {t('delete')}
+                </MenuItem>
             </CustomPopover>
 
             <ConfirmDialog
                 open={confirm.value}
                 onClose={confirm.onFalse}
                 title={t("delete")}
-                content={t('are_u_sure_to_delete', { item: t("driver"), item2: item?.name })}
+                content={t('are_u_sure_to_delete', { item: t("product"), item2: item?.name })}
                 action={
                     <LoadingButton
                         isSubmitting={postloader}
