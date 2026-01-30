@@ -1902,5 +1902,15 @@
     "empty_orders_copy_link": "Copy Store Link",
     "empty_orders_marketing_tips": "Marketing Tips",
     "empty_orders_create_product": "Create Product",
-    "empty_orders_encouragement": "Most stores receive their first order within 3 days"
+    "empty_orders_encouragement": "Most stores receive their first order within 3 days",
+    "weight": "Weight",
+    "weight_unit": "Weight Unit",
+    "weight_must_be_positive": "Weight must be positive",
+    "requires_shipping": "Requires Shipping",
+    "is_active": "Active",
+    "is_default": "Default",
+    "kg": "kg",
+    "g": "g",
+    "lb": "lb",
+    "oz": "oz"
 }

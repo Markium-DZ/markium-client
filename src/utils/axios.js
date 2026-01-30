@@ -110,6 +110,7 @@ export const endpoints = {
     list: '/product/list',
     details:(id)=> `/product/${id}`,
     update:(id)=> `/products/${id}/update`,
+    delete:(id)=> `/products/${id}`,
     assets:(id)=> `/products/${id}/assets`,
     deploy:(id)=> `/products/${id}/deploy`,
     orders:(id)=> `/products/${id}/orders`,

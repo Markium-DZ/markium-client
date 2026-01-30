@@ -80,6 +80,11 @@ export async function updateProduct(id,body) {
   return await axios.post(URL, body);
 }
 
+export async function deleteProduct(id) {
+  const URL = endpoints.product.delete(id);
+  return await axios.delete(URL);
+}
+
 export async function deployProduct(id) {
   const URL = endpoints.product.deploy(id)
   return await axios.post(URL);

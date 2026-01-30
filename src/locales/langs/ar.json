@@ -1929,5 +1929,15 @@
     "empty_orders_copy_link": "نسخ رابط المتجر",
     "empty_orders_marketing_tips": "نصائح التسويق",
     "empty_orders_create_product": "إنشاء منتج",
-    "empty_orders_encouragement": "معظم المتاجر تستقبل أول طلب خلال 3 أيام"
+    "empty_orders_encouragement": "معظم المتاجر تستقبل أول طلب خلال 3 أيام",
+    "weight": "الوزن",
+    "weight_unit": "وحدة الوزن",
+    "weight_must_be_positive": "يجب أن يكون الوزن موجباً",
+    "requires_shipping": "يتطلب شحن",
+    "is_active": "نشط",
+    "is_default": "افتراضي",
+    "kg": "كغ",
+    "g": "غ",
+    "lb": "رطل",
+    "oz": "أونصة"
 }

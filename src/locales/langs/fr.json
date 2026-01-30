@@ -1833,5 +1833,15 @@
     "empty_orders_copy_link": "Copier le Lien de la Boutique",
     "empty_orders_marketing_tips": "Conseils Marketing",
     "empty_orders_create_product": "Créer un Produit",
-    "empty_orders_encouragement": "La plupart des boutiques reçoivent leur première commande dans les 3 jours"
+    "empty_orders_encouragement": "La plupart des boutiques reçoivent leur première commande dans les 3 jours",
+    "weight": "Poids",
+    "weight_unit": "Unité de poids",
+    "weight_must_be_positive": "Le poids doit être positif",
+    "requires_shipping": "Nécessite l'expédition",
+    "is_active": "Actif",
+    "is_default": "Par défaut",
+    "kg": "kg",
+    "g": "g",
+    "lb": "lb",
+    "oz": "oz"
 }

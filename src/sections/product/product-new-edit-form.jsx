@@ -934,15 +934,15 @@ export default function ProductNewEditForm({ currentProduct }) {
     <div key={`product-form-container-${advancedMode ? 'advanced' : 'simple'}`}>
       <FormProvider methods={methods} onSubmit={onSubmit}>
         <Grid container spacing={3}>
-          {renderModeToggle}
+          {!currentProduct && renderModeToggle}
 
           {renderDetails}
 
           {renderProperties}
 
-          {!advancedMode && renderSimplePricing}
+          {!currentProduct && !advancedMode && renderSimplePricing}
 
-          {advancedMode && renderAdvancedOptions}
+          {!currentProduct && advancedMode && renderAdvancedOptions}
 
           {renderActions}
         </Grid>
