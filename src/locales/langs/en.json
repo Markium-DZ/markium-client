@@ -1912,5 +1912,6 @@
     "kg": "kg",
     "g": "g",
     "lb": "lb",
-    "oz": "oz"
+    "oz": "oz",
+    "error_deleting_variant": "Error deleting variant"
 }

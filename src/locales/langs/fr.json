@@ -1843,5 +1843,6 @@
     "kg": "kg",
     "g": "g",
     "lb": "lb",
-    "oz": "oz"
+    "oz": "oz",
+    "error_deleting_variant": "Erreur lors de la suppression de la variante"
 }

@@ -117,3 +117,8 @@ export async function updateProductVariant(productId, variantId, data) {
   const URL = `/products/${productId}/variants/${variantId}`;
   return await axios.put(URL, data);
 }
+
+export async function deleteProductVariant(productId, variantId) {
+  const URL = `/products/${productId}/variants/${variantId}`;
+  return await axios.delete(URL);
+}
