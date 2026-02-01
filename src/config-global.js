@@ -3,11 +3,15 @@ import { paths } from 'src/routes/paths';
 // API
 // ----------------------------------------------------------------------
 
+
+
 export const api_version = import.meta.env.VITE_API_VERSION ;
 
 export const HOST_API = import.meta.env.VITE_HOST_API ;
 export const ASSETS_API = import.meta.env.VITE_ASSETS_API;
 export const STORAGE_API = import.meta.env.VITE_STORAGE_API ; 
+
+
 
 export const FIREBASE_API = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
