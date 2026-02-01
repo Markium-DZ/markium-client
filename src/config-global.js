@@ -3,20 +3,11 @@ import { paths } from 'src/routes/paths';
 // API
 // ----------------------------------------------------------------------
 
+export const api_version = import.meta.env.VITE_API_VERSION ;
 
-// root@172.233.43.164
-// BETest@15371
-
-export const api_version = "v1"
-
-
-// export const HOST_API = 'http://172.105.83.136:8044/api';
-// export const HOST_API = `http://8.222.151.11:80/api/${api_version}`;
-// export const HOST_API = 'http://127.0.0.1:8000/api'; 
-export const HOST_API = `https://be.markium.online/api/${api_version}`;
-// export const HOST_API = `https://be-test.markium.online/api/${api_version}`;
+export const HOST_API = import.meta.env.VITE_HOST_API ;
 export const ASSETS_API = import.meta.env.VITE_ASSETS_API;
-export const STORAGE_API = 'https://s3.markium.online/'; 
+export const STORAGE_API = import.meta.env.VITE_STORAGE_API ; 
 
 export const FIREBASE_API = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -46,6 +37,15 @@ export const SUPABASE_API = {
 };
 
 export const MAPBOX_API = import.meta.env.VITE_MAPBOX_API;
+
+// PostHog Analytics
+export const POSTHOG_API = {
+  key: import.meta.env.VITE_PUBLIC_POSTHOG_KEY,
+  host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST || 'https://eu.i.posthog.com',
+  queryHost: (import.meta.env.VITE_PUBLIC_POSTHOG_HOST || 'https://eu.i.posthog.com').replace('://eu.i.', '://eu.'),
+  projectId: import.meta.env.VITE_PUBLIC_POSTHOG_PROJECT_ID,
+  personalApiKey: import.meta.env.VITE_POSTHOG_PERSONAL_API_KEY,
+};
 
 // ROOT PATH AFTER LOGIN SUCCESSFUL
 export const PATH_AFTER_LOGIN = paths.dashboard.root; // as '/dashboard'

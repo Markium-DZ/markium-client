@@ -17,6 +17,8 @@ const FaqsPage = lazy(() => import('src/pages/faqs'));
 const AboutPage = lazy(() => import('src/pages/about-us'));
 const PricingPage = lazy(() => import('src/pages/pricing'));
 const PaymentPage = lazy(() => import('src/pages/payment'));
+const PaymentSuccessPage = lazy(() => import('src/pages/payment-success'));
+const PaymentFailedPage = lazy(() => import('src/pages/payment-failed'));
 const ComingSoonPage = lazy(() => import('src/pages/coming-soon'));
 const MaintenancePage = lazy(() => import('src/pages/maintenance'));
 // PRODUCT
@@ -82,6 +84,8 @@ export const mainRoutes = [
       </CompactLayout>
     ),
     children: [
+      { path: 'payment-success', element: <PaymentSuccessPage /> },
+      { path: 'payment-failed', element: <PaymentFailedPage /> },
       { path: 'coming-soon', element: <ComingSoonPage /> },
       { path: 'maintenance', element: <MaintenancePage /> },
       { path: '500', element: <Page500 /> },
