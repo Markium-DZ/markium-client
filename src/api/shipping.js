@@ -1,6 +1,7 @@
 import useSWR from 'swr';
 import { useMemo } from 'react';
 import axios, { fetcher, endpoints } from 'src/utils/axios';
+import { capture } from 'src/utils/analytics';
 
 // ----------------------------------------------------------------------
 
@@ -62,7 +63,9 @@ export function useGetShippingConnections() {
 
 export async function createShippingConnection(body) {
   const URL = endpoints.shipping.connections;
-  return await axios.post(URL, body);
+  const response = await axios.post(URL, body);
+  capture('shipping_connection_created', { provider_name: body?.provider_slug });
+  return response;
 }
 
 export async function updateShippingConnection(connectionId, body) {

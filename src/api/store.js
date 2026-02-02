@@ -2,6 +2,7 @@
 import { useMemo } from 'react';
 import useSWR, { mutate } from 'swr';
 import axios, { fetcher, endpoints } from 'src/utils/axios';
+import { capture } from 'src/utils/analytics';
 
 // ----------------------------------------------------------------------
 
@@ -42,20 +43,24 @@ export function useGetMyStore(slug) {
 export async function updateStoreLogo(formData) {
   const URL = endpoints.store.root;
 
-  return await axios.post(URL, formData, {
+  const response = await axios.post(URL, formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
     },
   });
+  capture('store_updated', { updated_fields: ['logo'] });
+  return response;
 }
 
 
 export async function updateStoreConfig(formData) {
   const URL = endpoints.store.root;
 
-  return await axios.post(URL, formData, {
+  const response = await axios.post(URL, formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
     },
   });
+  capture('store_updated', { updated_fields: ['config'] });
+  return response;
 }
