@@ -1,6 +1,7 @@
 import useSWR from 'swr';
 import { useMemo } from 'react';
 import axios, { fetcher, endpoints } from 'src/utils/axios';
+import { capture } from 'src/utils/analytics';
 
 // ----------------------------------------------------------------------
 
@@ -60,11 +61,13 @@ export async function uploadMedia(files) {
     formData.append('files[]', file);
   });
 
-  return await axios.post(URL, formData, {
+  const response = await axios.post(URL, formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
     },
   });
+  capture('media_uploaded', { file_count: fileArray.length });
+  return response;
 }
 
 /**

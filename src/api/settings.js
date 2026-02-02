@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import useSWR, { mutate } from 'swr';
 
 import axios, { fetcher, endpoints } from 'src/utils/axios';
+import { capture } from 'src/utils/analytics';
 
 // ----------------------------------------------------------------------
 
@@ -115,7 +116,9 @@ export function useGetSystemCategories(page = 1, perPage = 100) {
 
 export async function createItemInSettings(slug,body) {
     const URL = endpoints.settings.items(slug);
-    return await axios.post(URL, body);
+    const response = await axios.post(URL, body);
+    capture('category_created', { category_name: body?.name });
+    return response;
 }
 
 

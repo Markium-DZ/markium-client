@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 
 import axios , { fetcher, endpoints } from 'src/utils/axios';
 import { HOST_API } from 'src/config-global';
+import { capture } from 'src/utils/analytics';
 
 // ----------------------------------------------------------------------
 
@@ -72,22 +73,35 @@ export function useSearchProducts(query) {
 
 export async function createProduct(body) {
   const URL = endpoints.product.root;
-  return await axios.post(URL, body);
+  const response = await axios.post(URL, body);
+  const product = response.data?.data;
+  capture('product_created', {
+    product_id: product?.id,
+    product_name: product?.name,
+    variant_count: product?.variants?.length,
+  });
+  return response;
 }
 
 export async function updateProduct(id,body) {
   const URL = endpoints.product.update(id);
-  return await axios.post(URL, body);
+  const response = await axios.post(URL, body);
+  capture('product_updated', { product_id: id });
+  return response;
 }
 
 export async function deleteProduct(id) {
   const URL = endpoints.product.delete(id);
-  return await axios.delete(URL);
+  const response = await axios.delete(URL);
+  capture('product_deleted', { product_id: id });
+  return response;
 }
 
 export async function deployProduct(id) {
   const URL = endpoints.product.deploy(id)
-  return await axios.post(URL);
+  const response = await axios.post(URL);
+  capture('product_deployment_started', { product_id: id });
+  return response;
 }
 
 export async function uploadProductImages(id, body) {

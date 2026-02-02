@@ -4,6 +4,7 @@ import PropTypes from 'prop-types';
 import { useMemo, useEffect, useReducer, useCallback } from 'react';
 
 import axios, { endpoints } from 'src/utils/axios';
+import { identifyClient, resetAnalytics, capture } from 'src/utils/analytics';
 
 import { AuthContext } from './auth-context';
 import { setSession, isValidToken, jwtDecode } from './utils';
@@ -76,6 +77,7 @@ export function AuthProvider({ children }) {
         const getUserInfo = localStorage.getItem(USER_STORAGE_KEY);
         if (getUserInfo !== null) {
           const user = JSON.parse(getUserInfo);
+          identifyClient(user);
           dispatch({
             type: 'INITIAL',
             payload: {
@@ -119,6 +121,10 @@ export function AuthProvider({ children }) {
       const { token, client } = response.data.data;
       setSession(token);
       localStorage.setItem(USER_STORAGE_KEY, JSON.stringify({ ...client }));
+
+      identifyClient(client);
+      capture('client_logged_in');
+
       dispatch({
         type: 'LOGIN',
         payload: {
@@ -156,6 +162,12 @@ export function AuthProvider({ children }) {
     setSession(token);
     localStorage.setItem(USER_STORAGE_KEY, JSON.stringify({ ...client }));
 
+    identifyClient(client);
+    capture('client_signed_up', {
+      client_name: client.name,
+      store_name: client.store?.name,
+    });
+
     dispatch({
       type: 'REGISTER',
       payload: {
@@ -169,6 +181,7 @@ export function AuthProvider({ children }) {
 
   // LOGOUT
   const logout = useCallback(async () => {
+    resetAnalytics();
     setSession(null);
     localStorage.removeItem(USER_STORAGE_KEY);
     dispatch({

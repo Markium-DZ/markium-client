@@ -1,6 +1,7 @@
 import useSWR from 'swr';
 import { useMemo } from 'react';
 import axios, { fetcher, endpoints } from 'src/utils/axios';
+import { capture } from 'src/utils/analytics';
 
 // ----------------------------------------------------------------------
 
@@ -62,7 +63,9 @@ export function useGetPaymentConnections() {
 
 export async function createPaymentConnection(body) {
   const URL = endpoints.payment.connections;
-  return await axios.post(URL, body);
+  const response = await axios.post(URL, body);
+  capture('payment_connection_created', { provider_slug: body?.provider_slug });
+  return response;
 }
 
 export async function updatePaymentConnection(connectionId, body) {
