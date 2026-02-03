@@ -5,7 +5,8 @@ import { paths } from 'src/routes/paths';
 
 export const api_version = import.meta.env.VITE_API_VERSION ;
 
-export const HOST_API = import.meta.env.VITE_HOST_API ;
+// export const HOST_API = import.meta.env.VITE_HOST_API ;
+export const HOST_API = "https://be-test.markium.online/api/v1" ;
 export const ASSETS_API = import.meta.env.VITE_ASSETS_API;
 export const STORAGE_API = import.meta.env.VITE_STORAGE_API ; 
 
