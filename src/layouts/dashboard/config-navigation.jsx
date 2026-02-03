@@ -51,6 +51,7 @@ const ICONS = {
   support: <Iconify icon="solar:chat-round-call-bold-duotone" />,
   media: <Iconify icon="solar:gallery-bold" />,
   inventory: <Iconify icon="solar:box-bold" />,
+  subscription: <Iconify icon="solar:wallet-bold-duotone" />,
 };
 
 // ----------------------------------------------------------------------
@@ -126,6 +127,7 @@ export function useNavData() {
             icon: ICONS.media,
           },
 
+
         ],
       },
 
@@ -140,6 +142,15 @@ export function useNavData() {
             permissions: ["read.color", "read.car_company", "read.car_model", "read.spec", "read.attahcment_name", "read.country", "read.neighborhood", "read.state"],
             roles: ['admin', 'manager'],
             // permissions:"read.system_settings",
+          },
+          {
+            title: t('subscription'),
+            path: paths.dashboard.subscription.root,
+            icon: ICONS.subscription,
+            children: [
+              { title: t('checkout'), path: paths.dashboard.subscription.checkout },
+              { title: t('payment_history'), path: paths.dashboard.subscription.history },
+            ],
           },
           {
             title: t('contact_support'),

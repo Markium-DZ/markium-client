@@ -1,17 +1,14 @@
 import { useContext, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import Button from '@mui/material/Button';
 import { useTheme } from '@mui/material/styles';
 import Container from '@mui/material/Container';
 import Grid from '@mui/material/Unstable_Grid2';
 
-import { paths } from 'src/routes/paths';
-import { useRouter } from 'src/routes/hooks';
-
 import { useGetProducts } from 'src/api/product';
 import { useGetOrders } from 'src/api/orders';
 import { useGetMedia } from 'src/api/media';
+import { useGetAnalyticsOverview, useGetAnalyticsTraffic } from 'src/api/analytics';
 
 import { AuthContext } from 'src/auth/context/jwt';
 
@@ -43,7 +40,6 @@ export default function OverviewEcommerceView() {
   const theme = useTheme();
   const settings = useSettingsContext();
   const { t } = useTranslation();
-  const router = useRouter();
 
   // Refresh data when tasks are completed in SetupChecklist
   const handleRefreshData = useCallback(() => {
@@ -54,7 +50,6 @@ export default function OverviewEcommerceView() {
   const productsCount = products?.length || 0;
   const ordersCount = orders?.length || 0;
   const hasMedia = mediaTotal > 0 || (media && media.length > 0);
-  const confirmedOrdersCount = orders?.filter((i) => i.status === 'confirmed')?.length || 0;
   const pendingOrdersCount = orders?.filter((i) => i.status === 'pending')?.length || 0;
   const deliveredOrdersCount = orders?.filter((i) => i.status === 'delivered')?.length || 0;
 
@@ -62,6 +57,23 @@ export default function OverviewEcommerceView() {
   const isNewUser = productsCount === 0;
   // B grade merchant: has products but no orders yet
   const isBGradeMerchant = productsCount > 0 && ordersCount === 0;
+  // Third grade user: has products and orders (established merchant)
+  const isThirdGradeUser = !isNewUser && !isBGradeMerchant;
+
+  // Fetch analytics data only for third grade users
+  const {
+    totalOrders: analyticsOrders,
+    totalOrdersData,
+    totalRevenue,
+    totalRevenueData,
+    totalVisitors,
+    totalVisitorsData,
+    totalProductViews,
+    totalProductViewsData,
+    overviewLoading: analyticsLoading,
+  } = useGetAnalyticsOverview(isThirdGradeUser ? '-30d' : null);
+
+  const { visitors, productViews } = useGetAnalyticsTraffic(isThirdGradeUser ? '-30d' : 'day');
 
   return (
     <Container maxWidth={settings.themeStretch ? false : 'xl'}>
@@ -100,44 +112,55 @@ export default function OverviewEcommerceView() {
           </Grid>
         )}
 
-        {/* Stats Cards - Only show when user has orders */}
-        {!isNewUser && !isBGradeMerchant && (
+        {/* Stats Cards - Only show when user has orders (third grade users) */}
+        {isThirdGradeUser && (
           <>
             <Grid xs={12} md={4}>
               <EcommerceWidgetSummary
-                title={t('products_published')}
-                percent={2.6}
-                total={productsCount}
+                title={t('total_orders')}
+                total={analyticsOrders || ordersCount || 0}
                 chart={{
-                  series: [22, 8, 35, 50, 82, 84, 77, 12, 87, 43],
+                  series: totalOrdersData.length > 0 ? totalOrdersData.slice(-10) : [22, 8, 35, 50, 82, 84, 77, 12, 87, 43],
                 }}
+                loading={analyticsLoading}
               />
             </Grid>
 
             <Grid xs={12} md={4}>
               <EcommerceWidgetSummary
-                title={t('orders_received')}
-                percent={-0.1}
-                total={ordersCount}
+                title={t('total_revenue')}
+                total={totalRevenue || "0"}
                 chart={{
                   colors: [theme.palette.info.light, theme.palette.info.main],
-                  series: [56, 47, 40, 62, 73, 30, 23, 54, 67, 68],
+                  series: totalRevenueData.length > 0 ? totalRevenueData.slice(-10) : [56, 47, 40, 62, 73, 30, 23, 54, 67, 68],
                 }}
+                loading={analyticsLoading}
               />
             </Grid>
 
             <Grid xs={12} md={4}>
               <EcommerceWidgetSummary
-                title={t('order_confirmed')}
-                percent={0.6}
-                total={confirmedOrdersCount}
+                title={t('total_visitors')}
+                total={totalVisitors || "0"}
                 chart={{
                   colors: [theme.palette.warning.light, theme.palette.warning.main],
-                  series: [40, 70, 75, 70, 50, 28, 7, 64, 38, 27],
+                  series: totalVisitorsData.length > 0 ? totalVisitorsData.slice(-10) : [40, 70, 75, 70, 50, 28, 7, 64, 38, 27],
                 }}
+                loading={analyticsLoading}
               />
             </Grid>
 
+            <Grid xs={12} md={4}>
+              <EcommerceWidgetSummary
+                title={t('total_product_views')}
+                total={totalProductViews}
+                chart={{
+                  colors: [theme.palette.success.light, theme.palette.success.main],
+                  series: totalProductViewsData.length > 0 ? totalProductViewsData.slice(-10) : [20, 30, 45, 60, 55, 70, 65, 80, 75, 90],
+                }}
+                loading={analyticsLoading}
+              />
+            </Grid>
           </>
         )}
 
@@ -150,10 +173,10 @@ export default function OverviewEcommerceView() {
               <EmptyStateProducts />
             </Grid>
           </>
-        ) : !isBGradeMerchant && (
+        ) : isThirdGradeUser && (
           // Active User View with orders - Show charts and data
           <>
-            <Grid xs={12} md={6} lg={4}>
+            {/* <Grid xs={12} md={6} lg={4}>
               <EcommerceSaleByGender
                 title={t('order_status')}
                 total={ordersCount}
@@ -164,14 +187,14 @@ export default function OverviewEcommerceView() {
                   ],
                 }}
               />
-            </Grid>
+            </Grid> */}
 
             <Grid xs={12} md={6} lg={8}>
               <EcommerceYearlySales
-                title={t('orders_and_revenue')}
-                subheader={t('yearly_comparison')}
+                title={t('visitors_and_views')}
+                subheader={t('last_30_days')}
                 chart={{
-                  categories: [
+                  categories: visitors.labels?.slice(-12) || [
                     t('jan'),
                     t('feb'),
                     t('mar'),
@@ -187,28 +210,15 @@ export default function OverviewEcommerceView() {
                   ],
                   series: [
                     {
-                      year: '2024',
+                      year: t('current_period'),
                       data: [
                         {
-                          name: t('total_revenue'),
-                          data: [10, 41, 35, 51, 49, 62, 69, 91, 148, 35, 51, 49],
+                          name: t('total_visitors'),
+                          data: visitors.data?.slice(-12) || [10, 41, 35, 51, 49, 62, 69, 91, 148, 35, 51, 49],
                         },
                         {
-                          name: t('total_orders'),
-                          data: [10, 34, 13, 56, 77, 88, 99, 77, 45, 13, 56, 77],
-                        },
-                      ],
-                    },
-                    {
-                      year: '2025',
-                      data: [
-                        {
-                          name: t('total_revenue'),
-                          data: [51, 35, 41, 10, 91, 69, 62, 148, 91, 69, 62, 49],
-                        },
-                        {
-                          name: t('total_orders'),
-                          data: [56, 13, 34, 10, 77, 99, 88, 45, 77, 99, 88, 77],
+                          name: t('product_views'),
+                          data: productViews.data?.slice(-12) || [10, 34, 13, 56, 77, 88, 99, 77, 45, 13, 56, 77],
                         },
                       ],
                     },

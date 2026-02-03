@@ -188,6 +188,9 @@ const BlankPage = lazy(() => import('src/pages/dashboard/blank'));
 const CompanyPage = lazy(() => import('src/pages/dashboard/company/list'));
 const CompanyEditPage = lazy(() => import('src/pages/dashboard/company/edit'));
 const CompanyNewPage = lazy(() => import('src/pages/dashboard/company/new'));
+// SUBSCRIPTION
+const SubscriptionCheckoutPage = lazy(() => import('src/pages/dashboard/subscription/checkout'));
+const SubscriptionHistoryPage = lazy(() => import('src/pages/dashboard/subscription/history'));
 
 // ----------------------------------------------------------------------
 
@@ -456,6 +459,14 @@ export const dashboardRoutes = [
       { path: 'permission', element: <PermissionDeniedPage /> },
       { path: 'blank', element: <BlankPage /> },
       { path: 'contact-support', element: <ContactSupportView /> },
+      {
+        path: 'subscription',
+        children: [
+          { element: <SubscriptionCheckoutPage />, index: true },
+          { path: 'checkout', element: <SubscriptionCheckoutPage /> },
+          { path: 'history', element: <SubscriptionHistoryPage /> },
+        ],
+      },
     ],
   },
   {

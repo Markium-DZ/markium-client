@@ -331,6 +331,11 @@ export const paths = {
     },
     apps:{
       android:"/app/app-release.apk"
-    }
+    },
+    subscription: {
+      root: `${ROOTS.DASHBOARD}/subscription`,
+      checkout: `${ROOTS.DASHBOARD}/subscription/checkout`,
+      history: `${ROOTS.DASHBOARD}/subscription/history`,
+    },
   },
 };

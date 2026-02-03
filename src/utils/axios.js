@@ -206,6 +206,12 @@ export const endpoints = {
   statistics: {
     root: '/attachments',
   },
+  analytics: {
+    overview: '/analytics/overview',
+    traffic: '/analytics/traffic',
+    funnel: '/analytics/funnel',
+    topProducts: '/analytics/top-products',
+  },
 
   drivers: {
     list: '/driver',
@@ -233,5 +239,12 @@ export const endpoints = {
     validateConnection: (connectionId) => `/payment/connections/${connectionId}/validate`,
     setDefaultConnection: (connectionId) => `/payment/connections/${connectionId}/set-default`,
     deleteConnection: (connectionId) => `/payment/connections/${connectionId}`,
+  },
+  subscriptions: {
+    packages: '/subscriptions/packages',
+    checkout: '/subscriptions/checkout',
+    payments: '/subscriptions/payments',
+    payment: (id) => `/subscriptions/payments/${id}`,
+    current: '/subscriptions/current',
   },
 };
