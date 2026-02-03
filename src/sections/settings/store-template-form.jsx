@@ -19,7 +19,7 @@ import { useSnackbar } from 'src/components/snackbar';
 import showError from 'src/utils/show_error';
 import { AuthContext } from 'src/auth/context/jwt';
 import Iconify from 'src/components/iconify';
-import { SingleFilePreviewLazy } from 'src/components/upload';
+import { SingleFilePreview } from 'src/components/upload';
 import { createProduct } from 'src/api/orders';
 import { updateTheme } from 'src/api/theme';
 import { updateStoreConfig } from 'src/api/store';
@@ -228,7 +228,7 @@ export default function StoreTemplateForm() {
                   }}
                 >
                   <CardActionArea onClick={() => handleTemplateSelect(template.id)}>
-                    <SingleFilePreviewLazy
+                    <SingleFilePreview
                       imgUrl={template.image}
                       alt={template.title}
                       sx={{
