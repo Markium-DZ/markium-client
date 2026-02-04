@@ -120,13 +120,16 @@ export default function AuthClassicLayout({ children, image, title }) {
       <Box
         component="img"
         alt="auth"
-        src={image || '/assets/illustrations/illustration_dashboard.png'}
+        src={image || '/assets/illustrations/illustration_dashboard.webp'}
+        width={720}
+        height={720}
         sx={{
           maxWidth: {
             xs: 480,
             lg: 560,
             xl: 720,
           },
+          height: 'auto',
         }}
       />
 

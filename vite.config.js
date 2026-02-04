@@ -21,6 +21,23 @@ export default defineConfig(({ mode }) => {
         },
       }),
     ],
+    build: {
+      target: 'esnext',
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+            'vendor-mui': [
+              '@mui/material',
+              '@mui/system',
+              '@mui/lab',
+              '@mui/x-data-grid',
+            ],
+            'vendor-motion': ['framer-motion'],
+          },
+        },
+      },
+    },
     resolve: {
       alias: {
         '~': `${process.cwd()}/node_modules`,

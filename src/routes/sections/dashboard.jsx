@@ -5,10 +5,8 @@ import { AuthGuard } from 'src/auth/guard';
 import DashboardLayout from 'src/layouts/dashboard';
 
 import { LoadingScreen } from 'src/components/loading-screen';
-import ContractCreatePage from 'src/pages/dashboard/clients/contracts-new';
 import { DataContextProvider } from 'src/context/system-data/DataContext';
 import PermissionsRouteContext from 'src/auth/context/permissions/permissions-route-context';
-import HomePage from 'src/pages/home';
 
 
 // ----------------------------------------------------------------------
@@ -153,6 +151,7 @@ const DriversEditPage = lazy(() => import('src/pages/dashboard/drivers/edit'));
 const AlertsDriversCreatePage = lazy(() => import('src/pages/dashboard/drivers/alerts'));
 
 // Clients
+const ContractCreatePage = lazy(() => import('src/pages/dashboard/clients/contracts-new'));
 const ClientsListPage = lazy(() => import('src/pages/dashboard/clients/list'));
 const ClientsDetailsPage = lazy(() => import('src/pages/dashboard/clients/clients-details'));
 const ContractsListPage = lazy(() => import('src/pages/dashboard/clients/contracts'));
@@ -183,6 +182,7 @@ const KanbanPage = lazy(() => import('src/pages/dashboard/kanban'));
 const PermissionDeniedPage = lazy(() => import('src/pages/dashboard/permission'));
 // BLANK PAGE
 const BlankPage = lazy(() => import('src/pages/dashboard/blank'));
+const HomePage = lazy(() => import('src/pages/home'));
 
 const CompanyPage = lazy(() => import('src/pages/dashboard/company/list'));
 const CompanyEditPage = lazy(() => import('src/pages/dashboard/company/edit'));
@@ -470,6 +470,6 @@ export const dashboardRoutes = [
   },
   {
     path:'home',
-    element:<HomePage />
+    element:<Suspense fallback={<LoadingScreen />}><HomePage /></Suspense>
   }
 ];
