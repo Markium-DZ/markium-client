@@ -1,4 +1,4 @@
-import { useContext, useCallback } from 'react';
+import { useState, useContext, useCallback } from 'react';
 
 import Container from '@mui/material/Container';
 import Grid from '@mui/material/Unstable_Grid2';
@@ -56,6 +56,10 @@ export default function OverviewEcommerceView() {
   // Third grade user: has products and orders (established merchant)
   const isThirdGradeUser = !isNewUser && !isBGradeMerchant;
 
+  // Analytics state
+  const [dateRange, setDateRange] = useState('-30d');
+  const [currentTab, setCurrentTab] = useState('overview');
+
   // Fetch analytics data only for third grade users
   const {
     totalOrders: analyticsOrders,
@@ -67,13 +71,13 @@ export default function OverviewEcommerceView() {
     totalProductViews,
     totalProductViewsData,
     overviewLoading: analyticsLoading,
-  } = useGetAnalyticsOverview(isThirdGradeUser ? '-30d' : '-30d');
+  } = useGetAnalyticsOverview(isThirdGradeUser ? dateRange : null);
 
-  const { visitors, productViews, trafficLoading } = useGetAnalyticsTraffic(isThirdGradeUser ? '-30d' : null);
+  const { visitors, productViews, trafficLoading } = useGetAnalyticsTraffic(isThirdGradeUser ? dateRange : null);
 
-  const { funnel, funnelLoading } = useGetAnalyticsFunnel(isThirdGradeUser ? '-30d' : null);
+  const { funnel, funnelLoading } = useGetAnalyticsFunnel(isThirdGradeUser ? dateRange : null);
 
-  const { topProducts, topProductsLoading } = useGetAnalyticsTopProducts(isThirdGradeUser ? '-30d' : null);
+  const { topProducts, topProductsLoading } = useGetAnalyticsTopProducts(isThirdGradeUser ? dateRange : null);
 
   return (
     <Container maxWidth={settings.themeStretch ? false : 'xl'}>
@@ -136,6 +140,11 @@ export default function OverviewEcommerceView() {
               // Top products data
               topProducts={topProducts}
               topProductsLoading={topProductsLoading}
+              // Date range & tab controls
+              dateRange={dateRange}
+              onDateRangeChange={setDateRange}
+              currentTab={currentTab}
+              onTabChange={setCurrentTab}
             />
           </Grid>
         )}

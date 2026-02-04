@@ -14,6 +14,7 @@ import { fCurrency } from 'src/utils/format-number';
 
 import Label from 'src/components/label';
 import Iconify from 'src/components/iconify';
+import { useSnackbar } from 'src/components/snackbar';
 import { useSettingsContext } from 'src/components/settings';
 
 import {
@@ -27,6 +28,7 @@ import {
 export default function SubscriptionCheckoutView() {
   const { t } = useTranslate();
   const settings = useSettingsContext();
+  const { enqueueSnackbar } = useSnackbar();
 
   const { packages, packagesLoading, packagesEmpty } = useGetSubscriptionPackages();
   const { subscription, subscriptionLoading } = useGetCurrentSubscription();
@@ -50,9 +52,11 @@ export default function SubscriptionCheckoutView() {
       }
     } catch (error) {
       console.error('Checkout error:', error);
+      const message = error?.error?.message || error?.message || t('operation_failed');
+      enqueueSnackbar(message, { variant: 'error' });
       setLoadingPackage(null);
     }
-  }, []);
+  }, [enqueueSnackbar, t]);
 
   const renderLoading = (
     <Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}>

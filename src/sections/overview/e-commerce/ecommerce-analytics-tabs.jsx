@@ -1,5 +1,4 @@
 import PropTypes from 'prop-types';
-import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import Tab from '@mui/material/Tab';
@@ -8,11 +7,14 @@ import Tabs from '@mui/material/Tabs';
 import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
 import Table from '@mui/material/Table';
+import Select from '@mui/material/Select';
+import MenuItem from '@mui/material/MenuItem';
 import TableRow from '@mui/material/TableRow';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
 import Typography from '@mui/material/Typography';
 import CardHeader from '@mui/material/CardHeader';
+import FormControl from '@mui/material/FormControl';
 import LinearProgress from '@mui/material/LinearProgress';
 import TableContainer from '@mui/material/TableContainer';
 import CircularProgress from '@mui/material/CircularProgress';
@@ -23,6 +25,8 @@ import { fNumber, fPercent } from 'src/utils/format-number';
 import Iconify from 'src/components/iconify';
 import Scrollbar from 'src/components/scrollbar';
 import Chart, { useChart } from 'src/components/chart';
+
+import { DATE_RANGE_OPTIONS } from 'src/api/analytics';
 
 // ----------------------------------------------------------------------
 
@@ -56,21 +60,43 @@ export default function EcommerceAnalyticsTabs({
   // Top products data
   topProducts,
   topProductsLoading,
+  // Date range
+  dateRange,
+  onDateRangeChange,
+  // Tab state
+  currentTab,
+  onTabChange,
   ...other
 }) {
   const { t } = useTranslation();
-  const theme = useTheme();
-  const [currentTab, setCurrentTab] = useState('overview');
 
   const handleChangeTab = (event, newValue) => {
-    setCurrentTab(newValue);
+    onTabChange?.(newValue);
+  };
+
+  const handleDateRangeChange = (event) => {
+    onDateRangeChange?.(event.target.value);
   };
 
   return (
     <Card {...other}>
       <CardHeader
         title={t('analytics')}
-        subheader={t('last_30_days')}
+        action={
+          <FormControl size="small" sx={{ minWidth: 140 }}>
+            <Select
+              value={dateRange}
+              onChange={handleDateRangeChange}
+              sx={{ fontSize: 14 }}
+            >
+              {DATE_RANGE_OPTIONS.map((option) => (
+                <MenuItem key={option.value} value={option.value}>
+                  {t(option.label)}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        }
         sx={{ pb: 0 }}
       />
 
@@ -148,6 +174,10 @@ EcommerceAnalyticsTabs.propTypes = {
   funnelLoading: PropTypes.bool,
   topProducts: PropTypes.array,
   topProductsLoading: PropTypes.bool,
+  dateRange: PropTypes.string,
+  onDateRangeChange: PropTypes.func,
+  currentTab: PropTypes.string,
+  onTabChange: PropTypes.func,
 };
 
 // ----------------------------------------------------------------------
@@ -223,7 +253,14 @@ function OverviewTab({
 }
 
 function MetricCard({ metric }) {
+  const { t } = useTranslation();
   const theme = useTheme();
+
+  // Check if data has any non-zero values OR if the total value is non-zero
+  const hasChartData = metric.data && metric.data.length > 0;
+  const hasNonZeroData = hasChartData && metric.data.some((val) => val > 0);
+  // Show chart if there's non-zero data, hide only when both value and data are zero
+  const showChart = hasNonZeroData || (hasChartData && metric.value > 0);
 
   const chartOptions = useChart({
     colors: [metric.color],
@@ -265,13 +302,26 @@ function MetricCard({ metric }) {
         {fNumber(metric.value)}
       </Typography>
 
-      {metric.data && metric.data.length > 0 && (
+      {hasNonZeroData ? (
         <Chart
           type="line"
           series={[{ data: metric.data.slice(-10) }]}
           options={chartOptions}
           height={60}
         />
+      ) : (
+        <Box
+          sx={{
+            height: 60,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Typography variant="caption" sx={{ color: 'text.disabled' }}>
+            {t('no_chart_data')}
+          </Typography>
+        </Box>
       )}
     </Box>
   );

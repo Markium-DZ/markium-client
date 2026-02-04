@@ -12,28 +12,49 @@ const options = {
 
 // ----------------------------------------------------------------------
 
+// Available date range options
+export const DATE_RANGE_OPTIONS = [
+  { value: '-7d', label: 'last_7_days' },
+  { value: '-14d', label: 'last_14_days' },
+  { value: '-30d', label: 'last_30_days' },
+  { value: '-90d', label: 'last_90_days' },
+];
+
+// ----------------------------------------------------------------------
+
 /**
  * Fetch analytics overview (total_orders, total_revenue, total_visitors, total_product_views)
  * @param {string} dateFrom - Date range: -7d, -14d, -30d, -90d (default: -30d)
  */
 export function useGetAnalyticsOverview(dateFrom = '-30d') {
-  const params = new URLSearchParams({ date_from: dateFrom });
+  const shouldFetch = dateFrom !== null;
+  const params = new URLSearchParams({ date_from: dateFrom || '-30d' });
   const url = `${endpoints.analytics.overview}?${params.toString()}`;
 
-  const { data, isLoading, error, isValidating, mutate } = useSWR(url, fetcher, options);
+  const { data, isLoading, error, isValidating, mutate } = useSWR(
+    shouldFetch ? url : null,
+    fetcher,
+    options
+  );
+
+  console.log("momodatra :",data);
 
   const memoizedValue = useMemo(() => {
     const metrics = data?.data?.metrics || {};
     return {
       overview: metrics,
-      totalOrders: metrics.total_orders?.[0]?.count ?? 0,
-      totalOrdersData: metrics.total_orders?.[0]?.data ?? [],
-      totalRevenue: metrics.total_revenue?.[0]?.count ?? 0,
-      totalRevenueData: metrics.total_revenue?.[0]?.data ?? [],
-      totalVisitors: metrics.total_visitors?.[0]?.count ?? 0,
-      totalVisitorsData: metrics.total_visitors?.[0]?.data ?? [],
-      totalProductViews: metrics.total_product_views?.[0]?.count ?? 0,
-      totalProductViewsData: metrics.total_product_views?.[0]?.data ?? [],
+      totalOrders: metrics.total_orders?.count ?? 0,
+      totalOrdersData: metrics.total_orders?.data ?? [],
+      totalOrdersLabels: metrics.total_orders?.labels ?? [],
+      totalRevenue: metrics.total_revenue?.count ?? 0,
+      totalRevenueData: metrics.total_revenue?.data ?? [],
+      totalRevenueLabels: metrics.total_revenue?.labels ?? [],
+      totalVisitors: metrics.total_visitors?.count ?? 0,
+      totalVisitorsData: metrics.total_visitors?.data ?? [],
+      totalVisitorsLabels: metrics.total_visitors?.labels ?? [],
+      totalProductViews: metrics.total_product_views?.count ?? 0,
+      totalProductViewsData: metrics.total_product_views?.data ?? [],
+      totalProductViewsLabels: metrics.total_product_views?.labels ?? [],
       overviewLoading: isLoading,
       overviewError: error,
       overviewValidating: isValidating,
@@ -52,10 +73,15 @@ export function useGetAnalyticsOverview(dateFrom = '-30d') {
  * @param {string} interval - Interval: day, week, month (default: day)
  */
 export function useGetAnalyticsTraffic(dateFrom = '-30d', interval = 'day') {
-  const params = new URLSearchParams({ date_from: dateFrom, interval });
+  const shouldFetch = dateFrom !== null;
+  const params = new URLSearchParams({ date_from: dateFrom || '-30d', interval });
   const url = `${endpoints.analytics.traffic}?${params.toString()}`;
 
-  const { data, isLoading, error, isValidating, mutate } = useSWR(url, fetcher, options);
+  const { data, isLoading, error, isValidating, mutate } = useSWR(
+    shouldFetch ? url : null,
+    fetcher,
+    options
+  );
 
   const memoizedValue = useMemo(() => {
     const traffic = data?.data?.traffic || [];
@@ -80,10 +106,15 @@ export function useGetAnalyticsTraffic(dateFrom = '-30d', interval = 'day') {
  * @param {string} dateFrom - Date range: -7d, -14d, -30d, -90d (default: -30d)
  */
 export function useGetAnalyticsFunnel(dateFrom = '-30d') {
-  const params = new URLSearchParams({ date_from: dateFrom });
+  const shouldFetch = dateFrom !== null;
+  const params = new URLSearchParams({ date_from: dateFrom || '-30d' });
   const url = `${endpoints.analytics.funnel}?${params.toString()}`;
 
-  const { data, isLoading, error, isValidating, mutate } = useSWR(url, fetcher, options);
+  const { data, isLoading, error, isValidating, mutate } = useSWR(
+    shouldFetch ? url : null,
+    fetcher,
+    options
+  );
 
   const memoizedValue = useMemo(() => {
     const funnel = data?.data?.funnel || [];
@@ -111,10 +142,15 @@ export function useGetAnalyticsFunnel(dateFrom = '-30d') {
  * @param {string} dateFrom - Date range: -7d, -14d, -30d, -90d (default: -30d)
  */
 export function useGetAnalyticsTopProducts(dateFrom = '-30d') {
-  const params = new URLSearchParams({ date_from: dateFrom });
+  const shouldFetch = dateFrom !== null;
+  const params = new URLSearchParams({ date_from: dateFrom || '-30d' });
   const url = `${endpoints.analytics.topProducts}?${params.toString()}`;
 
-  const { data, isLoading, error, isValidating, mutate } = useSWR(url, fetcher, options);
+  const { data, isLoading, error, isValidating, mutate } = useSWR(
+    shouldFetch ? url : null,
+    fetcher,
+    options
+  );
 
   const memoizedValue = useMemo(
     () => ({
