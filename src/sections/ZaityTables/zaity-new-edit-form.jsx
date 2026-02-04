@@ -87,7 +87,6 @@ export default function ZaityDynamicForm({ currentItem = {}, schema, fields, onS
 
 export function DynamicFormField({ field, options = {}, values,setValue }) {
   const { name, label, type, required, data = [], ...rest } = field;
-  console.log(name," : " , type);
 
   switch (type) {
     case 'text':
@@ -139,7 +138,6 @@ export function DynamicFormField({ field, options = {}, values,setValue }) {
 
     case 'condition':
       if (field.condition(values[field?.conditionKey])) {
-        console.log("field.condition(values[field?.conditionKey]) : ",field.condition(values[field?.conditionKey]));
         return <DynamicFormField field={{ ...field, type: field?.conditionType }} value={values} setValue={setValue} />;
       }
       else return  null

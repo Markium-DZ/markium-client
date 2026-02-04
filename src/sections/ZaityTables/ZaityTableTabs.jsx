@@ -107,7 +107,6 @@ function applyFilter({ inputData, comparator, filters, currentKey, items }) {
   Object.entries(filters).forEach(([key, value]) => {
     if (!value || value === 'all' || value === 'All') return;
     const matcherTab = items?.find(i => i.key == filters?.[currentKey])
-    console.log("matcherTab : ", matcherTab);
 
     inputData = inputData.filter((item) => {
       const fieldValue = item?.[key];

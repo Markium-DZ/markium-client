@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { root } from 'postcss';
 
 import { HOST_API } from 'src/config-global';
 

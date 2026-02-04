@@ -52,7 +52,6 @@ export default function DocumentsListView({ }) {
     const { car } = useGetCar()
     const { drivers } = useGetDrivers()
     const { documents, mutate, documentsLoading } = useGetDocuments()
-    console.log("documents : documents : ",documents)
     const { clients } = useGetClients()
 
     const [tableData, setTableData] = useState([]);

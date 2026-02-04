@@ -67,8 +67,6 @@ export default function ZaityListView({ TABLE_HEAD, dense, zaityTableDate, onSel
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslate();
 
-  console.log("zaityTableDate : ", zaityTableDate);
-
   const table = useTable({ defaultOrderBy: 'orderNumber' });
 
   const router = useRouter();
