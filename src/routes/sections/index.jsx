@@ -1,11 +1,9 @@
 import { Navigate, useRoutes } from 'react-router-dom';
 
-import MainLayout from 'src/layouts/main';
-
 import { paths } from 'src/routes/paths';
 import { authRoutes } from './auth';
 import { authDemoRoutes } from './auth-demo';
-import { HomePage, mainRoutes } from './main';
+import { mainRoutes } from './main';
 import { dashboardRoutes } from './dashboard';
 import { componentsRoutes } from './components';
 

@@ -1,12 +1,12 @@
 import { lazy, Suspense } from 'react';
 import { Outlet } from 'react-router-dom';
 
-import { AuthGuard } from 'src/auth/guard';
-import DashboardLayout from 'src/layouts/dashboard';
-
 import { LoadingScreen } from 'src/components/loading-screen';
-import { DataContextProvider } from 'src/context/system-data/DataContext';
-import PermissionsRouteContext from 'src/auth/context/permissions/permissions-route-context';
+
+// Lazy-load heavy layout components to keep them out of the initial bundle
+const AuthGuard = lazy(() => import('src/auth/guard').then(m => ({ default: m.AuthGuard })));
+const DashboardLayout = lazy(() => import('src/layouts/dashboard'));
+const PermissionsRouteContext = lazy(() => import('src/auth/context/permissions/permissions-route-context'));
 
 
 // ----------------------------------------------------------------------
@@ -197,15 +197,15 @@ export const dashboardRoutes = [
   {
     path: 'dashboard',
     element: (
-      <AuthGuard>
-        <DashboardLayout>
-          <Suspense fallback={<LoadingScreen />}>
-            {/* <DataContextProvider> */}
+      <Suspense fallback={<LoadingScreen />}>
+        <AuthGuard>
+          <DashboardLayout>
+            <Suspense fallback={<LoadingScreen />}>
               <Outlet />
-            {/* </DataContextProvider> */}
-          </Suspense>
-        </DashboardLayout>
-      </AuthGuard>
+            </Suspense>
+          </DashboardLayout>
+        </AuthGuard>
+      </Suspense>
     ),
     children: [
       { element: <IndexPage />, index: true },
