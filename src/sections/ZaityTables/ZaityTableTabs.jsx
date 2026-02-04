@@ -8,7 +8,7 @@ const ZaityTableTabs = ({
   children,
   data = [],
   items = [],
-  key = "status",
+  filterKey = "status",
   setTableDate,
   dateError,
   defaultFilters = {},
@@ -17,7 +17,7 @@ const ZaityTableTabs = ({
   t = (text) => text,
 }) => {
   const table = useTable({ defaultOrderBy });
-  const [filters, setFilters] = useState(defaultFilters);
+  const [filters, setFilters] = useState({ ...defaultFilters, [filterKey]: defaultFilters[filterKey] || 'all' });
 
   const handleFilters = useCallback((name, value) => {
     setFilters((prev) => ({
@@ -30,9 +30,9 @@ const ZaityTableTabs = ({
 
   const handleFilterStatus = useCallback(
     (event, newValue) => {
-      handleFilters(key, newValue);
+      handleFilters(filterKey, newValue);
     },
-    [handleFilters]
+    [handleFilters, filterKey]
   );
 
   const dataFiltered = applyFilter({
@@ -40,7 +40,7 @@ const ZaityTableTabs = ({
     comparator: getComparator(table.order, table.orderBy),
     filters,
     dateError,
-    currentKey: key,
+    currentKey: filterKey,
     items
   });
 
@@ -52,7 +52,7 @@ const ZaityTableTabs = ({
   return (
     <>
       <Tabs
-        value={filters?.status}
+        value={filters?.[filterKey]}
         onChange={handleFilterStatus}
         sx={{
           px: 2.5,
@@ -72,7 +72,7 @@ const ZaityTableTabs = ({
               label={tab.label}
               icon={
                 <Label
-                  variant={tab.key === filters[key] ? 'filled' : 'soft'}
+                  variant={tab.key === filters[filterKey] ? 'filled' : 'soft'}
                   color={tab.color || 'default'}
                 >
                   {count}
