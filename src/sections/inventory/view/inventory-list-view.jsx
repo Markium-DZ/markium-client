@@ -340,7 +340,7 @@ export default function InventoryListView() {
     >
       <Card>
         <ZaityTableTabs
-          key="stock_status"
+          filterKey="stock_status"
           data={tableData}
           items={items}
           defaultFilters={defaultFilters}

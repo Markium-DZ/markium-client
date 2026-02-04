@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
@@ -106,10 +106,10 @@ export default function SettingsView() {
       <RoleBasedGuard hasContent roles={[role]} sx={{ py: 10 }}>
         {
           groups?.map((group, index) => (
-            <>
+            <React.Fragment key={group.title}>
               {index > 0 && <Divider orientation="horizontal" sx={{ mt: 4, display: 'flex' }} />}
               <Typography variant="h4" sx={{ mb: 2, mt: 2, display: "flex", alignItems: "center" }} >
-                <Iconify icon={group?.icon} width="40px" height="40px" sx={{ mx: 1, color: 'primary.main' }} />
+                <Iconify icon={group?.icon} width={40} height={40} sx={{ mx: 1, color: 'primary.main' }} />
                 {t(group?.title)}
               </Typography>
               {/* <Box gap={3} display="grid" gridTemplateColumns="repeat(3, 1fr)"> */}
@@ -124,15 +124,15 @@ export default function SettingsView() {
               >
                 {
                   group.items?.map((item, index2) => (
-                    <Link href={item?.href} underline='none'>
-                      <Card key={index2} sx={{ pb: 2 }}>
-                        <CardHeader title={t(item?.header)} subheader={<Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>{t(item?.subheader)}<Link href={item?.href} sx={{ fontSize: "0.7rem" }}><Iconify icon="tabler:arrow-narrow-left" width="32px" height="32px" sx={{ color: 'primary.main' }} /></Link></Box>} />
+                    <Link key={item.type} href={item?.href} underline='none'>
+                      <Card sx={{ pb: 2 }}>
+                        <CardHeader title={t(item?.header)} subheader={<Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>{t(item?.subheader)}<Iconify icon="tabler:arrow-narrow-left" width={32} height={32} sx={{ color: 'primary.main' }} /></Box>} />
                       </Card>
                     </Link>
                   ))
                 }
               </Box>
-            </>
+            </React.Fragment>
           ))
         }
 

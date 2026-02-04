@@ -8,7 +8,6 @@ import { LoadingScreen } from 'src/components/loading-screen';
 import ContractCreatePage from 'src/pages/dashboard/clients/contracts-new';
 import { DataContextProvider } from 'src/context/system-data/DataContext';
 import PermissionsRouteContext from 'src/auth/context/permissions/permissions-route-context';
-import { element } from 'prop-types';
 import HomePage from 'src/pages/home';
 
 

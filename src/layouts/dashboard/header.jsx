@@ -62,7 +62,7 @@ export default function Header({ onOpenNav }) {
       {lgUp && isNavHorizontal && <Logo sx={{ mr: 2.5 }} />}
 
       {!lgUp && (
-        <IconButton onClick={onOpenNav}>
+        <IconButton onClick={onOpenNav} aria-label="Open navigation">
           <SvgColor src="/assets/icons/navbar/ic_menu_item.svg" />
         </IconButton>
       )}
@@ -80,13 +80,13 @@ export default function Header({ onOpenNav }) {
 
         <div style={{ display: "flex", alignItems: "center" }}>
           {darkMode == "dark" ?
-            <m.button initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }} onClick={Toggle} style={{ background: "none", border: "none" }}>
+            <m.button initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }} onClick={Toggle} style={{ background: "none", border: "none" }} aria-label="Switch to light mode">
               <Icon icon="duo-icons:moon-stars" width={24} height={24} style={{ color: "#fffefe" }} />
             </m.button>
             :
             null}
           {darkMode == "light" ?
-            <m.button initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }} onClick={Toggle} style={{ background: "none", border: "none" }}>
+            <m.button initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }} onClick={Toggle} style={{ background: "none", border: "none" }} aria-label="Switch to dark mode">
               <Icon icon="duo-icons:sun" width={24} height={24} />
             </m.button>
             :

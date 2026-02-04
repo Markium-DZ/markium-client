@@ -212,7 +212,7 @@ export default function InventoryItemsView() {
     >
       <Card>
         <ZaityTableTabs
-          key="item_status"
+          filterKey="item_status"
           data={tableData}
           items={statusItems}
           defaultFilters={defaultFilters}

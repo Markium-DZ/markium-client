@@ -52,7 +52,6 @@ export default function DocumentsListView({ }) {
     const { car } = useGetCar()
     const { drivers } = useGetDrivers()
     const { documents, mutate, documentsLoading } = useGetDocuments()
-    console.log("documents : documents : ",documents)
     const { clients } = useGetClients()
 
     const [tableData, setTableData] = useState([]);
@@ -192,8 +191,8 @@ export default function DocumentsListView({ }) {
                 ]}
             >
                 <Card>
-                    <ZaityTableTabs key='condition' data={tableData} items={items} defaultFilters={defaultFilters} setTableDate={setDataFiltered} filterFunction={filterFunction}>
-                        {/* <ZaityTableTabs key='attachable_type' data={tableData} items={items2} defaultFilters={defaultFilters} setTableDate={setDataFiltered} filterFunction={filterFunction}> */}
+                    <ZaityTableTabs filterKey='condition' data={tableData} items={items} defaultFilters={defaultFilters} setTableDate={setDataFiltered} filterFunction={filterFunction}>
+                        {/* <ZaityTableTabs filterKey='attachable_type' data={tableData} items={items2} defaultFilters={defaultFilters} setTableDate={setDataFiltered} filterFunction={filterFunction}> */}
                         <ZaityTableFilters data={dataFiltered} tableData={tableData} setTableDate={setDataFiltered} items={filters} defaultFilters={defaultFilters} dataFiltered={tableData} searchText={t("search_by") + " " + t("model") + ", " + " " + t("name") + ", " + t("plateNumber") + ", " + t("or_any_value") + " ..."} >
                             {
                                 documentsLoading ?

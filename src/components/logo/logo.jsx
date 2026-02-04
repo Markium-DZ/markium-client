@@ -13,8 +13,6 @@ import { useSettingsContext } from 'src/components/settings';
 const Logo = forwardRef(({ disabledLink = false, user, sx, ...other }, ref) => {
   const theme = useTheme();
   const settings = useSettingsContext();
-  console.log("theme : ", theme.palette.mode);
-  console.log("themeColorPresets : ", settings.themeColorPresets);
 
   const PRIMARY_LIGHT = theme.palette.primary.light;
 
@@ -52,6 +50,9 @@ const Logo = forwardRef(({ disabledLink = false, user, sx, ...other }, ref) => {
           <Box
             component="img"
             src={`/logo/${settings.themeColorPresets}.png`}
+            alt="Markium logo"
+            width={40}
+            height={40}
             sx={{ width: 40, height: 40, cursor: 'pointer', ...sx }}
           />
         </Box>
