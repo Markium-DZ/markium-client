@@ -37,7 +37,7 @@ export default function AppWelcome({ title, description, action, img, ...other }
             xs: theme.spacing(5, 3, 0, 3),
             md: theme.spacing(5),
           },
-          textAlign: { xs: 'center', md: 'left' },
+          textAlign: { xs: 'center', md: 'start' },
         }}
       >
         <Typography variant="h4" sx={{ mb: 2, whiteSpace: 'pre-line' }}>

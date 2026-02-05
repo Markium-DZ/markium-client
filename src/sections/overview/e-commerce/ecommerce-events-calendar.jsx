@@ -1,5 +1,4 @@
 import { useState, useMemo } from 'react';
-import PropTypes from 'prop-types';
 
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
@@ -16,59 +15,112 @@ import Iconify from 'src/components/iconify';
 
 // ----------------------------------------------------------------------
 
-// Static events list - dates for 2025
-const EVENTS = [
-  {
-    id: 'ramadan-2025',
-    name: 'ramadan',
-    nameAr: 'رمضان',
-    nameFr: 'Ramadan',
-    date: new Date(2025, 11, 1), // March 1, 2025 (start of Ramadan)
-    endDate: new Date(2025, 11, 1), // March 30, 2025
-    image: '/assets/events/ramadane.webp',
-    color: '#9C27B0',
+// Islamic holidays lookup table (Hijri dates shift ~10-11 days/year)
+const ISLAMIC_HOLIDAYS = {
+  2025: {
+    ramadan: { start: [2, 1], end: [2, 30] },       // March 1 - March 30
+    eid_fitr: { start: [2, 30], end: [3, 2] },       // March 30 - April 2
+    eid_adha: { start: [5, 6], end: [5, 10] },       // June 6 - June 10
   },
-  {
-    id: 'eid-fitr-2025',
-    name: 'eid_al_fitr',
-    nameAr: 'عيد الفطر',
-    nameFr: 'Aïd el-Fitr',
-    date: new Date(2025, 2, 30), // March 30, 2025
-    endDate: new Date(2025, 3, 2), // April 2, 2025
-    image: '/assets/events/eid.png',
-    color: '#4CAF50',
+  2026: {
+    ramadan: { start: [1, 18], end: [2, 19] },       // Feb 18 - March 19
+    eid_fitr: { start: [2, 20], end: [2, 22] },      // March 20 - March 22
+    eid_adha: { start: [4, 27], end: [4, 31] },      // May 27 - May 31
   },
-  {
-    id: 'eid-adha-2025',
-    name: 'eid_al_adha',
-    nameAr: 'عيد الأضحى',
-    nameFr: 'Aïd el-Adha',
-    date: new Date(2025, 5, 6), // June 6, 2025
-    endDate: new Date(2025, 5, 10), // June 10, 2025
-    image: '/assets/events/eid-adha.png',
-    color: '#FF9800',
+  2027: {
+    ramadan: { start: [1, 8], end: [2, 8] },         // Feb 8 - March 8
+    eid_fitr: { start: [2, 9], end: [2, 11] },       // March 9 - March 11
+    eid_adha: { start: [4, 16], end: [4, 20] },      // May 16 - May 20
   },
-  {
-    id: 'black-friday-2025',
+  2028: {
+    ramadan: { start: [0, 28], end: [1, 25] },       // Jan 28 - Feb 25
+    eid_fitr: { start: [1, 26], end: [1, 28] },      // Feb 26 - Feb 28
+    eid_adha: { start: [4, 5], end: [4, 9] },        // May 5 - May 9
+  },
+  2029: {
+    ramadan: { start: [0, 16], end: [1, 13] },       // Jan 16 - Feb 13
+    eid_fitr: { start: [1, 14], end: [1, 16] },      // Feb 14 - Feb 16
+    eid_adha: { start: [3, 24], end: [3, 28] },      // April 24 - April 28
+  },
+  2030: {
+    ramadan: { start: [0, 6], end: [1, 3] },         // Jan 6 - Feb 3
+    eid_fitr: { start: [1, 4], end: [1, 6] },        // Feb 4 - Feb 6
+    eid_adha: { start: [3, 13], end: [3, 17] },      // April 13 - April 17
+  },
+};
+
+// Compute Black Friday: 4th Friday of November
+function getBlackFriday(year) {
+  const nov1 = new Date(year, 10, 1);
+  const firstFriday = ((5 - nov1.getDay() + 7) % 7) + 1;
+  const fourthFriday = firstFriday + 21;
+  return fourthFriday;
+}
+
+function getEventsForYear(year) {
+  const events = [];
+  const islamic = ISLAMIC_HOLIDAYS[year];
+
+  if (islamic) {
+    events.push({
+      id: `ramadan-${year}`,
+      name: 'ramadan',
+      nameAr: 'رمضان',
+      nameFr: 'Ramadan',
+      date: new Date(year, islamic.ramadan.start[0], islamic.ramadan.start[1]),
+      endDate: new Date(year, islamic.ramadan.end[0], islamic.ramadan.end[1]),
+      image: '/assets/events/ramadane.webp',
+      color: '#9C27B0',
+    });
+    events.push({
+      id: `eid-fitr-${year}`,
+      name: 'eid_al_fitr',
+      nameAr: 'عيد الفطر',
+      nameFr: 'Aïd el-Fitr',
+      date: new Date(year, islamic.eid_fitr.start[0], islamic.eid_fitr.start[1]),
+      endDate: new Date(year, islamic.eid_fitr.end[0], islamic.eid_fitr.end[1]),
+      image: '/assets/events/eid.png',
+      color: '#4CAF50',
+    });
+    events.push({
+      id: `eid-adha-${year}`,
+      name: 'eid_al_adha',
+      nameAr: 'عيد الأضحى',
+      nameFr: 'Aïd el-Adha',
+      date: new Date(year, islamic.eid_adha.start[0], islamic.eid_adha.start[1]),
+      endDate: new Date(year, islamic.eid_adha.end[0], islamic.eid_adha.end[1]),
+      image: '/assets/events/eid-adha.png',
+      color: '#FF9800',
+    });
+  }
+
+  // Black Friday: 4th Friday of November
+  const bfDay = getBlackFriday(year);
+  events.push({
+    id: `black-friday-${year}`,
     name: 'black_friday',
     nameAr: 'الجمعة السوداء',
     nameFr: 'Black Friday',
-    date: new Date(2025, 10, 28), // November 28, 2025
-    endDate: new Date(2025, 10, 28),
+    date: new Date(year, 10, bfDay),
+    endDate: new Date(year, 10, bfDay),
     image: '/assets/events/black-friday.png',
     color: '#212121',
-  },
-  {
-    id: 'new-year-2026',
+  });
+
+  // New Year: always Dec 31 → Jan 1
+  events.push({
+    id: `new-year-${year + 1}`,
     name: 'new_year',
     nameAr: 'رأس السنة',
     nameFr: 'Nouvel An',
-    date: new Date(2025, 11, 31), // December 31, 2025
-    endDate: new Date(2026, 0, 1), // January 1, 2026
+    date: new Date(year, 11, 31),
+    endDate: new Date(year + 1, 0, 1),
     image: '/assets/events/new-year.png',
     color: '#E91E63',
-  },
-];
+  });
+
+  return events;
+}
 
 // ----------------------------------------------------------------------
 
@@ -82,6 +134,12 @@ export default function EcommerceEventsCalendar() {
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
+
+  // Generate events for current year + next year
+  const allEvents = useMemo(() => {
+    const currentYear = new Date().getFullYear();
+    return [...getEventsForYear(currentYear), ...getEventsForYear(currentYear + 1)];
+  }, []);
 
   // Get days in month
   const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -103,26 +161,23 @@ export default function EcommerceEventsCalendar() {
     : [t('sun'), t('mon'), t('tue'), t('wed'), t('thu'), t('fri'), t('sat')];
 
   // Get events for current month
-  const monthEvents = useMemo(() => {
-    return EVENTS.filter((event) => {
-      const eventMonth = event.date.getMonth();
-      const eventYear = event.date.getFullYear();
-      const endMonth = event.endDate?.getMonth() || eventMonth;
-      const endYear = event.endDate?.getFullYear() || eventYear;
+  const monthEvents = useMemo(() => allEvents.filter((event) => {
+    const eventMonth = event.date.getMonth();
+    const eventYear = event.date.getFullYear();
+    const endMonth = event.endDate?.getMonth() ?? eventMonth;
+    const endYear = event.endDate?.getFullYear() ?? eventYear;
 
-      // Check if event spans across current month
-      return (
-        (eventYear === year && eventMonth === month) ||
-        (endYear === year && endMonth === month) ||
-        (eventYear === year && eventMonth < month && endYear === year && endMonth >= month)
-      );
-    });
-  }, [year, month]);
+    return (
+      (eventYear === year && eventMonth === month) ||
+      (endYear === year && endMonth === month) ||
+      (eventYear === year && eventMonth < month && endYear === year && endMonth >= month)
+    );
+  }), [allEvents, year, month]);
 
   // Check if a day has an event
   const getEventForDay = (day) => {
     const checkDate = new Date(year, month, day);
-    return EVENTS.find((event) => {
+    return allEvents.find((event) => {
       const eventStart = new Date(event.date.getFullYear(), event.date.getMonth(), event.date.getDate());
       const eventEnd = event.endDate
         ? new Date(event.endDate.getFullYear(), event.endDate.getMonth(), event.endDate.getDate())
@@ -189,7 +244,7 @@ export default function EcommerceEventsCalendar() {
         </IconButton>
       </Stack>
 
-      {/* Day names header */}
+      {/* Day names header - L1: increased from 0.6rem to 0.65rem */}
       <Box
         sx={{
           display: 'grid',
@@ -214,7 +269,7 @@ export default function EcommerceEventsCalendar() {
         ))}
       </Box>
 
-      {/* Calendar grid */}
+      {/* Calendar grid - L1: day numbers increased from 0.65rem to 0.7rem */}
       <Box
         sx={{
           display: 'grid',
@@ -321,7 +376,7 @@ export default function EcommerceEventsCalendar() {
         })}
       </Box>
 
-      {/* Event preview on hover */}
+      {/* Event preview on hover - M1: sidebar labels increased from 0.6rem to 0.65rem */}
       <Box
         sx={{
           mt: 2,
@@ -361,11 +416,11 @@ export default function EcommerceEventsCalendar() {
             <Stack spacing={0.5} justifyContent="center" sx={{ flexGrow: 1 }}>
               <Typography
                 variant="subtitle2"
-                sx={{ fontWeight: 700, color: hoveredEvent.color }}
+                sx={{ fontWeight: 700, color: hoveredEvent.color, fontSize: '0.7rem' }}
               >
                 {getEventName(hoveredEvent)}
               </Typography>
-              <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+              <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.65rem' }}>
                 {hoveredEvent.date.toLocaleDateString(i18n.language, {
                   month: 'short',
                   day: 'numeric',
@@ -401,52 +456,6 @@ export default function EcommerceEventsCalendar() {
           </Stack>
         )}
       </Box>
-
-      {/* Events list for current month */}
-      {/* {monthEvents.length > 0 && (
-        <Stack spacing={0.5} sx={{ mt: 1.5 }}>
-          {monthEvents.map((event) => (
-            <Stack
-              key={event.id}
-              direction="row"
-              alignItems="center"
-              spacing={1}
-              sx={{
-                p: 0.75,
-                borderRadius: 0.75,
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-                '&:hover': {
-                  bgcolor: alpha(event.color, 0.1),
-                },
-              }}
-              onMouseEnter={() => setHoveredEvent(event)}
-              onMouseLeave={() => setHoveredEvent(null)}
-            >
-              <Box
-                sx={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: '50%',
-                  bgcolor: event.color,
-                  flexShrink: 0,
-                }}
-              />
-              <Typography
-                variant="caption"
-                sx={{
-                  fontWeight: 600,
-                  color: 'text.primary',
-                  fontSize: '0.7rem',
-                }}
-                noWrap
-              >
-                {getEventName(event)}
-              </Typography>
-            </Stack>
-          ))}
-        </Stack>
-      )} */}
     </Card>
   );
 }

@@ -165,7 +165,7 @@ export default function OrderTableRow({ row,unit,pv,currentLang, contract, clien
 
                 <Box>x{item.quantity}</Box>
 
-                <Box sx={{ width: 110, textAlign: 'right' }}>{fCurrency(item.price)}</Box>
+                <Box sx={{ width: 110, textAlign: 'end' }}>{fCurrency(item.price)}</Box>
               </Stack>
             ))} */}
           </Stack>

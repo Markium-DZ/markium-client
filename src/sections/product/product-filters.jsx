@@ -349,7 +349,7 @@ function InputRange({ type, value, onFilters }) {
           [`& .${inputBaseClasses.input}`]: {
             pr: 1,
             py: 0.75,
-            textAlign: 'right',
+            textAlign: 'end',
             typography: 'body2',
           },
         }}

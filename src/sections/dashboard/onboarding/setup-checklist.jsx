@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import { useState, useEffect, useCallback } from 'react';
+import { useRef, useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import Box from '@mui/material/Box';
@@ -22,19 +22,29 @@ import ProductNewEditForm from 'src/sections/product/product-new-edit-form';
 
 const STORAGE_KEY = 'markium-onboarding-dismissed';
 
-export default function SetupChecklist({ productsCount = 0, ordersCount = 0, hasMedia = false, isPhoneVerified = true, onRefresh }) {
+export default function SetupChecklist({ productsCount = 0, hasMedia = false, isPhoneVerified = true, isStoreCustomized = false, onRefresh }) {
   const { t } = useTranslation();
   const theme = useTheme();
   const router = useRouter();
   const [dismissed, setDismissed] = useState(false);
   const [mediaPickerOpen, setMediaPickerOpen] = useState(false);
   const [productDialogOpen, setProductDialogOpen] = useState(false);
+  const timerRef = useRef(null);
+
+  const scheduleRefresh = useCallback(() => {
+    onRefresh?.();
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => onRefresh?.(), 2000);
+  }, [onRefresh]);
 
   useEffect(() => {
     const isDismissed = localStorage.getItem(STORAGE_KEY);
     if (isDismissed === 'true') {
       setDismissed(true);
     }
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
   }, []);
 
   const handleOpenMediaPicker = useCallback(() => {
@@ -43,19 +53,13 @@ export default function SetupChecklist({ productsCount = 0, ordersCount = 0, has
 
   const handleCloseMediaPicker = useCallback(() => {
     setMediaPickerOpen(false);
-    // Refresh data after closing media picker (media may have been uploaded)
-    onRefresh?.();
-    // Additional delayed refresh to catch backend processing
-    setTimeout(() => onRefresh?.(), 2000);
-  }, [onRefresh]);
+    scheduleRefresh();
+  }, [scheduleRefresh]);
 
-  const handleMediaSelect = useCallback((selectedMedia) => {
-    // Media was selected/uploaded, close the dialog
+  const handleMediaSelect = useCallback(() => {
     setMediaPickerOpen(false);
-    // Refresh data to update the checklist
-    onRefresh?.();
-    setTimeout(() => onRefresh?.(), 2000);
-  }, [onRefresh]);
+    scheduleRefresh();
+  }, [scheduleRefresh]);
 
   const handleOpenProductDialog = useCallback(() => {
     setProductDialogOpen(true);
@@ -63,10 +67,8 @@ export default function SetupChecklist({ productsCount = 0, ordersCount = 0, has
 
   const handleCloseProductDialog = useCallback(() => {
     setProductDialogOpen(false);
-    // Refresh data to update the checklist (product may have been created)
-    onRefresh?.();
-    setTimeout(() => onRefresh?.(), 2000);
-  }, [onRefresh]);
+    scheduleRefresh();
+  }, [scheduleRefresh]);
 
   const steps = [
     // {
@@ -109,19 +111,10 @@ export default function SetupChecklist({ productsCount = 0, ordersCount = 0, has
       id: 'customize',
       title: t('onboarding_customize_store'),
       description: t('onboarding_customize_store_desc'),
-      completed: false,
+      completed: isStoreCustomized,
       icon: 'solar:palette-bold',
       action: () => router.push(paths.dashboard.settings.root),
       actionLabel: t('onboarding_customize_now'),
-    },
-    {
-      id: 'orders',
-      title: t('onboarding_receive_orders'),
-      description: t('onboarding_receive_orders_desc'),
-      completed: ordersCount > 0,
-      icon: 'solar:bag-check-bold',
-      action: null,
-      actionLabel: null,
     },
   ];
 
@@ -301,8 +294,8 @@ export default function SetupChecklist({ productsCount = 0, ordersCount = 0, has
 
 SetupChecklist.propTypes = {
   productsCount: PropTypes.number,
-  ordersCount: PropTypes.number,
   hasMedia: PropTypes.bool,
   isPhoneVerified: PropTypes.bool,
+  isStoreCustomized: PropTypes.bool,
   onRefresh: PropTypes.func,
 };

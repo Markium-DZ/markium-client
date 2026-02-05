@@ -6,6 +6,7 @@ import Grid from '@mui/material/Unstable_Grid2';
 import { useGetProducts } from 'src/api/product';
 import { useGetOrders } from 'src/api/orders';
 import { useGetMedia } from 'src/api/media';
+import { useGetMyStore } from 'src/api/store';
 import {
   useGetAnalyticsOverview,
   useGetAnalyticsTraffic,
@@ -18,24 +19,24 @@ import { AuthContext } from 'src/auth/context/jwt';
 import { useSettingsContext } from 'src/components/settings';
 import { MotivationIllustration } from 'src/assets/illustrations';
 
-
+import DashboardSkeleton from './dashboard-skeleton';
 import EcommerceEventsCalendar from '../ecommerce-events-calendar';
 import EcommerceAnalyticsTabs from '../ecommerce-analytics-tabs';
 
 import {
   SetupChecklist,
   WelcomeNewUser,
-  EmptyStateProducts,
-  EmptyStateOrders,
+  WaitingForOrders,
 } from 'src/sections/dashboard/onboarding';
 
 // ----------------------------------------------------------------------
 
 export default function OverviewEcommerceView() {
   const { user } = useContext(AuthContext);
-  const { products, productsMutate } = useGetProducts();
-  const { orders } = useGetOrders();
-  const { media, total: mediaTotal, mutate: mediaMutate } = useGetMedia(1, 1);
+  const { products, productsLoading, productsMutate } = useGetProducts();
+  const { orders, ordersLoading } = useGetOrders();
+  const { media, total: mediaTotal, mutate: mediaMutate, mediaLoading } = useGetMedia(1, 1);
+  const { store } = useGetMyStore(user?.store?.slug);
 
   const settings = useSettingsContext();
 
@@ -48,19 +49,24 @@ export default function OverviewEcommerceView() {
   const productsCount = products?.length || 0;
   const ordersCount = orders?.length || 0;
   const hasMedia = mediaTotal > 0 || (media && media.length > 0);
+  const isStoreCustomized = Boolean(store?.logo);
 
-  // Determine if user is new (no products)
-  const isNewUser = productsCount === 0;
-  // B grade merchant: has products but no orders yet
-  const isBGradeMerchant = productsCount > 0 && ordersCount === 0;
-  // Third grade user: has products and orders (established merchant)
-  const isThirdGradeUser = !isNewUser && !isBGradeMerchant;
+  // Loading state - show skeleton before tier determination
+  const isDataLoading = productsLoading || ordersLoading || mediaLoading;
+
+  // Setup complete = all 3 checklist steps done
+  const setupComplete = productsCount > 0 && hasMedia && isStoreCustomized;
+
+  // New tier logic
+  const isNewUser = !setupComplete;                           // checklist incomplete
+  const isWaitingForOrders = setupComplete && ordersCount === 0; // store ready, no orders
+  const isEstablished = setupComplete && ordersCount > 0;       // has orders
 
   // Analytics state
   const [dateRange, setDateRange] = useState('-30d');
   const [currentTab, setCurrentTab] = useState('overview');
 
-  // Fetch analytics data only for third grade users
+  // Fetch analytics data only for established users
   const {
     totalOrders: analyticsOrders,
     totalOrdersData,
@@ -71,54 +77,62 @@ export default function OverviewEcommerceView() {
     totalProductViews,
     totalProductViewsData,
     overviewLoading: analyticsLoading,
-  } = useGetAnalyticsOverview(isThirdGradeUser ? dateRange : null);
+  } = useGetAnalyticsOverview(isEstablished ? dateRange : null);
 
-  const { visitors, productViews, trafficLoading } = useGetAnalyticsTraffic(isThirdGradeUser ? dateRange : null);
+  const { visitors, productViews, trafficLoading } = useGetAnalyticsTraffic(isEstablished ? dateRange : null);
 
-  const { funnel, funnelLoading } = useGetAnalyticsFunnel(isThirdGradeUser ? dateRange : null);
+  const { funnel, funnelLoading } = useGetAnalyticsFunnel(isEstablished ? dateRange : null);
 
-  const { topProducts, topProductsLoading } = useGetAnalyticsTopProducts(isThirdGradeUser ? dateRange : null);
+  const { topProducts, topProductsLoading } = useGetAnalyticsTopProducts(isEstablished ? dateRange : null);
+
+  // Show skeleton while loading to prevent flash of wrong tier
+  if (isDataLoading) {
+    return <DashboardSkeleton themeStretch={settings.themeStretch} />;
+  }
 
   return (
     <Container maxWidth={settings.themeStretch ? false : 'xl'}>
       <Grid container spacing={3}>
-        {/* Welcome Banner - Different for new vs existing users */}
-        <Grid xs={12} md={8}>
+        {/* Welcome Banner */}
+        <Grid xs={12} md={8} order={{ xs: 1, md: 1 }}>
           <WelcomeNewUser
             userName={user?.name}
             productsCount={productsCount}
+            ordersCount={ordersCount}
+            isNewUser={isNewUser}
+            showSetupHint={isNewUser}
             img={<MotivationIllustration />}
           />
         </Grid>
 
         {/* Events Calendar */}
-        <Grid xs={12} md={4}>
+        <Grid xs={12} md={4} order={{ xs: 3, md: 2 }} data-tour="calendar">
           <EcommerceEventsCalendar />
         </Grid>
 
-        {/* Setup Checklist - Only for new users or incomplete setup */}
+        {/* Setup Checklist - Only when setup incomplete */}
         {isNewUser && (
-          <Grid xs={12}>
+          <Grid xs={12} order={{ xs: 2, md: 3 }}>
             <SetupChecklist
               productsCount={productsCount}
-              ordersCount={ordersCount}
               hasMedia={hasMedia}
+              isStoreCustomized={isStoreCustomized}
               isPhoneVerified={user?.is_phone_verified ?? true}
               onRefresh={handleRefreshData}
             />
           </Grid>
         )}
 
-        {/* B Grade Merchant: has products but no orders - show EmptyStateOrders */}
-        {isBGradeMerchant && (
-          <Grid xs={12}>
-            <EmptyStateOrders hasProducts />
+        {/* Waiting for Orders: setup complete but no orders yet */}
+        {isWaitingForOrders && (
+          <Grid xs={12} order={{ xs: 2, md: 3 }} data-tour="waiting-orders">
+            <WaitingForOrders storeSlug={user?.store?.slug} />
           </Grid>
         )}
 
-        {/* Analytics Tabs - Only show when user has orders (third grade users) */}
-        {isThirdGradeUser && (
-          <Grid xs={12}>
+        {/* Analytics Tabs - Only for established merchants */}
+        {isEstablished && (
+          <Grid xs={12} order={{ xs: 2, md: 3 }}>
             <EcommerceAnalyticsTabs
               // Overview data
               totalOrders={analyticsOrders || ordersCount || 0}
@@ -146,13 +160,6 @@ export default function OverviewEcommerceView() {
               currentTab={currentTab}
               onTabChange={setCurrentTab}
             />
-          </Grid>
-        )}
-
-        {/* Conditional Content Based on User State */}
-        {isNewUser && (
-          <Grid xs={12}>
-            <EmptyStateProducts />
           </Grid>
         )}
       </Grid>
