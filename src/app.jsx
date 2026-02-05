@@ -17,12 +17,12 @@ import { useScrollToTop } from 'src/hooks/use-scroll-to-top';
 
 import ProgressBar from 'src/components/progress-bar';
 import { MotionLazy } from 'src/components/animate/motion-lazy';
-import SnackbarProvider from 'src/components/snackbar/snackbar-provider';
 import { SettingsProvider } from 'src/components/settings';
 
 import { AuthProvider } from 'src/auth/context/jwt';
 
 // Lazy-load components not needed for the initial login page render
+const SnackbarProvider = lazy(() => import('src/components/snackbar/snackbar-provider'));
 const LocalizationProvider = lazy(() => import('src/locales/localization-provider'));
 const SettingsDrawer = lazy(() => import('src/components/settings/drawer/settings-drawer'));
 const CheckoutProvider = lazy(() =>
@@ -52,19 +52,19 @@ export default function App() {
       >
         <ThemeProvider>
           <MotionLazy>
-            <SnackbarProvider>
-              <Suspense fallback={null}>
-                <SettingsDrawer />
-              </Suspense>
-              <ProgressBar />
-              <Suspense fallback={<ProgressBar />}>
+            <Suspense fallback={<ProgressBar />}>
+              <SnackbarProvider>
+                <Suspense fallback={null}>
+                  <SettingsDrawer />
+                </Suspense>
+                <ProgressBar />
                 <CheckoutProvider>
                   <LocalizationProvider>
                     <Router />
                   </LocalizationProvider>
                 </CheckoutProvider>
-              </Suspense>
-            </SnackbarProvider>
+              </SnackbarProvider>
+            </Suspense>
           </MotionLazy>
         </ThemeProvider>
       </SettingsProvider>
