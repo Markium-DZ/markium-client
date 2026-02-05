@@ -26,7 +26,6 @@ import EcommerceAnalyticsTabs from '../ecommerce-analytics-tabs';
 import {
   SetupChecklist,
   WelcomeNewUser,
-  EmptyStateProducts,
   EmptyStateOrders,
 } from 'src/sections/dashboard/onboarding';
 
@@ -54,11 +53,6 @@ export default function OverviewEcommerceView() {
       target: '[data-tour="setup-checklist"]',
       title: t('tour_setup_title'),
       content: t('tour_setup_content'),
-    },
-    {
-      target: '[data-tour="empty-products"]',
-      title: t('tour_products_title'),
-      content: t('tour_products_content'),
     },
   ], [t]);
 
@@ -106,9 +100,9 @@ export default function OverviewEcommerceView() {
     <Container maxWidth={settings.themeStretch ? false : 'xl'}>
       {isNewUser && <Walktour steps={tourSteps} run={tourRun} callback={tourCallback} />}
 
-      <Grid container spacing={3}>
-        {/* Welcome Banner - Different for new vs existing users */}
-        <Grid xs={12} md={8} data-tour="welcome-banner">
+      <Grid container spacing={2}>
+        {/* Welcome Banner */}
+        <Grid xs={12} md={7} data-tour="welcome-banner">
           <WelcomeNewUser
             userName={user?.name}
             productsCount={productsCount}
@@ -117,7 +111,7 @@ export default function OverviewEcommerceView() {
         </Grid>
 
         {/* Events Calendar */}
-        <Grid xs={12} md={4}>
+        <Grid xs={12} md={5}>
           <EcommerceEventsCalendar />
         </Grid>
 
@@ -171,13 +165,6 @@ export default function OverviewEcommerceView() {
               currentTab={currentTab}
               onTabChange={setCurrentTab}
             />
-          </Grid>
-        )}
-
-        {/* Conditional Content Based on User State */}
-        {isNewUser && (
-          <Grid xs={12} data-tour="empty-products">
-            <EmptyStateProducts />
           </Grid>
         )}
       </Grid>

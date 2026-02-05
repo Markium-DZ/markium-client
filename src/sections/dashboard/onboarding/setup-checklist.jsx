@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import Box from '@mui/material/Box';
@@ -21,22 +21,12 @@ import ProductNewEditForm from 'src/sections/product/product-new-edit-form';
 
 // ----------------------------------------------------------------------
 
-const STORAGE_KEY = 'markium-onboarding-dismissed';
-
 export default function SetupChecklist({ productsCount = 0, ordersCount = 0, hasMedia = false, isPhoneVerified = true, onRefresh }) {
   const { t } = useTranslation();
   const theme = useTheme();
   const router = useRouter();
-  const [dismissed, setDismissed] = useState(false);
   const [mediaPickerOpen, setMediaPickerOpen] = useState(false);
   const [productDialogOpen, setProductDialogOpen] = useState(false);
-
-  useEffect(() => {
-    const isDismissed = localStorage.getItem(STORAGE_KEY);
-    if (isDismissed === 'true') {
-      setDismissed(true);
-    }
-  }, []);
 
   const handleOpenMediaPicker = useCallback(() => {
     setMediaPickerOpen(true);
@@ -115,27 +105,13 @@ export default function SetupChecklist({ productsCount = 0, ordersCount = 0, has
       action: () => router.push(paths.dashboard.settings.root),
       actionLabel: t('onboarding_customize_now'),
     },
-    {
-      id: 'orders',
-      title: t('onboarding_receive_orders'),
-      description: t('onboarding_receive_orders_desc'),
-      completed: ordersCount > 0,
-      icon: 'solar:bag-check-bold',
-      action: null,
-      actionLabel: null,
-    },
   ];
 
   const completedSteps = steps.filter((step) => step.completed).length;
   const progress = (completedSteps / steps.length) * 100;
   const allCompleted = completedSteps === steps.length;
 
-  const handleDismiss = () => {
-    localStorage.setItem(STORAGE_KEY, 'true');
-    setDismissed(true);
-  };
-
-  if (dismissed || allCompleted) {
+  if (allCompleted) {
     return null;
   }
 
@@ -143,12 +119,11 @@ export default function SetupChecklist({ productsCount = 0, ordersCount = 0, has
     <>
     <Card
       sx={{
-        p: 3,
-        // background: `linear-gradient(135deg, ${alpha(theme.palette.primary.light, 0.1)} 0%, ${alpha(theme.palette.primary.main, 0.05)} 100%)`,
+        p: 2.5,
         border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
       }}
     >
-      <Stack spacing={3}>
+      <Stack spacing={2}>
         {/* Header */}
         <Stack direction="row" alignItems="center" justifyContent="space-between">
           <Stack spacing={0.5}>
@@ -157,16 +132,17 @@ export default function SetupChecklist({ productsCount = 0, ordersCount = 0, has
               {t('onboarding_complete_steps')}
             </Typography>
           </Stack>
-          <Tooltip title={t('onboarding_dismiss_tooltip')} arrow>
-            <Button
-              size="small"
-              color="inherit"
-              onClick={handleDismiss}
-              sx={{ color: 'text.secondary' }}
-            >
-              {t('onboarding_dismiss')}
-            </Button>
-          </Tooltip>
+          <Button
+            size="small"
+            color="primary"
+            component="a"
+            href="https://markium.online/tutorials/getting-started"
+            target="_blank"
+            rel="noopener noreferrer"
+            startIcon={<Iconify icon="solar:play-circle-bold" width={16} />}
+          >
+            {t('empty_products_watch_tutorial')}
+          </Button>
         </Stack>
 
         {/* Progress */}
@@ -197,15 +173,15 @@ export default function SetupChecklist({ productsCount = 0, ordersCount = 0, has
         </Stack>
 
         {/* Steps */}
-        <Stack spacing={2}>
+        <Stack spacing={1.5}>
           {steps.map((step, index) => (
             <Stack
               key={step.id}
               direction={{ xs: 'column', sm: 'row' }}
               alignItems={{ xs: 'flex-start', sm: 'center' }}
-              spacing={2}
+              spacing={1.5}
               sx={{
-                p: 2,
+                p: 1.5,
                 borderRadius: 1.5,
                 bgcolor: step.completed
                   ? alpha(theme.palette.success.main, 0.08)
@@ -226,8 +202,8 @@ export default function SetupChecklist({ productsCount = 0, ordersCount = 0, has
               {/* Step Icon */}
               <Box
                 sx={{
-                  width: 44,
-                  height: 44,
+                  width: 38,
+                  height: 38,
                   borderRadius: '50%',
                   display: 'flex',
                   alignItems: 'center',
@@ -271,14 +247,6 @@ export default function SetupChecklist({ productsCount = 0, ordersCount = 0, has
                 >
                   {step.actionLabel}
                 </Button>
-              )}
-
-              {step.completed && (
-                <Iconify
-                  icon="solar:check-circle-bold"
-                  width={20}
-                  sx={{ color: 'success.main', flexShrink: 0 }}
-                />
               )}
             </Stack>
           ))}
