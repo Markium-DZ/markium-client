@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="fr">
   <head>
     <meta charset="utf-8" />
     <meta name="theme-color" content="#000000" />
@@ -31,14 +31,89 @@
     <!-- Preload LCP background image (used on login page) -->
     <link rel="preload" href="/assets/background/overlay_2.jpg" as="image" />
 
-    <title>Markium</title>
-
+    <!-- SEO -->
+    <title>Markium - Tableau de bord E-commerce pour l'Algerie</title>
     <meta
       name="description"
-      content="The starting point for your next project with Markium Kit, built on the newest version of Material-UI ©, ready to be customized to your style"
+      content="Plateforme de gestion e-commerce pour entreprises algeriennes. Gerez vos produits, commandes, inventaire, livraisons et facturation depuis un seul tableau de bord."
     />
-    <meta name="keywords" content="react,material,kit,application,dashboard,admin,template" />
-    <meta name="robots" content="index, follow" />
+    <meta
+      name="keywords"
+      content="gestion e-commerce Algerie, logiciel inventaire, tableau de bord commerce, gestion commandes, plateforme vente en ligne, facturation Algerie"
+    />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <meta name="author" content="Markium" />
+    <link rel="canonical" href="https://markium.online/" />
+
+    <!-- Open Graph -->
+    <meta property="og:locale" content="fr_DZ" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Markium - Tableau de bord E-commerce pour l'Algerie" />
+    <meta
+      property="og:description"
+      content="Tableau de bord e-commerce tout-en-un pour entreprises algeriennes. Gerez produits, commandes, inventaire et livraisons depuis une seule plateforme."
+    />
+    <meta property="og:url" content="https://markium.online/" />
+    <meta property="og:site_name" content="Markium" />
+    <meta property="og:image" content="https://markium.online/favicon/android-chrome-512x512.png" />
+    <meta property="og:image:width" content="512" />
+    <meta property="og:image:height" content="512" />
+    <meta property="og:image:alt" content="Markium - Gestion e-commerce pour l'Algerie" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Markium - Tableau de bord E-commerce" />
+    <meta
+      name="twitter:description"
+      content="Plateforme e-commerce pour entreprises algeriennes. Gerez produits, commandes, inventaire et analytiques."
+    />
+    <meta name="twitter:image" content="https://markium.online/favicon/android-chrome-512x512.png" />
+    <meta name="twitter:image:alt" content="Markium" />
+
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebApplication",
+          "@id": "https://markium.online/#webapp",
+          "name": "Markium",
+          "url": "https://markium.online",
+          "applicationCategory": "BusinessApplication",
+          "description": "Plateforme de gestion e-commerce pour entreprises algeriennes. Produits, commandes, inventaire, livraisons, facturation et analytiques.",
+          "inLanguage": ["fr", "ar", "en"],
+          "operatingSystem": "Web Browser",
+          "offers": {
+            "@type": "Offer",
+            "priceCurrency": "DZD",
+            "availability": "https://schema.org/InStock"
+          },
+          "featureList": [
+            "Gestion des produits",
+            "Gestion des commandes",
+            "Suivi d'inventaire",
+            "Gestion des livraisons",
+            "Facturation",
+            "Tableau de bord analytique"
+          ],
+          "author": { "@id": "https://markium.online/#organization" },
+          "publisher": { "@id": "https://markium.online/#organization" }
+        },
+        {
+          "@type": "Organization",
+          "@id": "https://markium.online/#organization",
+          "name": "Markium",
+          "url": "https://markium.online",
+          "logo": "https://markium.online/favicon/android-chrome-512x512.png",
+          "areaServed": {
+            "@type": "Country",
+            "name": "Algeria"
+          }
+        }
+      ]
+    }
+    </script>
   </head>
 
   <body>
