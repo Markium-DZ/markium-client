@@ -25,7 +25,7 @@ const EVENTS = [
     nameFr: 'Ramadan',
     date: new Date(2025, 11, 1), // March 1, 2025 (start of Ramadan)
     endDate: new Date(2025, 11, 1), // March 30, 2025
-    image: '/assets/events/ramadane.png',
+    image: '/assets/events/ramadane.webp',
     color: '#9C27B0',
   },
   {
