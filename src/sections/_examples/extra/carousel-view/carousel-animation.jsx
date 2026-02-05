@@ -80,7 +80,7 @@ function CarouselItem({ item, active }) {
           left: 0,
           bottom: 0,
           maxWidth: 720,
-          textAlign: 'left',
+          textAlign: 'start',
           position: 'absolute',
           color: 'common.white',
         }}

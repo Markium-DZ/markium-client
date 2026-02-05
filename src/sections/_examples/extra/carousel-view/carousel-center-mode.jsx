@@ -87,7 +87,7 @@ function CarouselItem({ item }) {
           bottom: 0,
           zIndex: 9,
           width: '100%',
-          textAlign: 'left',
+          textAlign: 'start',
           position: 'absolute',
           color: 'common.white',
           ...bgGradient({

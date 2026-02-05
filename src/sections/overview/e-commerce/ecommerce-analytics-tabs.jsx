@@ -12,6 +12,7 @@ import MenuItem from '@mui/material/MenuItem';
 import TableRow from '@mui/material/TableRow';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
+import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import CardHeader from '@mui/material/CardHeader';
 import FormControl from '@mui/material/FormControl';
@@ -205,6 +206,7 @@ function OverviewTab({
   const metrics = [
     {
       label: t('total_orders'),
+      tooltip: t('tooltip_total_orders'),
       value: totalOrders,
       data: totalOrdersData,
       color: theme.palette.primary.main,
@@ -212,6 +214,7 @@ function OverviewTab({
     },
     {
       label: t('total_revenue'),
+      tooltip: t('tooltip_total_revenue'),
       value: totalRevenue,
       data: totalRevenueData,
       color: theme.palette.info.main,
@@ -219,6 +222,7 @@ function OverviewTab({
     },
     {
       label: t('total_visitors'),
+      tooltip: t('tooltip_total_visitors'),
       value: totalVisitors,
       data: totalVisitorsData,
       color: theme.palette.warning.main,
@@ -226,6 +230,7 @@ function OverviewTab({
     },
     {
       label: t('total_product_views'),
+      tooltip: t('tooltip_total_product_views'),
       value: totalProductViews,
       data: totalProductViewsData,
       color: theme.palette.success.main,
@@ -293,9 +298,11 @@ function MetricCard({ metric }) {
         >
           <Iconify icon={metric.icon} width={24} />
         </Box>
-        <Typography variant="subtitle2" sx={{ color: 'text.secondary' }}>
-          {metric.label}
-        </Typography>
+        <Tooltip title={metric.tooltip} arrow placement="top">
+          <Typography variant="subtitle2" sx={{ color: 'text.secondary', cursor: 'help' }}>
+            {metric.label}
+          </Typography>
+        </Tooltip>
       </Stack>
 
       <Typography variant="h4" sx={{ mb: 1 }}>

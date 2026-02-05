@@ -97,7 +97,7 @@ export default function AboutWhat() {
             {SKILLS.map((progress, index) => (
               <Box component={m.div} key={progress.label} variants={varFade().inRight}>
                 <Stack direction="row" alignItems="center" sx={{ mb: 1 }}>
-                  <Typography variant="subtitle2" sx={{ flexGrow: 1, textAlign: 'left' }}>
+                  <Typography variant="subtitle2" sx={{ flexGrow: 1, textAlign: 'start' }}>
                     {progress.label}
                   </Typography>
 

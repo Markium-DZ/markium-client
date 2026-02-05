@@ -112,7 +112,7 @@ export default function EmptyStateOrders({ hasProducts = false, sx, ...other }) 
                   borderRadius: 1.5,
                   bgcolor: 'background.paper',
                   border: `1px solid ${alpha(theme.palette.grey[500], 0.12)}`,
-                  textAlign: 'left',
+                  textAlign: 'start',
                 }}
               >
                 <Box

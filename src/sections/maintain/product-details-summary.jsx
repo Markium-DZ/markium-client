@@ -233,7 +233,7 @@ export default function ProductDetailsSummary({
           [`& .${formHelperTextClasses.root}`]: {
             mx: 0,
             mt: 1,
-            textAlign: 'right',
+            textAlign: 'end',
           },
         }}
       >
@@ -262,7 +262,7 @@ export default function ProductDetailsSummary({
           onDecrease={() => setValue('quantity', values.quantity - 1)}
         />
 
-        <Typography variant="caption" component="div" sx={{ textAlign: 'right' }}>
+        <Typography variant="caption" component="div" sx={{ textAlign: 'end' }}>
           Available: {available}
         </Typography>
       </Stack>

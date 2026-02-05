@@ -133,7 +133,7 @@ export default function SupabaseNewPasswordView() {
       {renderHead}
 
       {!!errorMsg && (
-        <Alert severity="error" sx={{ textAlign: 'left', mb: 3 }}>
+        <Alert severity="error" sx={{ textAlign: 'start', mb: 3 }}>
           {errorMsg}
         </Alert>
       )}

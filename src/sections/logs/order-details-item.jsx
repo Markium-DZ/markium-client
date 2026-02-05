@@ -27,7 +27,7 @@ export default function OrderDetailsItems({
     <Stack
       spacing={2}
       alignItems="flex-end"
-      sx={{ my: 3, textAlign: 'right', typography: 'body2' }}
+      sx={{ my: 3, textAlign: 'end', typography: 'body2' }}
     >
       <Stack direction="row">
         <Box sx={{ color: 'text.secondary' }}>Subtotal</Box>
@@ -115,7 +115,7 @@ export default function OrderDetailsItems({
 
               <Box sx={{ typography: 'body2' }}>x{item.quantity}</Box>
 
-              <Box sx={{ width: 110, textAlign: 'right', typography: 'subtitle2' }}>
+              <Box sx={{ width: 110, textAlign: 'end', typography: 'subtitle2' }}>
                 {fCurrency(item.price)}
               </Box>
             </Stack>
