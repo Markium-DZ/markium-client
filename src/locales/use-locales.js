@@ -36,7 +36,9 @@ export function useTranslate() {
   const settings = useSettingsContext();
 
   const onChangeLang = useCallback(
-    (newlang) => {
+    async (newlang) => {
+      // Lazy-load the language bundle before switching
+      await i18n.loadLanguageAsync?.(newlang);
       i18n.changeLanguage(newlang);
       settings.onChangeDirectionByLang(newlang);
     },

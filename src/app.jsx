@@ -20,13 +20,14 @@ import { MotionLazy } from 'src/components/animate/motion-lazy';
 import SnackbarProvider from 'src/components/snackbar/snackbar-provider';
 import { SettingsProvider } from 'src/components/settings';
 
-import { CheckoutProvider } from 'src/sections/checkout/context';
-
 import { AuthProvider } from 'src/auth/context/jwt';
 
 // Lazy-load components not needed for the initial login page render
 const LocalizationProvider = lazy(() => import('src/locales/localization-provider'));
 const SettingsDrawer = lazy(() => import('src/components/settings/drawer/settings-drawer'));
+const CheckoutProvider = lazy(() =>
+  import('src/sections/checkout/context').then((m) => ({ default: m.CheckoutProvider }))
+);
 // import { AuthProvider } from 'src/auth/context/auth0';
 // import { AuthProvider } from 'src/auth/context/amplify';
 // import { AuthProvider } from 'src/auth/context/firebase';
@@ -52,17 +53,17 @@ export default function App() {
         <ThemeProvider>
           <MotionLazy>
             <SnackbarProvider>
-              <CheckoutProvider>
-                <Suspense fallback={null}>
-                  <SettingsDrawer />
-                </Suspense>
-                <ProgressBar />
-                <Suspense fallback={<ProgressBar />}>
+              <Suspense fallback={null}>
+                <SettingsDrawer />
+              </Suspense>
+              <ProgressBar />
+              <Suspense fallback={<ProgressBar />}>
+                <CheckoutProvider>
                   <LocalizationProvider>
                     <Router />
                   </LocalizationProvider>
-                </Suspense>
-              </CheckoutProvider>
+                </CheckoutProvider>
+              </Suspense>
             </SnackbarProvider>
           </MotionLazy>
         </ThemeProvider>
