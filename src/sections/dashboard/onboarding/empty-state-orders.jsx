@@ -1,5 +1,7 @@
 import PropTypes from 'prop-types';
+import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSnackbar } from 'notistack';
 
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
@@ -10,6 +12,7 @@ import { alpha, useTheme } from '@mui/material/styles';
 
 import { useRouter } from 'src/routes/hooks';
 import { paths } from 'src/routes/paths';
+import { useAuthContext } from 'src/auth/hooks';
 
 import Iconify from 'src/components/iconify';
 
@@ -19,6 +22,27 @@ export default function EmptyStateOrders({ hasProducts = false, sx, ...other }) 
   const { t } = useTranslation();
   const theme = useTheme();
   const router = useRouter();
+  const { user } = useAuthContext();
+  const { enqueueSnackbar } = useSnackbar();
+
+  const handleCopyStoreLink = useCallback(async () => {
+    const slug = user?.store?.slug;
+    if (!slug) {
+      enqueueSnackbar(t('store_url_not_available'), { variant: 'warning' });
+      return;
+    }
+    const storeUrl = `https://${slug}.markium.online/?store=${slug}`;
+    try {
+      await navigator.clipboard.writeText(storeUrl);
+      enqueueSnackbar(t('store_url_copied'), { variant: 'success' });
+    } catch {
+      enqueueSnackbar(t('failed_to_copy'), { variant: 'error' });
+    }
+  }, [user?.store?.slug, enqueueSnackbar, t]);
+
+  const handleMarketingTips = useCallback(() => {
+    router.push(paths.dashboard.settings.contact_support || paths.dashboard.settings.root);
+  }, [router]);
 
   const tips = [
     {
@@ -122,7 +146,7 @@ export default function EmptyStateOrders({ hasProducts = false, sx, ...other }) 
                 variant="contained"
                 size="large"
                 startIcon={<Iconify icon="solar:copy-bold" />}
-                onClick={() => {}}
+                onClick={handleCopyStoreLink}
               >
                 {t('empty_orders_copy_link')}
               </Button>
@@ -130,7 +154,7 @@ export default function EmptyStateOrders({ hasProducts = false, sx, ...other }) 
                 variant="outlined"
                 size="large"
                 startIcon={<Iconify icon="solar:chart-bold" />}
-                onClick={() => {}}
+                onClick={handleMarketingTips}
               >
                 {t('empty_orders_marketing_tips')}
               </Button>

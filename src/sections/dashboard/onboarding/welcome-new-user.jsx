@@ -52,8 +52,8 @@ export default function WelcomeNewUser({ userName, productsCount = 0, img, ...ot
           textAlign: { xs: 'center', md: 'left' },
         }}
       >
-        {/* {isNewUser ? ( */}
-          {/* <>
+        {isNewUser ? (
+          <>
             <Typography variant="h4" sx={{ mb: 1, whiteSpace: 'pre-line' }}>
               {t('welcome_new_user_title')} {userName}! 👋
             </Typography>
@@ -119,8 +119,8 @@ export default function WelcomeNewUser({ userName, productsCount = 0, img, ...ot
                 {t('welcome_tip_upload_first')}
               </Typography>
             </Stack>
-          </> */}
-        {/* ) : ( */}
+          </>
+        ) : (
           <>
             <Typography variant="h4" sx={{ mb: 2, whiteSpace: 'pre-line' }}>
               {t('welcome_back')} {userName}
@@ -145,7 +145,7 @@ export default function WelcomeNewUser({ userName, productsCount = 0, img, ...ot
               {t('view_orders')}
             </Button>
           </>
-        {/* )} */}
+        )}
       </Stack>
 
       {img && (

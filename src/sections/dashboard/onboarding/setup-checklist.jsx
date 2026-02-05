@@ -6,6 +6,7 @@ import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
+import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import LinearProgress from '@mui/material/LinearProgress';
 import { alpha, useTheme } from '@mui/material/styles';
@@ -156,14 +157,16 @@ export default function SetupChecklist({ productsCount = 0, ordersCount = 0, has
               {t('onboarding_complete_steps')}
             </Typography>
           </Stack>
-          <Button
-            size="small"
-            color="inherit"
-            onClick={handleDismiss}
-            sx={{ color: 'text.secondary' }}
-          >
-            {t('onboarding_dismiss')}
-          </Button>
+          <Tooltip title={t('onboarding_dismiss_tooltip')} arrow>
+            <Button
+              size="small"
+              color="inherit"
+              onClick={handleDismiss}
+              sx={{ color: 'text.secondary' }}
+            >
+              {t('onboarding_dismiss')}
+            </Button>
+          </Tooltip>
         </Stack>
 
         {/* Progress */}
@@ -176,18 +179,21 @@ export default function SetupChecklist({ productsCount = 0, ordersCount = 0, has
               {completedSteps}/{steps.length}
             </Typography>
           </Stack>
-          <LinearProgress
-            variant="determinate"
-            value={progress}
-            sx={{
-              height: 8,
-              borderRadius: 4,
-              bgcolor: alpha(theme.palette.primary.main, 0.1),
-              '& .MuiLinearProgress-bar': {
+          <Tooltip title={t('onboarding_progress_tooltip')} arrow>
+            <LinearProgress
+              variant="determinate"
+              value={progress}
+              aria-label={`${t('onboarding_progress')}: ${completedSteps}/${steps.length}`}
+              sx={{
+                height: 8,
                 borderRadius: 4,
-              },
-            }}
-          />
+                bgcolor: alpha(theme.palette.primary.main, 0.1),
+                '& .MuiLinearProgress-bar': {
+                  borderRadius: 4,
+                },
+              }}
+            />
+          </Tooltip>
         </Stack>
 
         {/* Steps */}

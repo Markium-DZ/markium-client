@@ -14,6 +14,7 @@ import { bgGradient } from 'src/theme/css';
 import { useAuthContext } from 'src/auth/hooks';
 
 import Logo from 'src/components/logo';
+import SkipToContent from 'src/components/skip-to-content';
 import { useTranslate } from 'src/locales';
 
 // ----------------------------------------------------------------------
@@ -82,7 +83,7 @@ export default function AuthClassicLayout({ children, image, title }) {
 
       <Box
         component="img"
-        alt="auth"
+        alt={t('auth_illustration_alt')}
         src={image || '/assets/illustrations/illustration_dashboard.webp'}
         width={720}
         height={720}
@@ -102,12 +103,17 @@ export default function AuthClassicLayout({ children, image, title }) {
   return (
     <Stack
       component="main"
+      id="main-content"
+      tabIndex={-1}
       direction="row"
       position={"relative"}
       sx={{
         minHeight: '100vh',
+        outline: 'none',
       }}
     >
+      <SkipToContent />
+
       {renderLogo}
 
       {mdUp && renderSection}

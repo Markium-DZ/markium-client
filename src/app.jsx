@@ -19,6 +19,7 @@ import ProgressBar from 'src/components/progress-bar';
 import { MotionLazy } from 'src/components/animate/motion-lazy';
 import SnackbarProvider from 'src/components/snackbar/snackbar-provider';
 import { SettingsProvider } from 'src/components/settings';
+import { LiveRegionProvider } from 'src/components/live-region';
 
 import { AuthProvider } from 'src/auth/context/jwt';
 
@@ -51,6 +52,7 @@ export default function App() {
         }}
       >
         <ThemeProvider>
+          <LiveRegionProvider>
           <MotionLazy>
             <SnackbarProvider>
               <Suspense fallback={null}>
@@ -66,6 +68,7 @@ export default function App() {
               </Suspense>
             </SnackbarProvider>
           </MotionLazy>
+          </LiveRegionProvider>
         </ThemeProvider>
       </SettingsProvider>
     </AuthProvider>

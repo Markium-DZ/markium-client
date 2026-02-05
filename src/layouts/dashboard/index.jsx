@@ -6,7 +6,9 @@ import { useBoolean } from 'src/hooks/use-boolean';
 import { useResponsive } from 'src/hooks/use-responsive';
 
 import { useSettingsContext } from 'src/components/settings';
+import { useTranslate } from 'src/locales';
 
+import SkipToContent from 'src/components/skip-to-content';
 import Main from './main';
 import Header from './header';
 import NavMini from './nav-mini';
@@ -35,6 +37,7 @@ export default function DashboardLayout({ children }) {
   if (isHorizontal) {
     return (
       <>
+        <SkipToContent />
         <Header onOpenNav={nav.onTrue} />
 
         {lgUp ? renderHorizontal : renderNavVertical}
@@ -47,6 +50,7 @@ export default function DashboardLayout({ children }) {
   if (isMini) {
     return (
       <>
+        <SkipToContent />
         <Header onOpenNav={nav.onTrue} />
 
         <Box
@@ -66,6 +70,7 @@ export default function DashboardLayout({ children }) {
 
   return (
     <>
+      <SkipToContent />
       <Header onOpenNav={nav.onTrue} />
 
       <Box

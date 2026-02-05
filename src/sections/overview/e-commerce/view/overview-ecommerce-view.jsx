@@ -1,4 +1,5 @@
-import { useState, useContext, useCallback } from 'react';
+import { useState, useContext, useCallback, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import Container from '@mui/material/Container';
 import Grid from '@mui/material/Unstable_Grid2';
@@ -17,7 +18,7 @@ import { AuthContext } from 'src/auth/context/jwt';
 
 import { useSettingsContext } from 'src/components/settings';
 import { MotivationIllustration } from 'src/assets/illustrations';
-
+import { Walktour, useWalktour } from 'src/components/walktour';
 
 import EcommerceEventsCalendar from '../ecommerce-events-calendar';
 import EcommerceAnalyticsTabs from '../ecommerce-analytics-tabs';
@@ -33,11 +34,33 @@ import {
 
 export default function OverviewEcommerceView() {
   const { user } = useContext(AuthContext);
+  const { t } = useTranslation();
   const { products, productsMutate } = useGetProducts();
   const { orders } = useGetOrders();
   const { media, total: mediaTotal, mutate: mediaMutate } = useGetMedia(1, 1);
 
   const settings = useSettingsContext();
+
+  const { run: tourRun, handleCallback: tourCallback } = useWalktour();
+
+  const tourSteps = useMemo(() => [
+    {
+      target: '[data-tour="welcome-banner"]',
+      title: t('tour_welcome_title'),
+      content: t('tour_welcome_content'),
+      disableBeacon: true,
+    },
+    {
+      target: '[data-tour="setup-checklist"]',
+      title: t('tour_setup_title'),
+      content: t('tour_setup_content'),
+    },
+    {
+      target: '[data-tour="empty-products"]',
+      title: t('tour_products_title'),
+      content: t('tour_products_content'),
+    },
+  ], [t]);
 
   // Refresh data when tasks are completed in SetupChecklist
   const handleRefreshData = useCallback(() => {
@@ -81,9 +104,11 @@ export default function OverviewEcommerceView() {
 
   return (
     <Container maxWidth={settings.themeStretch ? false : 'xl'}>
+      {isNewUser && <Walktour steps={tourSteps} run={tourRun} callback={tourCallback} />}
+
       <Grid container spacing={3}>
         {/* Welcome Banner - Different for new vs existing users */}
-        <Grid xs={12} md={8}>
+        <Grid xs={12} md={8} data-tour="welcome-banner">
           <WelcomeNewUser
             userName={user?.name}
             productsCount={productsCount}
@@ -98,7 +123,7 @@ export default function OverviewEcommerceView() {
 
         {/* Setup Checklist - Only for new users or incomplete setup */}
         {isNewUser && (
-          <Grid xs={12}>
+          <Grid xs={12} data-tour="setup-checklist">
             <SetupChecklist
               productsCount={productsCount}
               ordersCount={ordersCount}
@@ -151,7 +176,7 @@ export default function OverviewEcommerceView() {
 
         {/* Conditional Content Based on User State */}
         {isNewUser && (
-          <Grid xs={12}>
+          <Grid xs={12} data-tour="empty-products">
             <EmptyStateProducts />
           </Grid>
         )}
