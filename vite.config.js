@@ -55,6 +55,7 @@ export default defineConfig(({ mode }) => {
     ],
     build: {
       target: 'esnext',
+      modulePreload: { polyfill: false },
       rollupOptions: {
         output: {
           manualChunks: {
