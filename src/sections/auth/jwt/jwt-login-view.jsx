@@ -24,7 +24,8 @@ import { useAuthContext } from 'src/auth/hooks';
 import { HOST_API, PATH_AFTER_LOGIN } from 'src/config-global';
 
 import Iconify from 'src/components/iconify';
-import FormProvider, { RHFTextField } from 'src/components/hook-form';
+import FormProvider from 'src/components/hook-form/form-provider';
+import RHFTextField from 'src/components/hook-form/rhf-text-field';
 import axios from 'axios';
 import { endpoints } from 'src/utils/axios';
 

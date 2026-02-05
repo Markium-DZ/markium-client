@@ -6,27 +6,29 @@ import { localStorageGetItem } from 'src/utils/storage-available';
 
 import { defaultLang } from './config-lang';
 
+// Arabic is always needed (default + fallback) — static import avoids waterfall
+import translationAr from './langs/ar.json';
+
 // ----------------------------------------------------------------------
 
 const lng = localStorageGetItem('i18nextLng', defaultLang.value);
 
-// Each language JSON becomes a separate chunk — only the active one is fetched
+// Other languages loaded on demand
 const langLoaders = {
   en: () => import('./langs/en.json'),
   fr: () => import('./langs/fr.json'),
   vi: () => import('./langs/vi.json'),
   cn: () => import('./langs/cn.json'),
-  ar: () => import('./langs/ar.json'),
 };
 
-// Only load active language + fallback (top-level await requires target: esnext)
-const resources = {};
-const activeData = await (langLoaders[lng] ?? langLoaders.ar)();
-resources[lng] = { translations: activeData.default };
+const resources = {
+  ar: { translations: translationAr },
+};
 
-if (lng !== 'ar') {
-  const fallbackData = await langLoaders.ar();
-  resources.ar = { translations: fallbackData.default };
+// If active language is not Arabic, load it dynamically
+if (lng !== 'ar' && langLoaders[lng]) {
+  const data = await langLoaders[lng]();
+  resources[lng] = { translations: data.default };
 }
 
 i18n
