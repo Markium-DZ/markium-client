@@ -2,12 +2,14 @@ import { lazy, Suspense } from 'react';
 import { Outlet } from 'react-router-dom';
 
 import CompactLayout from 'src/layouts/compact';
-import AuthModernLayout from 'src/layouts/auth/modern';
 import AuthClassicLayout from 'src/layouts/auth/classic';
-import AuthModernCompactLayout from 'src/layouts/auth/modern-compact';
 
 import { SplashScreen } from 'src/components/loading-screen';
 import { t } from 'i18next';
+
+// Lazy-load layouts unique to auth-demo (not needed for login)
+const AuthModernLayout = lazy(() => import('src/layouts/auth/modern'));
+const AuthModernCompactLayout = lazy(() => import('src/layouts/auth/modern-compact'));
 
 // ----------------------------------------------------------------------
 

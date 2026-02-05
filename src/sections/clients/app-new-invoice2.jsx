@@ -59,7 +59,7 @@ export default function AppNewInvoice2({ title, subheader, tableData, contract_i
 
       <Divider sx={{ borderStyle: 'dashed' }} />
 
-      <Box sx={{ p: 2, textAlign: 'right' }}>
+      <Box sx={{ p: 2, textAlign: 'end' }}>
         <Button
           size="small"
           color="inherit"

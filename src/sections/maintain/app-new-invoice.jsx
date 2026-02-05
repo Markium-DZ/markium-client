@@ -60,7 +60,7 @@ export default function AppNewInvoice({ title, maintenance_id, subheader, tableD
         </Scrollbar>
       </TableContainer>
       {/* <Divider sx={{ borderStyle: 'dashed' }} /> */}
-      {/* <Box sx={{ p: 2, textAlign: 'right' }}>
+      {/* <Box sx={{ p: 2, textAlign: 'end' }}>
         <Button
           size="small"
           color="inherit"

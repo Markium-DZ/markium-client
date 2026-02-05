@@ -1,5 +1,4 @@
 
-
 /* eslint-disable perfectionist/sort-imports */
 import 'src/global.css';
 
@@ -8,22 +7,27 @@ import 'src/locales/i18n';
 
 // ----------------------------------------------------------------------
 
+import { lazy, Suspense } from 'react';
+
 import Router from 'src/routes/sections';
 
 import ThemeProvider from 'src/theme';
-
-import { LocalizationProvider } from 'src/locales';
 
 import { useScrollToTop } from 'src/hooks/use-scroll-to-top';
 
 import ProgressBar from 'src/components/progress-bar';
 import { MotionLazy } from 'src/components/animate/motion-lazy';
-import SnackbarProvider from 'src/components/snackbar/snackbar-provider';
-import { SettingsDrawer, SettingsProvider } from 'src/components/settings';
-
-import { CheckoutProvider } from 'src/sections/checkout/context';
+import { SettingsProvider } from 'src/components/settings';
 
 import { AuthProvider } from 'src/auth/context/jwt';
+
+// Lazy-load components not needed for the initial login page render
+const SnackbarProvider = lazy(() => import('src/components/snackbar/snackbar-provider'));
+const LocalizationProvider = lazy(() => import('src/locales/localization-provider'));
+const SettingsDrawer = lazy(() => import('src/components/settings/drawer/settings-drawer'));
+const CheckoutProvider = lazy(() =>
+  import('src/sections/checkout/context').then((m) => ({ default: m.CheckoutProvider }))
+);
 // import { AuthProvider } from 'src/auth/context/auth0';
 // import { AuthProvider } from 'src/auth/context/amplify';
 // import { AuthProvider } from 'src/auth/context/firebase';
@@ -36,30 +40,34 @@ export default function App() {
 
   return (
     <AuthProvider>
-        <LocalizationProvider>
-          <SettingsProvider
-            defaultSettings={{
-              themeMode: 'light', // 'light' | 'dark'
-              themeDirection: 'ltr', //  'rtl' | 'ltr'
-              themeContrast: 'default', // 'default' | 'bold'
-              themeLayout: 'vertical', // 'vertical' | 'horizontal' | 'mini'
-              themeColorPresets: 'default', // 'default' | 'cyan' | 'purple' | 'blue' | 'orange' | 'red'
-              themeStretch: false,
-            }}
-          >
-            <ThemeProvider>
-              <MotionLazy>
-                <SnackbarProvider>
-                  <CheckoutProvider>
-                    <SettingsDrawer />
-                    <ProgressBar />
+      <SettingsProvider
+        defaultSettings={{
+          themeMode: 'light', // 'light' | 'dark'
+          themeDirection: 'ltr', //  'rtl' | 'ltr'
+          themeContrast: 'default', // 'default' | 'bold'
+          themeLayout: 'vertical', // 'vertical' | 'horizontal' | 'mini'
+          themeColorPresets: 'default', // 'default' | 'cyan' | 'purple' | 'blue' | 'orange' | 'red'
+          themeStretch: false,
+        }}
+      >
+        <ThemeProvider>
+          <MotionLazy>
+            <Suspense fallback={<ProgressBar />}>
+              <SnackbarProvider>
+                <Suspense fallback={null}>
+                  <SettingsDrawer />
+                </Suspense>
+                <ProgressBar />
+                <CheckoutProvider>
+                  <LocalizationProvider>
                     <Router />
-                  </CheckoutProvider>
-                </SnackbarProvider>
-              </MotionLazy>
-            </ThemeProvider>
-          </SettingsProvider>
-        </LocalizationProvider>
+                  </LocalizationProvider>
+                </CheckoutProvider>
+              </SnackbarProvider>
+            </Suspense>
+          </MotionLazy>
+        </ThemeProvider>
+      </SettingsProvider>
     </AuthProvider>
   );
 }

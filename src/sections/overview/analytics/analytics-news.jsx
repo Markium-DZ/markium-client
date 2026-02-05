@@ -26,7 +26,7 @@ export default function AnalyticsNews({ title, subheader, list, ...other }) {
         ))}
       </Scrollbar>
 
-      <Box sx={{ p: 2, textAlign: 'right' }}>
+      <Box sx={{ p: 2, textAlign: 'end' }}>
         <Button
           size="small"
           color="inherit"

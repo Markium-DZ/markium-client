@@ -1,11 +1,13 @@
 import { lazy, Suspense } from 'react';
 import { Outlet } from 'react-router-dom';
 
-import MainLayout from 'src/layouts/main';
-import SimpleLayout from 'src/layouts/simple';
 import CompactLayout from 'src/layouts/compact';
 
 import { SplashScreen } from 'src/components/loading-screen';
+
+// Lazy-load heavy layout components
+const MainLayout = lazy(() => import('src/layouts/main'));
+const SimpleLayout = lazy(() => import('src/layouts/simple'));
 
 // ----------------------------------------------------------------------
 
@@ -34,11 +36,13 @@ const PostDetailsPage = lazy(() => import('src/pages/post/details'));
 export const mainRoutes = [
   {
     element: (
-      <MainLayout>
-        <Suspense fallback={<SplashScreen />}>
-          <Outlet />
-        </Suspense>
-      </MainLayout>
+      <Suspense fallback={<SplashScreen />}>
+        <MainLayout>
+          <Suspense fallback={<SplashScreen />}>
+            <Outlet />
+          </Suspense>
+        </MainLayout>
+      </Suspense>
     ),
     children: [
       { path: 'about-us', element: <AboutPage /> },
@@ -64,11 +68,13 @@ export const mainRoutes = [
   },
   {
     element: (
-      <SimpleLayout>
-        <Suspense fallback={<SplashScreen />}>
-          <Outlet />
-        </Suspense>
-      </SimpleLayout>
+      <Suspense fallback={<SplashScreen />}>
+        <SimpleLayout>
+          <Suspense fallback={<SplashScreen />}>
+            <Outlet />
+          </Suspense>
+        </SimpleLayout>
+      </Suspense>
     ),
     children: [
       { path: 'pricing', element: <PricingPage /> },

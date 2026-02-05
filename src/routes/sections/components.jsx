@@ -1,9 +1,10 @@
 import { lazy, Suspense } from 'react';
 import { Outlet, Navigate } from 'react-router-dom';
 
-import MainLayout from 'src/layouts/main';
-
 import { SplashScreen } from 'src/components/loading-screen';
+
+// Lazy-load heavy layout component
+const MainLayout = lazy(() => import('src/layouts/main'));
 
 // ----------------------------------------------------------------------
 
@@ -71,11 +72,13 @@ const ScrollProgressPage = lazy(() => import('src/pages/components/extra/scroll-
 export const componentsRoutes = [
   {
     element: (
-      <MainLayout>
-        <Suspense fallback={<SplashScreen />}>
-          <Outlet />
-        </Suspense>
-      </MainLayout>
+      <Suspense fallback={<SplashScreen />}>
+        <MainLayout>
+          <Suspense fallback={<SplashScreen />}>
+            <Outlet />
+          </Suspense>
+        </MainLayout>
+      </Suspense>
     ),
     children: [
       {

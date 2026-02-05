@@ -37,8 +37,6 @@ export function useGetAnalyticsOverview(dateFrom = '-30d') {
     options
   );
 
-  console.log("momodatra :",data);
-
   const memoizedValue = useMemo(() => {
     const metrics = data?.data?.metrics || {};
     return {

@@ -49,7 +49,7 @@ const Logo = forwardRef(({ disabledLink = false, user, sx, ...other }, ref) => {
         >
           <Box
             component="img"
-            src={`/logo/${settings.themeColorPresets}.png`}
+            src={`/logo/${settings.themeColorPresets}.webp`}
             alt="Markium logo"
             width={40}
             height={40}

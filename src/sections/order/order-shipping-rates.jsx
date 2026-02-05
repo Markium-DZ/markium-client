@@ -181,7 +181,7 @@ export default function OrderShippingRates({ quotesGroupedByProvider, loading, e
                               </Box>
 
                               {/* Price */}
-                              <Box sx={{ textAlign: 'right' }}>
+                              <Box sx={{ textAlign: 'end' }}>
                                 <Typography variant="h6" color="primary">
                                   {fCurrency(quote.price)} 
                                 </Typography>

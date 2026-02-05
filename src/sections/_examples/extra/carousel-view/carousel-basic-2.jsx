@@ -24,7 +24,7 @@ export default function CarouselBasic2({ data }) {
           <Stack key={item.id}>
             <Image alt={item.title} src={item.coverUrl} ratio="4/3" />
 
-            <CardContent sx={{ textAlign: 'left' }}>
+            <CardContent sx={{ textAlign: 'start' }}>
               <Typography variant="h6" noWrap gutterBottom>
                 {item.title}
               </Typography>

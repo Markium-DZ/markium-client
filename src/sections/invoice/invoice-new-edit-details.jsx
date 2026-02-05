@@ -104,7 +104,7 @@ export default function InvoiceNewEditDetails() {
     <Stack
       spacing={2}
       alignItems="flex-end"
-      sx={{ mt: 3, textAlign: 'right', typography: 'body2' }}
+      sx={{ mt: 3, textAlign: 'end', typography: 'body2' }}
     >
       <Stack direction="row">
         <Box sx={{ color: 'text.secondary' }}>Subtotal</Box>
@@ -248,7 +248,7 @@ export default function InvoiceNewEditDetails() {
                 sx={{
                   maxWidth: { md: 104 },
                   [`& .${inputBaseClasses.input}`]: {
-                    textAlign: { md: 'right' },
+                    textAlign: { md: 'end' },
                   },
                 }}
               />

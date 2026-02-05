@@ -71,7 +71,7 @@ const baseColumns = [
     headerAlign: 'right',
     width: 120,
     renderCell: (params) => (
-      <Stack sx={{ textAlign: 'right' }}>
+      <Stack sx={{ textAlign: 'end' }}>
         <Box component="span">{fDate(params.row.lastLogin)}</Box>
         <Box component="span" sx={{ color: 'text.secondary', typography: 'caption' }}>
           {fTime(params.row.lastLogin)}
