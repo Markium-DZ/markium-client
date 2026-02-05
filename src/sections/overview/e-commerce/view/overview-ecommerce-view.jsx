@@ -1,4 +1,5 @@
-import { useState, useContext, useCallback } from 'react';
+import { useState, useContext, useCallback, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import Container from '@mui/material/Container';
 import Grid from '@mui/material/Unstable_Grid2';
@@ -6,7 +7,6 @@ import Grid from '@mui/material/Unstable_Grid2';
 import { useGetProducts } from 'src/api/product';
 import { useGetOrders } from 'src/api/orders';
 import { useGetMedia } from 'src/api/media';
-import { useGetMyStore } from 'src/api/store';
 import {
   useGetAnalyticsOverview,
   useGetAnalyticsTraffic,
@@ -18,27 +18,43 @@ import { AuthContext } from 'src/auth/context/jwt';
 
 import { useSettingsContext } from 'src/components/settings';
 import { MotivationIllustration } from 'src/assets/illustrations';
+import { Walktour, useWalktour } from 'src/components/walktour';
 
-import DashboardSkeleton from './dashboard-skeleton';
 import EcommerceEventsCalendar from '../ecommerce-events-calendar';
 import EcommerceAnalyticsTabs from '../ecommerce-analytics-tabs';
 
 import {
   SetupChecklist,
   WelcomeNewUser,
-  WaitingForOrders,
+  EmptyStateOrders,
 } from 'src/sections/dashboard/onboarding';
 
 // ----------------------------------------------------------------------
 
 export default function OverviewEcommerceView() {
   const { user } = useContext(AuthContext);
-  const { products, productsLoading, productsMutate } = useGetProducts();
-  const { orders, ordersLoading } = useGetOrders();
-  const { media, total: mediaTotal, mutate: mediaMutate, mediaLoading } = useGetMedia(1, 1);
-  const { store } = useGetMyStore(user?.store?.slug);
+  const { t } = useTranslation();
+  const { products, productsMutate } = useGetProducts();
+  const { orders } = useGetOrders();
+  const { media, total: mediaTotal, mutate: mediaMutate } = useGetMedia(1, 1);
 
   const settings = useSettingsContext();
+
+  const { run: tourRun, handleCallback: tourCallback } = useWalktour();
+
+  const tourSteps = useMemo(() => [
+    {
+      target: '[data-tour="welcome-banner"]',
+      title: t('tour_welcome_title'),
+      content: t('tour_welcome_content'),
+      disableBeacon: true,
+    },
+    {
+      target: '[data-tour="setup-checklist"]',
+      title: t('tour_setup_title'),
+      content: t('tour_setup_content'),
+    },
+  ], [t]);
 
   // Refresh data when tasks are completed in SetupChecklist
   const handleRefreshData = useCallback(() => {
@@ -49,24 +65,19 @@ export default function OverviewEcommerceView() {
   const productsCount = products?.length || 0;
   const ordersCount = orders?.length || 0;
   const hasMedia = mediaTotal > 0 || (media && media.length > 0);
-  const isStoreCustomized = Boolean(store?.logo);
 
-  // Loading state - show skeleton before tier determination
-  const isDataLoading = productsLoading || ordersLoading || mediaLoading;
-
-  // Setup complete = all 3 checklist steps done
-  const setupComplete = productsCount > 0 && hasMedia && isStoreCustomized;
-
-  // New tier logic
-  const isNewUser = !setupComplete;                           // checklist incomplete
-  const isWaitingForOrders = setupComplete && ordersCount === 0; // store ready, no orders
-  const isEstablished = setupComplete && ordersCount > 0;       // has orders
+  // Determine if user is new (no products)
+  const isNewUser = productsCount === 0;
+  // B grade merchant: has products but no orders yet
+  const isBGradeMerchant = productsCount > 0 && ordersCount === 0;
+  // Third grade user: has products and orders (established merchant)
+  const isThirdGradeUser = !isNewUser && !isBGradeMerchant;
 
   // Analytics state
   const [dateRange, setDateRange] = useState('-30d');
   const [currentTab, setCurrentTab] = useState('overview');
 
-  // Fetch analytics data only for established users
+  // Fetch analytics data only for third grade users
   const {
     totalOrders: analyticsOrders,
     totalOrdersData,
@@ -77,62 +88,56 @@ export default function OverviewEcommerceView() {
     totalProductViews,
     totalProductViewsData,
     overviewLoading: analyticsLoading,
-  } = useGetAnalyticsOverview(isEstablished ? dateRange : null);
+  } = useGetAnalyticsOverview(isThirdGradeUser ? dateRange : null);
 
-  const { visitors, productViews, trafficLoading } = useGetAnalyticsTraffic(isEstablished ? dateRange : null);
+  const { visitors, productViews, trafficLoading } = useGetAnalyticsTraffic(isThirdGradeUser ? dateRange : null);
 
-  const { funnel, funnelLoading } = useGetAnalyticsFunnel(isEstablished ? dateRange : null);
+  const { funnel, funnelLoading } = useGetAnalyticsFunnel(isThirdGradeUser ? dateRange : null);
 
-  const { topProducts, topProductsLoading } = useGetAnalyticsTopProducts(isEstablished ? dateRange : null);
-
-  // Show skeleton while loading to prevent flash of wrong tier
-  if (isDataLoading) {
-    return <DashboardSkeleton themeStretch={settings.themeStretch} />;
-  }
+  const { topProducts, topProductsLoading } = useGetAnalyticsTopProducts(isThirdGradeUser ? dateRange : null);
 
   return (
     <Container maxWidth={settings.themeStretch ? false : 'xl'}>
-      <Grid container spacing={3}>
+      {isNewUser && <Walktour steps={tourSteps} run={tourRun} callback={tourCallback} />}
+
+      <Grid container spacing={2}>
         {/* Welcome Banner */}
-        <Grid xs={12} md={8} order={{ xs: 1, md: 1 }}>
+        <Grid xs={12} md={7} data-tour="welcome-banner">
           <WelcomeNewUser
             userName={user?.name}
             productsCount={productsCount}
-            ordersCount={ordersCount}
-            isNewUser={isNewUser}
-            showSetupHint={isNewUser}
             img={<MotivationIllustration />}
           />
         </Grid>
 
         {/* Events Calendar */}
-        <Grid xs={12} md={4} order={{ xs: 3, md: 2 }} data-tour="calendar">
+        <Grid xs={12} md={5}>
           <EcommerceEventsCalendar />
         </Grid>
 
-        {/* Setup Checklist - Only when setup incomplete */}
+        {/* Setup Checklist - Only for new users or incomplete setup */}
         {isNewUser && (
-          <Grid xs={12} order={{ xs: 2, md: 3 }}>
+          <Grid xs={12} data-tour="setup-checklist">
             <SetupChecklist
               productsCount={productsCount}
+              ordersCount={ordersCount}
               hasMedia={hasMedia}
-              isStoreCustomized={isStoreCustomized}
               isPhoneVerified={user?.is_phone_verified ?? true}
               onRefresh={handleRefreshData}
             />
           </Grid>
         )}
 
-        {/* Waiting for Orders: setup complete but no orders yet */}
-        {isWaitingForOrders && (
-          <Grid xs={12} order={{ xs: 2, md: 3 }} data-tour="waiting-orders">
-            <WaitingForOrders storeSlug={user?.store?.slug} />
+        {/* B Grade Merchant: has products but no orders - show EmptyStateOrders */}
+        {isBGradeMerchant && (
+          <Grid xs={12}>
+            <EmptyStateOrders hasProducts />
           </Grid>
         )}
 
-        {/* Analytics Tabs - Only for established merchants */}
-        {isEstablished && (
-          <Grid xs={12} order={{ xs: 2, md: 3 }}>
+        {/* Analytics Tabs - Only show when user has orders (third grade users) */}
+        {isThirdGradeUser && (
+          <Grid xs={12}>
             <EcommerceAnalyticsTabs
               // Overview data
               totalOrders={analyticsOrders || ordersCount || 0}

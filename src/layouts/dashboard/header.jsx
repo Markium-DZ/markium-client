@@ -5,7 +5,6 @@ import AppBar from '@mui/material/AppBar';
 import Toolbar from '@mui/material/Toolbar';
 import { useTheme } from '@mui/material/styles';
 import IconButton from '@mui/material/IconButton';
-import { paths } from 'src/routes/paths';
 
 import { useOffSetTop } from 'src/hooks/use-off-set-top';
 import { useResponsive } from 'src/hooks/use-responsive';
@@ -14,22 +13,17 @@ import { bgBlur } from 'src/theme/css';
 
 import Logo from 'src/components/logo';
 import SvgColor from 'src/components/svg-color';
-import { m } from 'framer-motion';
 import { useSettingsContext } from 'src/components/settings';
+import { useTranslate } from 'src/locales';
 
 import Searchbar from '../common/searchbar';
 import { NAV, HEADER } from '../config-layout';
 import SettingsButton from '../common/settings-button';
 import AccountPopover from '../common/account-popover';
-import ContactsPopover from '../common/contacts-popover';
 import LanguagePopover from '../common/language-popover';
-import NotificationsPopover from '../common/notifications-popover';
 import { useState } from 'react';
 
-
-import Iconify from 'src/components/iconify';
 import { Icon } from '@iconify/react';
-import { Link } from '@mui/material';
 import SettingsLink from '../common/settings-link';
 
 // ----------------------------------------------------------------------
@@ -38,6 +32,8 @@ export default function Header({ onOpenNav }) {
   const theme = useTheme();
 
   const settings = useSettingsContext();
+
+  const { t } = useTranslate();
 
   const isNavHorizontal = settings.themeLayout === 'horizontal';
 
@@ -78,28 +74,18 @@ export default function Header({ onOpenNav }) {
       >
 
 
-        <div style={{ display: "flex", alignItems: "center" }}>
-          {darkMode == "dark" ?
-            <m.button initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }} onClick={Toggle} style={{ background: "none", border: "none" }} aria-label="Switch to light mode">
-              <Icon icon="duo-icons:moon-stars" width={24} height={24} style={{ color: "#fffefe" }} />
-            </m.button>
-            :
-            null}
-          {darkMode == "light" ?
-            <m.button initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }} onClick={Toggle} style={{ background: "none", border: "none" }} aria-label="Switch to dark mode">
-              <Icon icon="duo-icons:sun" width={24} height={24} />
-            </m.button>
-            :
-            null}
-        </div>
-
-        {/* <div className="toggle-container">
-          <Icon icon="duo-icons:moon-stars" className="icon" />
-          <div className={`toggle-switch ${darkMode}`} onClick={Toggle}>
-            <div className="toggle-ball"></div>
-          </div>
-          <Icon icon="duo-icons:sun" className="icon" />
-        </div> */}
+        <IconButton
+          onClick={Toggle}
+          aria-label={darkMode === 'dark' ? t('switch_to_light_mode') : t('switch_to_dark_mode')}
+          sx={{ width: 40, height: 40 }}
+        >
+          <Icon
+            icon={darkMode === 'dark' ? 'duo-icons:moon-stars' : 'duo-icons:sun'}
+            width={24}
+            height={24}
+            style={darkMode === 'dark' ? { color: '#fffefe' } : undefined}
+          />
+        </IconButton>
 
 
         <LanguagePopover />

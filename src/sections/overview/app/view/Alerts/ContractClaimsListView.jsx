@@ -90,11 +90,11 @@ export default function ContractClaimsListView({ claimsLoading, data, with_contr
     const defaultFilters = { status: 'all', name: "" };
     const items = [
         { key: 'all', label: t('all'), match: () => true },
-        { key: 'paid_claim', label: t('paid_claim'), match: (item) => item?.status?.key == "paid_claim", color: 'primary' },
-        { key: 'not_yet_claim', label: t('not_yet_claim'), match: (item) => item?.status?.key == "not_yet_claim", color: 'secondary' },
-        { key: 'due_claim', label: t('due_claim'), match: (item) => item?.status?.key == "due_claim", color: 'warning' },
-        { key: 'overdue_claim', label: t('overdue_claim'), match: (item) => item?.status?.key == "overdue_claim", color: 'error' },
-        { key: 'severely_overdue_claim', label: t('severely_overdue_claim'), match: (item) => item?.status?.key == "severely_overdue_claim", color: 'error' },
+        { key: 'paid_claim', label: t('paid_claim'), match: (item) => item?.status?.key === "paid_claim", color: 'primary' },
+        { key: 'not_yet_claim', label: t('not_yet_claim'), match: (item) => item?.status?.key === "not_yet_claim", color: 'secondary' },
+        { key: 'due_claim', label: t('due_claim'), match: (item) => item?.status?.key === "due_claim", color: 'warning' },
+        { key: 'overdue_claim', label: t('overdue_claim'), match: (item) => item?.status?.key === "overdue_claim", color: 'error' },
+        { key: 'severely_overdue_claim', label: t('severely_overdue_claim'), match: (item) => item?.status?.key === "severely_overdue_claim", color: 'error' },
     ];
     const filterFunction = (data, filters) => {
         const activeTab = filters.tabKey;

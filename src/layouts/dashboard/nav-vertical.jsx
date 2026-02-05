@@ -84,6 +84,7 @@ export default function NavVertical({ openNav, onCloseNav }) {
         slotProps={{
           currentRole: user?.role,
         }}
+        aria-label={t('main_navigation')}
       />
 
       <Box sx={{ flexGrow: 1 }} />

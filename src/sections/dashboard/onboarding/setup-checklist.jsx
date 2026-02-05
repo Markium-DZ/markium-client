@@ -1,11 +1,12 @@
 import PropTypes from 'prop-types';
-import { useRef, useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
+import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import LinearProgress from '@mui/material/LinearProgress';
 import { alpha, useTheme } from '@mui/material/styles';
@@ -20,32 +21,12 @@ import ProductNewEditForm from 'src/sections/product/product-new-edit-form';
 
 // ----------------------------------------------------------------------
 
-const STORAGE_KEY = 'markium-onboarding-dismissed';
-
-export default function SetupChecklist({ productsCount = 0, hasMedia = false, isPhoneVerified = true, isStoreCustomized = false, onRefresh }) {
+export default function SetupChecklist({ productsCount = 0, ordersCount = 0, hasMedia = false, isPhoneVerified = true, onRefresh }) {
   const { t } = useTranslation();
   const theme = useTheme();
   const router = useRouter();
-  const [dismissed, setDismissed] = useState(false);
   const [mediaPickerOpen, setMediaPickerOpen] = useState(false);
   const [productDialogOpen, setProductDialogOpen] = useState(false);
-  const timerRef = useRef(null);
-
-  const scheduleRefresh = useCallback(() => {
-    onRefresh?.();
-    if (timerRef.current) clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(() => onRefresh?.(), 2000);
-  }, [onRefresh]);
-
-  useEffect(() => {
-    const isDismissed = localStorage.getItem(STORAGE_KEY);
-    if (isDismissed === 'true') {
-      setDismissed(true);
-    }
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-    };
-  }, []);
 
   const handleOpenMediaPicker = useCallback(() => {
     setMediaPickerOpen(true);
@@ -53,13 +34,19 @@ export default function SetupChecklist({ productsCount = 0, hasMedia = false, is
 
   const handleCloseMediaPicker = useCallback(() => {
     setMediaPickerOpen(false);
-    scheduleRefresh();
-  }, [scheduleRefresh]);
+    // Refresh data after closing media picker (media may have been uploaded)
+    onRefresh?.();
+    // Additional delayed refresh to catch backend processing
+    setTimeout(() => onRefresh?.(), 2000);
+  }, [onRefresh]);
 
-  const handleMediaSelect = useCallback(() => {
+  const handleMediaSelect = useCallback((selectedMedia) => {
+    // Media was selected/uploaded, close the dialog
     setMediaPickerOpen(false);
-    scheduleRefresh();
-  }, [scheduleRefresh]);
+    // Refresh data to update the checklist
+    onRefresh?.();
+    setTimeout(() => onRefresh?.(), 2000);
+  }, [onRefresh]);
 
   const handleOpenProductDialog = useCallback(() => {
     setProductDialogOpen(true);
@@ -67,8 +54,10 @@ export default function SetupChecklist({ productsCount = 0, hasMedia = false, is
 
   const handleCloseProductDialog = useCallback(() => {
     setProductDialogOpen(false);
-    scheduleRefresh();
-  }, [scheduleRefresh]);
+    // Refresh data to update the checklist (product may have been created)
+    onRefresh?.();
+    setTimeout(() => onRefresh?.(), 2000);
+  }, [onRefresh]);
 
   const steps = [
     // {
@@ -111,7 +100,7 @@ export default function SetupChecklist({ productsCount = 0, hasMedia = false, is
       id: 'customize',
       title: t('onboarding_customize_store'),
       description: t('onboarding_customize_store_desc'),
-      completed: isStoreCustomized,
+      completed: false,
       icon: 'solar:palette-bold',
       action: () => router.push(paths.dashboard.settings.root),
       actionLabel: t('onboarding_customize_now'),
@@ -122,12 +111,7 @@ export default function SetupChecklist({ productsCount = 0, hasMedia = false, is
   const progress = (completedSteps / steps.length) * 100;
   const allCompleted = completedSteps === steps.length;
 
-  const handleDismiss = () => {
-    localStorage.setItem(STORAGE_KEY, 'true');
-    setDismissed(true);
-  };
-
-  if (dismissed || allCompleted) {
+  if (allCompleted) {
     return null;
   }
 
@@ -135,12 +119,11 @@ export default function SetupChecklist({ productsCount = 0, hasMedia = false, is
     <>
     <Card
       sx={{
-        p: 3,
-        // background: `linear-gradient(135deg, ${alpha(theme.palette.primary.light, 0.1)} 0%, ${alpha(theme.palette.primary.main, 0.05)} 100%)`,
+        p: 2.5,
         border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
       }}
     >
-      <Stack spacing={3}>
+      <Stack spacing={2}>
         {/* Header */}
         <Stack direction="row" alignItems="center" justifyContent="space-between">
           <Stack spacing={0.5}>
@@ -151,11 +134,14 @@ export default function SetupChecklist({ productsCount = 0, hasMedia = false, is
           </Stack>
           <Button
             size="small"
-            color="inherit"
-            onClick={handleDismiss}
-            sx={{ color: 'text.secondary' }}
+            color="primary"
+            component="a"
+            href="https://markium.online/tutorials/getting-started"
+            target="_blank"
+            rel="noopener noreferrer"
+            startIcon={<Iconify icon="solar:play-circle-bold" width={16} />}
           >
-            {t('onboarding_dismiss')}
+            {t('empty_products_watch_tutorial')}
           </Button>
         </Stack>
 
@@ -169,30 +155,33 @@ export default function SetupChecklist({ productsCount = 0, hasMedia = false, is
               {completedSteps}/{steps.length}
             </Typography>
           </Stack>
-          <LinearProgress
-            variant="determinate"
-            value={progress}
-            sx={{
-              height: 8,
-              borderRadius: 4,
-              bgcolor: alpha(theme.palette.primary.main, 0.1),
-              '& .MuiLinearProgress-bar': {
+          <Tooltip title={t('onboarding_progress_tooltip')} arrow>
+            <LinearProgress
+              variant="determinate"
+              value={progress}
+              aria-label={`${t('onboarding_progress')}: ${completedSteps}/${steps.length}`}
+              sx={{
+                height: 8,
                 borderRadius: 4,
-              },
-            }}
-          />
+                bgcolor: alpha(theme.palette.primary.main, 0.1),
+                '& .MuiLinearProgress-bar': {
+                  borderRadius: 4,
+                },
+              }}
+            />
+          </Tooltip>
         </Stack>
 
         {/* Steps */}
-        <Stack spacing={2}>
+        <Stack spacing={1.5}>
           {steps.map((step, index) => (
             <Stack
               key={step.id}
               direction={{ xs: 'column', sm: 'row' }}
               alignItems={{ xs: 'flex-start', sm: 'center' }}
-              spacing={2}
+              spacing={1.5}
               sx={{
-                p: 2,
+                p: 1.5,
                 borderRadius: 1.5,
                 bgcolor: step.completed
                   ? alpha(theme.palette.success.main, 0.08)
@@ -213,8 +202,8 @@ export default function SetupChecklist({ productsCount = 0, hasMedia = false, is
               {/* Step Icon */}
               <Box
                 sx={{
-                  width: 44,
-                  height: 44,
+                  width: 38,
+                  height: 38,
                   borderRadius: '50%',
                   display: 'flex',
                   alignItems: 'center',
@@ -259,14 +248,6 @@ export default function SetupChecklist({ productsCount = 0, hasMedia = false, is
                   {step.actionLabel}
                 </Button>
               )}
-
-              {step.completed && (
-                <Iconify
-                  icon="solar:check-circle-bold"
-                  width={20}
-                  sx={{ color: 'success.main', flexShrink: 0 }}
-                />
-              )}
             </Stack>
           ))}
         </Stack>
@@ -294,8 +275,8 @@ export default function SetupChecklist({ productsCount = 0, hasMedia = false, is
 
 SetupChecklist.propTypes = {
   productsCount: PropTypes.number,
+  ordersCount: PropTypes.number,
   hasMedia: PropTypes.bool,
   isPhoneVerified: PropTypes.bool,
-  isStoreCustomized: PropTypes.bool,
   onRefresh: PropTypes.func,
 };

@@ -1,6 +1,6 @@
 import * as Yup from 'yup';
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useState, useEffect } from 'react';
+import { useForm, useWatch } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 
 import Link from '@mui/material/Link';
@@ -109,25 +109,31 @@ export default function JwtLoginView() {
   const {
     reset,
     handleSubmit,
+    control,
     formState: { isSubmitting },
   } = methods;
 
+  const watchedValues = useWatch({ control });
+
+  useEffect(() => {
+    if (errorMsg) {
+      setErrorMsg('');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [watchedValues.phone, watchedValues.password]);
+
   const onSubmit = handleSubmit(async (data) => {
     try {
-      console.log("data : ", data);
       const response = await axios.post(HOST_API + endpoints.auth.login, {...data,phone:formatPhoneWithPrefix(data.phone)});
-      console.log("response : ", response);
 
       if (response?.data?.success) {
-        const res = await login(formatPhoneWithPrefix(data.phone), data.password);
+        await login(formatPhoneWithPrefix(data.phone), data.password);
         router.push(returnTo || PATH_AFTER_LOGIN);
       } else {
         setErrorMsg(t("please_check_your_phone_and_password"));
       }
 
     } catch (error) {
-      console.log("error : ", error);
-
       if (error?.response?.status === 403) {
         setErrorMsg(t("user_is_banned"));
       } else {
@@ -157,9 +163,7 @@ export default function JwtLoginView() {
         name="phone"
         label={t('phone')}
         placeholder="555123456"
-        // inputProps={{
-        //   dir: 'ltr',
-        // }}
+        autoComplete="tel"
         InputProps={{
           startAdornment: (
             <InputAdornment position="start">
@@ -185,13 +189,15 @@ export default function JwtLoginView() {
         name="password"
         label={t('password')}
         type={password.value ? 'text' : 'password'}
-        // inputProps={{
-        //   dir: 'ltr',
-        // }}
+        autoComplete="current-password"
         InputProps={{
           endAdornment: (
             <InputAdornment position="end">
-              <IconButton onClick={password.onToggle} edge="end">
+              <IconButton
+                onClick={password.onToggle}
+                edge="end"
+                aria-label={password.value ? t('hide_password') : t('show_password')}
+              >
                 <Iconify icon={password.value ? 'solar:eye-bold' : 'solar:eye-closed-bold'} />
               </IconButton>
             </InputAdornment>
@@ -221,7 +227,7 @@ export default function JwtLoginView() {
       {renderHead}
 
       {!!errorMsg && (
-        <Alert severity="error" sx={{ mb: 3 }}>
+        <Alert severity="error" aria-live="assertive" sx={{ mb: 3 }}>
           {errorMsg}
         </Alert>
       )}

@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 import PropTypes from 'prop-types';
 import { closeSnackbar, SnackbarProvider as NotistackProvider } from 'notistack';
+import { useTranslation } from 'react-i18next';
 
 import Collapse from '@mui/material/Collapse';
 import IconButton from '@mui/material/IconButton';
@@ -13,6 +14,7 @@ import { StyledIcon, StyledNotistack } from './styles';
 
 export default function SnackbarProvider({ children }) {
   const settings = useSettingsContext();
+  const { t } = useTranslation();
 
   const isRTL = settings.themeDirection === 'rtl';
 
@@ -58,7 +60,12 @@ export default function SnackbarProvider({ children }) {
       }}
       // with close as default
       action={(snackbarId) => (
-        <IconButton size="small" onClick={() => closeSnackbar(snackbarId)} sx={{ p: 0.5 }}>
+        <IconButton
+          size="small"
+          onClick={() => closeSnackbar(snackbarId)}
+          aria-label={t('close_notification')}
+          sx={{ p: 0.5 }}
+        >
           <Iconify width={16} icon="mingcute:close-line" />
         </IconButton>
       )}

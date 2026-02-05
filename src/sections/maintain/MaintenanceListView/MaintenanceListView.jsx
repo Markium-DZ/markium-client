@@ -96,8 +96,8 @@ export default function MaintenanceListView({ }) {
 
     const items = [
         { key: 'all', label: t('all'), match: () => true },
-        { key: 'completed', label: t('completed'), match: (item) => item?.status?.key == "completed", color: 'primary' },
-        { key: 'pending', label: t('pending'), match: (item) => item?.status?.key == "pending", color: 'warning' },
+        { key: 'completed', label: t('completed'), match: (item) => item?.status?.key === "completed", color: 'primary' },
+        { key: 'pending', label: t('pending'), match: (item) => item?.status?.key === "pending", color: 'warning' },
         // { key: 'under_preparation', label: t('under_preparation'), match: (item) => item?.status?.key == "under_preparation", color: 'secondary' },
         // { key: 'rented', label: t('rented'), match: (item) => item?.status?.key == "rented", color: 'warning' },
     ];

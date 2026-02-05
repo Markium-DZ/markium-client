@@ -35,13 +35,18 @@ export default function RHFTextField({ name, helperText, type, ...other }) {
           }}
           error={!!error}
           helperText={error ? error?.message : helperText}
+          inputProps={{
+            'aria-invalid': !!error,
+            ...(error && { 'aria-describedby': `${name}-error` }),
+          }}
+          FormHelperTextProps={error ? { id: `${name}-error`, role: 'alert' } : undefined}
           {...other}
           sx={{
             "& .MuiInputBase-root": {
-              height: 50, // Change height here
+              height: 50,
             },
             "& .MuiInputBase-input": {
-              padding: "10px", // Adjust padding to center text properly
+              padding: "10px",
             },
           }}
         />

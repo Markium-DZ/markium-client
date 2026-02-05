@@ -25,12 +25,15 @@ export default function Main({ children, sx, ...other }) {
     return (
       <Box
         component="main"
+        id="main-content"
+        tabIndex={-1}
         sx={{
           minHeight: 1,
           display: 'flex',
           flexDirection: 'column',
           pt: `${HEADER.H_MOBILE + 24}px`,
           pb: 10,
+          outline: 'none',
           ...(lgUp && {
             pt: `${HEADER.H_MOBILE * 2 + 40}px`,
             pb: 15,
@@ -45,9 +48,12 @@ export default function Main({ children, sx, ...other }) {
   return (
     <Box
       component="main"
+      id="main-content"
+      tabIndex={-1}
       sx={{
         flexGrow: 1,
         minHeight: 1,
+        outline: 'none',
         display: 'flex',
         flexDirection: 'column',
         py: `${HEADER.H_MOBILE + SPACING}px`,

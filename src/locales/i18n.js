@@ -6,8 +6,7 @@ import { localStorageGetItem } from 'src/utils/storage-available';
 
 import { defaultLang } from './config-lang';
 
-// French (default) + Arabic (fallback) are always needed — static imports avoid waterfall
-import translationFr from './langs/fr.json';
+// Arabic is always needed (default + fallback) — static import avoids waterfall
 import translationAr from './langs/ar.json';
 
 // ----------------------------------------------------------------------
@@ -17,17 +16,17 @@ const lng = localStorageGetItem('i18nextLng', defaultLang.value);
 // Other languages loaded on demand
 const langLoaders = {
   en: () => import('./langs/en.json'),
+  fr: () => import('./langs/fr.json'),
   vi: () => import('./langs/vi.json'),
   cn: () => import('./langs/cn.json'),
 };
 
 const resources = {
-  fr: { translations: translationFr },
   ar: { translations: translationAr },
 };
 
-// If active language is not French or Arabic, load it dynamically
-if (!resources[lng] && langLoaders[lng]) {
+// If active language is not Arabic, load it dynamically
+if (lng !== 'ar' && langLoaders[lng]) {
   const data = await langLoaders[lng]();
   resources[lng] = { translations: data.default };
 }

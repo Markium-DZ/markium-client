@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import PropTypes from 'prop-types';
 
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
@@ -15,112 +16,56 @@ import Iconify from 'src/components/iconify';
 
 // ----------------------------------------------------------------------
 
-// Islamic holidays lookup table (Hijri dates shift ~10-11 days/year)
-const ISLAMIC_HOLIDAYS = {
-  2025: {
-    ramadan: { start: [2, 1], end: [2, 30] },       // March 1 - March 30
-    eid_fitr: { start: [2, 30], end: [3, 2] },       // March 30 - April 2
-    eid_adha: { start: [5, 6], end: [5, 10] },       // June 6 - June 10
+// Static events list — single-day events only
+const EVENTS = [
+  {
+    id: 'ramadan-2026',
+    name: 'ramadan',
+    nameAr: 'رمضان',
+    nameFr: 'Ramadan',
+    date: new Date(2026, 1, 18),  // Feb 18, 2026
+    image: '/assets/events/ramadane.webp',
+    color: '#9C27B0',
   },
-  2026: {
-    ramadan: { start: [1, 18], end: [2, 19] },       // Feb 18 - March 19
-    eid_fitr: { start: [2, 20], end: [2, 22] },      // March 20 - March 22
-    eid_adha: { start: [4, 27], end: [4, 31] },      // May 27 - May 31
+  {
+    id: 'eid-fitr-2026',
+    name: 'eid_al_fitr',
+    nameAr: 'عيد الفطر',
+    nameFr: 'Aïd el-Fitr',
+    date: new Date(2026, 2, 20),  // Mar 20, 2026
+    image: '/assets/events/eid.png',
+    color: '#4CAF50',
   },
-  2027: {
-    ramadan: { start: [1, 8], end: [2, 8] },         // Feb 8 - March 8
-    eid_fitr: { start: [2, 9], end: [2, 11] },       // March 9 - March 11
-    eid_adha: { start: [4, 16], end: [4, 20] },      // May 16 - May 20
+  {
+    id: 'eid-adha-2026',
+    name: 'eid_al_adha',
+    nameAr: 'عيد الأضحى',
+    nameFr: 'Aïd el-Adha',
+    date: new Date(2026, 4, 27),  // May 27, 2026
+    image: '/assets/events/eid-adha.png',
+    color: '#FF9800',
   },
-  2028: {
-    ramadan: { start: [0, 28], end: [1, 25] },       // Jan 28 - Feb 25
-    eid_fitr: { start: [1, 26], end: [1, 28] },      // Feb 26 - Feb 28
-    eid_adha: { start: [4, 5], end: [4, 9] },        // May 5 - May 9
-  },
-  2029: {
-    ramadan: { start: [0, 16], end: [1, 13] },       // Jan 16 - Feb 13
-    eid_fitr: { start: [1, 14], end: [1, 16] },      // Feb 14 - Feb 16
-    eid_adha: { start: [3, 24], end: [3, 28] },      // April 24 - April 28
-  },
-  2030: {
-    ramadan: { start: [0, 6], end: [1, 3] },         // Jan 6 - Feb 3
-    eid_fitr: { start: [1, 4], end: [1, 6] },        // Feb 4 - Feb 6
-    eid_adha: { start: [3, 13], end: [3, 17] },      // April 13 - April 17
-  },
-};
-
-// Compute Black Friday: 4th Friday of November
-function getBlackFriday(year) {
-  const nov1 = new Date(year, 10, 1);
-  const firstFriday = ((5 - nov1.getDay() + 7) % 7) + 1;
-  const fourthFriday = firstFriday + 21;
-  return fourthFriday;
-}
-
-function getEventsForYear(year) {
-  const events = [];
-  const islamic = ISLAMIC_HOLIDAYS[year];
-
-  if (islamic) {
-    events.push({
-      id: `ramadan-${year}`,
-      name: 'ramadan',
-      nameAr: 'رمضان',
-      nameFr: 'Ramadan',
-      date: new Date(year, islamic.ramadan.start[0], islamic.ramadan.start[1]),
-      endDate: new Date(year, islamic.ramadan.end[0], islamic.ramadan.end[1]),
-      image: '/assets/events/ramadane.webp',
-      color: '#9C27B0',
-    });
-    events.push({
-      id: `eid-fitr-${year}`,
-      name: 'eid_al_fitr',
-      nameAr: 'عيد الفطر',
-      nameFr: 'Aïd el-Fitr',
-      date: new Date(year, islamic.eid_fitr.start[0], islamic.eid_fitr.start[1]),
-      endDate: new Date(year, islamic.eid_fitr.end[0], islamic.eid_fitr.end[1]),
-      image: '/assets/events/eid.png',
-      color: '#4CAF50',
-    });
-    events.push({
-      id: `eid-adha-${year}`,
-      name: 'eid_al_adha',
-      nameAr: 'عيد الأضحى',
-      nameFr: 'Aïd el-Adha',
-      date: new Date(year, islamic.eid_adha.start[0], islamic.eid_adha.start[1]),
-      endDate: new Date(year, islamic.eid_adha.end[0], islamic.eid_adha.end[1]),
-      image: '/assets/events/eid-adha.png',
-      color: '#FF9800',
-    });
-  }
-
-  // Black Friday: 4th Friday of November
-  const bfDay = getBlackFriday(year);
-  events.push({
-    id: `black-friday-${year}`,
+  {
+    id: 'black-friday-2026',
     name: 'black_friday',
     nameAr: 'الجمعة السوداء',
     nameFr: 'Black Friday',
-    date: new Date(year, 10, bfDay),
-    endDate: new Date(year, 10, bfDay),
+    date: new Date(2026, 10, 27), // Nov 27, 2026
     image: '/assets/events/black-friday.png',
     color: '#212121',
-  });
-
-  // New Year: always Dec 31 → Jan 1
-  events.push({
-    id: `new-year-${year + 1}`,
+  },
+  {
+    id: 'new-year-2027',
     name: 'new_year',
     nameAr: 'رأس السنة',
     nameFr: 'Nouvel An',
-    date: new Date(year, 11, 31),
-    endDate: new Date(year + 1, 0, 1),
+    date: new Date(2026, 11, 31), // Dec 31, 2026
     image: '/assets/events/new-year.png',
     color: '#E91E63',
-  });
+  },
+];
 
-  return events;
-}
+const TOTAL_CELLS = 42; // 6 rows × 7 cols — fixed height
 
 // ----------------------------------------------------------------------
 
@@ -130,69 +75,53 @@ export default function EcommerceEventsCalendar() {
   const isRTL = i18n.dir() === 'rtl';
 
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [hoveredEvent, setHoveredEvent] = useState(null);
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
 
-  // Generate events for current year + next year
-  const allEvents = useMemo(() => {
-    const currentYear = new Date().getFullYear();
-    return [...getEventsForYear(currentYear), ...getEventsForYear(currentYear + 1)];
-  }, []);
-
-  // Get days in month
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const firstDayOfMonth = new Date(year, month, 1).getDay();
-
-  // Adjust first day for RTL (Saturday as first day in Arabic)
-  const adjustedFirstDay = isRTL ? (firstDayOfMonth + 1) % 7 : firstDayOfMonth;
-
-  // Get month name (using existing short translations)
   const monthNames = [
     t('jan'), t('feb'), t('mar'), t('apr'),
     t('may'), t('jun'), t('jul'), t('aug'),
-    t('sep'), t('oct'), t('nov'), t('dec')
+    t('sep'), t('oct'), t('nov'), t('dec'),
   ];
 
-  // Day names
   const dayNames = isRTL
     ? [t('sat'), t('sun'), t('mon'), t('tue'), t('wed'), t('thu'), t('fri')]
     : [t('sun'), t('mon'), t('tue'), t('wed'), t('thu'), t('fri'), t('sat')];
 
-  // Get events for current month
-  const monthEvents = useMemo(() => allEvents.filter((event) => {
-    const eventMonth = event.date.getMonth();
-    const eventYear = event.date.getFullYear();
-    const endMonth = event.endDate?.getMonth() ?? eventMonth;
-    const endYear = event.endDate?.getFullYear() ?? eventYear;
+  // Build fixed 42-cell grid with prev/next month fillers
+  const calendarCells = useMemo(() => {
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const firstDayOfMonth = new Date(year, month, 1).getDay();
+    const adjustedFirstDay = isRTL ? (firstDayOfMonth + 1) % 7 : firstDayOfMonth;
+    const prevMonthDays = new Date(year, month, 0).getDate();
 
-    return (
-      (eventYear === year && eventMonth === month) ||
-      (endYear === year && endMonth === month) ||
-      (eventYear === year && eventMonth < month && endYear === year && endMonth >= month)
+    const cells = [];
+
+    // Previous month filler days
+    for (let i = adjustedFirstDay - 1; i >= 0; i--) {
+      cells.push({ day: prevMonthDays - i, type: 'prev' });
+    }
+
+    // Current month days
+    for (let d = 1; d <= daysInMonth; d++) {
+      cells.push({ day: d, type: 'current' });
+    }
+
+    // Next month filler days
+    let nextDay = 1;
+    while (cells.length < TOTAL_CELLS) {
+      cells.push({ day: nextDay++, type: 'next' });
+    }
+
+    return cells;
+  }, [year, month, isRTL]);
+
+  // Check if a day has an event (only for current month days)
+  const getEventForDay = (day) =>
+    EVENTS.find((e) =>
+      e.date.getFullYear() === year && e.date.getMonth() === month && e.date.getDate() === day
     );
-  }), [allEvents, year, month]);
-
-  // Check if a day has an event
-  const getEventForDay = (day) => {
-    const checkDate = new Date(year, month, day);
-    return allEvents.find((event) => {
-      const eventStart = new Date(event.date.getFullYear(), event.date.getMonth(), event.date.getDate());
-      const eventEnd = event.endDate
-        ? new Date(event.endDate.getFullYear(), event.endDate.getMonth(), event.endDate.getDate())
-        : eventStart;
-      return checkDate >= eventStart && checkDate <= eventEnd;
-    });
-  };
-
-  const handlePrevMonth = () => {
-    setCurrentDate(new Date(year, month - 1, 1));
-  };
-
-  const handleNextMonth = () => {
-    setCurrentDate(new Date(year, month + 1, 1));
-  };
 
   const getEventName = (event) => {
     if (i18n.language === 'ar') return event.nameAr;
@@ -200,262 +129,238 @@ export default function EcommerceEventsCalendar() {
     return t(event.name);
   };
 
-  // Generate calendar days
-  const calendarDays = [];
-
-  // Empty cells for days before first day of month
-  for (let i = 0; i < adjustedFirstDay; i++) {
-    calendarDays.push(null);
-  }
-
-  // Days of the month
-  for (let day = 1; day <= daysInMonth; day++) {
-    calendarDays.push(day);
-  }
+  const handlePrevMonth = () => setCurrentDate(new Date(year, month - 1, 1));
+  const handleNextMonth = () => setCurrentDate(new Date(year, month + 1, 1));
 
   const today = new Date();
   const isToday = (day) =>
-    day === today.getDate() &&
-    month === today.getMonth() &&
-    year === today.getFullYear();
+    day === today.getDate() && month === today.getMonth() && year === today.getFullYear();
+
+  // Nearest upcoming event
+  const nearestEvent = useMemo(() => {
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    return EVENTS
+      .filter((e) => e.date >= now)
+      .sort((a, b) => a.date - b.date)[0] || null;
+  }, []);
+
+  const daysUntilNearest = useMemo(() => {
+    if (!nearestEvent) return null;
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    const eventStart = new Date(nearestEvent.date.getFullYear(), nearestEvent.date.getMonth(), nearestEvent.date.getDate());
+    const diff = Math.ceil((eventStart - now) / (1000 * 60 * 60 * 24));
+    return diff <= 0 ? 0 : diff;
+  }, [nearestEvent]);
 
   return (
     <Card
       sx={{
-        p: 2,
+        p: 1.5,
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
         background: `linear-gradient(135deg, ${alpha(theme.palette.primary.light, 0.05)} 0%, ${alpha(theme.palette.primary.main, 0.02)} 100%)`,
       }}
     >
-      {/* Header */}
-      <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
-        <IconButton size="small" onClick={handlePrevMonth}>
-          <Iconify icon={isRTL ? "eva:arrow-ios-forward-fill" : "eva:arrow-ios-back-fill"} />
-        </IconButton>
+      {/* Body: Calendar + Nearest Event side by side */}
+      <Stack direction="row" spacing={1.5} sx={{ flexGrow: 1 }}>
+        {/* Calendar column */}
+        <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+          {/* Header — bound to calendar width */}
+          <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
+            <IconButton size="small" onClick={handlePrevMonth}>
+              <Iconify icon={isRTL ? 'eva:arrow-ios-forward-fill' : 'eva:arrow-ios-back-fill'} width={18} />
+            </IconButton>
 
-        <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
-          {monthNames[month]} {year}
-        </Typography>
+            <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+              {monthNames[month]} {year}
+            </Typography>
 
-        <IconButton size="small" onClick={handleNextMonth}>
-          <Iconify icon={isRTL ? "eva:arrow-ios-back-fill" : "eva:arrow-ios-forward-fill"} />
-        </IconButton>
-      </Stack>
-
-      {/* Day names header - L1: increased from 0.6rem to 0.65rem */}
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(7, 1fr)',
-          gap: 0.5,
-          mb: 1,
-        }}
-      >
-        {dayNames.map((day, index) => (
-          <Typography
-            key={index}
-            variant="caption"
-            sx={{
-              textAlign: 'center',
-              fontWeight: 600,
-              color: 'text.secondary',
-              fontSize: '0.65rem',
-            }}
-          >
-            {day}
-          </Typography>
-        ))}
-      </Box>
-
-      {/* Calendar grid - L1: day numbers increased from 0.65rem to 0.7rem */}
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(7, 1fr)',
-          gap: 0.5,
-          flexGrow: 1,
-        }}
-      >
-        {calendarDays.map((day, index) => {
-          const event = day ? getEventForDay(day) : null;
-          const todayDate = isToday(day);
-
-          return (
-            <Tooltip
-              key={index}
-              title={event ? getEventName(event) : ''}
-              arrow
-              placement="top"
-              TransitionComponent={Fade}
-              TransitionProps={{ timeout: 300 }}
-              componentsProps={{
-                tooltip: {
-                  sx: {
-                    bgcolor: event?.color || 'grey.800',
-                    '& .MuiTooltip-arrow': {
-                      color: event?.color || 'grey.800',
-                    },
-                    fontSize: '0.75rem',
-                    fontWeight: 600,
-                    px: 1.5,
-                    py: 0.75,
-                  },
-                },
-              }}
-            >
-              <Box
-                onMouseEnter={() => event && setHoveredEvent(event)}
-                onMouseLeave={() => setHoveredEvent(null)}
+            <IconButton size="small" onClick={handleNextMonth}>
+              <Iconify icon={isRTL ? 'eva:arrow-ios-back-fill' : 'eva:arrow-ios-forward-fill'} width={18} />
+            </IconButton>
+          </Stack>
+          {/* Day names */}
+          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', mb: 0.5 }}>
+            {dayNames.map((name, i) => (
+              <Typography
+                key={i}
+                variant="caption"
                 sx={{
-                  position: 'relative',
-                  aspectRatio: '1',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  borderRadius: 1,
-                  cursor: event ? 'pointer' : 'default',
-                  transition: 'all 0.2s ease-in-out',
-                  ...(day && {
-                    bgcolor: event
-                      ? alpha(event.color, 0.15)
-                      : todayDate
-                      ? alpha(theme.palette.primary.main, 0.08)
-                      : 'transparent',
-                    border: todayDate
-                      ? `2px solid ${theme.palette.primary.main}`
-                      : event
-                      ? `1px solid ${alpha(event.color, 0.3)}`
-                      : '1px solid transparent',
-                    '&:hover': event
-                      ? {
-                          bgcolor: alpha(event.color, 0.25),
-                          transform: 'scale(1.1)',
-                          boxShadow: `0 4px 12px ${alpha(event.color, 0.3)}`,
-                        }
-                      : {},
-                  }),
+                  textAlign: 'center',
+                  fontWeight: 600,
+                  color: 'text.disabled',
+                  fontSize: '0.6rem',
                 }}
               >
-                {day && (
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      fontWeight: event ? 700 : todayDate ? 700 : 500,
-                      color: event
-                        ? event.color
-                        : todayDate
-                        ? 'primary.main'
-                        : 'text.primary',
-                      fontSize: '0.7rem',
-                    }}
-                  >
-                    {day}
-                  </Typography>
-                )}
+                {name}
+              </Typography>
+            ))}
+          </Box>
 
-                {/* Event indicator dot */}
-                {event && (
+          {/* Fixed 6-row grid */}
+          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '1px' }}>
+            {calendarCells.map((cell, index) => {
+              const isCurrent = cell.type === 'current';
+              const event = isCurrent ? getEventForDay(cell.day) : null;
+              const todayDate = isCurrent && isToday(cell.day);
+
+              const tooltipTitle = event ? getEventName(event) : '';
+
+              return (
+                <Tooltip
+                  key={index}
+                  title={tooltipTitle}
+                  arrow
+                  placement="top"
+                  TransitionComponent={Fade}
+                  TransitionProps={{ timeout: 200 }}
+                  componentsProps={{
+                    tooltip: {
+                      sx: {
+                        bgcolor: event?.color || 'grey.800',
+                        '& .MuiTooltip-arrow': { color: event?.color || 'grey.800' },
+                        fontSize: '0.7rem',
+                        fontWeight: 600,
+                        px: 1,
+                        py: 0.5,
+                      },
+                    },
+                  }}
+                >
                   <Box
                     sx={{
-                      position: 'absolute',
-                      bottom: 2,
-                      left: '50%',
-                      transform: 'translateX(-50%)',
-                      width: 4,
-                      height: 4,
-                      borderRadius: '50%',
-                      bgcolor: event.color,
+                      position: 'relative',
+                      height: 24,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderRadius: 0.5,
+                      cursor: event ? 'pointer' : 'default',
+                      transition: 'background 0.15s',
+                      ...(event && {
+                        bgcolor: alpha(event.color, 0.12),
+                        '&:hover': { bgcolor: alpha(event.color, 0.22) },
+                      }),
+                      ...(todayDate && !event && {
+                        bgcolor: alpha(theme.palette.primary.main, 0.08),
+                        border: `1.5px solid ${theme.palette.primary.main}`,
+                      }),
                     }}
-                  />
-                )}
-              </Box>
-            </Tooltip>
-          );
-        })}
-      </Box>
+                  >
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        fontSize: '0.65rem',
+                        lineHeight: 1,
+                        fontWeight: (event || todayDate) ? 700 : 400,
+                        color: !isCurrent
+                          ? 'text.disabled'
+                          : event
+                          ? event.color
+                          : todayDate
+                          ? 'primary.main'
+                          : 'text.primary',
+                      }}
+                    >
+                      {cell.day}
+                    </Typography>
 
-      {/* Event preview on hover - M1: sidebar labels increased from 0.6rem to 0.65rem */}
-      <Box
-        sx={{
-          mt: 2,
-          minHeight: 80,
-          borderRadius: 1.5,
-          overflow: 'hidden',
-          position: 'relative',
-          transition: 'all 0.3s ease-in-out',
-          ...(hoveredEvent
-            ? {
-                bgcolor: alpha(hoveredEvent.color, 0.1),
-                border: `1px solid ${alpha(hoveredEvent.color, 0.3)}`,
-              }
-            : {
-                bgcolor: alpha(theme.palette.grey[500], 0.04),
-                border: `1px dashed ${alpha(theme.palette.grey[500], 0.2)}`,
-              }),
-        }}
-      >
-        {hoveredEvent ? (
-          <Stack direction="row" spacing={1.5} sx={{ p: 1.5, height: '100%' }}>
-            <Box
-              component="img"
-              src={hoveredEvent.image}
-              alt={getEventName(hoveredEvent)}
-              sx={{
-                width: 60,
-                height: 60,
-                borderRadius: 1,
-                objectFit: 'cover',
-                boxShadow: `0 2px 8px ${alpha(hoveredEvent.color, 0.3)}`,
-              }}
-              onError={(e) => {
-                e.target.style.display = 'none';
-              }}
-            />
-            <Stack spacing={0.5} justifyContent="center" sx={{ flexGrow: 1 }}>
-              <Typography
-                variant="subtitle2"
-                sx={{ fontWeight: 700, color: hoveredEvent.color, fontSize: '0.7rem' }}
+                    {/* Event dot */}
+                    {event && (
+                      <Box
+                        sx={{
+                          position: 'absolute',
+                          bottom: 1,
+                          left: '50%',
+                          transform: 'translateX(-50%)',
+                          width: 3,
+                          height: 3,
+                          borderRadius: '50%',
+                          bgcolor: event.color,
+                        }}
+                      />
+                    )}
+                  </Box>
+                </Tooltip>
+              );
+            })}
+          </Box>
+        </Box>
+
+        {/* Nearest event sidebar */}
+        {nearestEvent && (
+          <Stack
+            spacing={1}
+            sx={{
+              width: 120,
+              flexShrink: 0,
+              p: 1.5,
+              borderRadius: 1.5,
+              bgcolor: alpha(nearestEvent.color, 0.06),
+              border: `1px solid ${alpha(nearestEvent.color, 0.15)}`,
+            }}
+          >
+            <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary', fontSize: '0.6rem', textAlign: 'center' }}>
+              {t('next_event')}
+            </Typography>
+
+            {/* Body — centered in remaining space */}
+            <Stack spacing={1} alignItems="center" justifyContent="center" sx={{ flexGrow: 1 }}>
+            <Stack direction="row" spacing={1} alignItems="center">
+              <Box
+                component="img"
+                src={nearestEvent.image}
+                alt={getEventName(nearestEvent)}
+                sx={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 1,
+                  objectFit: 'cover',
+                  flexShrink: 0,
+                  boxShadow: `0 2px 6px ${alpha(nearestEvent.color, 0.25)}`,
+                }}
+                onError={(e) => { e.target.style.display = 'none'; }}
+              />
+              <Stack spacing={0.25} sx={{ minWidth: 0 }}>
+                <Typography
+                  variant="caption"
+                  sx={{ fontWeight: 700, color: nearestEvent.color, lineHeight: 1.2, fontSize: '0.65rem' }}
+                  noWrap
+                >
+                  {getEventName(nearestEvent)}
+                </Typography>
+                <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.6rem', lineHeight: 1.2 }}>
+                  {nearestEvent.date.toLocaleDateString(i18n.language, { month: 'short', day: 'numeric' })}
+                </Typography>
+              </Stack>
+            </Stack>
+
+            {/* Countdown badge */}
+            {daysUntilNearest !== null && (
+              <Box
+                sx={{
+                  px: 1,
+                  py: 0.25,
+                  borderRadius: 0.75,
+                  bgcolor: alpha(nearestEvent.color, 0.12),
+                  textAlign: 'center',
+                }}
               >
-                {getEventName(hoveredEvent)}
-              </Typography>
-              <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.65rem' }}>
-                {hoveredEvent.date.toLocaleDateString(i18n.language, {
-                  month: 'short',
-                  day: 'numeric',
-                })}
-                {hoveredEvent.endDate && hoveredEvent.endDate > hoveredEvent.date && (
-                  <>
-                    {' - '}
-                    {hoveredEvent.endDate.toLocaleDateString(i18n.language, {
-                      month: 'short',
-                      day: 'numeric',
-                    })}
-                  </>
-                )}
-              </Typography>
+                <Typography
+                  variant="caption"
+                  sx={{ fontWeight: 700, color: nearestEvent.color, fontSize: '0.6rem' }}
+                >
+                  {daysUntilNearest === 0 ? t('now') : `${t('remaining')} ${daysUntilNearest} ${t('day')}`}
+                </Typography>
+              </Box>
+            )}
             </Stack>
           </Stack>
-        ) : (
-          <Stack
-            alignItems="center"
-            justifyContent="center"
-            sx={{ height: '100%', py: 2 }}
-          >
-            <Iconify
-              icon="solar:calendar-bold-duotone"
-              width={24}
-              sx={{ color: 'text.disabled', mb: 0.5 }}
-            />
-            <Typography variant="caption" sx={{ color: 'text.disabled' }}>
-              {monthEvents.length > 0
-                ? t('hover_to_see_events')
-                : t('no_events_this_month')}
-            </Typography>
-          </Stack>
         )}
-      </Box>
+      </Stack>
     </Card>
   );
 }

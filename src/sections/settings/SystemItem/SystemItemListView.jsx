@@ -69,8 +69,8 @@ export default function SystemItemListView({ collection }) {
     const defaultFilters = { status: 'all', name: "" };
     const items = [
         { key: 'all', label: t('all'), match: () => true },
-        { key: 'selected', label: t('selected'), match: (item) => item?.visibility == "visible", color: 'success' },
-        { key: 'not_selected', label: t('not_selected'), match: (item) => item?.visibility == "hidden", color: 'warning' },
+        { key: 'selected', label: t('selected'), match: (item) => item?.visibility === "visible", color: 'success' },
+        { key: 'not_selected', label: t('not_selected'), match: (item) => item?.visibility === "hidden", color: 'warning' },
     ];
 
     const filters = [

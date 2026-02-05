@@ -63,8 +63,8 @@ export default function CostInputs({ }) {
 
     const items = [
         { key: 'all', label: t('all'), match: () => true },
-        { key: 'debit', label: t('debit'), match: (item) => item?.operation == "debit", color: 'error' },
-        { key: 'credit', label: t('credit'), match: (item) => item?.operation == "credit", color: 'primary' },
+        { key: 'debit', label: t('debit'), match: (item) => item?.operation === "debit", color: 'error' },
+        { key: 'credit', label: t('credit'), match: (item) => item?.operation === "credit", color: 'primary' },
         // { key: 'under_preparation', label: t('under_preparation'), match: (item) => item?.status?.key == "under_preparation", color: 'secondary' },
         // { key: 'rented', label: t('rented'), match: (item) => item?.is_rented, color: 'warning' },
     ];

@@ -15,7 +15,7 @@ import CustomPopover, { usePopover } from 'src/components/custom-popover';
 export default function LanguagePopover() {
   const popover = usePopover();
 
-  const { onChangeLang } = useTranslate();
+  const { t, onChangeLang } = useTranslate();
 
   const { allLangs, currentLang } = useLocales();
 
@@ -35,6 +35,7 @@ export default function LanguagePopover() {
         whileHover="hover"
         variants={varHover(1.05)}
         onClick={popover.onOpen}
+        aria-label={t('change_language')}
         sx={{
           width: 40,
           height: 40,
