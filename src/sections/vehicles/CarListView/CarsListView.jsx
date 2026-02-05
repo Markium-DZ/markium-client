@@ -58,10 +58,10 @@ export default function CarsListView({ }) {
 
     const items = [
         { key: 'all', label: t('all'), match: () => true },
-        { key: 'available', label: t('available'), match: (item) => item?.status?.key == "available", color: 'primary' },
-        { key: 'under_maintenance', label: t('under_maintenance'), match: (item) => item?.status?.key == "under_maintenance", color: 'error' },
-        { key: 'under_preparation', label: t('under_preparation'), match: (item) => item?.status?.key == "under_preparation", color: 'secondary' },
-        { key: 'rented', label: t('rented'), match: (item) => item?.status?.key == "rented", color: 'warning' },
+        { key: 'available', label: t('available'), match: (item) => item?.status?.key === "available", color: 'primary' },
+        { key: 'under_maintenance', label: t('under_maintenance'), match: (item) => item?.status?.key === "under_maintenance", color: 'error' },
+        { key: 'under_preparation', label: t('under_preparation'), match: (item) => item?.status?.key === "under_preparation", color: 'secondary' },
+        { key: 'rented', label: t('rented'), match: (item) => item?.status?.key === "rented", color: 'warning' },
     ];
     const filters = [
         {

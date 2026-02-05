@@ -106,13 +106,13 @@ function applyFilter({ inputData, comparator, filters, currentKey, items }) {
   // Apply dynamic filters
   Object.entries(filters).forEach(([key, value]) => {
     if (!value || value === 'all' || value === 'All') return;
-    const matcherTab = items?.find(i => i.key == filters?.[currentKey])
+    const matcherTab = items?.find(i => i.key === filters?.[currentKey])
 
     inputData = inputData.filter((item) => {
       const fieldValue = item?.[key];
 
       // Special case for status key
-      if (key == currentKey) {
+      if (key === currentKey) {
         // return condition(item);
         return matcherTab?.match(item)
       }

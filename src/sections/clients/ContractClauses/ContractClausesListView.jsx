@@ -46,9 +46,9 @@ export default function ContractClausesListView({ data , contract }) {
     const defaultFilters = { status: 'all', name: "" };
     const items = [
         { key: 'all', label: t('all'), match: () => true },
-        { key: 'under_rent', label: t('under_rent'), match: (item) => item?.gstatus == "under_rent", color: 'primary' },
-        { key: 'cancelled', label: t('cancelled'), match: (item) => item?.gstatus == "cancelled", color: 'error' },
-        { key: 'replaced', label: t('replaced'), match: (item) => item?.gstatus == "replaced", color: 'secondary' },
+        { key: 'under_rent', label: t('under_rent'), match: (item) => item?.gstatus === "under_rent", color: 'primary' },
+        { key: 'cancelled', label: t('cancelled'), match: (item) => item?.gstatus === "cancelled", color: 'error' },
+        { key: 'replaced', label: t('replaced'), match: (item) => item?.gstatus === "replaced", color: 'secondary' },
     ];
     const filterFunction = (data, filters) => {
         const activeTab = filters.tabKey;

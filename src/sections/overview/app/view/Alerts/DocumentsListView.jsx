@@ -92,14 +92,14 @@ export default function DocumentsListView({ }) {
 
     const items = [
         { key: 'All', label: t('all'), match: () => true },
-        { key: 'not_yet_attachment', label: t('not_yet_attachment'), match: (item) => item?.status?.key == "not_yet_attachment", color: 'secondary' },
-        { key: 'soon_attachment', label: t('soon_attachment'), match: (item) => item?.status?.key == "soon_attachment", color: 'warning' },
-        { key: 'late_attachment', label: t('late_attachment'), match: (item) => item?.status?.key == "late_attachment", color: 'error' },
-        { key: 'too_late_attachment', label: t('too_late_attachment'), match: (item) => item?.status?.key == "too_late_attachment", color: 'error' },
-        { key: 'car', label: t('car'), match: (item) => item?.attachable_type == "car", color: 'secondary' },
-        { key: 'driver', label: t('driver'), match: (item) => item?.attachable_type == "driver", color: 'primary' },
-        { key: 'client', label: t('client'), match: (item) => item?.attachable_type == "client", color: 'success' },
-        { key: 'other', label: t('other'), match: (item) => item?.attachable_type == "other", color: 'warning' },
+        { key: 'not_yet_attachment', label: t('not_yet_attachment'), match: (item) => item?.status?.key === "not_yet_attachment", color: 'secondary' },
+        { key: 'soon_attachment', label: t('soon_attachment'), match: (item) => item?.status?.key === "soon_attachment", color: 'warning' },
+        { key: 'late_attachment', label: t('late_attachment'), match: (item) => item?.status?.key === "late_attachment", color: 'error' },
+        { key: 'too_late_attachment', label: t('too_late_attachment'), match: (item) => item?.status?.key === "too_late_attachment", color: 'error' },
+        { key: 'car', label: t('car'), match: (item) => item?.attachable_type === "car", color: 'secondary' },
+        { key: 'driver', label: t('driver'), match: (item) => item?.attachable_type === "driver", color: 'primary' },
+        { key: 'client', label: t('client'), match: (item) => item?.attachable_type === "client", color: 'success' },
+        { key: 'other', label: t('other'), match: (item) => item?.attachable_type === "other", color: 'warning' },
     ];
     // const items2 = [
     //     { key: 'all', label: t('all'), match: () => true },

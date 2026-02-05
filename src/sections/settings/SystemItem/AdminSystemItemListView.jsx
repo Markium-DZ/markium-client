@@ -265,8 +265,8 @@ export default function AdminSystemItemListView({ collection }) {
     const defaultFilters = { status: 'all', name: "" };
     const items = [
         { key: 'all', label: t('all'), match: () => true },
-        { key: 'selected', label: t('selected'), match: (item) => item?.status == "selected", color: 'primary' },
-        { key: 'not_selected', label: t('not_selected'), match: (item) => item?.status == "not_selected", color: 'warning' },
+        { key: 'selected', label: t('selected'), match: (item) => item?.status === "selected", color: 'primary' },
+        { key: 'not_selected', label: t('not_selected'), match: (item) => item?.status === "not_selected", color: 'warning' },
     ];
 
     const filters = [
