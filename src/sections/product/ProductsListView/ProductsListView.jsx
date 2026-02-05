@@ -120,10 +120,10 @@ export default function ProductsListView({ }) {
 
     const items = [
         { key: 'all', label: t('all'), match: () => true },
-        { key: 'deployed', label: t('deployed'), match: (item) => !item?.status == "deployed", color: 'success' },
-        { key: 'processing', label: t('processing'), match: (item) => item?.status == "processing", color: 'warning' },
-        { key: 'draft', label: t('draft'), match: (item) => item?.status == "draft", color: 'default' },
-        { key: 'failed', label: t('not_enabled'), match: (item) => item?.status == "failed", color: 'error' },
+        { key: 'deployed', label: t('deployed'), match: (item) => item?.status === "deployed", color: 'success' },
+        { key: 'processing', label: t('processing'), match: (item) => item?.status === "processing", color: 'warning' },
+        { key: 'draft', label: t('draft'), match: (item) => item?.status === "draft", color: 'default' },
+        { key: 'failed', label: t('not_enabled'), match: (item) => item?.status === "failed", color: 'error' },
     ];
 
     const filterFunction = (data, filters) => {
