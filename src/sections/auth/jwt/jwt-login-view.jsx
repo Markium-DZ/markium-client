@@ -6,6 +6,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import Link from '@mui/material/Link';
 import Alert from '@mui/material/Alert';
 import Stack from '@mui/material/Stack';
+import Divider from '@mui/material/Divider';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import LoadingButton from '@mui/lab/LoadingButton';
@@ -46,53 +47,34 @@ export default function JwtLoginView() {
 
   const password = useBoolean();
 
-  const validateEmail = (email) => {
-    return Yup.string().email().isValidSync(email);
-  };
-
   const validatePhone = (phone) => {
     if (!phone) return false;
-    
-    // Remove any non-digit characters for validation
     const cleanPhone = phone.replace(/\D/g, '');
-    
-    // Check for 9 digits starting with 5, 6, or 7
     if (cleanPhone.length === 9) {
       return /^[567]/.test(cleanPhone);
     }
-    
-    // Check for 10 digits starting with 05, 06, or 07
     if (cleanPhone.length === 10) {
       return /^0[567]/.test(cleanPhone);
     }
-    
     return false;
   };
 
   const formatPhoneWithPrefix = (phone) => {
     if (!phone) return phone;
-    
     const cleanPhone = phone.replace(/\D/g, '');
-    
-    // If 9 digits starting with 5, 6, or 7, add +213
     if (cleanPhone.length === 9 && /^[567]/.test(cleanPhone)) {
       return `+213${cleanPhone}`;
     }
-    
-    // If 10 digits starting with 05, 06, or 07, replace 0 with +213
     if (cleanPhone.length === 10 && /^0[567]/.test(cleanPhone)) {
       return `+213${cleanPhone.substring(1)}`;
     }
-    
     return phone;
   };
 
   const LoginSchema = Yup.object().shape({
     phone: Yup.string()
       .required(t('phone_is_required'))
-      .test('phone-validation', t('phone_is_invalid'), (value) => {
-        return validatePhone(value);
-      }),
+      .test('phone-validation', t('phone_is_invalid'), (value) => validatePhone(value)),
     password: Yup.string().required(t('password_is_required')),
   });
 
@@ -124,33 +106,43 @@ export default function JwtLoginView() {
 
   const onSubmit = handleSubmit(async (data) => {
     try {
-      const response = await axios.post(HOST_API + endpoints.auth.login, {...data,phone:formatPhoneWithPrefix(data.phone)});
+      const response = await axios.post(HOST_API + endpoints.auth.login, {
+        ...data,
+        phone: formatPhoneWithPrefix(data.phone),
+      });
 
       if (response?.data?.success) {
         await login(formatPhoneWithPrefix(data.phone), data.password);
         router.push(returnTo || PATH_AFTER_LOGIN);
       } else {
-        setErrorMsg(t("please_check_your_phone_and_password"));
+        setErrorMsg(t('please_check_your_phone_and_password'));
       }
-
     } catch (error) {
       if (error?.response?.status === 403) {
-        setErrorMsg(t("user_is_banned"));
+        setErrorMsg(t('user_is_banned'));
       } else {
-        setErrorMsg(t("please_check_your_phone_and_password"));
+        setErrorMsg(t('please_check_your_phone_and_password'));
       }
     }
   });
 
-
   const renderHead = (
-    <Stack spacing={2} sx={{ mb: 5 }}>
-      <Typography variant="h4"> {t('login')} </Typography>
+    <Stack spacing={1.5} sx={{ mb: 4 }}>
+      <Typography variant="h4" sx={{ fontWeight: 700 }}>
+        {t('login')}
+      </Typography>
 
-      <Stack direction="row" spacing={0.5}>
-        <Typography variant="body2">{t('dont_have_account')}</Typography>
+      <Stack direction="row" spacing={0.5} alignItems="center">
+        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+          {t('dont_have_account')}
+        </Typography>
 
-        <Link component={RouterLink} href={paths.auth.jwt.register} variant="subtitle2">
+        <Link
+          component={RouterLink}
+          href={paths.auth.jwt.register}
+          variant="subtitle2"
+          sx={{ fontWeight: 600 }}
+        >
           {t('create_account')}
         </Link>
       </Stack>
@@ -158,33 +150,31 @@ export default function JwtLoginView() {
   );
 
   const renderForm = (
-    <Stack spacing={2.5}>
+    <Stack spacing={3}>
       <RHFTextField
         name="phone"
         label={t('phone')}
         placeholder="555123456"
         autoComplete="tel"
+        dir="ltr"
+        sx={{ '& .MuiInputBase-root': { direction: 'ltr' } }}
         InputProps={{
           startAdornment: (
             <InputAdornment position="start">
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                <Box
-                  component="span"
-                  sx={{
-                    fontSize: '1.2rem',
-                    lineHeight: 1,
-                  }}
-                >
+              <Stack direction="row" alignItems="center" spacing={0.75}>
+                <Box component="span" sx={{ fontSize: '1.2rem', lineHeight: 1 }}>
                   🇩🇿
                 </Box>
-                <Typography variant="body2" sx={{ color: 'text.secondary', fontWeight: 500 }}>
+                <Typography variant="body2" sx={{ color: 'text.secondary', fontWeight: 600 }}>
                   +213
                 </Typography>
-              </Box>
+                <Divider orientation="vertical" flexItem sx={{ mx: 0.5, height: 20, alignSelf: 'center' }} />
+              </Stack>
             </InputAdornment>
           ),
         }}
       />
+
       <RHFTextField
         name="password"
         label={t('password')}
@@ -205,17 +195,21 @@ export default function JwtLoginView() {
         }}
       />
 
-      {/* <Link variant="body2" color="inherit" underline="always" sx={{ alignSelf: 'flex-end' }}>
-        {t('forgotPassword')}
-      </Link> */}
-
       <LoadingButton
         fullWidth
-        color="inherit"
+        color="primary"
         size="large"
         type="submit"
         variant="contained"
         loading={isSubmitting}
+        sx={{
+          mt: 1,
+          py: 1.5,
+          fontWeight: 700,
+          fontSize: '0.95rem',
+          borderRadius: 1.5,
+          boxShadow: (theme) => `0 8px 16px 0 ${theme.palette.primary.main}3D`,
+        }}
       >
         {t('login')}
       </LoadingButton>
@@ -227,11 +221,10 @@ export default function JwtLoginView() {
       {renderHead}
 
       {!!errorMsg && (
-        <Alert severity="error" aria-live="assertive" sx={{ mb: 3 }}>
+        <Alert severity="error" aria-live="assertive" sx={{ mb: 3, borderRadius: 1.5 }}>
           {errorMsg}
         </Alert>
       )}
-
 
       <FormProvider methods={methods} onSubmit={onSubmit}>
         {renderForm}

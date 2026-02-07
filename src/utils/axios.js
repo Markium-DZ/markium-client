@@ -85,6 +85,8 @@ export const endpoints = {
     register: `/auth/signup`,
     changePassword: `/auth/changePassword`,
     changePasswordByAdmin: `/auth/changePasswordByAdmin`,
+    sendOtp: `/auth/send-otp`,
+    verifyOtp: `/auth/verify-otp`,
   },
   mail: {
     list: '/api/mail/list',
