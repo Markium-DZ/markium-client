@@ -1544,5 +1544,13 @@
     "view_all_products": "View All Products",
     "revenue": "Revenue",
     "mark_fake": "Fake",
-    "coming_soon": "Coming soon"
+    "coming_soon": "Coming soon",
+    "updated_daily": "Updated daily",
+    "conversion_funnel": "Conversion Funnel",
+    "visitors_and_revenue": "Visitors & Revenue",
+    "visitors_and_orders": "Visitors & Orders",
+    "metric_tooltip_orders": "Total orders received in the selected period",
+    "metric_tooltip_revenue": "Total revenue generated in the selected period",
+    "metric_tooltip_visitors": "Unique visitors to your store in the selected period",
+    "metric_tooltip_views": "Total product page views in the selected period"
 }

@@ -22,8 +22,8 @@ export function responsiveFontSizes({ sm, md, lg }) {
   };
 }
 
-export const primaryFont = '"Noto Kufi Arabic", sans-serif';
-export const secondaryFont = '"Noto Kufi Arabic", sans-serif';
+export const primaryFont = '"IBM Plex Sans Arabic", sans-serif';
+export const secondaryFont = '"IBM Plex Sans Arabic", sans-serif';
 
 // ----------------------------------------------------------------------
 

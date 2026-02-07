@@ -19,7 +19,6 @@ import { useTranslate } from 'src/locales';
 import Searchbar from '../common/searchbar';
 import { NAV, HEADER } from '../config-layout';
 import SettingsButton from '../common/settings-button';
-import AccountPopover from '../common/account-popover';
 import LanguagePopover from '../common/language-popover';
 import { useState } from 'react';
 
@@ -100,9 +99,6 @@ export default function Header({ onOpenNav }) {
         </Link> */}
         <SettingsLink />
         <SettingsButton />
-
-
-        <AccountPopover />
       </Stack>
     </>
   );

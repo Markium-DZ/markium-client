@@ -1468,5 +1468,13 @@
     "view_all_products": "Voir tous les produits",
     "revenue": "Revenus",
     "mark_fake": "Faux",
-    "coming_soon": "Bientôt disponible"
+    "coming_soon": "Bientôt disponible",
+    "updated_daily": "Mis à jour quotidiennement",
+    "conversion_funnel": "Entonnoir de conversion",
+    "visitors_and_revenue": "Visiteurs et revenus",
+    "visitors_and_orders": "Visiteurs et commandes",
+    "metric_tooltip_orders": "Total des commandes reçues pendant la période sélectionnée",
+    "metric_tooltip_revenue": "Revenus totaux générés pendant la période sélectionnée",
+    "metric_tooltip_visitors": "Visiteurs uniques de votre boutique pendant la période sélectionnée",
+    "metric_tooltip_views": "Total des vues de pages produits pendant la période sélectionnée"
 }

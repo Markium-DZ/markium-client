@@ -1,12 +1,9 @@
 import { useState, useContext, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import Box from '@mui/material/Box';
-import Card from '@mui/material/Card';
 import Container from '@mui/material/Container';
 import Grid from '@mui/material/Unstable_Grid2';
-import Typography from '@mui/material/Typography';
-import { alpha, useTheme } from '@mui/material/styles';
+import { useTheme } from '@mui/material/styles';
 
 import { useRouter } from 'src/routes/hooks';
 import { paths } from 'src/routes/paths';
@@ -17,7 +14,9 @@ import { useGetMedia } from 'src/api/media';
 import { useGetLowStockInventory } from 'src/api/inventory';
 import {
   useGetAnalyticsOverview,
+  useGetAnalyticsTraffic,
   useGetAnalyticsTopProducts,
+  useGetAnalyticsFunnel,
 } from 'src/api/analytics';
 
 import { AuthContext } from 'src/auth/context/jwt';
@@ -25,10 +24,11 @@ import { AuthContext } from 'src/auth/context/jwt';
 import { useSettingsContext } from 'src/components/settings';
 import { MotivationIllustration } from 'src/assets/illustrations';
 import { Walktour, useWalktour } from 'src/components/walktour';
-import Iconify from 'src/components/iconify';
 
 import EcommerceEventsCalendar from '../ecommerce-events-calendar';
-import { MetricCard } from '../ecommerce-analytics-tabs';
+import DashboardMetrics from '../dashboard-metrics';
+import DashboardChart from '../dashboard-chart';
+import DashboardFunnel from '../dashboard-funnel';
 import DashboardSkeleton from './dashboard-skeleton';
 
 import {
@@ -92,21 +92,36 @@ export default function OverviewEcommerceView() {
   const isThirdGradeUser = !gradeLoading && !isNewUser && !isBGradeMerchant;
 
   // Analytics state
-  const [dateRange] = useState('-30d');
+  const [dateRange, setDateRange] = useState('-30d');
 
   // Fetch analytics data only for third grade users
   const {
     totalOrders: analyticsOrders,
     totalOrdersData,
+    totalOrdersLabels,
     totalRevenue,
     totalRevenueData,
+    totalRevenueLabels,
     totalVisitors,
     totalVisitorsData,
+    totalVisitorsLabels,
     totalProductViews,
     totalProductViewsData,
+    overviewLoading,
   } = useGetAnalyticsOverview(isThirdGradeUser ? dateRange : null);
 
+  // Fetch traffic time-series (visitors + product views per day)
+  const {
+    visitors: trafficVisitors,
+    trafficLoading,
+  } = useGetAnalyticsTraffic(isThirdGradeUser ? dateRange : null);
+
   const { topProducts, topProductsLoading } = useGetAnalyticsTopProducts(isThirdGradeUser ? dateRange : null);
+
+  const {
+    funnel: funnelData,
+    funnelLoading,
+  } = useGetAnalyticsFunnel(isThirdGradeUser ? dateRange : null);
 
   // Low stock data (fetches 10 items for dashboard table + total count)
   const {
@@ -131,43 +146,64 @@ export default function OverviewEcommerceView() {
     [products]
   );
 
-  // Metric cards data for standalone rendering
+  // Build orders-per-day time-series from raw orders, aligned to traffic labels
+  const ordersTimeSeries = useMemo(() => {
+    const labels = trafficVisitors?.labels;
+    if (!labels?.length || !orders?.length) return { data: [], labels: [] };
+
+    // Normalize date to YYYY-MM-DD regardless of input format
+    const toDay = (dateStr) => {
+      if (!dateStr) return '';
+      const d = new Date(dateStr);
+      if (Number.isNaN(d.getTime())) return dateStr.slice(0, 10);
+      return d.toISOString().slice(0, 10);
+    };
+
+    // Count orders per date
+    const countByDate = {};
+    orders.forEach((o) => {
+      const day = toDay(o.created_at);
+      if (day) countByDate[day] = (countByDate[day] || 0) + 1;
+    });
+
+    const data = labels.map((label) => countByDate[toDay(label)] || 0);
+
+    return { data, labels };
+  }, [orders, trafficVisitors?.labels]);
+
+  // Metric cards data
   const metricCards = useMemo(() => [
     {
       label: t('total_orders'),
-      tooltip: t('tooltip_total_orders'),
+      tooltip: t('metric_tooltip_orders'),
       value: analyticsOrders || ordersCount || 0,
       data: totalOrdersData,
       color: theme.palette.primary.main,
-      icon: 'solar:cart-large-minimalistic-bold-duotone',
-      href: paths.dashboard.order.root,
+      icon: 'solar:bag-4-bold-duotone',
     },
     {
       label: t('total_revenue'),
-      tooltip: t('tooltip_total_revenue'),
+      tooltip: t('metric_tooltip_revenue'),
       value: totalRevenue || 0,
       data: totalRevenueData,
       color: theme.palette.info.main,
-      icon: 'solar:dollar-minimalistic-bold-duotone',
-      href: paths.dashboard.order.root,
+      icon: 'solar:wallet-money-bold-duotone',
     },
     {
       label: t('total_visitors'),
-      tooltip: t('tooltip_total_visitors'),
+      tooltip: t('metric_tooltip_visitors'),
       value: totalVisitors || 0,
       data: totalVisitorsData,
       color: theme.palette.warning.main,
       icon: 'solar:users-group-rounded-bold-duotone',
-      href: null,
     },
     {
       label: t('total_product_views'),
-      tooltip: t('tooltip_total_product_views'),
+      tooltip: t('metric_tooltip_views'),
       value: totalProductViews || 0,
       data: totalProductViewsData,
       color: theme.palette.success.main,
       icon: 'solar:eye-bold-duotone',
-      href: paths.dashboard.product.root,
     },
   ], [t, theme, analyticsOrders, ordersCount, totalOrdersData, totalRevenue, totalRevenueData, totalVisitors, totalVisitorsData, totalProductViews, totalProductViewsData]);
 
@@ -222,57 +258,30 @@ export default function OverviewEcommerceView() {
         {/* ===== GRADE C: Operational command center ===== */}
         {isThirdGradeUser && (
           <>
-            {/* Row 1: Metrics 2x2 (md=3) + Placeholder (md=5) + Calendar (md=4) */}
-            <Grid xs={12} md={3} sx={{ minHeight: 300 }}>
-              <Box
-                sx={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(2, 1fr)',
-                  gridTemplateRows: 'repeat(2, 1fr)',
-                  gap: 1.5,
-                  height: '100%',
-                }}
-              >
-                {metricCards.map((metric) => (
-                  <MetricCard
-                    key={metric.label}
-                    metric={metric}
-                    compact
-                    onClick={metric.href ? () => router.push(metric.href) : undefined}
-                  />
-                ))}
-              </Box>
+            {/* Row 1: Metrics 2x2 (md=3) + Chart (md=5) + Calendar (md=4) */}
+            <Grid xs={12} md={3}>
+              <DashboardMetrics
+                metrics={metricCards}
+                dateRange={dateRange}
+                onDateRangeChange={setDateRange}
+              />
             </Grid>
 
             <Grid xs={12} md={5}>
-              <Card
-                sx={{
-                  height: '100%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  bgcolor: (thm) => alpha(thm.palette.grey[500], 0.04),
-                  border: (thm) => `1px dashed ${alpha(thm.palette.grey[500], 0.2)}`,
-                }}
-              >
-                <Box sx={{ textAlign: 'center', p: 3 }}>
-                  <Iconify
-                    icon="solar:widget-add-bold-duotone"
-                    width={40}
-                    sx={{ color: 'text.disabled', mb: 1 }}
-                  />
-                  <Typography variant="body2" sx={{ color: 'text.disabled' }}>
-                    {t('coming_soon')}
-                  </Typography>
-                </Box>
-              </Card>
+              <DashboardChart
+                visitorsData={trafficVisitors.data}
+                visitorsLabels={trafficVisitors.labels}
+                ordersData={ordersTimeSeries.data}
+                ordersLabels={ordersTimeSeries.labels}
+                loading={trafficLoading || ordersLoading}
+              />
             </Grid>
 
             <Grid xs={12} md={4}>
               <EcommerceEventsCalendar />
             </Grid>
 
-            {/* Row 2: Action Center (md=4) + Data Table (md=8) */}
+            {/* Row 2: Action Center (md=4) + Data Table (md=5) + Funnel (md=3) */}
             <Grid xs={12} md={4}>
               <ActionCenter
                 pendingOrders={pendingOrders}
@@ -282,7 +291,7 @@ export default function OverviewEcommerceView() {
               />
             </Grid>
 
-            <Grid xs={12} md={8}>
+            <Grid xs={12} md={5}>
               <DashboardDataTable
                 orders={orders}
                 ordersLoading={ordersLoading}
@@ -290,6 +299,13 @@ export default function OverviewEcommerceView() {
                 topProductsLoading={topProductsLoading}
                 lowStockInventory={lowStockItems}
                 lowStockLoading={lowStockLoading}
+              />
+            </Grid>
+
+            <Grid xs={12} md={3}>
+              <DashboardFunnel
+                funnel={funnelData}
+                loading={funnelLoading}
               />
             </Grid>
           </>

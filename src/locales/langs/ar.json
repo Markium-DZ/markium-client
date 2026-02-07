@@ -1564,5 +1564,13 @@
     "view_all_products": "عرض جميع المنتجات",
     "revenue": "الإيرادات",
     "mark_fake": "مزيف",
-    "coming_soon": "قريباً"
+    "coming_soon": "قريباً",
+    "updated_daily": "يتم التحديث يومياً",
+    "conversion_funnel": "مسار التحويل",
+    "visitors_and_revenue": "الزوار والإيرادات",
+    "visitors_and_orders": "الزوار والطلبات",
+    "metric_tooltip_orders": "إجمالي الطلبات المستلمة في الفترة المحددة",
+    "metric_tooltip_revenue": "إجمالي الإيرادات المحققة في الفترة المحددة",
+    "metric_tooltip_visitors": "الزوار الفريدون لمتجرك في الفترة المحددة",
+    "metric_tooltip_views": "إجمالي مشاهدات صفحات المنتجات في الفترة المحددة"
 }

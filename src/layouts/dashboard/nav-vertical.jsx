@@ -1,39 +1,37 @@
-import { useContext, useEffect } from 'react';
+import { useEffect } from 'react';
 import PropTypes from 'prop-types';
 
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
+import Avatar from '@mui/material/Avatar';
+import Divider from '@mui/material/Divider';
 import Drawer from '@mui/material/Drawer';
+import Typography from '@mui/material/Typography';
 
 import { usePathname } from 'src/routes/hooks';
 
 import { useResponsive } from 'src/hooks/use-responsive';
-import { useMockedUser } from 'src/hooks/use-mocked-user';
 
-import Logo from 'src/components/logo';
 import Scrollbar from 'src/components/scrollbar';
+import Label from 'src/components/label';
+import Iconify from 'src/components/iconify';
 import { NavSectionVertical } from 'src/components/nav-section';
 
+import { useAuthContext } from 'src/auth/hooks';
+import { useGetCurrentSubscription } from 'src/api/subscriptions';
+import { useTranslate } from 'src/locales';
+
 import { NAV } from '../config-layout';
-// import NavUpgrade from '../common/nav-upgrade';
+import NavUserProfile from '../common/nav-user-profile';
 import { useNavData } from './config-navigation';
 import NavToggleButton from '../common/nav-toggle-button';
-import { IconButton, Tooltip, Typography } from '@mui/material';
-import { t } from 'i18next';
-import { AuthContext } from 'src/auth/context/jwt';
-import { useAuthContext } from 'src/auth/hooks';
-import Iconify from 'src/components/iconify';
 
 // ----------------------------------------------------------------------
 
 export default function NavVertical({ openNav, onCloseNav }) {
-  // const { user } = useMockedUser();
-  // const { user } = useContext(AuthContext);
   const { user } = useAuthContext();
-
-  const publicProductUrl = user?.store?.slug
-    ? `https://${user.store.slug}.markium.online/?store=${user?.store?.slug}`
-    : '';
+  const { t } = useTranslate();
+  const { subscription } = useGetCurrentSubscription();
 
   const pathname = usePathname();
 
@@ -48,6 +46,19 @@ export default function NavVertical({ openNav, onCloseNav }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname]);
 
+  const storeName = user?.store?.name || t('markium');
+  const storeLogo = user?.store?.logo_url;
+  const storeInitials = storeName?.substring(0, 2).toUpperCase();
+
+  const packageName = subscription?.package?.name;
+  const packageSlug = subscription?.package?.slug;
+  const packageTranslationKey = packageSlug ? `package_${packageSlug}` : '';
+  const translatedPackageName = packageTranslationKey ? t(packageTranslationKey) : '';
+  const displayPackageName =
+    translatedPackageName && translatedPackageName !== packageTranslationKey
+      ? translatedPackageName
+      : packageName;
+
   const renderContent = (
     <Scrollbar
       sx={{
@@ -59,25 +70,49 @@ export default function NavVertical({ openNav, onCloseNav }) {
         },
       }}
     >
-      <Box display="flex" alignItems="center" sx={{ mt: 3, ml: 4, mb: 1 }}>
-        <Logo user={user} />
-        <Typography color="primary" mx={1} fontWeight="500" >
-          {user?.store?.name || t("markium")}
-        </Typography>
-        <Tooltip title={t('open_in_new_tab')}>
-          <IconButton
-            component="a"
-            href={publicProductUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            size="small"
-            color="primary"
-            sx={{ p: 0.5 }}
+      <Box sx={{ px: 2.5, pt: 3, pb: 2 }}>
+        <Stack direction="row" alignItems="center" spacing={1.5}>
+          <Avatar
+            src={storeLogo}
+            alt={storeName}
+            sx={{
+              width: 40,
+              height: 40,
+              bgcolor: 'grey.800',
+              color: 'common.white',
+              fontSize: 14,
+              fontWeight: 700,
+            }}
           >
-            <Iconify icon="eva:external-link-fill" width={16} />
-          </IconButton>
-        </Tooltip>
+            {storeInitials}
+          </Avatar>
+
+          <Box sx={{ minWidth: 0, flexGrow: 1 }}>
+            <Typography variant="subtitle2" noWrap>
+              {storeName}
+            </Typography>
+
+            {displayPackageName && (
+              <Label
+                color="success"
+                variant="soft"
+                startIcon={<Iconify icon="solar:cart-3-bold" width={14} />}
+                sx={{ mt: 0.5 }}
+              >
+                {displayPackageName}
+              </Label>
+            )}
+          </Box>
+        </Stack>
       </Box>
+
+      <Box sx={{ px: 2.5, pt: 2, pb: 3 }}>
+        <Typography variant="h5" sx={{ whiteSpace: 'pre-line' }}>
+          {`${t('welcome_back')}\n${user?.name} 👋`}
+        </Typography>
+      </Box>
+
+      <Divider sx={{ borderStyle: 'dashed', mx: 2.5, mb: 2 }} />
 
       <NavSectionVertical
         data={navData}
@@ -89,7 +124,7 @@ export default function NavVertical({ openNav, onCloseNav }) {
 
       <Box sx={{ flexGrow: 1 }} />
 
-      {/* <NavUpgrade /> */}
+      <NavUserProfile />
     </Scrollbar>
   );
 

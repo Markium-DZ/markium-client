@@ -168,10 +168,9 @@ export default function EcommerceEventsCalendar() {
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
-        background: `linear-gradient(135deg, ${alpha(theme.palette.primary.light, 0.05)} 0%, ${alpha(theme.palette.primary.main, 0.02)} 100%)`,
       }}
     >
-      <Stack direction={{ xs: 'column', sm: 'row' }} sx={{ flexGrow: 1, height: '100%', justifyContent: 'center' }}>
+      <Stack direction={{ xs: 'column', sm: 'row' }} sx={{ flexGrow: 1, height: '100%', justifyContent: 'center', p: 2 }}>
         {/* MUI DateCalendar */}
         <Box sx={{ flexShrink: 0 }}>
           <DateCalendar
@@ -182,9 +181,13 @@ export default function EcommerceEventsCalendar() {
             slots={{ day: EventDay }}
             sx={{
               maxHeight: 'none',
+              width: '100%',
               '& .MuiPickersCalendarHeader-root': {
+                px: 2,
+                mt: 1,
+              },
+              '& .MuiDayCalendar-header, & .MuiDayCalendar-weekContainer': {
                 px: 1,
-                mt: 0.5,
               },
               '& .MuiPickersDay-root': {
                 fontSize: '0.8rem',

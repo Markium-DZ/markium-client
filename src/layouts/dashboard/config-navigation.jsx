@@ -60,10 +60,10 @@ export function useNavData() {
       // OVERVIEW
       // ----------------------------------------------------------------------
       {
-        subheader: t('overview'),
+        subheader: '',
         items: [
           {
-            title: t('statistics'),
+            title: t('overview'),
             path: paths.dashboard.root,
             icon: ICONS.analytics,
           },
