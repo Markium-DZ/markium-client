@@ -53,7 +53,7 @@ export default function ProductDetailsView({ id }) {
   const { copy } = useCopyToClipboard();
 
   const publicProductUrl = user?.store?.slug
-    ? `https://${user.store.slug}.markium.online/?product=${id}`
+    ? `https://${user.store.slug}.markium.online/?product_slug=${product.slug}`
     : '';
 
   const handleCopyLink = useCallback(() => {

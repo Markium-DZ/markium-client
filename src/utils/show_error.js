@@ -2,8 +2,12 @@ import { t } from "i18next";
 
 // Lazy-load notistack — keeps it out of the initial bundle
 let _enqueue;
-const getEnqueue = () =>
-  _enqueue ?? (_enqueue = import('notistack').then((m) => m.enqueueSnackbar));
+const getEnqueue = () => {
+  if (!_enqueue) {
+    _enqueue = import('notistack').then((m) => m.enqueueSnackbar);
+  }
+  return _enqueue;
+};
 
 export default function showError(error) {
   console.log("showError received: ", error);
