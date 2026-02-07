@@ -39,13 +39,10 @@ export const SUPABASE_API = {
 
 export const MAPBOX_API = import.meta.env.VITE_MAPBOX_API;
 
-// PostHog Analytics
+// PostHog Analytics (client-side tracking only)
 export const POSTHOG_API = {
   key: import.meta.env.VITE_PUBLIC_POSTHOG_KEY,
   host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST || 'https://eu.i.posthog.com',
-  queryHost: (import.meta.env.VITE_PUBLIC_POSTHOG_HOST || 'https://eu.i.posthog.com').replace('://eu.i.', '://eu.'),
-  projectId: import.meta.env.VITE_PUBLIC_POSTHOG_PROJECT_ID,
-  personalApiKey: import.meta.env.VITE_POSTHOG_PERSONAL_API_KEY,
 };
 
 // ROOT PATH AFTER LOGIN SUCCESSFUL

@@ -36,14 +36,7 @@ function inlineCssPlugin() {
 
 // ----------------------------------------------------------------------
 
-export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, process.cwd(), '');
-
-  // Derive PostHog query host from the capture host
-  const posthogHost = env.VITE_PUBLIC_POSTHOG_HOST || 'https://eu.i.posthog.com';
-  const posthogQueryHost = posthogHost.replace('://eu.i.', '://eu.').replace('://us.i.', '://us.');
-
-  return {
+export default defineConfig(() => ({
     plugins: [
       react(),
       checker({
@@ -73,17 +66,8 @@ export default defineConfig(({ mode }) => {
     },
     server: {
       port: 3031,
-      proxy: {
-        '/posthog-api': {
-          target: posthogQueryHost,
-          changeOrigin: true,
-          rewrite: (p) => p.replace(/^\/posthog-api/, ''),
-          secure: true,
-        },
-      },
     },
     preview: {
       port: 3031,
     },
-  };
-});
+  }));
