@@ -76,5 +76,4 @@ dist
 .serena
 
 .env.production
-
 .env.development
