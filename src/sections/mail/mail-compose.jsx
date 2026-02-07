@@ -127,13 +127,9 @@ export default function MailCompose({ onCloseCompose }) {
             onChange={handleChangeMessage}
             placeholder="Type a message"
             sx={{
-              '& .ql-editor': {},
               ...(fullScreen.value && {
                 height: 1,
-                '& .quill': {
-                  height: 1,
-                },
-                '& .ql-editor': {
+                '& .ProseMirror': {
                   maxHeight: 'unset',
                 },
               }),

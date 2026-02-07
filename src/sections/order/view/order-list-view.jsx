@@ -49,7 +49,7 @@ import { t } from 'i18next';
 const STATUS_OPTIONS = [{ value: 'all', label: 'All' }, ...ORDER_STATUS_OPTIONS];
 
 const TABLE_HEAD = [
-  { id: 'orderNumber', label: t('vehicle'), width: 116 },
+  { id: 'orderNumber', label: t('product'), width: 116 },
   { id: 'name', label: 'Customer' },
   { id: 'createdAt', label: 'Date', width: 140 },
   { id: 'totalQuantity', label: 'Items', width: 120, align: 'center' },
@@ -123,7 +123,7 @@ export default function OrderListView() {
     (id) => {
       const deleteRow = tableData.filter((row) => row.id !== id);
 
-      enqueueSnackbar('Delete success!');
+      enqueueSnackbar(t('delete_success'));
 
       setTableData(deleteRow);
 
@@ -135,7 +135,7 @@ export default function OrderListView() {
   const handleDeleteRows = useCallback(() => {
     const deleteRows = tableData.filter((row) => !table.selected.includes(row.id));
 
-    enqueueSnackbar('Delete success!');
+    enqueueSnackbar(t('delete_success'));
 
     setTableData(deleteRows);
 

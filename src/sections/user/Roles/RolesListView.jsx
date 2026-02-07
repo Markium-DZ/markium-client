@@ -4,7 +4,6 @@ import { t } from 'i18next';
 import { set } from 'lodash'; // [keep for later use]
 import { enqueueSnackbar } from 'notistack';
 import { useCallback, useEffect, useState } from 'react';
-import { deleteDriver } from 'src/api/drivers';
 import { changeItemVisibilityInSettings, useGetMainSpecs } from 'src/api/settings'; // [keep for later use]
 import { deleteEmptyRole, deleteRole, useRoles } from 'src/api/users';
 import { useValues } from 'src/api/utils';

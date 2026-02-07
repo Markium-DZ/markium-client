@@ -86,13 +86,6 @@ export const endpoints = {
     changePassword: `/auth/changePassword`,
     changePasswordByAdmin: `/auth/changePasswordByAdmin`,
   },
-  clauses: {
-    root: `/maintenance/clauses`,
-    list: (id) => `/maintenance/${id}/clauses`,
-    add: `/maintenance/clauses`,
-    edit: (id) => `/maintenance/clauses/${id}`,
-
-  },
   mail: {
     list: '/api/mail/list',
     details: '/api/mail/details',
@@ -129,61 +122,12 @@ export const endpoints = {
     items: (id) => `/inventory/${id}/items`,
     itemTracking: (inventoryId, itemId) => `/inventory/${inventoryId}/items/${itemId}/tracking`,
   },
-  company: {
-    list: '/company',
-    statistics: "/company/statistics"
-  },
-  maintenance: {
-    list: '/maintenance',
-    specs: "/maintenance/specifications",
-    complete: (id) => `/maintenance/${id}/complete`,
-    updateExitDate: (id) => `/maintenance/${id}/updateExitDate`,
-    release: (id) => `/maintenance/${id}/car_release`,
-    logs: "/maintenance/logs",
-  },
-  cars: {
-    list: '/car',
-    transactions: '/car/transactions',
-    logs: '/car/logs',
-    attach: '/car/driver/attach',
-    detach: '/car/driver/detach',
-    under_maintainance: '/car/under_maintainance',
-    pm: (id) => `/car/${id}/maintenance/periodic`,
-  },
-  clients: {
-    list: '/client',
-    client: (id) => `/client/` + id
-  },
-  contracts: {
-    list: '/contract',
-    claims: (id) => `/contract/${id}/claims`,
-    clauses: (id) => `/contract/${id}/clauses`,
-    cancleClause: (id) => `/contract/clauses/${id}/cancel`,
-    allclaims: `/contract/claims/all`,
-    logs: "/contract/claims/logs",
-    allClaims:{
-      root:"/contract/claims"
-    },
-    clause:{
-      root:"/contract/clauses",
-      replace:(id) => `/contract/clauses/${id}/replace`,
-    }
-  },
-  claims: {
-    list: '/contract/1/claims',
-    new: "/contract/claims",
-    logs: "/contract/claims/logs",
-    edit: (id) => `/contract/claims/${id}`,
-    paid: (id) => `/contract/claims/${id}/paid`,
-  },
   settings: {
+    mainspecs: '/main-specs',
     items: (slug)=>`/${slug}`,
     categories: '/categories',
     categoriesList: '/categories/list',
     visibility: '/system-settings/visibility',
-    mainspecs: '/maintenance/specifications',
-    new: "/contract/claims",
-    logs: "/contract/claims/logs"
   },
   users: {
     root: '/auth/registerCompanyEmployeer',
@@ -195,12 +139,6 @@ export const endpoints = {
     permissions: '/permissions',
     user_permissions: '/auth/permissions',
     visibility: '/system-settings/visibility',
-    mainspecs: '/maintenance/specifications',
-    new: "/contract/claims",
-    logs: "/contract/claims/logs"
-  },
-  documents: {
-    list: '/attachments',
   },
   statistics: {
     root: '/attachments',
@@ -212,9 +150,6 @@ export const endpoints = {
     topProducts: '/analytics/top-products',
   },
 
-  drivers: {
-    list: '/driver',
-  },
   store: {
     logo: '/store/logo',
     root: '/store',
@@ -230,6 +165,7 @@ export const endpoints = {
     orderRates: (orderId) => `/shipping/orders/${orderId}/rates`,
     orderRatesByProvider: (orderId) => `/shipping/orders/${orderId}/rates/by-provider`,
     refreshOrderRates: (orderId) => `/shipping/orders/${orderId}/rates/refresh`,
+    shipOrder: (orderId) => `/shipping/orders/${orderId}/ship`,
   },
   payment: {
     providers: '/payment/providers',

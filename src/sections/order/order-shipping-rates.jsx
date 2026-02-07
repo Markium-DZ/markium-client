@@ -22,7 +22,7 @@ import { LoadingScreen } from 'src/components/loading-screen';
 
 // ----------------------------------------------------------------------
 
-export default function OrderShippingRates({ quotesGroupedByProvider, loading, error, onRefresh, onSelect, selectedQuoteId }) {
+export default function OrderShippingRates({ quotesGroupedByProvider, loading, error, onRefresh, onSelect, selectedQuoteId, onShip }) {
   const { t } = useTranslate();
 
   // Calculate if we have any quotes
@@ -202,6 +202,14 @@ export default function OrderShippingRates({ quotesGroupedByProvider, loading, e
             })}
           </Stack>
         </RadioGroup>
+
+        {selectedQuoteId && onShip && (
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+            <Button variant="contained" onClick={onShip} startIcon={<Iconify icon="solar:delivery-bold" />}>
+              {t('ship_order')}
+            </Button>
+          </Box>
+        )}
       </Box>
     </Card>
   );
@@ -214,4 +222,5 @@ OrderShippingRates.propTypes = {
   onRefresh: PropTypes.func,
   onSelect: PropTypes.func,
   selectedQuoteId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  onShip: PropTypes.func,
 };

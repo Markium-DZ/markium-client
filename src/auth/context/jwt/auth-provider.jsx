@@ -8,6 +8,7 @@ import { setSession, isValidToken, jwtDecode } from './utils';
 import { useValues } from 'src/api/utils';
 import showError from 'src/utils/show_error';
 import { success } from 'src/theme/palette';
+import { identifyUser, resetPostHog, captureEvent } from 'src/utils/posthog';
 
 // ----------------------------------------------------------------------
 /**
@@ -74,6 +75,7 @@ export function AuthProvider({ children }) {
         const getUserInfo = localStorage.getItem(USER_STORAGE_KEY);
         if (getUserInfo !== null) {
           const user = JSON.parse(getUserInfo);
+          identifyUser(user);
           dispatch({
             type: 'INITIAL',
             payload: {
@@ -117,6 +119,8 @@ export function AuthProvider({ children }) {
       const { token, client } = response.data.data;
       setSession(token);
       localStorage.setItem(USER_STORAGE_KEY, JSON.stringify({ ...client }));
+      identifyUser(client);
+      captureEvent('client_logged_in', { method: 'phone' });
       dispatch({
         type: 'LOGIN',
         payload: {
@@ -153,6 +157,8 @@ export function AuthProvider({ children }) {
 
     setSession(token);
     localStorage.setItem(USER_STORAGE_KEY, JSON.stringify({ ...client }));
+    identifyUser(client);
+    captureEvent('client_signed_up', { method: 'phone', store_name, store_slug });
 
     dispatch({
       type: 'REGISTER',
@@ -169,6 +175,7 @@ export function AuthProvider({ children }) {
   const logout = useCallback(async () => {
     setSession(null);
     localStorage.removeItem(USER_STORAGE_KEY);
+    resetPostHog();
     dispatch({
       type: 'LOGOUT',
     });

@@ -10,7 +10,7 @@ import { fDate, fTime } from 'src/utils/format-time';
 import Label from 'src/components/label';
 import Iconify from 'src/components/iconify';
 import CustomPopover, { usePopover } from 'src/components/custom-popover';
-import ExpandableText from '../maintain/ExpandableText';
+import ExpandableText from './ExpandableText';
 import { useCallback } from 'react';
 import { useRouter } from 'src/routes/hooks';
 import { Box } from '@mui/material';

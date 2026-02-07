@@ -1,1 +1,1 @@
-export { default as OverviewAppView } from './overview-app-view';
+// Fleet overview views have been removed. The active dashboard uses OverviewEcommerceView.

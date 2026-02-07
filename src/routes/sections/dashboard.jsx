@@ -37,11 +37,6 @@ const InventoryDetailsPage = lazy(() => import('src/pages/dashboard/inventory/de
 const InventoryTrackingPage = lazy(() => import('src/pages/dashboard/inventory/tracking'));
 const InventoryItemsPage = lazy(() => import('src/pages/dashboard/inventory/items'));
 const ItemTrackingPage = lazy(() => import('src/pages/dashboard/inventory/item-tracking'));
-// ORDER
-const MainSpecListPage = lazy(() => import('src/pages/dashboard/settings/pm'));
-const ClaimCreatePage = lazy(() => import('src/pages/dashboard/clients/claims-new'));
-const MainSpecCreatePage = lazy(() => import('src/pages/dashboard/settings/pm-new'));
-const MainSpecEditPage = lazy(() => import('src/pages/dashboard/settings/edit'));
 
 // roles
 const RolesListPage = lazy(() => import('src/pages/dashboard/user/roles/roles'));
@@ -49,19 +44,12 @@ const RolesCreatePage = lazy(() => import('src/pages/dashboard/user/roles/roles-
 const RolesEditPage = lazy(() => import('src/pages/dashboard/user/roles/roles-edit'));
 // users
 const UsersListPage = lazy(() => import('src/pages/dashboard/user/users/users'));
-// car models system settings 
-const CarModelsListPage = lazy(() => import('src/pages/dashboard/settings/car_models/car_models'));
-const CarModelsCreatePage = lazy(() => import('src/pages/dashboard/settings/car_models/car_models-new'));
-const CarModelsEditPage = lazy(() => import('src/pages/dashboard/settings/car_models/car_models-edit'));
-// document system settings 
-const DocumentListPage = lazy(() => import('src/pages/dashboard/settings/documents/documents'));
-const DocumentCreatePage = lazy(() => import('src/pages/dashboard/settings/documents/documents-new'));
-const DocumentEditPage = lazy(() => import('src/pages/dashboard/documents/edit'));
-// Neighborhood system settings 
+
+// Neighborhood system settings
 const NeighborhoodListPage = lazy(() => import('src/pages/dashboard/settings/neighborhood/neighborhood'));
 const NeighborhoodCreatePage = lazy(() => import('src/pages/dashboard/settings/neighborhood/neighborhood-new'));
 const NeighborhoodEditPage = lazy(() => import('src/pages/dashboard/settings/neighborhood/neighborhood-edit'));
-// system item  settings 
+// system item  settings
 const AdminSystemItemListPage = lazy(() => import('src/pages/dashboard/settings/items/items-admin'));
 const SystemItemListPage = lazy(() => import('src/pages/dashboard/settings/items/items'));
 const SystemItemCreatePage = lazy(() => import('src/pages/dashboard/settings/items/items-new'));
@@ -104,63 +92,7 @@ const BlogPostsPage = lazy(() => import('src/pages/dashboard/post/list'));
 const BlogPostPage = lazy(() => import('src/pages/dashboard/post/details'));
 const BlogNewPostPage = lazy(() => import('src/pages/dashboard/post/new'));
 const BlogEditPostPage = lazy(() => import('src/pages/dashboard/post/edit'));
-// Vehicles
-const VehiclesListPage = lazy(() => import('src/pages/dashboard/vehicle/list'));
-const LogListPage = lazy(() => import('src/pages/dashboard/vehicle/log'));
-const InputsListPage = lazy(() => import('src/pages/dashboard/vehicle/inputs&costs'));
 
-const VehiclePage = lazy(() => import('src/pages/dashboard/vehicle/details'));
-const VehiclesCreatePage = lazy(() => import('src/pages/dashboard/vehicle/new'));
-const VehiclesEditPage = lazy(() => import('src/pages/dashboard/vehicle/edit'));
-const PMListPage = lazy(() => import('src/pages/dashboard/periodic-maintenance/list'));
-
-// Maintains
-const MaintainListPage = lazy(() => import('src/pages/dashboard/maintain/list'));
-const MaintainNewPage = lazy(() => import('src/pages/dashboard/maintain/new'));
-const MaintainEditPage = lazy(() => import('src/pages/dashboard/maintain/edit'));
-const NotificationsMaintainListPage = lazy(
-  () => import('src/pages/dashboard/maintain/notifications')
-);
-const MaintainDetailsPage = lazy(() => import('src/pages/dashboard/maintain/details'));
-
-// Maintains
-// const MaintainListPage = lazy(() => import('src/pages/dashboard/maintain/list'));
-const ClauseNewPage = lazy(() => import('src/pages/dashboard/clause/new'));
-const ClauseEditPage = lazy(() => import('src/pages/dashboard/clause/edit'));
-// const NotificationsMaintainListPage = lazy(
-//   () => import('src/pages/dashboard/maintain/notifications')
-// );
-// const MaintainDetailsPage = lazy(() => import('src/pages/dashboard/maintain/details'));
-
-// Documents
-const InvoicePreview = lazy(() => import('src/pages/dashboard/documents/preview'));
-const DocumentsListPage = lazy(() => import('src/pages/dashboard/documents/list'));
-const DocumentsNewPage = lazy(() => import('src/pages/dashboard/documents/new'));
-const DocumentsEditPage = lazy(() => import('src/pages/dashboard/documents/edit'));
-const NotificationDocumentsListView = lazy(() => import('src/pages/dashboard/documents/alerts'));
-const CurrentInMaintainListView = lazy(
-  () => import('src/pages/dashboard/maintain/currentInMaintain')
-);
-
-// JOB
-const DriversDetailsPage = lazy(() => import('src/pages/dashboard/drivers/details'));
-const DriversListPage = lazy(() => import('src/pages/dashboard/drivers/list'));
-const DriversCreatePage = lazy(() => import('src/pages/dashboard/drivers/new'));
-const DriversSalaryPage = lazy(() => import('src/pages/dashboard/drivers/sallery'));
-const DriversEditPage = lazy(() => import('src/pages/dashboard/drivers/edit'));
-const AlertsDriversCreatePage = lazy(() => import('src/pages/dashboard/drivers/alerts'));
-
-// Clients
-const ContractCreatePage = lazy(() => import('src/pages/dashboard/clients/contracts-new'));
-const ClientsListPage = lazy(() => import('src/pages/dashboard/clients/list'));
-const ClientsDetailsPage = lazy(() => import('src/pages/dashboard/clients/clients-details'));
-const ContractsListPage = lazy(() => import('src/pages/dashboard/clients/contracts'));
-const ClaimsListPage = lazy(() => import('src/pages/dashboard/clients/claims'));
-const ClientsCreatePage = lazy(() => import('src/pages/dashboard/clients/new'));
-const ClientEditPage = lazy(() => import('src/pages/dashboard/clients/edit'));
-const AlertsClientsListPage = lazy(() => import('src/pages/dashboard/clients/alerts'));
-
-const ContractsDetailsPage = lazy(() => import('src/pages/dashboard/clients/contracts-details'));
 // JOB
 const JobDetailsPage = lazy(() => import('src/pages/dashboard/job/details'));
 const JobListPage = lazy(() => import('src/pages/dashboard/job/list'));
@@ -184,9 +116,6 @@ const PermissionDeniedPage = lazy(() => import('src/pages/dashboard/permission')
 const BlankPage = lazy(() => import('src/pages/dashboard/blank'));
 const HomePage = lazy(() => import('src/pages/home'));
 
-const CompanyPage = lazy(() => import('src/pages/dashboard/company/list'));
-const CompanyEditPage = lazy(() => import('src/pages/dashboard/company/edit'));
-const CompanyNewPage = lazy(() => import('src/pages/dashboard/company/new'));
 // SUBSCRIPTION
 const SubscriptionCheckoutPage = lazy(() => import('src/pages/dashboard/subscription/checkout'));
 const SubscriptionHistoryPage = lazy(() => import('src/pages/dashboard/subscription/history'));
@@ -241,77 +170,6 @@ export const dashboardRoutes = [
           { path: ':id/upload-assets', element: <ProductUploadAssetsPage /> },
         ],
       },
-      {
-        path: 'vehicle',
-        children: [
-          { element: <PermissionsRouteContext action={"read.car"} ><VehiclesListPage /></PermissionsRouteContext>, index: true },
-          { path: 'list', element: <PermissionsRouteContext action={"read.car"} ><VehiclesListPage /></PermissionsRouteContext> },
-          { path: 'log', element: <LogListPage /> },
-          { path: 'inputs', element: <InputsListPage /> },
-          { path: ':id', element: <PermissionsRouteContext action={"read.car"} ><VehiclePage /></PermissionsRouteContext> },
-          { path: 'new', element:<PermissionsRouteContext action={"create.car"} > <VehiclesCreatePage /></PermissionsRouteContext> },
-          { path: ':id/edit', element: <PermissionsRouteContext action={"update.car"} ><VehiclesEditPage /></PermissionsRouteContext> },
-          { path: ':id/pm', element: <PMListPage /> },
-        ],
-      },
-      {
-        path: 'maintenance',
-        children: [
-          { element:<PermissionsRouteContext action={"read.maintenance"} ><MaintainListPage /></PermissionsRouteContext> , index: true },
-          { path: 'list', element: <PermissionsRouteContext action={"read.maintenance"} ><MaintainListPage /></PermissionsRouteContext> },
-          { path: ':id', element: <PermissionsRouteContext action={"read.maintenance"} ><MaintainDetailsPage /></PermissionsRouteContext> },
-          { path: 'new', element: <PermissionsRouteContext action={"create.maintenance"} ><MaintainNewPage /></PermissionsRouteContext> },
-          { path: 'notifications', element: <NotificationsMaintainListPage /> },
-
-          { path: ':id/edit', element: <PermissionsRouteContext action={"update.maintenance"} ><MaintainEditPage /></PermissionsRouteContext> },
-          { path: ':id/clause', element: <ClauseNewPage /> },
-
-          { path: 'current-in-maintenance', element: <CurrentInMaintainListView /> },
-        ],
-      },
-
-      {
-        path: 'documents',
-        children: [
-          { element: <DocumentsListPage />, index: true },
-          { path: 'preview', element: <InvoicePreview /> },
-          { path: 'list', element: <DocumentsListPage /> },
-          { path: ':id', element: <VehiclePage /> },
-          { path: 'new', element: <DocumentsNewPage /> },
-          { path: ':id/edit', element: <DocumentsEditPage /> },
-          { path: 'alerts', element: <NotificationDocumentsListView /> },
-        ],
-      },
-      {
-        path: 'drivers',
-        children: [
-          { element: <DriversListPage />, index: true },
-          { path: 'list', element: <DriversListPage /> },
-          { path: 'salary', element: <DriversSalaryPage /> },
-          { path: ':id', element: <DriversDetailsPage /> },
-          { path: ':id/edit', element: <DriversEditPage /> },
-
-          { path: 'new', element: <DriversCreatePage /> },
-          { path: 'alerts', element: <AlertsDriversCreatePage /> },
-        ],
-      },
-
-      {
-        path: 'clients',
-        children: [
-          { element: <ClientsListPage />, index: true },
-          { path: 'list', element: <ClientsListPage /> },
-          { path: 'new', element: <ClientsCreatePage /> },
-          { path: ':id/edit', element: <ClientEditPage /> },
-          { path: 'contracts', element: <ContractsListPage /> },
-          { path: 'contracts/new', element: <ContractCreatePage /> },
-          { path: 'contracts/:id', element: <ContractsDetailsPage /> },
-          { path: 'claims', element: <ClaimsListPage /> },
-          { path: 'claims/new', element: <ClaimCreatePage /> },
-          { path: 'alerts', element: <AlertsClientsListPage /> },
-          { path: ':id', element: <ClientsDetailsPage /> },
-        ],
-      },
 
       {
         path: 'order',
@@ -356,19 +214,7 @@ export const dashboardRoutes = [
           { path: 'contacts-social', element: <ContactsSocialView /> },
           { path: 'color-palette', element: <ColorPaletteView /> },
           { path: 'store-language', element: <StoreLanguageView /> },
-          { path: "pm", element: <SystemItemListPage collection={{metadata:"Maintenance Specification",type:"maintenance_specification"}} />, index: true },
-          { path: 'pm/new', element: <SystemItemCreatePage collection={{metadata:"Maintenance Specification",type:"maintenance_specification"}} /> },
-          { path: 'pm/:id/edit', element: <SystemItemEditPage collection={{metadata:"Maintenance Specification",type:"maintenance_specification"}} /> },
           { path: ":model/admin", element: <AdminSystemItemListPage />, index: true },
-          { path: "attachment_names", element: <SystemItemListPage collection={{metadata:"Attachment Names",type:"attachment_name"}} />, index: true },
-          { path: 'attachment_names/new', element: <SystemItemCreatePage collection={{metadata:"Attachment Names",type:"attachment_name"}} /> },
-          { path: 'attachment_names/:id/edit', element: <SystemItemEditPage collection={{metadata:"Attachment Names",type:"attachment_name"}} /> },
-          { path: "specs", element: <SystemItemListPage collection={{metadata:"Specs",type:"spec"}} />, index: true },
-          { path: 'specs/new', element: <SystemItemCreatePage collection={{metadata:"Specs",type:"spec"}} /> },
-          { path: 'specs/:id/edit', element: <SystemItemEditPage collection={{metadata:"Specs",type:"spec"}} /> },
-          { path: "license_types", element: <SystemItemListPage collection={{metadata:"License Type",type:"license_type"}} />, index: true },
-          { path: 'license_types/new', element: <SystemItemCreatePage collection={{metadata:"License Type",type:"license_type"}} /> },
-          { path: 'license_types/:id/edit', element: <SystemItemEditPage collection={{metadata:"License Type",type:"license_type"}} /> },
           { path: "payment_methods", element: <SystemItemListPage collection={{metadata:"Payment Method",type:"payment_method"}} />, index: true },
           { path: 'payment_methods/new', element: <SystemItemCreatePage collection={{metadata:"Payment Method",type:"payment_method"}} /> },
           { path: 'payment_methods/:id/edit', element: <SystemItemEditPage collection={{metadata:"Payment Method",type:"payment_method"}} /> },
@@ -381,15 +227,6 @@ export const dashboardRoutes = [
           { path: "countries", element: <SystemItemListPage collection={{metadata:"Countries",type:"country"}} />, index: true },
           { path: 'countries/new', element: <SystemItemCreatePage collection={{metadata:"Countries",type:"country"}} /> },
           { path: 'countries/:id/edit', element: <SystemItemEditPage /> },
-          { path: "car_models", element: <SystemItemListPage collection={{metadata:"Car Model",type:"car_model"}} />, index: true },
-          { path: 'car_models/new', element: <SystemItemCreatePage collection={{metadata:"Car Model",type:"car_model"}} /> },
-          { path: 'car_models/:id/edit', element: <SystemItemEditPage collection={{metadata:"Car Model",type:"car_model"}} /> },
-          { path: "car_companies", element: <SystemItemListPage collection={{metadata:"Car Company",type:"car_company"}} />, index: true },
-          { path: 'car_companies/new', element: <SystemItemCreatePage collection={{metadata:"Car Company",type:"car_company"}} /> },
-          { path: 'car_companies/:id/edit', element: <SystemItemEditPage collection={{metadata:"Car Company",type:"car_company"}} /> },
-          { path: "documents", element: <DocumentListPage />, index: true },
-          { path: 'documents/new', element: <DocumentCreatePage /> },
-          { path: 'documents/:id/edit', element: <DocumentEditPage /> },
           { path: "neighborhood", element: <SystemItemListPage collection={{metadata:"Neighborhood",type:"neighborhood"}} />, index: true },
           { path: 'neighborhood/new', element: <SystemItemCreatePage collection={{metadata:"Neighborhood",type:"neighborhood"}} /> },
           { path: 'neighborhood/:id/edit', element: <SystemItemEditPage collection={{metadata:"Neighborhood",type:"neighborhood"}} /> },
@@ -430,16 +267,6 @@ export const dashboardRoutes = [
         ],
       },
 
-      {
-        path: 'company',
-        children: [
-          { element: <CompanyPage />, index: true },
-          { path: 'list', element: <CompanyPage /> },
-          { path: ':id', element: <CompanyEditPage /> },
-          { path: 'new', element: <CompanyNewPage /> },
-          { path: ':id/edit', element: <JobEditPage /> },
-        ],
-      },
       {
         path: 'tour',
         children: [

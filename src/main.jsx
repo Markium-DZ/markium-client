@@ -4,8 +4,11 @@ import { BrowserRouter } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 
 import App from './app';
+import { initPostHog } from './utils/posthog';
 
 // ----------------------------------------------------------------------
+
+initPostHog();
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 

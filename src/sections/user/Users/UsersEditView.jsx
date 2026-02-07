@@ -27,10 +27,7 @@ import FormProvider, { RHFTextField, RHFSelect, RHFMultiSelect } from 'src/compo
 
 import { useLocales, useTranslate } from 'src/locales';
 
-import { addNewDriver, editDriver } from 'src/api/drivers';
-
 import { useValues } from 'src/api/utils';
-import { useGetCar } from 'src/api/car';
 import { changeUserPasswordByAdmin, createUser, updateUser, useRoles } from 'src/api/users';
 import Label from 'src/components/label';
 import showError from 'src/utils/show_error';

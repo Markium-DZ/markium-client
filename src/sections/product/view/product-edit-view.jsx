@@ -28,7 +28,7 @@ export default function ProductEditView({ id }) {
         links={[
           { name: t('dashboard'), href: paths.dashboard.root },
           {
-            name: t('vehicle'),
+            name: t('product'),
             href: paths.dashboard.product.root,
           },
           { name: t('edit') },

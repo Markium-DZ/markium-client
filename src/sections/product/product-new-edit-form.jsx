@@ -8,14 +8,13 @@ import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
 import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
-import Switch from '@mui/material/Switch';
+import ToggleButton from '@mui/material/ToggleButton';
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import Divider from '@mui/material/Divider';
-import Grid from '@mui/material/Unstable_Grid2';
-import CardHeader from '@mui/material/CardHeader';
 import Typography from '@mui/material/Typography';
 import LoadingButton from '@mui/lab/LoadingButton';
+import LinearProgress from '@mui/material/LinearProgress';
 import InputAdornment from '@mui/material/InputAdornment';
-import FormControlLabel from '@mui/material/FormControlLabel';
 import { alpha } from '@mui/material/styles';
 import Button from '@mui/material/Button';
 import Paper from '@mui/material/Paper';
@@ -23,7 +22,6 @@ import Paper from '@mui/material/Paper';
 import { paths } from 'src/routes/paths';
 import { useRouter } from 'src/routes/hooks';
 
-import { useResponsive } from 'src/hooks/use-responsive';
 import { useTranslate } from 'src/locales';
 
 import { _tags } from 'src/_mock';
@@ -37,6 +35,7 @@ import FormProvider, {
 } from 'src/components/hook-form';
 import { createProduct, updateProduct, createMedia } from 'src/api/product';
 import showError from 'src/utils/show_error';
+import { captureEvent } from 'src/utils/posthog';
 import { useGetSystemCategories } from 'src/api/settings';
 import { IconButton, ListSubheader, MenuItem } from '@mui/material';
 import Iconify from 'src/components/iconify';
@@ -47,10 +46,76 @@ import ProductVariantsManager from './components/product-variants-manager';
 
 // ----------------------------------------------------------------------
 
-export default function ProductNewEditForm({ currentProduct }) {
-  const router = useRouter();
+const TIMELINE_LEFT = { xs: 40, md: 56 };
+const TIMELINE_GAP = { xs: 2, md: 2.5 };
 
-  const mdUp = useResponsive('up', 'md');
+function FormTimelineStep({ stepNumber, icon, title, isLast, children }) {
+  return (
+    <Box sx={{ display: 'flex', gap: TIMELINE_GAP }}>
+      {/* Left column: circle + connector */}
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          width: TIMELINE_LEFT,
+          flexShrink: 0,
+        }}
+      >
+        {/* Numbered circle */}
+        <Box
+          sx={{
+            width: { xs: 36, md: 44 },
+            height: { xs: 36, md: 44 },
+            borderRadius: '50%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            bgcolor: (theme) => alpha(theme.palette.primary.main, 0.1),
+            color: 'primary.main',
+            flexShrink: 0,
+            mt: 0.5,
+          }}
+        >
+          <Iconify icon={icon} width={{ xs: 18, md: 22 }} />
+        </Box>
+
+        {/* Vertical connector line */}
+        {!isLast && (
+          <Box
+            sx={{
+              flex: 1,
+              width: 2,
+              bgcolor: (theme) => alpha(theme.palette.primary.main, 0.16),
+              my: 1,
+            }}
+          />
+        )}
+      </Box>
+
+      {/* Right column: title + content */}
+      <Box sx={{ flex: 1, pb: isLast ? 0 : 3, minWidth: 0 }}>
+        <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 600 }}>
+          {stepNumber}. {title}
+        </Typography>
+        {children}
+      </Box>
+    </Box>
+  );
+}
+
+FormTimelineStep.propTypes = {
+  stepNumber: PropTypes.number.isRequired,
+  icon: PropTypes.string.isRequired,
+  title: PropTypes.string.isRequired,
+  isLast: PropTypes.bool,
+  children: PropTypes.node,
+};
+
+// ----------------------------------------------------------------------
+
+export default function ProductNewEditForm({ currentProduct, drawerMode = false, onSuccess, onCancel, onDirtyChange }) {
+  const router = useRouter();
 
   const { enqueueSnackbar } = useSnackbar();
 
@@ -59,6 +124,7 @@ export default function ProductNewEditForm({ currentProduct }) {
   const [advancedMode, setAdvancedMode] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState({ open: false, type: '' });
   const [mediaPickerOpen, setMediaPickerOpen] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(null);
   const [optionDefinitions, setOptionDefinitions] = useState([]);
   const [variants, setVariants] = useState([
     {
@@ -165,10 +231,15 @@ export default function ProductNewEditForm({ currentProduct }) {
     watch,
     setValue,
     handleSubmit,
-    formState: { isSubmitting },
+    formState: { isSubmitting, isDirty },
   } = methods;
 
   const values = watch();
+
+  // Notify parent about dirty state changes (for unsaved-changes warning)
+  useEffect(() => {
+    onDirtyChange?.(isDirty);
+  }, [isDirty, onDirtyChange]);
 
   useEffect(() => {
     if (currentProduct) {
@@ -252,12 +323,6 @@ export default function ProductNewEditForm({ currentProduct }) {
   const onSubmit = handleSubmit(
     async (data) => {
     try {
-      console.info('=== FORM SUBMISSION START ===');
-      console.info('Advanced Mode:', advancedMode);
-      console.info('Form data received:', data);
-      console.info('Images:', data.images);
-      console.info('Variants:', variants);
-
       // Manual validation for advanced mode variants
       if (advancedMode) {
         if (!variants || variants.length === 0) {
@@ -317,15 +382,12 @@ export default function ProductNewEditForm({ currentProduct }) {
           });
         }
 
-        console.info('Images to upload:', imagesToUpload);
-
         // Upload all images at once if any
         if (imagesToUpload.length > 0) {
-          console.info('Uploading', imagesToUpload.length, 'images to /media...');
           const files = imagesToUpload.map((item) => item.file);
-          const mediaResponse = await createMedia(files);
+          const mediaResponse = await createMedia(files, setUploadProgress);
+          setUploadProgress(null);
           uploadedMedia = mediaResponse.data.data || [];
-          console.info('Media uploaded successfully:', uploadedMedia);
 
           // Map uploaded media back to variants
           if (advancedMode) {
@@ -343,8 +405,6 @@ export default function ProductNewEditForm({ currentProduct }) {
               }
             });
           }
-        } else {
-          console.warn('No images to upload');
         }
       }
 
@@ -418,33 +478,46 @@ export default function ProductNewEditForm({ currentProduct }) {
         payload.variants = [simpleVariant];
       }
 
-      console.info('Submitting product data:', payload);
-
       // Step 3: Submit product to API as JSON
       if (currentProduct?.id) {
         await updateProduct(currentProduct.id, payload);
       } else {
         await createProduct(payload);
+        captureEvent('product_created', { name: data.name, category_id: data.category_id, mode: advancedMode ? 'advanced' : 'simple' });
       }
 
       enqueueSnackbar(currentProduct ? t('update_success') : t('create_success'));
-      router.push(paths.dashboard.product.root);
+      if (onSuccess) {
+        onSuccess();
+      } else {
+        router.push(paths.dashboard.product.root);
+      }
     } catch (error) {
-      console.log('Caught error:', error);
       showError(error);
     }
   },
   (errors) => {
-    // Validation errors
-    console.error('=== VALIDATION ERRORS ===');
-    console.error('Errors:', errors);
-    console.error('Advanced Mode:', advancedMode);
-    console.error('Variants:', variants);
+    // Scroll to first error field
+    const firstErrorKey = Object.keys(errors)[0];
+    if (firstErrorKey) {
+      const el = document.querySelector(`[name="${firstErrorKey}"]`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.focus();
+      }
+    }
 
-    // Show first validation error
-    const firstError = Object.values(errors)[0];
-    if (firstError?.message) {
-      enqueueSnackbar(firstError.message, { variant: 'error' });
+    // Show all validation errors
+    const errorMessages = Object.values(errors)
+      .map(err => err?.message)
+      .filter(Boolean);
+
+    if (errorMessages.length === 1) {
+      enqueueSnackbar(errorMessages[0], { variant: 'error' });
+    } else if (errorMessages.length > 1) {
+      errorMessages.forEach((msg) => {
+        enqueueSnackbar(msg, { variant: 'error' });
+      });
     }
   });
 
@@ -490,462 +563,664 @@ export default function ProductNewEditForm({ currentProduct }) {
     [setValue, values.images]
   );
 
-  const renderModeToggle = (
-    <Grid xs={12} md={10}>
-      <Paper
-        sx={{
-          p: 3,
-          bgcolor: (theme) => alpha(theme.palette.primary.main, 0.04),
-          border: (theme) => `2px solid ${alpha(theme.palette.primary.main, 0.16)}`,
-        }}
-      >
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Box>
-            <Typography variant="h6" gutterBottom>
-              {advancedMode ? t('advanced_mode') : t('simple_mode')}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              {advancedMode
-                ? t('advanced_mode_description')
-                : t('simple_mode_description')}
-            </Typography>
-          </Box>
+  // ---- Render sections ----
 
-          <FormControlLabel
-            control={
-              <Switch
-                checked={advancedMode}
-                onChange={handleModeSwitch}
-                color="primary"
-                size="medium"
-              />
+  const renderModeToggle = (
+    <Paper
+      sx={{
+        p: 3,
+        bgcolor: (theme) => alpha(theme.palette.primary.main, 0.04),
+        border: (theme) => `2px solid ${alpha(theme.palette.primary.main, 0.16)}`,
+      }}
+    >
+      <Stack spacing={2} alignItems="center">
+        <ToggleButtonGroup
+          value={advancedMode ? 'advanced' : 'simple'}
+          exclusive
+          onChange={(_, val) => {
+            if (val !== null && val !== (advancedMode ? 'advanced' : 'simple')) {
+              handleModeSwitch();
             }
-            label={
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                {/* <Iconify
-                  icon={advancedMode ? 'mdi:tune-variant' : 'mdi:toggle-switch-outline'}
-                  width={20}
-                /> */}
-                <Typography variant="body2" fontWeight={600}>
-                  {advancedMode ? t('switch_to_simple') : t('switch_to_advanced')}
+          }}
+          aria-label={t('product_mode')}
+          sx={{
+            width: '100%',
+            '& .MuiToggleButton-root': {
+              flex: 1,
+              py: 1.5,
+              gap: 1,
+              textTransform: 'none',
+              fontWeight: 600,
+              fontSize: '0.875rem',
+              borderRadius: 1,
+              '&.Mui-selected': {
+                bgcolor: 'primary.main',
+                color: 'primary.contrastText',
+                '&:hover': {
+                  bgcolor: 'primary.dark',
+                },
+              },
+            },
+          }}
+        >
+          <ToggleButton value="simple" aria-describedby="mode-desc-simple">
+            <Iconify icon="solar:box-minimalistic-bold" width={20} />
+            {t('simple_mode')}
+          </ToggleButton>
+          <ToggleButton value="advanced" aria-describedby="mode-desc-advanced">
+            <Iconify icon="solar:tuning-2-bold" width={20} />
+            {t('advanced_mode')}
+          </ToggleButton>
+        </ToggleButtonGroup>
+
+        <Typography
+          id={advancedMode ? 'mode-desc-advanced' : 'mode-desc-simple'}
+          variant="body2"
+          color="text.secondary"
+          sx={{ textAlign: 'center' }}
+        >
+          {advancedMode
+            ? t('advanced_mode_description')
+            : t('simple_mode_description')}
+        </Typography>
+      </Stack>
+    </Paper>
+  );
+
+  const renderProductInfo = (
+    <Card>
+      <Stack spacing={3} sx={{ p: 3 }}>
+        <RHFTextField name="name" label={t('product_name')} />
+        <RHFTextField name="description" label={t('description')} />
+
+        <Stack spacing={1.5}>
+          <Typography variant="subtitle2">{t('content')}</Typography>
+          <RHFEditor simple name="content" />
+        </Stack>
+
+        {/* In Advanced Mode, show note about per-variant images */}
+        {advancedMode && (
+          <Paper
+            sx={{
+              p: 2,
+              bgcolor: (theme) => alpha(theme.palette.info.main, 0.08),
+              border: (theme) => `1px solid ${alpha(theme.palette.info.main, 0.24)}`,
+            }}
+          >
+            <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-start' }}>
+              <Iconify
+                icon="eva:info-fill"
+                width={20}
+                sx={{ color: 'info.main', mt: 0.25 }}
+              />
+              <Box>
+                <Typography variant="subtitle2" color="info.main" gutterBottom>
+                  {t('variant_images_info_title')}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {t('variant_images_info_description')}
                 </Typography>
               </Box>
-            }
-            labelPlacement="start"
-            sx={{ ml: 0 }}
-          />
-        </Box>
-      </Paper>
-    </Grid>
+            </Box>
+          </Paper>
+        )}
+      </Stack>
+    </Card>
   );
 
-  const renderDetails = (
-    <>
-      <Grid xs={12} md={10}>
-        <Card>
-          {!mdUp && <CardHeader title={t('details')} />}
+  const renderMedia = (
+    <Card>
+      <Stack spacing={1.5} sx={{ p: 3 }}>
+        <Typography variant="subtitle2">{t('images')}</Typography>
 
-          <Stack spacing={3} sx={{ p: 3 }}>
-            <RHFTextField name="name" label={t('product_name')} />
-            <RHFTextField name="description" label={t('description')} />
-
-            <Stack spacing={1.5}>
-              <Typography variant="subtitle2">{t('content')}</Typography>
-              <RHFEditor simple name="content" />
-            </Stack>
-
-            {/* Only show main image upload in Simple Mode */}
-            {!advancedMode && (
-              <Stack spacing={1.5}>
-                <Typography variant="subtitle2">{t('images')}</Typography>
-
-                {/* Selected Images Preview */}
-                {values.images && values.images.length > 0 && (
-                  <Box sx={{ mb: 2 }}>
-                    <Grid container spacing={2}>
-                      {values.images.map((image, index) => (
-                        <Grid item xs={6} sm={4} md={3} key={image.id || index}>
-                          <Card sx={{ position: 'relative' }}>
-                            <Box
-                              sx={{
-                                position: 'relative',
-                                width: '100%',
-                                paddingTop: '100%',
-                                overflow: 'hidden',
-                              }}
-                            >
-                              <Box
-                                component="img"
-                                src={image.preview || image.full_url}
-                                alt={image.name || image.alt_text}
-                                sx={{
-                                  position: 'absolute',
-                                  top: 0,
-                                  left: 0,
-                                  width: '100%',
-                                  height: '100%',
-                                  objectFit: 'cover',
-                                }}
-                              />
-                              <IconButton
-                                size="small"
-                                onClick={() => handleRemoveFile(image)}
-                                sx={{
-                                  position: 'absolute',
-                                  top: 4,
-                                  right: 4,
-                                  bgcolor: 'rgba(0,0,0,0.6)',
-                                  color: 'white',
-                                  width: 24,
-                                  height: 24,
-                                  '&:hover': {
-                                    bgcolor: 'rgba(0,0,0,0.8)',
-                                  },
-                                }}
-                              >
-                                <Iconify icon="eva:close-fill" width={16} />
-                              </IconButton>
-                            </Box>
-                          </Card>
-                        </Grid>
-                      ))}
-                    </Grid>
-
-                    <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
-                      <Button
-                        variant="outlined"
-                        color="inherit"
-                        size="small"
-                        onClick={handleRemoveAllFiles}
-                      >
-                        {t('remove_all')}
-                      </Button>
-                    </Stack>
-                  </Box>
-                )}
-
-                {/* Add Images Button - Modern Placeholder */}
-                <Box
-                  onClick={() => setMediaPickerOpen(true)}
-                  sx={{
-                    p: 5,
-                    outline: 'none',
-                    borderRadius: 1,
-                    cursor: 'pointer',
-                    overflow: 'hidden',
-                    position: 'relative',
-                    bgcolor: (theme) => alpha(theme.palette.grey[500], 0.08),
-                    border: (theme) => `1px dashed ${alpha(theme.palette.grey[500], 0.2)}`,
-                    transition: (theme) => theme.transitions.create(['opacity', 'padding']),
-                    '&:hover': { opacity: 0.72 },
-                  }}
-                >
-                  <Stack spacing={2.5} alignItems="center">
-                    {/* Upload Icon */}
-                    <Box
-                      sx={{
-                        width: 80,
-                        height: 80,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        borderRadius: '50%',
-                        bgcolor: (theme) => alpha(theme.palette.primary.main, 0.08),
-                      }}
-                    >
-                      <Iconify
-                        icon="solar:gallery-bold"
-                        width={40}
-                        sx={{ color: 'primary.main' }}
-                      />
-                    </Box>
-
-                    {/* Upload Text */}
-                    <Stack spacing={0.5} alignItems="center">
-                      <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                        {t('click_to_browse_media_library')}
-                      </Typography>
-                      <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                        {t('select_from_existing_media_or_upload_new')}
-                      </Typography>
-                    </Stack>
-                  </Stack>
-                </Box>
-              </Stack>
-            )}
-
-            {/* In Advanced Mode, show note about per-variant images */}
-            {advancedMode && (
-              <Paper
-                sx={{
-                  p: 2,
-                  bgcolor: (theme) => alpha(theme.palette.info.main, 0.08),
-                  border: (theme) => `1px solid ${alpha(theme.palette.info.main, 0.24)}`,
-                }}
-              >
-                <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-start' }}>
-                  <Iconify
-                    icon="eva:info-fill"
-                    width={20}
-                    sx={{ color: 'info.main', mt: 0.25 }}
-                  />
-                  <Box>
-                    <Typography variant="subtitle2" color="info.main" gutterBottom>
-                      {t('variant_images_info_title')}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {t('variant_images_info_description')}
-                    </Typography>
-                  </Box>
-                </Box>
-              </Paper>
-            )}
-          </Stack>
-        </Card>
-      </Grid>
-    </>
-  );
-
-  const renderProperties = (
-    <>
-      <Grid xs={12} md={10}>
-        <Card>
-          {!mdUp && <CardHeader title={t('properties')} />}
-
-          <Stack spacing={3} sx={{ p: 3 }}>
+        {/* Selected Images Preview */}
+        {values.images && values.images.length > 0 && (
+          <Box sx={{ mb: 2 }}>
             <Box
-              columnGap={2}
-              rowGap={3}
               display="grid"
               gridTemplateColumns={{
-                xs: 'repeat(1, 1fr)',
-                md: 'repeat(1, 1fr)',
+                xs: 'repeat(2, 1fr)',
+                sm: 'repeat(3, 1fr)',
+                md: 'repeat(4, 1fr)',
               }}
+              gap={2}
             >
-              <RHFSelect name="category_id" label={t('category')}>
-                <MenuItem value="">{t('select_category')}</MenuItem>
-                <Divider sx={{ borderStyle: 'dashed' }} />
-                {groupedCategories?.map((parentCategory) => [
-                  // Parent category as group header (also selectable)
-                  <ListSubheader
-                    key={`header-${parentCategory.id}`}
+              {values.images.map((image, index) => (
+                <Card key={image.id || index} sx={{ position: 'relative' }}>
+                  <Box
                     sx={{
-                      bgcolor: 'background.neutral',
-                      color: 'text.primary',
-                      fontWeight: 600,
-                      lineHeight: '36px',
+                      position: 'relative',
+                      width: '100%',
+                      paddingTop: '100%',
+                      overflow: 'hidden',
                     }}
                   >
-                    {parentCategory.name}
-                  </ListSubheader>,
-                  // If parent has no children, make it selectable
-                  parentCategory.children?.length === 0 && (
-                    <MenuItem
-                      key={parentCategory.id}
-                      value={parentCategory.id}
-                      sx={{ pl: 3 }}
+                    <Box
+                      component="img"
+                      src={image.preview || image.full_url}
+                      alt={image.name || image.alt_text}
+                      sx={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                      }}
+                    />
+                    <IconButton
+                      size="small"
+                      onClick={() => handleRemoveFile(image)}
+                      aria-label={t('remove_image')}
+                      sx={{
+                        position: 'absolute',
+                        top: 4,
+                        right: 4,
+                        bgcolor: 'rgba(0,0,0,0.6)',
+                        color: 'white',
+                        width: 24,
+                        height: 24,
+                        '&:hover': {
+                          bgcolor: 'rgba(0,0,0,0.8)',
+                        },
+                      }}
                     >
-                      {parentCategory.name}
-                    </MenuItem>
-                  ),
-                  // Children categories
-                  ...(parentCategory.children?.map((child) => (
-                    <MenuItem
-                      key={child.id}
-                      value={child.id}
-                      sx={{ pl: 3 }}
-                    >
-                      {child.name}
-                    </MenuItem>
-                  )) || []),
-                ])}
-              </RHFSelect>
+                      <Iconify icon="eva:close-fill" width={16} />
+                    </IconButton>
+                  </Box>
+                </Card>
+              ))}
             </Box>
 
-            <Stack spacing={1}>
-              <RHFAutocomplete
-                name="tags"
-                label={`${t('tags')} (${t('optional')})`}
-                placeholder={`+ ${t('tags')}`}
-                multiple
-                freeSolo
-                options={_tags.map((option) => t(`tag_${option.toLowerCase()}`))}
-                getOptionLabel={(option) => option}
-                renderOption={(props, option) => (
-                  <li {...props} key={option}>
-                    {option}
-                  </li>
-                )}
-                renderTags={(selected, getTagProps) =>
-                  selected.map((option, index) => (
-                    <Chip
-                      {...getTagProps({ index })}
-                      key={option}
-                      label={option}
-                      size="small"
-                      color="info"
-                      variant="soft"
-                    />
-                  ))
-                }
+            <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
+              <Button
+                variant="outlined"
+                color="inherit"
+                size="small"
+                onClick={handleRemoveAllFiles}
+              >
+                {t('remove_all')}
+              </Button>
+            </Stack>
+          </Box>
+        )}
+
+        {/* Add Images Button - Modern Placeholder */}
+        <Box
+          role="button"
+          tabIndex={0}
+          aria-label={t('click_to_browse_media_library')}
+          onClick={() => setMediaPickerOpen(true)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              setMediaPickerOpen(true);
+            }
+          }}
+          sx={{
+            p: 5,
+            outline: 'none',
+            borderRadius: 1,
+            cursor: 'pointer',
+            overflow: 'hidden',
+            position: 'relative',
+            bgcolor: (theme) => alpha(theme.palette.grey[500], 0.08),
+            border: (theme) => `1px dashed ${alpha(theme.palette.grey[500], 0.2)}`,
+            transition: (theme) => theme.transitions.create(['opacity', 'padding']),
+            '&:hover': { opacity: 0.72 },
+            '&:focus-visible': {
+              outline: (theme) => `2px solid ${theme.palette.primary.main}`,
+              outlineOffset: 2,
+            },
+          }}
+        >
+          <Stack spacing={2.5} alignItems="center">
+            <Box
+              sx={{
+                width: 80,
+                height: 80,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: '50%',
+                bgcolor: (theme) => alpha(theme.palette.primary.main, 0.08),
+              }}
+            >
+              <Iconify
+                icon="solar:gallery-bold"
+                width={40}
+                sx={{ color: 'primary.main' }}
               />
-              <Typography variant="caption" sx={{ color: 'text.secondary', px: 1.5 }}>
-                {t('tags_helper_text')}
+            </Box>
+
+            <Stack spacing={0.5} alignItems="center">
+              <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                {t('click_to_browse_media_library')}
+              </Typography>
+              <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                {t('select_from_existing_media_or_upload_new')}
               </Typography>
             </Stack>
           </Stack>
-        </Card>
-      </Grid>
-    </>
+        </Box>
+      </Stack>
+    </Card>
+  );
+
+  const renderProperties = (
+    <Card>
+      <Stack spacing={3} sx={{ p: 3 }}>
+        <Box
+          columnGap={2}
+          rowGap={3}
+          display="grid"
+          gridTemplateColumns="repeat(1, 1fr)"
+        >
+          <RHFSelect name="category_id" label={t('category')}>
+            <MenuItem value="">{t('select_category')}</MenuItem>
+            <Divider sx={{ borderStyle: 'dashed' }} />
+            {groupedCategories?.map((parentCategory) => [
+              // Parent category as group header (also selectable)
+              <ListSubheader
+                key={`header-${parentCategory.id}`}
+                sx={{
+                  bgcolor: 'background.neutral',
+                  color: 'text.primary',
+                  fontWeight: 600,
+                  lineHeight: '36px',
+                }}
+              >
+                {parentCategory.name}
+              </ListSubheader>,
+              // If parent has no children, make it selectable
+              parentCategory.children?.length === 0 && (
+                <MenuItem
+                  key={parentCategory.id}
+                  value={parentCategory.id}
+                  sx={{ pl: 3 }}
+                >
+                  {parentCategory.name}
+                </MenuItem>
+              ),
+              // Children categories
+              ...(parentCategory.children?.map((child) => (
+                <MenuItem
+                  key={child.id}
+                  value={child.id}
+                  sx={{ pl: 3 }}
+                >
+                  {child.name}
+                </MenuItem>
+              )) || []),
+            ])}
+          </RHFSelect>
+        </Box>
+
+        <Stack spacing={1}>
+          <RHFAutocomplete
+            name="tags"
+            label={`${t('tags')} (${t('optional')})`}
+            placeholder={`+ ${t('tags')}`}
+            multiple
+            freeSolo
+            options={_tags.map((option) => t(`tag_${option.toLowerCase()}`))}
+            getOptionLabel={(option) => option}
+            renderOption={(props, option) => (
+              <li {...props} key={option}>
+                {option}
+              </li>
+            )}
+            renderTags={(selected, getTagProps) =>
+              selected.map((option, index) => (
+                <Chip
+                  {...getTagProps({ index })}
+                  key={option}
+                  label={option}
+                  size="small"
+                  color="info"
+                  variant="soft"
+                />
+              ))
+            }
+          />
+          <Typography variant="caption" sx={{ color: 'text.secondary', px: 1.5 }}>
+            {t('tags_helper_text')}
+          </Typography>
+        </Stack>
+      </Stack>
+    </Card>
   );
 
   const renderSimplePricing = (
-    <>
-      <Grid xs={12} md={10}>
-        <Card>
-          <CardHeader title={t('pricing_inventory')} />
+    <Card>
+      <Stack spacing={3} sx={{ p: 3 }}>
+        <Box
+          columnGap={2}
+          rowGap={3}
+          display="grid"
+          gridTemplateColumns={{
+            xs: 'repeat(1, 1fr)',
+            md: 'repeat(2, 1fr)',
+          }}
+        >
+          <RHFTextField
+            name="sale_price"
+            label={t('sale_price')}
+            placeholder="0.00"
+            type="number"
+            InputLabelProps={{ shrink: true }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Box component="span" sx={{ color: 'text.disabled' }}>
+                    DZD
+                  </Box>
+                </InputAdornment>
+              ),
+              endAdornment: (
+                <InputAdornment position="end" sx={{ flexDirection: 'column', height: '100%', mr: -0.5 }}>
+                  <IconButton
+                    size="small"
+                    onClick={() => setValue('sale_price', (parseFloat(values.sale_price) || 0) + 1)}
+                    sx={{ p: 0, lineHeight: 1 }}
+                  >
+                    <Iconify icon="eva:arrow-ios-upward-fill" width={16} />
+                  </IconButton>
+                  <IconButton
+                    size="small"
+                    onClick={() => setValue('sale_price', Math.max(0, (parseFloat(values.sale_price) || 0) - 1))}
+                    sx={{ p: 0, lineHeight: 1 }}
+                  >
+                    <Iconify icon="eva:arrow-ios-downward-fill" width={16} />
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+          />
 
-          <Stack spacing={3} sx={{ p: 3 }}>
-            <Box
-              columnGap={2}
-              rowGap={3}
-              display="grid"
-              gridTemplateColumns={{
-                xs: 'repeat(1, 1fr)',
-                md: 'repeat(2, 1fr)',
+          <Stack spacing={1}>
+            <RHFTextField
+              name="real_price"
+              label={`${t('compare_at_price')} (${t('optional')})`}
+              placeholder="0.00"
+              type="number"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Box component="span" sx={{ color: 'text.disabled' }}>
+                      DZD
+                    </Box>
+                  </InputAdornment>
+                ),
+                endAdornment: (
+                  <InputAdornment position="end" sx={{ flexDirection: 'column', height: '100%', mr: -0.5 }}>
+                    <IconButton
+                      size="small"
+                      onClick={() => setValue('real_price', (parseFloat(values.real_price) || 0) + 1)}
+                      sx={{ p: 0, lineHeight: 1 }}
+                    >
+                      <Iconify icon="eva:arrow-ios-upward-fill" width={16} />
+                    </IconButton>
+                    <IconButton
+                      size="small"
+                      onClick={() => setValue('real_price', Math.max(0, (parseFloat(values.real_price) || 0) - 1))}
+                      sx={{ p: 0, lineHeight: 1 }}
+                    >
+                      <Iconify icon="eva:arrow-ios-downward-fill" width={16} />
+                    </IconButton>
+                  </InputAdornment>
+                ),
               }}
-            >
-              <RHFTextField
-                name="sale_price"
-                label={t('sale_price')}
-                placeholder="0.00"
-                type="number"
-                InputLabelProps={{ shrink: true }}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Box component="span" sx={{ color: 'text.disabled' }}>
-                        DZD
-                      </Box>
-                    </InputAdornment>
-                  ),
-                }}
-              />
-
-              <Stack spacing={1}>
-                <RHFTextField
-                  name="real_price"
-                  label={`${t('compare_at_price')} (${t('optional')})`}
-                  placeholder="0.00"
-                  type="number"
-                  InputLabelProps={{ shrink: true }}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <Box component="span" sx={{ color: 'text.disabled' }}>
-                          DZD
-                        </Box>
-                      </InputAdornment>
-                    ),
-                  }}
-                />
-                <Typography variant="caption" sx={{ color: 'text.secondary', px: 1.5 }}>
-                  {t('compare_at_price_helper_text')}
-                </Typography>
-              </Stack>
-
-              <RHFTextField
-                name="quantity"
-                label={t('quantity')}
-                placeholder="0"
-                type="number"
-                InputLabelProps={{ shrink: true }}
-              />
-            </Box>
+            />
+            <Typography variant="caption" sx={{ color: 'text.secondary', px: 1.5 }}>
+              {t('compare_at_price_helper_text')}
+            </Typography>
           </Stack>
-        </Card>
-      </Grid>
-    </>
+
+          <RHFTextField
+            name="quantity"
+            label={t('quantity')}
+            placeholder="0"
+            type="number"
+            InputLabelProps={{ shrink: true }}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end" sx={{ flexDirection: 'column', height: '100%', mr: -0.5 }}>
+                  <IconButton
+                    size="small"
+                    onClick={() => setValue('quantity', (values.quantity || 0) + 1)}
+                    sx={{ p: 0, lineHeight: 1 }}
+                  >
+                    <Iconify icon="eva:arrow-ios-upward-fill" width={16} />
+                  </IconButton>
+                  <IconButton
+                    size="small"
+                    onClick={() => setValue('quantity', Math.max(0, (values.quantity || 0) - 1))}
+                    sx={{ p: 0, lineHeight: 1 }}
+                  >
+                    <Iconify icon="eva:arrow-ios-downward-fill" width={16} />
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+          />
+        </Box>
+      </Stack>
+    </Card>
   );
 
-  const renderAdvancedOptions = (
-    <>
-      <Grid xs={12} md={10}>
-        <Card>
-          <CardHeader title={t('product_options_variants')} />
-          <Stack spacing={3} sx={{ p: 3 }}>
-            <OptionDefinitionBuilder
-              options={optionDefinitions}
-              onChange={setOptionDefinitions}
-              maxOptions={3}
-            />
-          </Stack>
-        </Card>
-      </Grid>
-
-      <Grid xs={12} md={10}>
-        <Card>
-          <CardHeader title={t('variants')} />
-          <Stack spacing={3} sx={{ p: 3 }}>
-            <ProductVariantsManager
-              options={optionDefinitions}
-              variants={variants}
-              onChange={setVariants}
-              images={values.images}
-            />
-          </Stack>
-        </Card>
-      </Grid>
-    </>
+  const renderOptionsCard = (
+    <Card>
+      <Stack spacing={3} sx={{ p: 3 }}>
+        <OptionDefinitionBuilder
+          options={optionDefinitions}
+          onChange={setOptionDefinitions}
+          maxOptions={3}
+        />
+      </Stack>
+    </Card>
   );
 
-  const renderActions = (
-    <>
-      {mdUp && <Grid md={4} />}
-      <Grid
-        xs={12}
-        md={10}
-        sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2 }}
+  const renderVariantsCard = (
+    <Card>
+      <Stack spacing={3} sx={{ p: 3 }}>
+        <ProductVariantsManager
+          options={optionDefinitions}
+          variants={variants}
+          onChange={setVariants}
+          images={values.images}
+        />
+      </Stack>
+    </Card>
+  );
+
+  const actionButtons = (
+    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2 }}>
+      <Button
+        variant="outlined"
+        color="inherit"
+        size="large"
+        startIcon={<Iconify icon="eva:arrow-back-fill" />}
+        onClick={() => (onCancel ? onCancel() : router.push(paths.dashboard.product.root))}
       >
-        <Button
-          variant="outlined"
-          color="inherit"
-          size="large"
-          startIcon={<Iconify icon="eva:arrow-back-fill" />}
-          onClick={() => router.push(paths.dashboard.product.root)}
-        >
-          {t('cancel')}
-        </Button>
+        {t('cancel')}
+      </Button>
 
-        <LoadingButton
-          type="submit"
-          variant="contained"
-          size="large"
-          loading={isSubmitting}
-          startIcon={<Iconify icon="eva:save-fill" />}
-        >
-          {!currentProduct ? t('create_product') : t('save_changes')}
-        </LoadingButton>
-      </Grid>
-    </>
+      <LoadingButton
+        type="submit"
+        variant="contained"
+        size="large"
+        loading={isSubmitting}
+        aria-busy={isSubmitting}
+        startIcon={<Iconify icon="eva:save-fill" />}
+      >
+        {!currentProduct ? t('create_product') : t('save_changes')}
+      </LoadingButton>
+
+      {uploadProgress !== null && (
+        <LinearProgress variant="determinate" value={uploadProgress} sx={{ mt: 1, borderRadius: 1, width: '100%' }} />
+      )}
+    </Box>
   );
+
+  const renderActions = drawerMode ? (
+    <Box
+      sx={{
+        position: 'sticky',
+        bottom: 0,
+        zIndex: 10,
+        bgcolor: 'background.paper',
+        borderTop: (theme) => `1px solid ${alpha(theme.palette.grey[500], 0.12)}`,
+        borderRadius: 0,
+        py: 2,
+        px: 2.5,
+        mx: -3,
+        mb: -3,
+        width: 'calc(100% + 48px)',
+      }}
+    >
+      {actionButtons}
+    </Box>
+  ) : (
+    <Box
+      sx={{
+        mt: 3,
+        ml: { xs: `calc(${TIMELINE_LEFT.xs}px + 16px)`, md: `calc(${TIMELINE_LEFT.md}px + 20px)` },
+      }}
+    >
+      {actionButtons}
+    </Box>
+  );
+
+  // ---- Build timeline steps ----
+
+  const buildTimelineSteps = () => {
+    const steps = [];
+    let stepNum = 1;
+
+    // Step: Product Info (always)
+    steps.push(
+      <FormTimelineStep
+        key="product-info"
+        stepNumber={stepNum}
+        icon="solar:document-text-bold"
+        title={t('form_step_product_info')}
+        isLast={false}
+      >
+        {renderProductInfo}
+      </FormTimelineStep>
+    );
+    stepNum += 1;
+
+    if (!advancedMode) {
+      // Simple mode: Media → Category & Tags → Pricing
+      steps.push(
+        <FormTimelineStep
+          key="media"
+          stepNumber={stepNum}
+          icon="solar:gallery-bold"
+          title={t('form_step_media')}
+          isLast={false}
+        >
+          {renderMedia}
+        </FormTimelineStep>
+      );
+      stepNum += 1;
+
+      steps.push(
+        <FormTimelineStep
+          key="category-tags"
+          stepNumber={stepNum}
+          icon="solar:tag-bold"
+          title={t('form_step_category_tags')}
+          isLast={!currentProduct ? false : true}
+        >
+          {renderProperties}
+        </FormTimelineStep>
+      );
+      stepNum += 1;
+
+      if (!currentProduct) {
+        steps.push(
+          <FormTimelineStep
+            key="pricing"
+            stepNumber={stepNum}
+            icon="solar:wallet-money-bold"
+            title={t('form_step_pricing')}
+            isLast
+          >
+            {renderSimplePricing}
+          </FormTimelineStep>
+        );
+        stepNum += 1;
+      }
+    } else {
+      // Advanced mode: Category & Tags → Options → Variants
+      steps.push(
+        <FormTimelineStep
+          key="category-tags"
+          stepNumber={stepNum}
+          icon="solar:tag-bold"
+          title={t('form_step_category_tags')}
+          isLast={false}
+        >
+          {renderProperties}
+        </FormTimelineStep>
+      );
+      stepNum += 1;
+
+      if (!currentProduct) {
+        steps.push(
+          <FormTimelineStep
+            key="options"
+            stepNumber={stepNum}
+            icon="solar:settings-bold"
+            title={t('form_step_options')}
+            isLast={false}
+          >
+            {renderOptionsCard}
+          </FormTimelineStep>
+        );
+        stepNum += 1;
+
+        steps.push(
+          <FormTimelineStep
+            key="variants"
+            stepNumber={stepNum}
+            icon="solar:layers-bold"
+            title={t('form_step_variants')}
+            isLast
+          >
+            {renderVariantsCard}
+          </FormTimelineStep>
+        );
+        stepNum += 1;
+      }
+    }
+
+    // Fix isLast on the actual last step
+    if (steps.length > 0) {
+      const lastIdx = steps.length - 1;
+      const lastStep = steps[lastIdx];
+      steps[lastIdx] = { ...lastStep, props: { ...lastStep.props, isLast: true } };
+    }
+
+    return steps;
+  };
 
   return (
     <div key={`product-form-container-${advancedMode ? 'advanced' : 'simple'}`}>
       <FormProvider methods={methods} onSubmit={onSubmit}>
-        <Grid container spacing={3}>
+        <Stack spacing={0}>
           {!currentProduct && renderModeToggle}
 
-          {renderDetails}
-
-          {renderProperties}
-
-          {!currentProduct && !advancedMode && renderSimplePricing}
-
-          {!currentProduct && advancedMode && renderAdvancedOptions}
+          <Box sx={{ mt: !currentProduct ? 3 : 0 }}>
+            {buildTimelineSteps()}
+          </Box>
 
           {renderActions}
-        </Grid>
+        </Stack>
       </FormProvider>
 
       <ConfirmDialog
@@ -977,4 +1252,8 @@ export default function ProductNewEditForm({ currentProduct }) {
 
 ProductNewEditForm.propTypes = {
   currentProduct: PropTypes.object,
+  drawerMode: PropTypes.bool,
+  onSuccess: PropTypes.func,
+  onCancel: PropTypes.func,
+  onDirtyChange: PropTypes.func,
 };

@@ -18,6 +18,7 @@ import FormProvider, {
   RHFUploadAvatar,
 } from 'src/components/hook-form';
 import showError from 'src/utils/show_error';
+import { captureEvent } from 'src/utils/posthog';
 import { updateStoreLogo } from 'src/api/store';
 import { AuthContext } from 'src/auth/context/jwt';
 
@@ -77,6 +78,7 @@ export default function StoreLogoForm() {
           });
         }
       }
+      captureEvent('store_updated', { section: 'logo' });
       enqueueSnackbar(t('logo_updated_successfully'), { variant: 'success' });
       setLoading(false);
     } catch (error) {

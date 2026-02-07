@@ -9,7 +9,6 @@ import { varFade } from '../animate';
 import FileThumbnail, { fileData } from '../file-thumbnail';
 import { fileFormat } from '../file-thumbnail/utils';
 import { t } from 'i18next';
-import { paths } from 'src/routes/paths';
 import { Link } from '@mui/material';
 
 // ----------------------------------------------------------------------
@@ -88,7 +87,7 @@ export default function MultiFilePreview({ thumbnail, files, sx,onClose }) {
 
         // List mode
         return (
-          <Link href={paths.dashboard.documents.preview + `?url=${"/" + file?.path}`} target='_blank'>
+          <Link href={`/${file?.path}`} target='_blank'>
             <Stack
               key={key}
               component={m.div}

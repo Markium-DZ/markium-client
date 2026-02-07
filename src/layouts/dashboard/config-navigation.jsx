@@ -44,10 +44,6 @@ const ICONS = {
   analytics: icon('ic_analytics'),
   settings: icon('ic_settings'),
   dashboard: icon('ic_dashboard'),
-  car: <Iconify icon="tabler:car" />,
-  maintenance: <Iconify icon="map:car-repair" />,
-  document: <Iconify icon="carbon:document" />,
-  driver: <Iconify icon="healthicons:truck-driver" />,
   support: <Iconify icon="solar:chat-round-call-bold-duotone" />,
   media: <Iconify icon="solar:gallery-bold" />,
   inventory: <Iconify icon="solar:box-bold" />,
@@ -79,17 +75,6 @@ export function useNavData() {
       {
         subheader: t('management'),
         items: [
-          // {
-          //   title: t('vehicles'),
-          //   path: paths.dashboard.vehicle.root,
-          //   icon: ICONS.car,
-          //   permissions:["read.car"],
-          //   children: [
-          //     { title: t('vehiclesList'), permissions:"read.car", path: paths.dashboard.vehicle.root },
-          //     { title: t('logAndNotification'), permissions:"read.car_log", path: paths.dashboard.vehicle.log },
-          //     { title: t('costAndInput'), permissions:"read.car", path: paths.dashboard.vehicle.inputs },
-          //   ],
-          // },
           {
             title: t('products'),
             path: paths.dashboard.product.root,
@@ -139,7 +124,7 @@ export function useNavData() {
             title: t('settings'),
             path: paths.dashboard.settings.root,
             icon: ICONS.settings,
-            permissions: ["read.color", "read.car_company", "read.car_model", "read.spec", "read.attahcment_name", "read.country", "read.neighborhood", "read.state"],
+            permissions: ["read.color", "read.country", "read.neighborhood", "read.state"],
             roles: ['admin', 'manager'],
             // permissions:"read.system_settings",
           },

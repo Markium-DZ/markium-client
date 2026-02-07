@@ -1,4 +1,5 @@
 import PropTypes from 'prop-types';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import Tab from '@mui/material/Tab';
@@ -15,6 +16,7 @@ import TableCell from '@mui/material/TableCell';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import CardHeader from '@mui/material/CardHeader';
+import InputLabel from '@mui/material/InputLabel';
 import FormControl from '@mui/material/FormControl';
 import LinearProgress from '@mui/material/LinearProgress';
 import TableContainer from '@mui/material/TableContainer';
@@ -67,9 +69,13 @@ export default function EcommerceAnalyticsTabs({
   // Tab state
   currentTab,
   onTabChange,
+  // Options
+  hideOverviewTab,
   ...other
 }) {
   const { t } = useTranslation();
+
+  const visibleTabs = hideOverviewTab ? TABS.filter((tab) => tab.value !== 'overview') : TABS;
 
   const handleChangeTab = (event, newValue) => {
     onTabChange?.(newValue);
@@ -85,7 +91,11 @@ export default function EcommerceAnalyticsTabs({
         title={t('analytics')}
         action={
           <FormControl size="small" sx={{ minWidth: 140 }}>
+            <InputLabel id="analytics-date-range-label" sx={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}>
+              {t('date_range')}
+            </InputLabel>
             <Select
+              labelId="analytics-date-range-label"
               value={dateRange}
               onChange={handleDateRangeChange}
               sx={{ fontSize: 14 }}
@@ -104,15 +114,29 @@ export default function EcommerceAnalyticsTabs({
       <Tabs
         value={currentTab}
         onChange={handleChangeTab}
+        variant="scrollable"
+        scrollButtons={false}
         sx={{
           px: 3,
           pt: 2,
+          position: 'relative',
           '& .MuiTab-root': {
             minHeight: 48,
           },
+          '&::after': {
+            content: '""',
+            position: 'absolute',
+            right: 0,
+            top: 0,
+            bottom: 0,
+            width: 40,
+            background: (thm) => `linear-gradient(to right, transparent, ${thm.palette.background.paper})`,
+            pointerEvents: 'none',
+            display: { xs: 'block', md: 'none' },
+          },
         }}
       >
-        {TABS.map((tab) => (
+        {visibleTabs.map((tab) => (
           <Tab
             key={tab.value}
             value={tab.value}
@@ -179,6 +203,7 @@ EcommerceAnalyticsTabs.propTypes = {
   onDateRangeChange: PropTypes.func,
   currentTab: PropTypes.string,
   onTabChange: PropTypes.func,
+  hideOverviewTab: PropTypes.bool,
 };
 
 // ----------------------------------------------------------------------
@@ -257,15 +282,26 @@ function OverviewTab({
   );
 }
 
-function MetricCard({ metric }) {
-  const { t } = useTranslation();
+export function MetricCard({ metric, onClick, compact }) {
   const theme = useTheme();
 
-  // Check if data has any non-zero values OR if the total value is non-zero
   const hasChartData = metric.data && metric.data.length > 0;
   const hasNonZeroData = hasChartData && metric.data.some((val) => val > 0);
-  // Show chart if there's non-zero data, hide only when both value and data are zero
-  const showChart = hasNonZeroData || (hasChartData && metric.value > 0);
+
+  // Calculate percentage change from data series (compare second half avg to first half avg)
+  const percentChange = useMemo(() => {
+    if (!hasChartData || metric.data.length < 4) return null;
+    const d = metric.data;
+    const mid = Math.floor(d.length / 2);
+    const firstHalf = d.slice(0, mid);
+    const secondHalf = d.slice(mid);
+    const avgFirst = firstHalf.reduce((a, b) => a + b, 0) / firstHalf.length;
+    const avgSecond = secondHalf.reduce((a, b) => a + b, 0) / secondHalf.length;
+    if (avgFirst === 0) return avgSecond > 0 ? 100 : 0;
+    return ((avgSecond - avgFirst) / avgFirst) * 100;
+  }, [hasChartData, metric.data]);
+
+  const isPositive = percentChange !== null && percentChange >= 0;
 
   const chartOptions = useChart({
     colors: [metric.color],
@@ -280,62 +316,127 @@ function MetricCard({ metric }) {
   });
 
   return (
-    <Box
-      sx={{
-        p: 2.5,
-        borderRadius: 2,
-        bgcolor: alpha(metric.color, 0.08),
-      }}
-    >
-      <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 2 }}>
-        <Box
-          sx={{
-            p: 1,
-            borderRadius: 1,
-            bgcolor: alpha(metric.color, 0.16),
-            color: metric.color,
-          }}
-        >
-          <Iconify icon={metric.icon} width={24} />
-        </Box>
-        <Tooltip title={metric.tooltip} arrow placement="top">
-          <Typography variant="subtitle2" sx={{ color: 'text.secondary', cursor: 'help' }}>
+    <Tooltip title={metric.tooltip} arrow placement="top">
+      <Box
+        onClick={onClick}
+        sx={{
+          p: compact ? 1.5 : 2,
+          borderRadius: 2,
+          bgcolor: alpha(metric.color, 0.08),
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+          ...(onClick && {
+            cursor: 'pointer',
+            transition: 'all 0.2s ease',
+            '&:hover': {
+              bgcolor: alpha(metric.color, 0.14),
+              transform: 'translateY(-1px)',
+              boxShadow: `0 4px 12px ${alpha(metric.color, 0.15)}`,
+            },
+          }),
+        }}
+      >
+        {/* Icon + Label */}
+        <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 0.75 }}>
+          <Box
+            sx={{
+              width: compact ? 28 : 36,
+              height: compact ? 28 : 36,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: 1,
+              bgcolor: alpha(metric.color, 0.16),
+              color: metric.color,
+              flexShrink: 0,
+            }}
+          >
+            <Iconify icon={metric.icon} width={compact ? 16 : 20} />
+          </Box>
+          <Typography
+            variant="caption"
+            noWrap
+            sx={{
+              color: 'text.secondary',
+              fontWeight: 600,
+              lineHeight: 1.2,
+              fontSize: compact ? '0.65rem' : '0.75rem',
+            }}
+          >
             {metric.label}
           </Typography>
-        </Tooltip>
-      </Stack>
+        </Stack>
 
-      <Typography variant="h4" sx={{ mb: 1 }}>
-        {fNumber(metric.value)}
-      </Typography>
-
-      {hasNonZeroData ? (
-        <Chart
-          type="line"
-          series={[{ data: metric.data.slice(-10) }]}
-          options={chartOptions}
-          height={60}
-        />
-      ) : (
-        <Box
-          sx={{
-            height: 60,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <Typography variant="caption" sx={{ color: 'text.disabled' }}>
-            {t('no_chart_data')}
+        {/* Number + Percentage */}
+        <Stack direction="row" alignItems="baseline" spacing={0.75} sx={{ mb: 'auto' }}>
+          <Typography
+            variant={compact ? 'h5' : 'h4'}
+            component="p"
+            sx={{
+              lineHeight: 1.1,
+              fontWeight: 800,
+              letterSpacing: '-0.02em',
+            }}
+          >
+            {metric.value ? fNumber(metric.value) : '0'}
           </Typography>
-        </Box>
-      )}
-    </Box>
+
+          {percentChange !== null && Math.abs(percentChange) >= 0.1 && (
+            <Stack
+              direction="row"
+              alignItems="center"
+              spacing={0.25}
+              sx={{
+                px: 0.5,
+                py: 0.25,
+                borderRadius: 0.75,
+                bgcolor: alpha(isPositive ? theme.palette.success.main : theme.palette.error.main, 0.12),
+              }}
+            >
+              <Iconify
+                icon={isPositive ? 'eva:trending-up-fill' : 'eva:trending-down-fill'}
+                width={14}
+                sx={{ color: isPositive ? 'success.main' : 'error.main' }}
+              />
+              <Typography
+                variant="caption"
+                sx={{
+                  fontWeight: 700,
+                  fontSize: '0.65rem',
+                  lineHeight: 1,
+                  color: isPositive ? 'success.main' : 'error.main',
+                }}
+              >
+                {fPercent(Math.abs(percentChange))}
+              </Typography>
+            </Stack>
+          )}
+        </Stack>
+
+        {/* Sparkline — always reserve space */}
+        {!compact && (
+          <Box sx={{ mt: 1, flexGrow: 1, minHeight: 40 }}>
+            {hasNonZeroData && (
+              <Chart
+                type="line"
+                series={[{ data: metric.data.slice(-10) }]}
+                options={chartOptions}
+                height={40}
+              />
+            )}
+          </Box>
+        )}
+      </Box>
+    </Tooltip>
   );
 }
 
 MetricCard.propTypes = {
   metric: PropTypes.object,
+  onClick: PropTypes.func,
+  compact: PropTypes.bool,
 };
 
 // ----------------------------------------------------------------------
@@ -346,16 +447,7 @@ function TrafficTab({ visitors, productViews, loading }) {
   const { t } = useTranslation();
   const theme = useTheme();
 
-  if (loading) {
-    return <LoadingState />;
-  }
-
-  const hasData = visitors?.data?.length > 0 || productViews?.data?.length > 0;
-
-  if (!hasData) {
-    return <EmptyState message={t('no_traffic_data')} />;
-  }
-
+  // Hooks must be called before any early returns
   const chartOptions = useChart({
     colors: [theme.palette.primary.main, theme.palette.warning.main],
     xaxis: {
@@ -365,6 +457,16 @@ function TrafficTab({ visitors, productViews, loading }) {
       y: { formatter: (value) => fNumber(value) },
     },
   });
+
+  if (loading) {
+    return <LoadingState />;
+  }
+
+  const hasData = visitors?.data?.length > 0 || productViews?.data?.length > 0;
+
+  if (!hasData) {
+    return <EmptyState message={t('no_traffic_data')} />;
+  }
 
   const series = [
     {

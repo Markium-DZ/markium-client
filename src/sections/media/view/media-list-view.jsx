@@ -23,6 +23,7 @@ import { fDate, fDateTime } from 'src/utils/format-time';
 import { fData } from 'src/utils/format-number';
 import CustomPopover, { usePopover } from 'src/components/custom-popover';
 import { ConfirmDialog } from 'src/components/custom-dialog';
+import { captureEvent } from 'src/utils/posthog';
 import showError from 'src/utils/show_error';
 import { STORAGE_API } from 'src/config-global';
 import { LoadingScreen } from 'src/components/loading-screen';
@@ -91,6 +92,7 @@ export default function MediaListView() {
     try {
       setUploading(true);
       await uploadMedia(files);
+      captureEvent('media_uploaded', { count: files.length });
 
       // Reset page and media to refresh from beginning
       setPage(1);

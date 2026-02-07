@@ -41,8 +41,6 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { useSnackbar } from 'src/components/snackbar';
 import FormProvider, { RHFTextField, RHFUpload, } from 'src/components/hook-form';
 
-import { markMaintenanceAsCompeleted } from 'src/api/maintainance';
-import { updateCarODO } from 'src/api/car';
 import showError from 'src/utils/show_error';
 import { deleteRole } from 'src/api/users';
 import SimpleAutocomplete from 'src/components/hook-form/rhf-simple-autocomplete';
@@ -80,7 +78,6 @@ export function DeleteCurrentRole({ odo, id, close,role, roles,setCarDetails }) 
   const onSubmit = handleSubmit(async (data) => {
     try {
       const response = await deleteRole(id, {replacement_role_id:data?.replacement_role_id});
-      // setCarDetails(prev => ({...prev,odometer:data?.odometer}))
       enqueueSnackbar(t("operation_success"), { variant: 'success' });
       close();
     } catch (error) {
@@ -97,11 +94,6 @@ export function DeleteCurrentRole({ odo, id, close,role, roles,setCarDetails }) 
     <FormProvider methods={methods} onSubmit={onSubmit}>
       <Grid container spacing={3}>
         <Grid xs={12} md={12} sx={{ mt: 3 }}>
-          {/* <Stack direction="row" mb={2} sx={{ px: '10px' }}>
-            <Box sx={{ width: 150, color: 'text.secondary' }}>{t('current_odometer') + " :"}</Box>
-            <Box sx={{ typography: 'subtitle2' }}>{odo} {t("km")}</Box>
-          </Stack> */}
-          {/* <RHFTextField required type="number" name="odometer" label={t('new_value')} /> */}
            <SimpleAutocomplete  required options={roles} name="replacement_role_id" label={t('replacement_role_id')} placeholder={t('search_by')} />
           {/* <FormHelperText id="component-helper-text">
             {t("must_be_grater_then_old")}

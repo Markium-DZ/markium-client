@@ -95,8 +95,7 @@ export async function uploadProductImages(id, body) {
   return await axios.post(URL, body);
 }
 
-export async function createMedia(files) {
-  // const URL = '/media';
+export async function createMedia(files, onProgress) {
   const URL = endpoints.media.root;
   const formData = new FormData();
 
@@ -108,6 +107,12 @@ export async function createMedia(files) {
     headers: {
       'Content-Type': 'multipart/form-data',
     },
+    onUploadProgress: onProgress
+      ? (progressEvent) => {
+          const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          onProgress(percent);
+        }
+      : undefined,
   });
 }
 

@@ -41,9 +41,6 @@ import {
 } from 'src/components/table';
 
 import { useLocales, useTranslate } from 'src/locales';
-import { useGetClaim } from 'src/api/claim';
-import { useGetClients } from 'src/api/client';
-import { useGetContracts } from 'src/api/contract';
 import { useGetMainSpecs } from 'src/api/settings';
 import { useValues } from 'src/api/utils';
 import OrderTableRow from './zaity-table-row';

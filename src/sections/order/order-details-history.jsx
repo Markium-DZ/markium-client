@@ -19,6 +19,8 @@ import { t } from 'i18next';
 // ----------------------------------------------------------------------
 
 export default function OrderDetailsHistory({ currentOrder,history }) {
+  const shipment = currentOrder?.activeShipment;
+
   const renderSummary = (
     <Stack
       spacing={2}
@@ -34,21 +36,27 @@ export default function OrderDetailsHistory({ currentOrder,history }) {
       }}
     >
       <Stack spacing={0.5}>
-        <Box sx={{ color: 'text.disabled' }}>Order time</Box>
+        <Box sx={{ color: 'text.disabled' }}>{t('order_time')}</Box>
         {fDateTime(currentOrder?.created_at)}
       </Stack>
-      <Stack spacing={0.5}>
-        <Box sx={{ color: 'text.disabled' }}>Payment time</Box>
-        {fDateTime(currentOrder?.updated_at)}
-      </Stack>
-      <Stack spacing={0.5}>
-        <Box sx={{ color: 'text.disabled' }}>Delivery time for the carrier</Box>
-        {fDateTime(currentOrder?.updated_at)}
-      </Stack>
-      <Stack spacing={0.5}>
-        <Box sx={{ color: 'text.disabled' }}>Completion time</Box>
-        {fDateTime(currentOrder?.updated_at)}
-      </Stack>
+      {currentOrder?.confirmed_at && (
+        <Stack spacing={0.5}>
+          <Box sx={{ color: 'text.disabled' }}>{t('confirmation_time')}</Box>
+          {fDateTime(currentOrder?.confirmed_at)}
+        </Stack>
+      )}
+      {shipment?.shipped_at && (
+        <Stack spacing={0.5}>
+          <Box sx={{ color: 'text.disabled' }}>{t('shipping_time')}</Box>
+          {fDateTime(shipment.shipped_at)}
+        </Stack>
+      )}
+      {shipment?.delivered_at && (
+        <Stack spacing={0.5}>
+          <Box sx={{ color: 'text.disabled' }}>{t('delivery_time')}</Box>
+          {fDateTime(shipment.delivered_at)}
+        </Stack>
+      )}
     </Stack>
   );
 

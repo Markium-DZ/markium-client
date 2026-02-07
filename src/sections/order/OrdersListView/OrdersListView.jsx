@@ -3,11 +3,6 @@ import { t } from 'i18next';
 import { set } from 'lodash'; // [keep for later use]
 import { enqueueSnackbar, useSnackbar } from 'notistack';
 import { useCallback, useEffect, useState } from 'react';
-import { AddCarToMentainance, deleteCar, markCarAsAvailable, useGetCar } from 'src/api/car';
-import { useGetClauses } from 'src/api/claim';
-import { useGetClients } from 'src/api/client';
-import { deleteContractClause, useGetContracts } from 'src/api/contract';
-import { markMaintenanceAsCompeleted, useGetMaintenance } from 'src/api/maintainance';
 import { changeItemVisibilityInSettings, useGetMainSpecs, useGetSystemVisibleItem } from 'src/api/settings'; // [keep for later use]
 import { createUser, deleteUser, useRoles, useUsers } from 'src/api/users';
 import { useValues } from 'src/api/utils';
@@ -34,14 +29,13 @@ import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import FormProvider, { RHFUpload } from 'src/components/hook-form';
 import { LoadingButton } from '@mui/lab';
-import { deleteDocument, useGetDocuments } from 'src/api/document';
-import { deleteDriver, useGetDrivers } from 'src/api/drivers';
 import { secondary } from 'src/theme/palette';
 import { color } from 'framer-motion';
 import { LoadingScreen } from 'src/components/loading-screen';
 import { useGetProducts } from 'src/api/product';
 import { updateOrder, useGetOrders, useGetOrdersByProduct } from 'src/api/orders';
 import ExportOrdersButton from './ExportOrdersButton';
+import { fCurrency } from 'src/utils/format-number';
 import { HOST_API } from 'src/config-global';
 import { getOrderStatusOptions, getOrderStatus } from 'src/constants/order-status';
 
@@ -172,13 +166,13 @@ function OrderItemDetailsDialog({ open, onClose, item }) {
                 </Typography>
                 <Stack direction="row" spacing={1.5} alignItems="baseline" flexWrap="wrap" sx={{ mt: 0.5 }}>
                     <Typography variant="h5" color="primary.main" sx={{ fontWeight: 700 }}>
-                        {item.unit_price ? `${item.unit_price.toFixed(2)} DA` : '-'}
+                        {item.unit_price ? fCurrency(item.unit_price) : '-'}
                     </Typography>
                     {item.quantity > 1 && (
                         <Typography variant="body2" color="text.secondary">
                             {t('total')}: <Box component="span" sx={{ fontWeight: 700, color: 'primary.dark' }}>
-                                {item.total_price ? `${item.total_price.toFixed(2)} DA` :
-                                (item.unit_price ? `${(item.unit_price * item.quantity).toFixed(2)} DA` : '-')}
+                                {item.total_price ? fCurrency(item.total_price) :
+                                (item.unit_price ? fCurrency(item.unit_price * item.quantity) : '-')}
                             </Box>
                         </Typography>
                     )}
@@ -487,7 +481,7 @@ export default function OrdersListView({ product_id }) {
                 name: item?.customer?.full_name,
                 phone: item?.customer?.phone,
                 total_items: item?.total_items || item?.items?.length || 0,
-                total: item?.total_price ? `${item.total_price.toFixed(2)} DA` : item?.total ? `${item.total.toFixed(2)} DA` : '-',
+                total: item?.total_price ? fCurrency(item.total_price) : item?.total ? fCurrency(item.total) : '-',
                 products_summary: itemsSummary,
                 c_status: translatedStatus,
                 full_address: currentLang?.value === "ar"
@@ -597,12 +591,21 @@ export default function OrdersListView({ product_id }) {
                     <ZaityTableTabs filterKey='condition' data={tableData} items={items} defaultFilters={defaultFilters} setTableDate={setDataFiltered} filterFunction={filterFunction}>
                         {/* <ZaityTableTabs filterKey='attachable_type' data={tableData} items={items2} defaultFilters={defaultFilters} setTableDate={setDataFiltered} filterFunction={filterFunction}> */}
                         <ZaityTableFilters data={dataFiltered} tableData={tableData} setTableDate={setDataFiltered} items={filters} defaultFilters={defaultFilters} dataFiltered={tableData} searchText={t("search_by") + " " + t("name") + " " + t("or_any_value") + " ..."}  >
-                            {
-                                ordersLoading ?
-                                    <LoadingScreen sx={{ my: 8 }} color='primary' />
-                                    :
-                                    <ZaityListView TABLE_HEAD={[...TABLE_HEAD]} dense="medium" zaityTableDate={dataFiltered || []} onSelectedRows={({ data, setTableData }) => { return <onSelectedRowsComponent configurable_type={"roles"} setTableData={setTableData} data={orders} /> }} />
-                            }
+                            {ordersLoading ? (
+                                <LoadingScreen sx={{ my: 8 }} color='primary' />
+                            ) : (!dataFiltered || dataFiltered.length === 0) ? (
+                                <Box sx={{ textAlign: 'center', py: 10 }}>
+                                    <Iconify icon="solar:bag-4-bold-duotone" width={64} sx={{ color: 'text.disabled', mb: 2 }} />
+                                    <Typography variant="h6" color="text.secondary" gutterBottom>
+                                        {t('no_orders_yet')}
+                                    </Typography>
+                                    <Typography variant="body2" color="text.disabled" sx={{ mb: 3 }}>
+                                        {t('no_orders_description')}
+                                    </Typography>
+                                </Box>
+                            ) : (
+                                <ZaityListView TABLE_HEAD={[...TABLE_HEAD]} dense="medium" zaityTableDate={dataFiltered || []} onSelectedRows={({ data, setTableData }) => { return <onSelectedRowsComponent configurable_type={"roles"} setTableData={setTableData} data={orders} /> }} />
+                            )}
                         </ZaityTableFilters>
                         {/* </ZaityTableTabs> */}
                     </ZaityTableTabs>
@@ -642,9 +645,7 @@ const ElementActions = ({ item, setTableData }) => {
                 loading.onTrue()
                 // Update order status - use first item's product_id if backend requires it
                 const productId = item.items?.[0]?.product?.id || item.product_id;
-                console.log("new status : ", { status: selectedStatus.value })
                 await updateOrder(item.id, { status: selectedStatus.value })
-                console.log("Changing order status:", { orderId: item?.id, newStatus: selectedStatus.value });
 
                 // Update table data optimistically
                 setTableData(prev => prev?.map(order =>
@@ -657,7 +658,6 @@ const ElementActions = ({ item, setTableData }) => {
                 setPostloader(false)
                 setSelectedStatus(null)
             } catch (error) {
-                console.log("ersetSelectedStatus setSelectedStatus setSelectedStatus ror : ", error);
                 setPostloader(false)
                 loading.onFalse()
                 showError(error.error)

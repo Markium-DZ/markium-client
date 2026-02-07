@@ -91,12 +91,7 @@ export default function SystemItemListView({ collection }) {
 
     const checkVisibility = useCallback(
         (item) => {
-            // if ( ["license_type","car_model"]?.includes(currentType) ) {
-            //     return visibleItems.some(i => (i?.id == item?.id || i?.key == item?.key));
-            //     // return visibleItems?.map(i => i.id)?.includes(item.id)
-            // } else {
             return item?.is_active
-            // }
         },
         [visibleItems]
     );
@@ -162,7 +157,7 @@ export default function SystemItemListView({ collection }) {
                                 itemsLoading ?
                                     <LoadingScreen sx={{ my: 8 }} color='primary' />
                                     :
-                                    <ZaityListView TABLE_HEAD={[...currentSystemItem?.TABLE_HEAD, { id: 'visibilitys', label: t('selected'), type: "label", width: collection.type == "maintenance_specification" ? 120 : 350 }, { id: 'enable', label: t('enable'), type: "component", width: 40, align: "center" }]} dense="small" zaityTableDate={dataFiltered || []} onSelectedRows={({ data, setTableData }) => { return <onSelectedRowsComponent configurable_type={collection?.type} setTableData={setTableData} data={data} /> }} />
+                                    <ZaityListView TABLE_HEAD={[...currentSystemItem?.TABLE_HEAD, { id: 'visibilitys', label: t('selected'), type: "label", width: 350 }, { id: 'enable', label: t('enable'), type: "component", width: 40, align: "center" }]} dense="small" zaityTableDate={dataFiltered || []} onSelectedRows={({ data, setTableData }) => { return <onSelectedRowsComponent configurable_type={collection?.type} setTableData={setTableData} data={data} /> }} />
                             }
                         </ZaityTableFilters>
                     </ZaityTableTabs>

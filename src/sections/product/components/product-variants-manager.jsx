@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
@@ -109,7 +109,7 @@ export default function ProductVariantsManager({ options, variants, onChange, im
   }, [possibleVariants, variants]);
 
   // Update parent when synced variants change
-  useMemo(() => {
+  useEffect(() => {
     if (JSON.stringify(syncedVariants) !== JSON.stringify(variants)) {
       onChange(syncedVariants);
     }
@@ -289,37 +289,37 @@ export default function ProductVariantsManager({ options, variants, onChange, im
           <Table size="small">
             <TableHead>
               <TableRow sx={{ bgcolor: (theme) => alpha(theme.palette.grey[500], 0.04) }}>
-                <TableCell padding="checkbox" sx={{ width: 50 }}>
+                <TableCell scope="col" padding="checkbox" sx={{ width: 50 }}>
                   <Typography variant="caption" fontWeight={700}>
                     {t('default')}
                   </Typography>
                 </TableCell>
-                <TableCell sx={{ minWidth: 180 }}>
+                <TableCell scope="col" sx={{ minWidth: 180 }}>
                   <Typography variant="caption" fontWeight={700}>
                     {t('variant')}
                   </Typography>
                 </TableCell>
-                <TableCell sx={{ width: 120 }}>
+                <TableCell scope="col" sx={{ width: 120 }}>
                   <Typography variant="caption" fontWeight={700}>
                     {t('price')}
                   </Typography>
                 </TableCell>
-                <TableCell sx={{ width: 120 }}>
+                <TableCell scope="col" sx={{ width: 120 }}>
                   <Typography variant="caption" fontWeight={700}>
                     {t('compare_price')}
                   </Typography>
                 </TableCell>
-                <TableCell sx={{ width: 100 }}>
+                <TableCell scope="col" sx={{ width: 100 }}>
                   <Typography variant="caption" fontWeight={700}>
                     {t('stock')}
                   </Typography>
                 </TableCell>
-                <TableCell sx={{ width: 80, textAlign: 'center' }}>
+                <TableCell scope="col" sx={{ width: 80, textAlign: 'center' }}>
                   <Typography variant="caption" fontWeight={700}>
                     {t('image')}
                   </Typography>
                 </TableCell>
-                <TableCell sx={{ width: 60 }} />
+                <TableCell scope="col" sx={{ width: 60 }} />
               </TableRow>
             </TableHead>
             <TableBody>
@@ -408,6 +408,7 @@ function VariantRow({ variant, index, expanded, onToggleExpand, onUpdate, images
             checked={variant.is_default}
             onChange={() => onUpdate(variant.id, 'is_default', true)}
             color="primary"
+            inputProps={{ 'aria-label': `${t('default')}: ${variantLabel}` }}
           />
         </TableCell>
 
@@ -498,7 +499,7 @@ function VariantRow({ variant, index, expanded, onToggleExpand, onUpdate, images
 
         {/* Expand Button */}
         <TableCell>
-          <IconButton size="small" onClick={onToggleExpand}>
+          <IconButton size="small" onClick={onToggleExpand} aria-label={expanded ? t('collapse_variant') : t('expand_variant')} aria-expanded={expanded}>
             <Iconify
               icon={expanded ? 'eva:arrow-ios-upward-fill' : 'eva:arrow-ios-downward-fill'}
             />
@@ -528,8 +529,8 @@ function VariantRow({ variant, index, expanded, onToggleExpand, onUpdate, images
                     size="small"
                     label={t('price')}
                     type="number"
-                    value={variant.price}
-                    onChange={(e) => onUpdate(variant.id, 'price', parseFloat(e.target.value) || 0)}
+                    value={variant.price || ''}
+                    onChange={(e) => onUpdate(variant.id, 'price', e.target.value === '' ? 0 : parseFloat(e.target.value))}
                     InputProps={{
                       startAdornment: <InputAdornment position="start">DZD</InputAdornment>,
                     }}
@@ -538,8 +539,8 @@ function VariantRow({ variant, index, expanded, onToggleExpand, onUpdate, images
                     size="small"
                     label={t('compare_at_price')}
                     type="number"
-                    value={variant.compare_at_price}
-                    onChange={(e) => onUpdate(variant.id, 'compare_at_price', parseFloat(e.target.value) || 0)}
+                    value={variant.compare_at_price || ''}
+                    onChange={(e) => onUpdate(variant.id, 'compare_at_price', e.target.value === '' ? 0 : parseFloat(e.target.value))}
                     error={variant.compare_at_price > 0 && variant.compare_at_price < variant.price}
                     helperText={
                       variant.compare_at_price > 0 && variant.compare_at_price < variant.price
@@ -554,8 +555,30 @@ function VariantRow({ variant, index, expanded, onToggleExpand, onUpdate, images
                     size="small"
                     label={t('quantity')}
                     type="number"
-                    value={variant.quantity}
-                    onChange={(e) => onUpdate(variant.id, 'quantity', parseInt(e.target.value, 10) || 0)}
+                    value={variant.quantity || ''}
+                    onChange={(e) => onUpdate(variant.id, 'quantity', e.target.value === '' ? 0 : parseInt(e.target.value, 10))}
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end" sx={{ flexDirection: 'column', height: '100%', mr: -0.5 }}>
+                          <IconButton
+                            size="small"
+                            onClick={() => onUpdate(variant.id, 'quantity', (variant.quantity || 0) + 1)}
+                            aria-label={t('increase')}
+                            sx={{ p: 0, lineHeight: 1 }}
+                          >
+                            <Iconify icon="eva:arrow-ios-upward-fill" width={16} />
+                          </IconButton>
+                          <IconButton
+                            size="small"
+                            onClick={() => onUpdate(variant.id, 'quantity', Math.max(0, (variant.quantity || 0) - 1))}
+                            aria-label={t('decrease')}
+                            sx={{ p: 0, lineHeight: 1 }}
+                          >
+                            <Iconify icon="eva:arrow-ios-downward-fill" width={16} />
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    }}
                   />
                 </Box>
 
@@ -568,7 +591,16 @@ function VariantRow({ variant, index, expanded, onToggleExpand, onUpdate, images
                   <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
                     {/* Media Picker Button */}
                     <Box
+                      role="button"
+                      tabIndex={0}
+                      aria-label={t('add_images')}
                       onClick={() => setMediaPickerOpen(true)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          setMediaPickerOpen(true);
+                        }
+                      }}
                       sx={{
                         width: 60,
                         height: 60,
@@ -583,6 +615,10 @@ function VariantRow({ variant, index, expanded, onToggleExpand, onUpdate, images
                         '&:hover': {
                           borderColor: 'primary.main',
                           bgcolor: (theme) => alpha(theme.palette.primary.main, 0.04),
+                        },
+                        '&:focus-visible': {
+                          outline: (theme) => `2px solid ${theme.palette.primary.main}`,
+                          outlineOffset: 2,
                         },
                       }}
                     >

@@ -6,7 +6,9 @@ import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
+import Drawer from '@mui/material/Drawer';
 import Tooltip from '@mui/material/Tooltip';
+import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import LinearProgress from '@mui/material/LinearProgress';
 import { alpha, useTheme } from '@mui/material/styles';
@@ -15,8 +17,8 @@ import { useRouter } from 'src/routes/hooks';
 import { paths } from 'src/routes/paths';
 
 import Iconify from 'src/components/iconify';
+import { ConfirmDialog } from 'src/components/custom-dialog';
 import { MediaPickerDialog } from 'src/components/media-picker';
-import ContentDialog from 'src/components/custom-dialog/content-dialog';
 import ProductNewEditForm from 'src/sections/product/product-new-edit-form';
 
 // ----------------------------------------------------------------------
@@ -27,6 +29,8 @@ export default function SetupChecklist({ productsCount = 0, ordersCount = 0, has
   const router = useRouter();
   const [mediaPickerOpen, setMediaPickerOpen] = useState(false);
   const [productDialogOpen, setProductDialogOpen] = useState(false);
+  const [isFormDirty, setIsFormDirty] = useState(false);
+  const [unsavedDialogOpen, setUnsavedDialogOpen] = useState(false);
 
   const handleOpenMediaPicker = useCallback(() => {
     setMediaPickerOpen(true);
@@ -54,10 +58,24 @@ export default function SetupChecklist({ productsCount = 0, ordersCount = 0, has
 
   const handleCloseProductDialog = useCallback(() => {
     setProductDialogOpen(false);
+    setIsFormDirty(false);
     // Refresh data to update the checklist (product may have been created)
     onRefresh?.();
     setTimeout(() => onRefresh?.(), 2000);
   }, [onRefresh]);
+
+  const handleRequestCloseProductDialog = useCallback(() => {
+    if (isFormDirty) {
+      setUnsavedDialogOpen(true);
+    } else {
+      handleCloseProductDialog();
+    }
+  }, [isFormDirty, handleCloseProductDialog]);
+
+  const handleDiscardChanges = useCallback(() => {
+    setUnsavedDialogOpen(false);
+    handleCloseProductDialog();
+  }, [handleCloseProductDialog]);
 
   const steps = [
     // {
@@ -262,12 +280,55 @@ export default function SetupChecklist({ productsCount = 0, ordersCount = 0, has
       title={t('onboarding_upload_images')}
     />
 
-    <ContentDialog
+    <Drawer
+      anchor={theme.direction === 'rtl' ? 'right' : 'left'}
       open={productDialogOpen}
-      onClose={handleCloseProductDialog}
-      title={t('create_new_product')}
-      maxWidth="lg"
-      content={<ProductNewEditForm />}
+      onClose={handleRequestCloseProductDialog}
+      PaperProps={{
+        sx: {
+          width: { xs: '100%', sm: '80vw', md: '60vw', lg: '50vw' },
+        },
+        role: 'dialog',
+        'aria-modal': 'true',
+        'aria-label': t('create_new_product'),
+      }}
+    >
+      <Stack
+        direction="row"
+        alignItems="center"
+        justifyContent="space-between"
+        sx={{
+          px: 2.5,
+          py: 2,
+          borderBottom: `1px solid ${alpha(theme.palette.grey[500], 0.12)}`,
+        }}
+      >
+        <Typography variant="h6">{t('create_new_product')}</Typography>
+        <IconButton onClick={handleRequestCloseProductDialog} size="small" aria-label={t('cancel')}>
+          <Iconify icon="mingcute:close-line" width={20} />
+        </IconButton>
+      </Stack>
+
+      <Box sx={{ p: 2.5, overflowY: 'auto', flexGrow: 1 }}>
+        <ProductNewEditForm
+          drawerMode
+          onSuccess={handleCloseProductDialog}
+          onCancel={handleRequestCloseProductDialog}
+          onDirtyChange={setIsFormDirty}
+        />
+      </Box>
+    </Drawer>
+
+    <ConfirmDialog
+      open={unsavedDialogOpen}
+      onClose={() => setUnsavedDialogOpen(false)}
+      title={t('unsaved_changes_title')}
+      content={t('unsaved_changes_message')}
+      action={
+        <Button variant="contained" color="error" onClick={handleDiscardChanges}>
+          {t('discard_changes')}
+        </Button>
+      }
     />
     </>
   );

@@ -3,11 +3,6 @@ import { t } from 'i18next';
 import { set } from 'lodash'; // [keep for later use]
 import { enqueueSnackbar, useSnackbar } from 'notistack';
 import { useCallback, useContext, useEffect, useState } from 'react';
-import { AddCarToMentainance, deleteCar, markCarAsAvailable, useGetCar } from 'src/api/car';
-import { useGetClauses } from 'src/api/claim';
-import { useGetClients } from 'src/api/client';
-import { deleteContractClause, useGetContracts } from 'src/api/contract';
-import { markMaintenanceAsCompeleted, useGetMaintenance } from 'src/api/maintainance';
 import { changeItemVisibilityInSettings, useGetMainSpecs, useGetSystemVisibleItem } from 'src/api/settings'; // [keep for later use]
 import { createUser, deleteUser, useRoles, useUsers } from 'src/api/users';
 import { useValues } from 'src/api/utils';
@@ -34,14 +29,13 @@ import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import FormProvider, { RHFUpload } from 'src/components/hook-form';
 import { LoadingButton } from '@mui/lab';
-import { deleteDocument, useGetDocuments } from 'src/api/document';
-import { deleteDriver, useGetDrivers } from 'src/api/drivers';
 import { secondary } from 'src/theme/palette';
 import { color } from 'framer-motion';
 import { LoadingScreen } from 'src/components/loading-screen';
 import { useGetProducts, deployProduct, deleteProduct } from 'src/api/product';
 import Label from 'src/components/label';
 import { AuthContext } from 'src/auth/context/jwt';
+import { captureEvent } from 'src/utils/posthog';
 
 
 
@@ -203,7 +197,7 @@ const ElementActions = ({ item, setTableData , user }) => {
 
     const onEditRow = useCallback(
         (id) => {
-            router.push(paths.dashboard.drivers.edit(id));
+            router.push(paths.dashboard.product.edit(id));
         },
         [router]
     );
@@ -242,15 +236,17 @@ const ElementActions = ({ item, setTableData , user }) => {
     const onDeployProduct = useCallback(
         async (id) => {
             setDeployLoader(true)
+            captureEvent('product_deployment_started', { product_id: id });
             try {
                 const res = await deployProduct(id);
-                console.log("deploy res : ", res);
+                captureEvent('product_deployment_succeeded', { product_id: id });
                 // Update the item status in the table
                 setTableData(prev => prev?.map(i => i.id === id ? { ...i, status: 'deployed', color: 'success', c_status: t('deployed') } : i))
                 enqueueSnackbar(t("operation_success"));
                 deployConfirm.onFalse();
                 setDeployLoader(false)
             } catch (error) {
+                captureEvent('product_deployment_failed', { product_id: id, error: error?.message });
                 console.log("error : ", error);
                 setDeployLoader(false)
                 showError(error)

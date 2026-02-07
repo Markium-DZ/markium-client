@@ -49,7 +49,7 @@ export default function WelcomeNewUser({ userName, productsCount = 0, img, ...ot
             xs: theme.spacing(3, 2.5, 0, 2.5),
             md: theme.spacing(3),
           },
-          textAlign: { xs: 'center', md: 'left' },
+          textAlign: { xs: 'center', md: 'start' },
         }}
       >
         {isNewUser ? (

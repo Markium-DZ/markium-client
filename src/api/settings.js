@@ -32,9 +32,10 @@ export function useGetMainSpecs() {
 
     return memoizedValue;
 }
+
 export function useGetMainSpec(id) {
     const { data, isLoading, error, isValidating, mutate } = useSWR(
-        endpoints.settings?.mainspecs+"/"+id,
+        endpoints.settings?.mainspecs + "/" + id,
         fetcher,
         options
     );
@@ -53,17 +54,6 @@ export function useGetMainSpec(id) {
 
     return memoizedValue;
 }
-
-export async function createMainSpec(body) {
-    const URL = endpoints.settings?.mainspecs;
-    return await axios.post(URL, body);
-}
-
-export async function editMainSpec(id, body) {
-    const URL = endpoints.settings?.mainspecs+'/' + id;
-    return await axios.put(URL, body);
-}
-
 
 export function useGetSystemVisibleItem(type) {
     const { data, isLoading, error, isValidating, mutate } = useSWR(

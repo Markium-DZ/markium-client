@@ -132,3 +132,13 @@ export async function refreshShippingRates(orderId) {
   const URL = endpoints.shipping.refreshOrderRates(orderId);
   return await axios.post(URL);
 }
+
+export async function createShipment(orderId, { connectionId, quoteId, serviceCode, metadata }) {
+  const URL = endpoints.shipping.shipOrder(orderId);
+  return await axios.post(URL, {
+    connection_id: connectionId,
+    quote_id: quoteId || null,
+    service_code: serviceCode || null,
+    metadata: metadata || null,
+  });
+}

@@ -18,70 +18,6 @@ import ZaityTableTabs from 'src/sections/ZaityTables/ZaityTableTabs'; // [keep f
 // ----------------------------------------------------------------------
 
 const types = {
-    maintenance_specification: {
-        item_settings_lable: "maintenance_specifications",
-        add_new_item_lable: "addMaintenanceItem",
-        keyInValues: "maintenance_specifications",
-        TABLE_HEAD: [
-            { id: 'name', label: t('clause'), type: "text", width: 140 },
-            { id: 'type', label: t('type'), type: "text", width: 140 },
-            { id: 'is_periodic', label: t('is_periodic'), type: "text", width: 60 },
-            { id: 'period_value', label: t('period_value'), type: "text", width: 60 },
-            { id: 'period_unit', label: t('unit'), type: "text", width: 60 },
-            { id: 'note', label: t('note'), type: "long_text", width: 200 },
-            // { id: 'actions', label: t('actions'), type: "threeDots", width: 88, align: "right" },
-        ],
-        href: paths.dashboard.settings.new,
-        tableElements: (data, keyInValues) => {
-            return data?.[keyInValues]
-                ? data?.[keyInValues]?.map((item) => ({
-                    ...item,
-                    name: item?.name,
-                    is_periodic: item?.is_periodic ? t("yes") : t("no"),
-                    period_unit: data?.unit_enum.find(i => i.key == item?.period_unit)?.translations[0]?.name,
-                    // actions: (actionMethod) => <ElementActions actionMethod={actionMethod} />,
-                }))
-                : [];
-        },
-    },
-    attachment_name: {
-        item_settings_lable: "attachment_names_settings",
-        add_new_item_lable: "add_new_attachment_name",
-        keyInValues: "attachmenat_names",
-        TABLE_HEAD: [
-            { id: 'name', label: t('attachment_name'), type: "text", width: 140 },
-            { id: 'object_type', label: t('attachable'), type: "text", width: 140 },
-            // { id: 'actions', label: t('actions'), type: "threeDots", width: 88, align: "right" },
-        ],
-        href: paths.dashboard.settings.attachment_namesNew,
-        tableElements: (data, keyInValues) => {
-            return data?.[keyInValues]
-                ? data?.[keyInValues]?.map((item) => ({
-                    ...item,
-                    name: item?.translations?.[0]?.name,
-                    object_type: [{ name: "car", lable: { ar: "سيارة", en: "car" }, id: 1 }, { name: "driver", lable: { ar: "سائق", en: "driver" }, id: 2 }, { name: "client", lable: { ar: "عميل", en: "client" }, id: 3 }, { name: "other", lable: { ar: "اخرى", en: "other" }, id: 4 }].find(i => i.name == item.object_type).lable.ar,
-                }))
-                : [];
-        },
-    },
-    spec: {
-        item_settings_lable: "specs_settings",
-        add_new_item_lable: "add_new_spec",
-        keyInValues: "specs",
-        TABLE_HEAD: [
-            { id: 'name', label: t('specs_name'), type: "text", width: 140 },
-            // { id: 'actions', label: t('actions'), type: "threeDots", width: 88, align: "right" },
-        ],
-        href: paths.dashboard.settings.specsNew,
-        tableElements: (data, keyInValues) => {
-            return data?.[keyInValues]
-                ? data?.[keyInValues]?.map((item) => ({
-                    ...item,
-                    name: item?.translations?.[0]?.name,
-                }))
-                : [];
-        },
-    },
     payment_method: {
         item_settings_lable: "payment_methods_settings",
         add_new_item_lable: "add_new_payment_methods",
@@ -96,25 +32,6 @@ const types = {
                 ? data?.[keyInValues]?.map((item) => ({
                     ...item,
                     // name: item?.translations?.[0]?.name,
-                    // actions: (actionMethod) => <ElementActions actionMethod={actionMethod} />,
-                }))
-                : [];
-        },
-    },
-    license_type: {
-        item_settings_lable: "license_types_settings",
-        add_new_item_lable: "add_new_license_types",
-        keyInValues: "license_types",
-        TABLE_HEAD: [
-            { id: 'name', label: t('name'), type: "text", width: 140 },
-            // { id: 'actions', label: t('actions'), type: "threeDots", width: 88, align: "right" },
-        ],
-        href: paths.dashboard.settings.license_typesNew,
-        tableElements: (data, keyInValues) => {
-            return data?.[keyInValues]
-                ? data?.[keyInValues]?.map((item) => ({
-                    ...item,
-                    name: item?.translations?.[0]?.name,
                     // actions: (actionMethod) => <ElementActions actionMethod={actionMethod} />,
                 }))
                 : [];
@@ -197,48 +114,6 @@ const types = {
                     name: item?.translations?.[0]?.name,
                     // actions: (actionMethod) => <ElementActions actionMethod={actionMethod} />,
                 }))
-                : [];
-        },
-    },
-    car_company: {
-        item_settings_lable: "car_companies_settings",
-        add_new_item_lable: "add_new_car_company",
-        keyInValues: "car_companies",
-        TABLE_HEAD: [
-            { id: 'name', label: t('car_company_name'), type: "text", width: 140 },
-            // { id: 'actions', label: t('actions'), type: "threeDots", width: 88, align: "right" },
-        ],
-        href: paths.dashboard.settings.car_companiesNew,
-        tableElements: (data, keyInValues) => {
-            return data?.[keyInValues]
-                ? data?.[keyInValues]?.map((item) => ({
-                    ...item,
-                    name: item?.translations?.[0]?.name,
-                    // actions: (actionMethod) => <ElementActions actionMethod={actionMethod} />,
-                }))
-                : [];
-        },
-    },
-    car_model: {
-        item_settings_lable: "car_models",
-        add_new_item_lable: "add_new_car_model",
-        keyInValues: "car_companies",
-        TABLE_HEAD: [
-            { id: 'name', label: t('car_model_name'), type: "text", width: 140 },
-            { id: 'company', label: t('company'), type: "text", width: 140 },
-            // { id: 'actions', label: t('actions'), type: "threeDots", width: 88, align: "right" },
-        ],
-        href: paths.dashboard.settings.car_modelsNew,
-        tableElements: (data, keyInValues) => {
-            return data?.[keyInValues]
-                ? data?.car_companies?.flatMap(company =>
-                    company.models.map(model => ({
-                        ...model,
-                        name: model?.translations[0]?.name,
-                        company: company?.translations[0]?.name, // 👈 direct from parent
-                        // actions: (actionMethod) => <ElementActions actionMethod={actionMethod} />,
-                    }))
-                )
                 : [];
         },
     },
@@ -325,7 +200,7 @@ export default function AdminSystemItemListView({ collection }) {
                 <Card>
                     <ZaityTableTabs data={tableData} items={items} defaultFilters={{ status: 'all' }} setTableDate={setDataFiltered} filterFunction={filterFunction}>
                         <ZaityTableFilters data={dataFiltered} tableData={tableData} items={filters} setTableDate={setDataFiltered} defaultFilters={defaultFilters} dataFiltered={tableData}>
-                            <ZaityListView TABLE_HEAD={[...currentSystemItem?.TABLE_HEAD, { id: 'enabled', label: t('selected'), type: "label", width: collection.type == "maintenance_specification" ? 120 : 350 }, { id: 'enable', label: t('enable'), type: "component", width: 40, align: "center" }]} dense="small" zaityTableDate={dataFiltered || []} onSelectedRows={({ data, setTableData }) => { return <onSelectedRowsComponent configurable_type={collection?.type} setTableData={setTableData} data={data} /> }} />
+                            <ZaityListView TABLE_HEAD={[...currentSystemItem?.TABLE_HEAD, { id: 'enabled', label: t('selected'), type: "label", width: 350 }, { id: 'enable', label: t('enable'), type: "component", width: 40, align: "center" }]} dense="small" zaityTableDate={dataFiltered || []} onSelectedRows={({ data, setTableData }) => { return <onSelectedRowsComponent configurable_type={collection?.type} setTableData={setTableData} data={data} /> }} />
                         </ZaityTableFilters>
                     </ZaityTableTabs>
                 </Card>
@@ -345,7 +220,7 @@ const EnableDisableItem = ({ visibleItems, setVisibleItems, item, configurable_t
             let enabled = ischkd ? t("enabled") : t("not_enabled");
             let color = ischkd ? "success" : "error";
             const res = await changeItemVisibilityInSettings({ configurable_type, configurable_id: item.id, is_selected: event.target.checked, is_private: false })
-            if (configurable_type == "maintenance_specification" || configurable_type == "payment_method") {
+            if (configurable_type == "payment_method") {
                 setTableData(prev =>
                     prev?.map(i => {
                         if (i.id == item.id) {

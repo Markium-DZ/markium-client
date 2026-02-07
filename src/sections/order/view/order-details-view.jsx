@@ -13,7 +13,7 @@ import { paths } from 'src/routes/paths';
 
 import { ORDER_STATUS_OPTIONS } from 'src/_mock';
 import { useGetOrder, updateOrder } from 'src/api/orders';
-import { useGetShippingRates, refreshShippingRates } from 'src/api/shipping';
+import { useGetShippingRates, refreshShippingRates, createShipment } from 'src/api/shipping';
 
 import { useSettingsContext } from 'src/components/settings';
 import { useSnackbar } from 'src/components/snackbar';
@@ -38,8 +38,6 @@ export default function OrderDetailsView({ id }) {
 
   // Fetch shipping rates for this order
   const { quotes, quotesGroupedByProvider, ratesLoading, ratesError, mutate: mutateRates } = useGetShippingRates(id);
-  console.log("quotes :",quotes);
-  console.log("quotesGroupedByProvider :",quotesGroupedByProvider);
 
   const [status, setStatus] = useState(currentOrder?.status);
   const [selectedQuoteId, setSelectedQuoteId] = useState(null);
@@ -64,12 +62,10 @@ export default function OrderDetailsView({ id }) {
 
       enqueueSnackbar(t("operation_success"), { variant: 'success' });
     } catch (error) {
-      console.error('Failed to update order status:', error);
-
       // Revert status on error
       setStatus(currentOrder?.status);
 
-      enqueueSnackbar('Failed to update order status', { variant: 'error' });
+      enqueueSnackbar(t('failed_update_order_status'), { variant: 'error' });
     }
   }, [id, currentOrder?.status, mutate, enqueueSnackbar]);
 
@@ -83,7 +79,6 @@ export default function OrderDetailsView({ id }) {
       await mutateRates();
       enqueueSnackbar(t('shipping_rates_refreshed'), { variant: 'success' });
     } catch (error) {
-      console.error('Failed to refresh shipping rates:', error);
       enqueueSnackbar(t('error_loading_shipping_rates'), { variant: 'error' });
     } finally {
       setIsRefreshing(false);
@@ -93,9 +88,25 @@ export default function OrderDetailsView({ id }) {
   // Handle shipping rate selection
   const handleSelectQuote = useCallback((quoteId) => {
     setSelectedQuoteId(quoteId);
-    // You can add logic here to update the order with the selected shipping rate
-    console.log('Selected quote ID:', quoteId);
   }, []);
+
+  // Handle ship order
+  const handleShipOrder = useCallback(async () => {
+    if (!selectedQuoteId) return;
+    const selectedQuote = quotes.find(q => q.id === selectedQuoteId);
+    if (!selectedQuote) return;
+    try {
+      await createShipment(id, {
+        connectionId: selectedQuote.connection?.id,
+        quoteId: selectedQuoteId,
+      });
+      mutate();
+      mutateRates();
+      enqueueSnackbar(t('shipment_created_successfully'), { variant: 'success' });
+    } catch (error) {
+      enqueueSnackbar(t('error_creating_shipment'), { variant: 'error' });
+    }
+  }, [id, selectedQuoteId, quotes, mutate, mutateRates, enqueueSnackbar, t]);
 
   // Handle tab change
   const handleTabChange = useCallback((event, newValue) => {
@@ -178,6 +189,7 @@ export default function OrderDetailsView({ id }) {
             onRefresh={handleRefreshRates}
             onSelect={handleSelectQuote}
             selectedQuoteId={selectedQuoteId}
+            onShip={handleShipOrder}
           />
         )}
       </Box>

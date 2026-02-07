@@ -248,6 +248,7 @@ function OptionDefinitionCard({ option, index, onUpdate, onRemove, onAddValue, o
           size="small"
           color="error"
           onClick={() => onRemove(option.id)}
+          aria-label={t('remove_option')}
           sx={{
             '&:hover': {
               bgcolor: (theme) => alpha(theme.palette.error.main, 0.08),
@@ -367,6 +368,7 @@ function OptionDefinitionCard({ option, index, onUpdate, onRemove, onAddValue, o
               <TextField
                 type="color"
                 size="small"
+                label={t('select_color')}
                 value={newColorHex}
                 onChange={(e) => setNewColorHex(e.target.value)}
                 sx={{ width: 80 }}
