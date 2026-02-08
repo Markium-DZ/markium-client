@@ -13,6 +13,7 @@ import { useTranslate } from 'src/locales';
 import { useGetInventory } from 'src/api/inventory';
 import { paths } from 'src/routes/paths';
 import { RouterLink } from 'src/routes/components';
+import Alert from '@mui/material/Alert';
 import { LoadingScreen } from 'src/components/loading-screen';
 import Iconify from 'src/components/iconify';
 import CustomPopover, { usePopover } from 'src/components/custom-popover';
@@ -74,7 +75,7 @@ export default function InventoryListView() {
   const [dataFiltered, setDataFiltered] = useState([]);
   const [adjustmentDialog, setAdjustmentDialog] = useState({ open: false, item: null });
 
-  const { inventory, inventoryLoading, totalPages, mutate } = useGetInventory(page, 20);
+  const { inventory, inventoryLoading, inventoryError, totalPages, mutate } = useGetInventory(page, 20);
 
   const handleOpenAdjustment = (item) => {
     setAdjustmentDialog({ open: true, item });
@@ -338,6 +339,12 @@ export default function InventoryListView() {
         { name: t('list') },
       ]}
     >
+      {!inventoryLoading && inventoryError && allInventory.length === 0 && (
+        <Alert severity="warning" icon={<Iconify icon="solar:cloud-cross-bold" width={22} />} sx={{ mb: 2 }}>
+          {t('no_connection_notice')}
+        </Alert>
+      )}
+
       <Card>
         <ZaityTableTabs
           filterKey="stock_status"

@@ -16,6 +16,12 @@ export default function showError(error) {
   const errorData = error?.error || error?.errors || error;
 
   getEnqueue().then((enqueueSnackbar) => {
+    // Network / connection error — no response from server
+    if (error?.isNetworkError || errorData?.isNetworkError) {
+      enqueueSnackbar(t('no_connection_notice'), { variant: 'warning' });
+      return;
+    }
+
     // Format 1: { error: { code, message, details: { field: ["error"] } } }
     if (errorData?.details) {
       // Validation errors with details object (422 errors)

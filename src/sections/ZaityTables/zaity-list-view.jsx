@@ -60,7 +60,7 @@ const defaultFilters = {
 
 // ----------------------------------------------------------------------
 
-export default function ZaityListView({ TABLE_HEAD, dense, zaityTableDate, onSelectedRows,maxWidth,rowsPerPage,minHeight,height , rowsPerPageOptions }) {
+export default function ZaityListView({ TABLE_HEAD, dense, zaityTableDate, onSelectedRows,maxWidth,rowsPerPage,minHeight,height , rowsPerPageOptions, hidePagination }) {
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslate();
 
@@ -203,16 +203,18 @@ export default function ZaityListView({ TABLE_HEAD, dense, zaityTableDate, onSel
         </Scrollbar>
       </TableContainer>
 
-      <TablePaginationCustom
-      rowsPerPageOptions={rowsPerPageOptions}
-        count={dataFiltered.length}
-        page={table.page}
-        rowsPerPage={(rowsPerPage || table.rowsPerPage)}
-        onPageChange={table.onChangePage}
-        onRowsPerPageChange={table.onChangeRowsPerPage}
-        dense={table.dense}
-        onChangeDense={table.onChangeDense}
-      />
+      {!hidePagination && (
+        <TablePaginationCustom
+          rowsPerPageOptions={rowsPerPageOptions}
+          count={dataFiltered.length}
+          page={table.page}
+          rowsPerPage={(rowsPerPage || table.rowsPerPage)}
+          onPageChange={table.onChangePage}
+          onRowsPerPageChange={table.onChangeRowsPerPage}
+          dense={table.dense}
+          onChangeDense={table.onChangeDense}
+        />
+      )}
     </>
   );
 }

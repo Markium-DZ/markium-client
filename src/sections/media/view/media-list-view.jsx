@@ -9,6 +9,7 @@ import Container from '@mui/material/Container';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
 import CircularProgress from '@mui/material/CircularProgress';
+import Alert from '@mui/material/Alert';
 import Grid from '@mui/material/Grid';
 import MenuItem from '@mui/material/MenuItem';
 import { alpha } from '@mui/material/styles';
@@ -157,13 +158,13 @@ export default function MediaListView() {
         />
       </Stack>
 
-      <Box ref={scrollContainerRef}>
-        {mediaError && (
-          <Typography color="error" sx={{ textAlign: 'center', py: 3 }}>
-            {t('failed_to_load_media')}
-          </Typography>
-        )}
+      {mediaError && allMedia.length === 0 && !mediaLoading && (
+        <Alert severity="warning" icon={<Iconify icon="solar:cloud-cross-bold" width={22} />} sx={{ mb: 2 }}>
+          {t('no_connection_notice')}
+        </Alert>
+      )}
 
+      <Box ref={scrollContainerRef}>
         {Object.keys(groupedMedia).length === 0 && !mediaLoading && (
           <Card sx={{ p: 5, textAlign: 'center' }}>
             <Iconify icon="solar:gallery-bold" width={64} sx={{ mx: 'auto', color: 'text.disabled', mb: 2 }} />

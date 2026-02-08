@@ -168,124 +168,134 @@ export default function EcommerceEventsCalendar() {
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
+        overflow: 'hidden',
+        px: 3,
+        py: 2,
       }}
     >
-      <Stack direction={{ xs: 'column', sm: 'row' }} sx={{ flexGrow: 1, height: '100%', justifyContent: 'center', p: 2 }}>
-        {/* MUI DateCalendar */}
-        <Box sx={{ flexShrink: 0 }}>
-          <DateCalendar
-            value={currentDate}
-            onChange={(newDate) => setCurrentDate(newDate)}
-            showDaysOutsideCurrentMonth
-            fixedWeekNumber={6}
-            slots={{ day: EventDay }}
+      {/* MUI DateCalendar */}
+      <Box sx={{ flexGrow: 1, overflow: 'hidden' }}>
+        <DateCalendar
+          value={currentDate}
+          onChange={(newDate) => setCurrentDate(newDate)}
+          showDaysOutsideCurrentMonth
+          fixedWeekNumber={6}
+          slots={{ day: EventDay }}
+          sx={{
+            maxHeight: 'none',
+            maxWidth: 'none',
+            width: '100%',
+            '& .MuiDayCalendar-header, & .MuiDayCalendar-weekContainer': {
+              justifyContent: 'space-evenly',
+            },
+            '& .MuiPickersCalendarHeader-root': {
+              px: 0,
+              mt: 0,
+              mb: 0,
+              minHeight: 32,
+            },
+            '& .MuiPickersCalendarHeader-label': {
+              fontSize: '0.85rem',
+            },
+            '& .MuiDayCalendar-weekDayLabel': {
+              width: 28,
+              height: 28,
+              fontSize: '0.7rem',
+            },
+            '& .MuiPickersDay-root': {
+              width: 28,
+              height: 28,
+              fontSize: '0.75rem',
+            },
+            '& .MuiPickersDay-root.Mui-selected': {
+              bgcolor: theme.palette.primary.main,
+            },
+            '& .MuiDayCalendar-slideTransition': {
+              minHeight: 180,
+            },
+          }}
+        />
+      </Box>
+
+      {/* Nearest event — compact horizontal strip */}
+      {nearestEvent && (
+        <Stack
+          direction="row"
+          alignItems="center"
+          spacing={1.5}
+          sx={{
+            px: 2,
+            py: 1,
+            borderRadius: 1.5,
+            bgcolor: alpha(nearestEvent.color, 0.06),
+            border: `1px solid ${alpha(nearestEvent.color, 0.15)}`,
+          }}
+        >
+          <Box
+            component="img"
+            src={nearestEvent.image}
+            alt={getEventName(nearestEvent)}
             sx={{
-              maxHeight: 'none',
-              width: '100%',
-              '& .MuiPickersCalendarHeader-root': {
-                px: 2,
-                mt: 1,
-              },
-              '& .MuiDayCalendar-header, & .MuiDayCalendar-weekContainer': {
-                px: 1,
-              },
-              '& .MuiPickersDay-root': {
-                fontSize: '0.8rem',
-              },
-              '& .MuiPickersDay-root.Mui-selected': {
-                bgcolor: theme.palette.primary.main,
-              },
+              width: 36,
+              height: 36,
+              borderRadius: 1,
+              objectFit: 'cover',
+              flexShrink: 0,
+              boxShadow: `0 2px 6px ${alpha(nearestEvent.color, 0.25)}`,
+            }}
+            onError={(e) => {
+              e.target.style.display = 'none';
             }}
           />
-        </Box>
 
-        {/* Nearest event sidebar */}
-        {nearestEvent && (
-          <Stack
-            spacing={1}
-            alignItems="center"
-            sx={{
-              width: { xs: '100%', sm: 130 },
-              flexShrink: 0,
-              p: 1.5,
-              m: 1.5,
-              borderRadius: 1.5,
-              bgcolor: alpha(nearestEvent.color, 0.06),
-              border: `1px solid ${alpha(nearestEvent.color, 0.15)}`,
-            }}
-          >
+          <Stack sx={{ flexGrow: 1, minWidth: 0 }}>
             <Typography
               variant="caption"
-              sx={{ fontWeight: 600, color: 'text.secondary', fontSize: '0.7rem' }}
+              noWrap
+              sx={{
+                fontWeight: 700,
+                color: nearestEvent.color,
+                fontSize: '0.8rem',
+                lineHeight: 1.2,
+              }}
             >
-              {t('next_event')}
+              {getEventName(nearestEvent)}
             </Typography>
-
-            <Stack spacing={1} alignItems="center" justifyContent="center" sx={{ flexGrow: 1 }}>
-              <Box
-                component="img"
-                src={nearestEvent.image}
-                alt={getEventName(nearestEvent)}
-                sx={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: 1,
-                  objectFit: 'cover',
-                  flexShrink: 0,
-                  boxShadow: `0 2px 6px ${alpha(nearestEvent.color, 0.25)}`,
-                }}
-                onError={(e) => {
-                  e.target.style.display = 'none';
-                }}
-              />
-
-              <Stack spacing={0.25} alignItems="center" sx={{ minWidth: 0 }}>
-                <Typography
-                  variant="caption"
-                  sx={{
-                    fontWeight: 700,
-                    color: nearestEvent.color,
-                    lineHeight: 1.2,
-                    fontSize: '0.8rem',
-                    textAlign: 'center',
-                  }}
-                >
-                  {getEventName(nearestEvent)}
-                </Typography>
-                <Typography
-                  variant="caption"
-                  sx={{ color: 'text.secondary', fontSize: '0.7rem', lineHeight: 1.2 }}
-                >
-                  {nearestEvent.date.toLocaleDateString(i18n.language, {
-                    month: 'short',
-                    day: 'numeric',
-                  })}
-                </Typography>
-              </Stack>
-
-              {daysUntilNearest !== null && (
-                <Box
-                  sx={{
-                    px: 1,
-                    py: 0.25,
-                    borderRadius: 0.75,
-                    bgcolor: alpha(nearestEvent.color, 0.12),
-                  }}
-                >
-                  <Typography
-                    variant="caption"
-                    sx={{ fontWeight: 700, color: nearestEvent.color, fontSize: '0.7rem' }}
-                  >
-                    {daysUntilNearest === 0
-                      ? t('now')
-                      : `${t('remaining')} ${daysUntilNearest} ${t('day')}`}
-                  </Typography>
-                </Box>
-              )}
-            </Stack>
+            <Typography
+              variant="caption"
+              noWrap
+              sx={{ color: 'text.secondary', fontSize: '0.7rem', lineHeight: 1.2 }}
+            >
+              {nearestEvent.date.toLocaleDateString(i18n.language, {
+                month: 'short',
+                day: 'numeric',
+              })}
+            </Typography>
           </Stack>
-        )}
-      </Stack>
+
+          {daysUntilNearest !== null && (
+            <Box
+              sx={{
+                px: 1,
+                py: 0.25,
+                borderRadius: 0.75,
+                bgcolor: alpha(nearestEvent.color, 0.12),
+                flexShrink: 0,
+              }}
+            >
+              <Typography
+                variant="caption"
+                noWrap
+                sx={{ fontWeight: 700, color: nearestEvent.color, fontSize: '0.7rem' }}
+              >
+                {daysUntilNearest === 0
+                  ? t('now')
+                  : `${daysUntilNearest} ${t('day')}`}
+              </Typography>
+            </Box>
+          )}
+        </Stack>
+      )}
     </Card>
   );
 }

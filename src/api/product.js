@@ -8,7 +8,13 @@ import { HOST_API } from 'src/config-global';
 
 export function useGetProducts() {
   const URL = endpoints.product.root;
-  const { data, isLoading, error, isValidating, mutate } = useSWR( URL, fetcher);
+  const { data, isLoading, error, isValidating, mutate } = useSWR(URL, fetcher, {
+    onErrorRetry: (err, key, config, revalidate, { retryCount }) => {
+      const delays = [5000, 10000, 20000, 30000];
+      if (retryCount >= delays.length) return;
+      setTimeout(() => revalidate({ retryCount }), delays[retryCount]);
+    },
+  });
 
   const memoizedValue = useMemo(
     () => ({

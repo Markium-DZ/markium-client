@@ -22,8 +22,10 @@ import {
 import { AuthContext } from 'src/auth/context/jwt';
 
 import { useSettingsContext } from 'src/components/settings';
+import ConnectionError from 'src/components/connection-error';
 import { MotivationIllustration } from 'src/assets/illustrations';
 import { Walktour, useWalktour } from 'src/components/walktour';
+
 
 import EcommerceEventsCalendar from '../ecommerce-events-calendar';
 import DashboardMetrics from '../dashboard-metrics';
@@ -48,8 +50,8 @@ export default function OverviewEcommerceView() {
   const { user } = useContext(AuthContext);
   const { t } = useTranslation();
   const theme = useTheme();
-  const { products, productsLoading, productsMutate } = useGetProducts();
-  const { orders, ordersLoading } = useGetOrders();
+  const { products, productsLoading, productsError, productsMutate } = useGetProducts();
+  const { orders, ordersLoading, ordersError, mutate: ordersMutate } = useGetOrders();
   const { media, total: mediaTotal, mutate: mediaMutate } = useGetMedia(1, 1);
 
   const router = useRouter();
@@ -77,8 +79,10 @@ export default function OverviewEcommerceView() {
     mediaMutate?.();
   }, [productsMutate, mediaMutate]);
 
-  // Show skeleton while core data is loading to prevent grade flicker
-  const gradeLoading = productsLoading || ordersLoading;
+  // Show skeleton while core data is loading or on connection error (prevents grade misclassification)
+  const isStillLoading = productsLoading || ordersLoading;
+  const hasConnectionError = !isStillLoading && ((productsError && !products?.length) || (ordersError && !orders?.length));
+  const gradeLoading = isStillLoading || hasConnectionError;
 
   const productsCount = products?.length || 0;
   const ordersCount = orders?.length || 0;
@@ -91,30 +95,31 @@ export default function OverviewEcommerceView() {
   // Third grade user: has products and orders (established merchant)
   const isThirdGradeUser = !gradeLoading && !isNewUser && !isBGradeMerchant;
 
+  // HEADER.H_DESKTOP(80) + SPACING(8) = 88px  → Main py = 88px top + 88px bottom = 176px
+  const MAIN_VERTICAL_PADDING = 176;
+
   // Analytics state
-  const [dateRange, setDateRange] = useState('-30d');
+  const [dateRange, setDateRange] = useState('-7d');
 
   // Fetch analytics data only for third grade users
   const {
     totalOrders: analyticsOrders,
     totalOrdersData,
-    totalOrdersLabels,
     totalRevenue,
     totalRevenueData,
-    totalRevenueLabels,
     totalVisitors,
     totalVisitorsData,
-    totalVisitorsLabels,
-    totalProductViews,
-    totalProductViewsData,
     overviewLoading,
   } = useGetAnalyticsOverview(isThirdGradeUser ? dateRange : null);
 
-  // Fetch traffic time-series (visitors + product views per day)
+  // Fetch traffic time-series (hourly for 1-day, daily otherwise)
+  const trafficInterval = dateRange === '-1d' ? 'hour' : 'day';
   const {
     visitors: trafficVisitors,
+    productViews: trafficProductViews,
+    orderCompleted: trafficOrders,
     trafficLoading,
-  } = useGetAnalyticsTraffic(isThirdGradeUser ? dateRange : null);
+  } = useGetAnalyticsTraffic(isThirdGradeUser ? dateRange : null, trafficInterval);
 
   const { topProducts, topProductsLoading } = useGetAnalyticsTopProducts(isThirdGradeUser ? dateRange : null);
 
@@ -146,40 +151,23 @@ export default function OverviewEcommerceView() {
     [products]
   );
 
-  // Build orders-per-day time-series from raw orders, aligned to traffic labels
-  const ordersTimeSeries = useMemo(() => {
-    const labels = trafficVisitors?.labels;
-    if (!labels?.length || !orders?.length) return { data: [], labels: [] };
-
-    // Normalize date to YYYY-MM-DD regardless of input format
-    const toDay = (dateStr) => {
-      if (!dateStr) return '';
-      const d = new Date(dateStr);
-      if (Number.isNaN(d.getTime())) return dateStr.slice(0, 10);
-      return d.toISOString().slice(0, 10);
-    };
-
-    // Count orders per date
-    const countByDate = {};
-    orders.forEach((o) => {
-      const day = toDay(o.created_at);
-      if (day) countByDate[day] = (countByDate[day] || 0) + 1;
-    });
-
-    const data = labels.map((label) => countByDate[toDay(label)] || 0);
-
-    return { data, labels };
-  }, [orders, trafficVisitors?.labels]);
-
-  // Metric cards data
+  // Metric cards data — prefer overview time-series, fallback to traffic time-series
   const metricCards = useMemo(() => [
     {
       label: t('total_orders'),
       tooltip: t('metric_tooltip_orders'),
       value: analyticsOrders || ordersCount || 0,
-      data: totalOrdersData,
+      data: totalOrdersData?.length ? totalOrdersData : trafficOrders.data,
       color: theme.palette.primary.main,
       icon: 'solar:bag-4-bold-duotone',
+    },
+    {
+      label: t('total_visitors'),
+      tooltip: t('metric_tooltip_visitors'),
+      value: totalVisitors || 0,
+      data: totalVisitorsData?.length ? totalVisitorsData : trafficVisitors.data,
+      color: theme.palette.success.main,
+      icon: 'solar:users-group-rounded-bold-duotone',
     },
     {
       label: t('total_revenue'),
@@ -188,34 +176,46 @@ export default function OverviewEcommerceView() {
       data: totalRevenueData,
       color: theme.palette.info.main,
       icon: 'solar:wallet-money-bold-duotone',
+      suffix: t('currency_da'),
+      span: 2,
     },
-    {
-      label: t('total_visitors'),
-      tooltip: t('metric_tooltip_visitors'),
-      value: totalVisitors || 0,
-      data: totalVisitorsData,
-      color: theme.palette.warning.main,
-      icon: 'solar:users-group-rounded-bold-duotone',
-    },
-    {
-      label: t('total_product_views'),
-      tooltip: t('metric_tooltip_views'),
-      value: totalProductViews || 0,
-      data: totalProductViewsData,
-      color: theme.palette.success.main,
-      icon: 'solar:eye-bold-duotone',
-    },
-  ], [t, theme, analyticsOrders, ordersCount, totalOrdersData, totalRevenue, totalRevenueData, totalVisitors, totalVisitorsData, totalProductViews, totalProductViewsData]);
+  ], [t, theme, analyticsOrders, ordersCount, totalOrdersData, totalRevenue, totalRevenueData, totalVisitors, totalVisitorsData, trafficOrders.data, trafficVisitors.data]);
 
-  if (gradeLoading) {
+  const handleRetry = useCallback(() => {
+    productsMutate?.();
+    ordersMutate?.();
+    mediaMutate?.();
+  }, [productsMutate, ordersMutate, mediaMutate]);
+
+  if (isStillLoading) {
     return <DashboardSkeleton themeStretch={settings.themeStretch} />;
   }
 
+  if (hasConnectionError) {
+    return <ConnectionError onRetry={handleRetry} sx={{ flexGrow: 1 }} />;
+  }
+
   return (
-    <Container maxWidth={settings.themeStretch ? false : 'xl'}>
+    <Container
+      maxWidth={settings.themeStretch ? false : 'xl'}
+      sx={{
+        ...(isThirdGradeUser && {
+          height: { lg: `calc(100vh - ${MAIN_VERTICAL_PADDING}px)` },
+          overflow: { lg: 'auto' },
+        }),
+      }}
+    >
       {isNewUser && <Walktour steps={tourSteps} run={tourRun} callback={tourCallback} />}
 
-      <Grid container spacing={3}>
+      <Grid
+        container
+        spacing={3}
+        sx={{
+          ...(isThirdGradeUser && {
+            height: { lg: '100%' },
+          }),
+        }}
+      >
         {/* ===== GRADE A & B: Original layout ===== */}
         {!isThirdGradeUser && (
           <>
@@ -258,8 +258,8 @@ export default function OverviewEcommerceView() {
         {/* ===== GRADE C: Operational command center ===== */}
         {isThirdGradeUser && (
           <>
-            {/* Row 1: Metrics 2x2 (md=3) + Chart (md=5) + Calendar (md=4) */}
-            <Grid xs={12} md={3}>
+            {/* Row 1: Metrics + DataTable + Calendar */}
+            <Grid xs={12} md={6} lg={3} sx={{ height: { lg: '50%' } }}>
               <DashboardMetrics
                 metrics={metricCards}
                 dateRange={dateRange}
@@ -267,31 +267,7 @@ export default function OverviewEcommerceView() {
               />
             </Grid>
 
-            <Grid xs={12} md={5}>
-              <DashboardChart
-                visitorsData={trafficVisitors.data}
-                visitorsLabels={trafficVisitors.labels}
-                ordersData={ordersTimeSeries.data}
-                ordersLabels={ordersTimeSeries.labels}
-                loading={trafficLoading || ordersLoading}
-              />
-            </Grid>
-
-            <Grid xs={12} md={4}>
-              <EcommerceEventsCalendar />
-            </Grid>
-
-            {/* Row 2: Action Center (md=4) + Data Table (md=5) + Funnel (md=3) */}
-            <Grid xs={12} md={4}>
-              <ActionCenter
-                pendingOrders={pendingOrders}
-                ordersToShip={ordersToShip}
-                lowStockCount={lowStockTotal || 0}
-                draftProducts={draftProducts}
-              />
-            </Grid>
-
-            <Grid xs={12} md={5}>
+            <Grid xs={12} md={6} lg={6} sx={{ height: { lg: '50%' } }}>
               <DashboardDataTable
                 orders={orders}
                 ordersLoading={ordersLoading}
@@ -302,7 +278,32 @@ export default function OverviewEcommerceView() {
               />
             </Grid>
 
-            <Grid xs={12} md={3}>
+            <Grid xs={12} lg={3} sx={{ height: { lg: '50%' } }}>
+              <EcommerceEventsCalendar />
+            </Grid>
+
+            {/* Row 2: ActionCenter + Chart + Funnel */}
+            <Grid xs={12} md={6} lg={3} sx={{ height: { lg: '50%' } }}>
+              <ActionCenter
+                pendingOrders={pendingOrders}
+                ordersToShip={ordersToShip}
+                lowStockCount={lowStockTotal || 0}
+                draftProducts={draftProducts}
+              />
+            </Grid>
+
+            <Grid xs={12} md={6} lg={6} sx={{ height: { lg: '50%' } }}>
+              <DashboardChart
+                visitorsData={trafficVisitors.data}
+                visitorsLabels={trafficVisitors.days || trafficVisitors.labels}
+                ordersData={trafficOrders.data}
+                ordersLabels={trafficOrders.days || trafficOrders.labels}
+                loading={trafficLoading}
+                interval={trafficInterval}
+              />
+            </Grid>
+
+            <Grid xs={12} lg={3} sx={{ height: { lg: '50%' } }}>
               <DashboardFunnel
                 funnel={funnelData}
                 loading={funnelLoading}

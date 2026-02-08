@@ -28,6 +28,7 @@ import { PRODUCT_STOCK_OPTIONS } from 'src/_mock';
 import Iconify from 'src/components/iconify';
 import { useSnackbar } from 'src/components/snackbar';
 import EmptyContent from 'src/components/empty-content';
+import ConnectionError from 'src/components/connection-error';
 import { ConfirmDialog } from 'src/components/custom-dialog';
 import { useSettingsContext } from 'src/components/settings';
 import CustomBreadcrumbs from 'src/components/custom-breadcrumbs';
@@ -75,7 +76,7 @@ export default function ProductListView() {
 
   const settings = useSettingsContext();
 
-  const { products, productsLoading } = useGetProducts();
+  const { products, productsLoading, productsError, productsMutate } = useGetProducts();
 
   const [tableData, setTableData] = useState([]);
 
@@ -289,6 +290,9 @@ export default function ProductListView() {
             flexDirection: { md: 'column' },
           }}
         >
+          {!productsLoading && productsError && !products?.length ? (
+            <ConnectionError onRetry={() => productsMutate?.()} />
+          ) : (
           <DataGrid
             checkboxSelection
             disableRowSelectionOnClick
@@ -364,6 +368,7 @@ export default function ProductListView() {
               },
             }}
           />
+          )}
         </Card>
       </Container>
 

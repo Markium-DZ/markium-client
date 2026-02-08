@@ -8,7 +8,6 @@ import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import CardHeader from '@mui/material/CardHeader';
-import LinearProgress from '@mui/material/LinearProgress';
 import { alpha, useTheme } from '@mui/material/styles';
 
 import { useRouter } from 'src/routes/hooks';
@@ -81,44 +80,30 @@ export default function ActionCenter({ pendingOrders = 0, ordersToShip = 0, lowS
     [counts]
   );
 
-  const totalActions = ACTION_TYPES.length;
-  const completedActions = ACTION_TYPES.filter((a) => counts[a.prop] === 0).length;
-  const progressPct = (completedActions / totalActions) * 100;
-  const allClear = completedActions === totalActions;
+  const remainingCount = activeActions.length;
+  const allClear = remainingCount === 0;
 
   return (
     <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       <CardHeader
         title={t('action_center')}
+        subheader={!allClear ? t('remaining_tasks', { count: remainingCount }) : undefined}
         titleTypographyProps={{ variant: 'h6', component: 'h2' }}
-        sx={{ px: 2.5, pt: 2.5, pb: 0 }}
+        subheaderTypographyProps={{ variant: 'caption', sx: { color: 'text.secondary', fontWeight: 600 } }}
+        action={
+          !allClear && (
+            <Button
+              size="small"
+              color="inherit"
+              startIcon={<Iconify icon="solar:bell-bold" width={16} />}
+              sx={{ fontSize: '0.75rem', fontWeight: 600 }}
+            >
+              {t('remind_me')}
+            </Button>
+          )
+        }
+        sx={{ px: 2.5, pt: 2.5, pb: 1 }}
       />
-
-      {/* Progress bar */}
-      <Stack spacing={0.75} sx={{ px: 2.5, pt: 1.5, pb: 1 }}>
-        <Stack direction="row" alignItems="center" justifyContent="space-between">
-          <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600 }}>
-            {t('actions_progress', { done: completedActions, total: totalActions })}
-          </Typography>
-          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-            {Math.round(progressPct)}%
-          </Typography>
-        </Stack>
-
-        <LinearProgress
-          variant="determinate"
-          value={progressPct}
-          sx={{
-            height: 6,
-            borderRadius: 1,
-            bgcolor: alpha(allClear ? theme.palette.success.main : theme.palette.primary.main, 0.12),
-            '& .MuiLinearProgress-bar': {
-              bgcolor: allClear ? theme.palette.success.main : theme.palette.primary.main,
-              borderRadius: 1,
-            },
-          }}
-        />
-      </Stack>
 
       {/* Notification list */}
       <Box sx={{ flexGrow: 1, overflow: 'auto', px: 1, py: 1 }}>

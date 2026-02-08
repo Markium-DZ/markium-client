@@ -34,10 +34,45 @@ function inlineCssPlugin() {
   };
 }
 
+// Fix esbuild __esm init ordering bug in pre-bundled MUI chunks.
+// esbuild splits MUI into chunks where createTheme_default is imported
+// but init_createTheme() is never called, leaving it undefined.
+// This plugin patches the pre-bundled output to add the missing init call.
+function fixMuiEsbuildInit() {
+  return {
+    name: 'fix-mui-esbuild-init',
+    enforce: 'pre',
+    transform(code, id) {
+      if (!id.includes('.vite/deps/chunk-')) return;
+      if (!code.includes('createTheme_default') || code.includes('init_createTheme')) return;
+
+      // Add init_createTheme to the import that has createTheme_default
+      let patched = code.replace(
+        /import\s*\{([^}]*\bcreateTheme_default\b[^}]*)\}\s*from\s*"([^"]+)"/,
+        (match, imports, source) => {
+          if (imports.includes('init_createTheme')) return match;
+          return `import {${imports},\n  init_createTheme\n} from "${source}"`;
+        }
+      );
+
+      if (patched === code) return; // no import found to patch
+
+      // Insert init_createTheme() call before the first use of createTheme_default
+      patched = patched.replace(
+        /^(.*?)(var \w+ = createTheme_default\(\))/m,
+        '$1init_createTheme();\n$2'
+      );
+
+      return patched;
+    },
+  };
+}
+
 // ----------------------------------------------------------------------
 
 export default defineConfig(() => ({
     plugins: [
+      fixMuiEsbuildInit(),
       react(),
       checker({
         overlay: {

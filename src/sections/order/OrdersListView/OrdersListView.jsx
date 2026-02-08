@@ -1,4 +1,4 @@
-import { Box, Button, Card, FormControlLabel, FormGroup, Grid, IconButton, MenuItem, Stack, Switch, Tooltip, Typography, Avatar, Chip, Dialog, DialogTitle, DialogContent, Divider } from '@mui/material';
+import { Alert, Box, Button, Card, FormControlLabel, FormGroup, Grid, IconButton, MenuItem, Stack, Switch, Tooltip, Typography, Avatar, Chip, Dialog, DialogTitle, DialogContent, Divider } from '@mui/material';
 import { t } from 'i18next';
 import { set } from 'lodash'; // [keep for later use]
 import { enqueueSnackbar, useSnackbar } from 'notistack';
@@ -389,12 +389,13 @@ function OrderItemsCell({ items, order }) {
 
 export default function OrdersListView({ product_id }) {
     // Call hooks unconditionally at the top level
-    const { orders: ordersByProduct, ordersLoading: loadingByProduct } = useGetOrdersByProduct(product_id);
-    const { orders: allOrders, ordersLoading: loadingAll } = useGetOrders();
+    const { orders: ordersByProduct, ordersLoading: loadingByProduct, ordersError: errorByProduct } = useGetOrdersByProduct(product_id);
+    const { orders: allOrders, ordersLoading: loadingAll, ordersError: errorAll } = useGetOrders();
 
     // Use the appropriate data based on product_id
     const orders = product_id ? ordersByProduct : allOrders;
     const ordersLoading = product_id ? loadingByProduct : loadingAll;
+    const ordersError = product_id ? errorByProduct : errorAll;
 
     const { currentLang } = useLocales()
 
@@ -587,6 +588,12 @@ export default function OrdersListView({ product_id }) {
                     { name: t('list') },
                 ]}
             >
+                {!ordersLoading && ordersError && !orders?.length && (
+                    <Alert severity="warning" icon={<Iconify icon="solar:cloud-cross-bold" width={22} />} sx={{ mb: 2 }}>
+                        {t('no_connection_notice')}
+                    </Alert>
+                )}
+
                 <Card>
                     <ZaityTableTabs filterKey='condition' data={tableData} items={items} defaultFilters={defaultFilters} setTableDate={setDataFiltered} filterFunction={filterFunction}>
                         {/* <ZaityTableTabs filterKey='attachable_type' data={tableData} items={items2} defaultFilters={defaultFilters} setTableDate={setDataFiltered} filterFunction={filterFunction}> */}

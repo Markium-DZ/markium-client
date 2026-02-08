@@ -7,10 +7,16 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import CardHeader from '@mui/material/CardHeader';
 import LinearProgress from '@mui/material/LinearProgress';
+import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
 import { alpha, useTheme } from '@mui/material/styles';
 
+import { useRouter } from 'src/routes/hooks';
+import { paths } from 'src/routes/paths';
+
 import { fNumber, fPercent } from 'src/utils/format-number';
+
+import Iconify from 'src/components/iconify';
 
 // ----------------------------------------------------------------------
 
@@ -29,6 +35,7 @@ const COLOR_KEYS = ['primary', 'info', 'warning', 'error', 'success'];
 export default function DashboardFunnel({ funnel, loading }) {
   const { t } = useTranslation();
   const theme = useTheme();
+  const router = useRouter();
 
   if (loading) {
     return (
@@ -55,6 +62,17 @@ export default function DashboardFunnel({ funnel, loading }) {
       <CardHeader
         title={t('analytics_conversion_funnel')}
         titleTypographyProps={{ variant: 'subtitle1' }}
+        action={
+          <Button
+            size="small"
+            color="inherit"
+            endIcon={<Iconify icon="solar:alt-arrow-right-outline" width={16} sx={{ transform: theme.direction === 'rtl' ? 'scaleX(-1)' : 'none' }} />}
+            onClick={() => router.push(paths.dashboard.analytics)}
+            sx={{ fontSize: '0.75rem', fontWeight: 600 }}
+          >
+            {t('view_all_analytics')}
+          </Button>
+        }
         sx={{ pb: 1 }}
       />
 

@@ -8,12 +8,18 @@ const options = {
   revalidateIfStale: true,
   revalidateOnFocus: false,
   revalidateOnReconnect: false,
+  onErrorRetry: (err, key, config, revalidate, { retryCount }) => {
+    const delays = [5000, 10000, 20000, 30000];
+    if (retryCount >= delays.length) return;
+    setTimeout(() => revalidate({ retryCount }), delays[retryCount]);
+  },
 };
 
 // ----------------------------------------------------------------------
 
 // Available date range options
 export const DATE_RANGE_OPTIONS = [
+  { value: '-1d', label: 'last_1_day' },
   { value: '-7d', label: 'last_7_days' },
   { value: '-14d', label: 'last_14_days' },
   { value: '-30d', label: 'last_30_days' },
@@ -39,20 +45,23 @@ export function useGetAnalyticsOverview(dateFrom = '-30d') {
 
   const memoizedValue = useMemo(() => {
     const metrics = data?.data?.metrics || {};
+    // Backend may return plain numbers or objects with { count, data, labels }
+    const val = (m) => (typeof m === 'object' && m !== null ? m.count ?? 0 : m ?? 0);
+    const arr = (m, key) => (typeof m === 'object' && m !== null ? m[key] ?? [] : []);
     return {
       overview: metrics,
-      totalOrders: metrics.total_orders?.count ?? 0,
-      totalOrdersData: metrics.total_orders?.data ?? [],
-      totalOrdersLabels: metrics.total_orders?.labels ?? [],
-      totalRevenue: metrics.total_revenue?.count ?? 0,
-      totalRevenueData: metrics.total_revenue?.data ?? [],
-      totalRevenueLabels: metrics.total_revenue?.labels ?? [],
-      totalVisitors: metrics.total_visitors?.count ?? 0,
-      totalVisitorsData: metrics.total_visitors?.data ?? [],
-      totalVisitorsLabels: metrics.total_visitors?.labels ?? [],
-      totalProductViews: metrics.total_product_views?.count ?? 0,
-      totalProductViewsData: metrics.total_product_views?.data ?? [],
-      totalProductViewsLabels: metrics.total_product_views?.labels ?? [],
+      totalOrders: val(metrics.total_orders),
+      totalOrdersData: arr(metrics.total_orders, 'data'),
+      totalOrdersLabels: arr(metrics.total_orders, 'labels'),
+      totalRevenue: val(metrics.total_revenue),
+      totalRevenueData: arr(metrics.total_revenue, 'data'),
+      totalRevenueLabels: arr(metrics.total_revenue, 'labels'),
+      totalVisitors: val(metrics.total_visitors),
+      totalVisitorsData: arr(metrics.total_visitors, 'data'),
+      totalVisitorsLabels: arr(metrics.total_visitors, 'labels'),
+      totalProductViews: val(metrics.total_product_views),
+      totalProductViewsData: arr(metrics.total_product_views, 'data'),
+      totalProductViewsLabels: arr(metrics.total_product_views, 'labels'),
       overviewLoading: isLoading,
       overviewError: error,
       overviewValidating: isValidating,
@@ -87,6 +96,7 @@ export function useGetAnalyticsTraffic(dateFrom = '-30d', interval = 'day') {
       traffic,
       visitors: traffic[0] || { count: 0, data: [], labels: [] },
       productViews: traffic[1] || { count: 0, data: [], labels: [] },
+      orderCompleted: traffic[2] || { count: 0, data: [], labels: [] },
       trafficLoading: isLoading,
       trafficError: error,
       trafficValidating: isValidating,

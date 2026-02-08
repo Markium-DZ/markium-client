@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import Tab from '@mui/material/Tab';
@@ -10,12 +10,16 @@ import Stack from '@mui/material/Stack';
 import Badge from '@mui/material/Badge';
 import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
+import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import CircularProgress from '@mui/material/CircularProgress';
 import { alpha, useTheme } from '@mui/material/styles';
 
 import { useRouter } from 'src/routes/hooks';
 import { paths } from 'src/routes/paths';
+
+import { formatDistanceToNow } from 'date-fns';
+import { fr, enUS, arSA } from 'date-fns/locale';
 
 import { fCurrency, fNumber } from 'src/utils/format-number';
 
@@ -27,14 +31,13 @@ import ZaityListView from 'src/sections/ZaityTables/zaity-list-view';
 
 // ----------------------------------------------------------------------
 
+const DATE_LOCALES = { fr, en: enUS, ar: arSA };
+
 const TAB_VALUES = {
   ORDERS: 'orders',
   TOP_PRODUCTS: 'top_products',
   LOW_STOCK: 'low_stock',
 };
-
-// Fixed height for the table content area (excludes tabs header + footer)
-const TABLE_CONTENT_HEIGHT = 380;
 
 // ----------------------------------------------------------------------
 
@@ -46,14 +49,17 @@ export default function DashboardDataTable({
   lowStockInventory = [],
   lowStockLoading = false,
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const theme = useTheme();
   const router = useRouter();
 
   const [currentTab, setCurrentTab] = useState(TAB_VALUES.ORDERS);
+  const [page, setPage] = useState(0);
+  const ROWS_PER_PAGE = 5;
 
   const handleChangeTab = (event, newValue) => {
     setCurrentTab(newValue);
+    setPage(0);
   };
 
   // ---- TAB 1: Recent Orders ----
@@ -118,11 +124,21 @@ export default function DashboardDataTable({
       {
         id: 'created_at',
         label: t('date'),
-        type: 'date',
+        type: 'render',
         width: 100,
+        render: (row) => (
+          <Typography variant="body2" noWrap sx={{ color: 'text.secondary' }}>
+            {row.created_at
+              ? formatDistanceToNow(new Date(row.created_at), {
+                  addSuffix: true,
+                  locale: DATE_LOCALES[i18n.language] || enUS,
+                }).replace(/\s*تقريباً|about\s+|il y a\s+/g, '')
+              : '–'}
+          </Typography>
+        ),
       },
     ],
-    [t]
+    [t, i18n.language]
   );
 
   // ---- TAB 2: Top Products ----
@@ -264,6 +280,27 @@ export default function DashboardDataTable({
     },
   ];
 
+  // Pagination helpers
+  const currentData = useMemo(() => {
+    if (currentTab === TAB_VALUES.ORDERS) return recentOrdersData;
+    if (currentTab === TAB_VALUES.TOP_PRODUCTS) return topProductsData;
+    if (currentTab === TAB_VALUES.LOW_STOCK) return lowStockData;
+    return [];
+  }, [currentTab, recentOrdersData, topProductsData, lowStockData]);
+
+  const totalCount = currentData.length;
+  const totalPages = Math.ceil(totalCount / ROWS_PER_PAGE);
+  const pageData = useMemo(
+    () => currentData.slice(page * ROWS_PER_PAGE, page * ROWS_PER_PAGE + ROWS_PER_PAGE),
+    [currentData, page]
+  );
+
+  const from = totalCount === 0 ? 0 : page * ROWS_PER_PAGE + 1;
+  const to = Math.min((page + 1) * ROWS_PER_PAGE, totalCount);
+
+  const handlePrevPage = useCallback(() => setPage((p) => Math.max(0, p - 1)), []);
+  const handleNextPage = useCallback(() => setPage((p) => Math.min(totalPages - 1, p + 1)), [totalPages]);
+
   const viewAllConfig = {
     [TAB_VALUES.ORDERS]: { label: t('view_all_orders'), path: paths.dashboard.order.root },
     [TAB_VALUES.TOP_PRODUCTS]: { label: t('view_all_products'), path: paths.dashboard.product.root },
@@ -321,8 +358,8 @@ export default function DashboardDataTable({
         </Tabs>
       </Box>
 
-      {/* Tab content — fixed height */}
-      <Box sx={{ height: TABLE_CONTENT_HEIGHT, overflow: 'auto', flexShrink: 0 }}>
+      {/* Tab content */}
+      <Box sx={{ flexGrow: 1, minHeight: 0, overflow: 'hidden' }}>
         {isLoading ? (
           <Box sx={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <CircularProgress size={36} />
@@ -332,38 +369,43 @@ export default function DashboardDataTable({
             {currentTab === TAB_VALUES.ORDERS && (
               <ZaityListView
                 TABLE_HEAD={ordersTableHead}
-                zaityTableDate={recentOrdersData}
+                zaityTableDate={pageData}
                 dense="small"
-                rowsPerPage={5}
-                rowsPerPageOptions={[5, 10]}
+                rowsPerPage={ROWS_PER_PAGE}
+                hidePagination
               />
             )}
 
             {currentTab === TAB_VALUES.TOP_PRODUCTS && (
               <ZaityListView
                 TABLE_HEAD={topProductsTableHead}
-                zaityTableDate={topProductsData}
+                zaityTableDate={pageData}
                 dense="small"
-                rowsPerPage={5}
-                rowsPerPageOptions={[5, 10]}
+                rowsPerPage={ROWS_PER_PAGE}
+                hidePagination
               />
             )}
 
             {currentTab === TAB_VALUES.LOW_STOCK && (
               <ZaityListView
                 TABLE_HEAD={lowStockTableHead}
-                zaityTableDate={lowStockData}
+                zaityTableDate={pageData}
                 dense="small"
-                rowsPerPage={5}
-                rowsPerPageOptions={[5, 10]}
+                rowsPerPage={ROWS_PER_PAGE}
+                hidePagination
               />
             )}
           </>
         )}
       </Box>
 
-      {/* View All footer */}
-      <Box sx={{ px: 2.5, py: 1.5, borderTop: 1, borderColor: 'divider', flexShrink: 0, mt: 'auto' }}>
+      {/* Footer: View All + Pagination */}
+      <Stack
+        direction="row"
+        alignItems="center"
+        justifyContent="space-between"
+        sx={{ px: 2.5, py: 1.5, borderTop: 1, borderColor: 'divider', flexShrink: 0, mt: 'auto' }}
+      >
         <Button
           size="small"
           color="inherit"
@@ -373,7 +415,21 @@ export default function DashboardDataTable({
         >
           {viewAllConfig[currentTab].label}
         </Button>
-      </Box>
+
+        {totalCount > 0 && (
+          <Stack direction="row" alignItems="center" spacing={0.5}>
+            <Typography variant="caption" sx={{ color: 'text.secondary', whiteSpace: 'nowrap' }}>
+              {from}–{to} {t('of')} {totalCount}
+            </Typography>
+            <IconButton size="small" onClick={handlePrevPage} disabled={page === 0}>
+              <Iconify icon={theme.direction === 'rtl' ? 'solar:alt-arrow-right-linear' : 'solar:alt-arrow-left-linear'} width={18} />
+            </IconButton>
+            <IconButton size="small" onClick={handleNextPage} disabled={page >= totalPages - 1}>
+              <Iconify icon={theme.direction === 'rtl' ? 'solar:alt-arrow-left-linear' : 'solar:alt-arrow-right-linear'} width={18} />
+            </IconButton>
+          </Stack>
+        )}
+      </Stack>
     </Card>
   );
 }

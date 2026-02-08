@@ -75,5 +75,5 @@ dist
 
 .serena
 
-# .env.production and .env.development are committed (contain only public API URLs)
+# .env.staging and .env.production are committed (contain only public API URLs)
 # Secrets (PostHog keys etc.) go in .env.local or Cloudflare dashboard

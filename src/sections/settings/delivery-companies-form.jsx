@@ -74,11 +74,10 @@ export default function DeliveryCompaniesForm() {
       // Convert required_credentials to fields array
       const fields = Object.entries(provider.required_credentials || {}).map(([key, credential]) => ({
         name: `${provider.identifier}_${key}`,
-        label: credential.label || key,
+        labelKey: key,
         type: credential.type === 'string' ? 'text' : credential.type,
         required: credential.required || false,
-        placeholder: credential.placeholder || '',
-        description: credential.description || '',
+        descriptionKey: key,
       }));
 
       return {
@@ -88,7 +87,7 @@ export default function DeliveryCompaniesForm() {
         image: provider.logo || '/assets/images/delivery/default.png',
         color: '#4ECDC4', // Default color, can be customized per provider
         fields,
-        description: `${provider.name} - ${provider.supported_countries.join(', ')}`,
+        descriptionKey: `${provider.identifier}_description`,
         capabilities: provider.capabilities,
         isSandboxAvailable: provider.is_sandbox_available,
         // Connection data
@@ -428,7 +427,7 @@ export default function DeliveryCompaniesForm() {
                         )}
                       </Stack>
                       <Typography variant="caption" color="text.secondary">
-                        {company.description}
+                        {t(company.descriptionKey)}
                       </Typography>
                     </Box>
                     <Box onClick={(e) => e.stopPropagation()} sx={{ mr: 2 }}>
@@ -505,16 +504,15 @@ export default function DeliveryCompaniesForm() {
                           <RHFTextField
                             key={field.name}
                             name={field.name}
-                            label={field.label}
+                            label={t(field.labelKey)}
                             type={field.type}
-                            placeholder={field.placeholder}
                             disabled={!values[`${company.id}_enabled`]}
                             helperText={
                               !values[`${company.id}_enabled`]
                                 ? t('enable_to_configure')
-                                : field.description || (field.required
+                                : field.required
                                   ? t('required_field')
-                                  : t('optional_field'))
+                                  : t('optional_field')
                             }
                             InputProps={{
                               startAdornment: (

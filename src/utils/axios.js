@@ -8,12 +8,14 @@ const axiosInstance = axios.create({ baseURL: HOST_API });
 axiosInstance.interceptors.response.use(
   (res) => res,
   (error) => {
-    // Log the error for debugging
-    console.error('Axios error intercepted:', {
-      status: error.response?.status,
-      data: error.response?.data,
-      url: error.config?.url,
-    });
+    // Only log server errors (not network/connection errors which spam the console)
+    if (error.response) {
+      console.error('Axios error intercepted:', {
+        status: error.response.status,
+        data: error.response.data,
+        url: error.config?.url,
+      });
+    }
 
     // Check for 401 status and redirect to login
     if (error.response?.status === 401) {
@@ -34,6 +36,11 @@ axiosInstance.interceptors.response.use(
       // Ensure we reject with the error data so show_error can handle it
       console.error('422 Validation Error:', errorData);
       return Promise.reject(errorData);
+    }
+
+    // Network error — no response from server (offline / server down)
+    if (!error.response) {
+      return Promise.reject({ isNetworkError: true });
     }
 
     // Throw the error with consistent structure for all other errors

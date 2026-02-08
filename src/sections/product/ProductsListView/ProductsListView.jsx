@@ -1,4 +1,4 @@
-import { Avatar, Box, Button, Card, FormControlLabel, FormGroup, Grid, IconButton, Link, ListItemText, MenuItem, Stack, Switch, Tooltip, Typography } from '@mui/material';
+import { Alert, Avatar, Box, Button, Card, FormControlLabel, FormGroup, Grid, IconButton, Link, ListItemText, MenuItem, Stack, Switch, Tooltip, Typography } from '@mui/material';
 import { t } from 'i18next';
 import { set } from 'lodash'; // [keep for later use]
 import { enqueueSnackbar, useSnackbar } from 'notistack';
@@ -45,8 +45,7 @@ import { captureEvent } from 'src/utils/posthog';
 
 export default function ProductsListView({ }) {
 
-    const { products, productsLoading } = useGetProducts()
-    console.log("products : ",products);
+    const { products, productsLoading, productsError, productsMutate } = useGetProducts();
 
     const { user } = useContext(AuthContext);
 
@@ -157,16 +156,21 @@ export default function ProductsListView({ }) {
                     { name: t('list') },
                 ]}
             >
+                {!productsLoading && productsError && !products?.length && (
+                    <Alert severity="warning" icon={<Iconify icon="solar:cloud-cross-bold" width={22} />} sx={{ mb: 2 }}>
+                        {t('no_connection_notice')}
+                    </Alert>
+                )}
+
                 <Card>
                     <ZaityTableTabs filterKey='condition' data={tableData} items={items} defaultFilters={defaultFilters} setTableDate={setDataFiltered} filterFunction={filterFunction}>
                         {/* <ZaityTableTabs filterKey='attachable_type' data={tableData} items={items2} defaultFilters={defaultFilters} setTableDate={setDataFiltered} filterFunction={filterFunction}> */}
                         <ZaityTableFilters data={dataFiltered} tableData={tableData} setTableDate={setDataFiltered} items={filters} defaultFilters={defaultFilters} dataFiltered={tableData} searchText={t("search_by") + " " + t("name") + " " + t("or_any_value") + " ..."}  >
-                            {
-                                productsLoading ?
-                                    <LoadingScreen sx={{ my: 8 }} color='primary' />
-                                    :
-                                    <ZaityListView TABLE_HEAD={[...TABLE_HEAD]} dense="medium" zaityTableDate={dataFiltered || []} onSelectedRows={({ data, setTableData }) => { return <onSelectedRowsComponent configurable_type={"roles"} setTableData={setTableData} data={products} /> }} />
-                            }
+                            {productsLoading ? (
+                                <LoadingScreen sx={{ my: 8 }} color='primary' />
+                            ) : (
+                                <ZaityListView TABLE_HEAD={[...TABLE_HEAD]} dense="medium" zaityTableDate={dataFiltered || []} onSelectedRows={({ data, setTableData }) => { return <onSelectedRowsComponent configurable_type={"roles"} setTableData={setTableData} data={products} /> }} />
+                            )}
                         </ZaityTableFilters>
                         {/* </ZaityTableTabs> */}
                     </ZaityTableTabs>

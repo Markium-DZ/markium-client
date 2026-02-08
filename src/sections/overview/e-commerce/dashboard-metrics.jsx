@@ -27,17 +27,18 @@ export default function DashboardMetrics({ metrics, dateRange, onDateRangeChange
 
   return (
     <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      {/* Metrics 2x2 grid */}
+      {/* Metrics grid: 2 top cells + 1 spanning bottom */}
       <Box
         sx={{
           flexGrow: 1,
           display: 'grid',
           gridTemplateColumns: 'repeat(2, 1fr)',
           gridTemplateRows: 'repeat(2, 1fr)',
-          '& > *:nth-of-type(odd)': {
+          '& > *:first-of-type': {
             borderRight: (thm) => `1px dashed ${thm.palette.divider}`,
+            borderBottom: (thm) => `1px dashed ${thm.palette.divider}`,
           },
-          '& > *:nth-of-type(-n+2)': {
+          '& > *:nth-of-type(2)': {
             borderBottom: (thm) => `1px dashed ${thm.palette.divider}`,
           },
         }}
@@ -76,10 +77,22 @@ export default function DashboardMetrics({ metrics, dateRange, onDateRangeChange
           </Select>
         </Stack>
 
-        <Stack direction="row" alignItems="center" spacing={0.5}>
-          <Iconify icon="solar:refresh-linear" width={15} sx={{ color: 'text.disabled' }} />
-          <Typography variant="caption" sx={{ color: 'text.disabled' }}>
-            {t('updated_daily')}
+        <Stack direction="row" alignItems="center" spacing={0.75}>
+          <Box
+            sx={{
+              width: 8,
+              height: 8,
+              borderRadius: '50%',
+              bgcolor: 'success.main',
+              animation: 'pulse-live 2s ease-in-out infinite',
+              '@keyframes pulse-live': {
+                '0%, 100%': { opacity: 1 },
+                '50%': { opacity: 0.4 },
+              },
+            }}
+          />
+          <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600 }}>
+            {t('live_updates')}
           </Typography>
         </Stack>
       </Stack>
@@ -100,6 +113,7 @@ function MetricCell({ metric }) {
   const hasData = metric.data?.length > 0;
   const data = hasData ? metric.data.slice(-10) : FLAT_LINE;
   const color = hasData ? metric.color : theme.palette.grey[300];
+  const isWide = metric.span === 2;
 
   return (
     <Box
@@ -110,6 +124,7 @@ function MetricCell({ metric }) {
         justifyContent: 'center',
         p: 2,
         overflow: 'hidden',
+        ...(isWide && { gridColumn: '1 / -1' }),
       }}
     >
       {/* Colored icon badge — top-end corner */}
@@ -132,7 +147,7 @@ function MetricCell({ metric }) {
         </Box>
       </Tooltip>
 
-      {/* Value + Label — tooltip on content hover only */}
+      {/* Value + Label */}
       <Tooltip title={metric.tooltip || ''} placement="top" arrow>
         <Box sx={{ alignSelf: 'flex-start' }}>
           <Typography
@@ -145,6 +160,11 @@ function MetricCell({ metric }) {
             }}
           >
             {metric.value ? fNumber(metric.value) : '0'}
+            {metric.suffix && (
+              <Typography component="span" variant="body2" sx={{ fontWeight: 600, ml: 0.5 }}>
+                {metric.suffix}
+              </Typography>
+            )}
           </Typography>
 
           <Typography
@@ -159,7 +179,7 @@ function MetricCell({ metric }) {
         </Box>
       </Tooltip>
 
-      {/* Sparkline — outside tooltip zone */}
+      {/* Sparkline */}
       <Box sx={{ height: 36, mt: 1.5 }} dir="ltr">
         <SparkLineChart
           data={data}

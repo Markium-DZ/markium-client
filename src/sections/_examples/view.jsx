@@ -2,12 +2,12 @@ import { m } from 'framer-motion';
 import PropTypes from 'prop-types';
 import orderBy from 'lodash/orderBy';
 
-import Box from '@mui/material/Box';
 import Link from '@mui/material/Link';
 import Stack from '@mui/material/Stack';
 import Divider from '@mui/material/Divider';
 import Container from '@mui/material/Container';
 import Typography from '@mui/material/Typography';
+import Box from '@mui/material/Box';
 
 import { varFade, MotionContainer } from 'src/components/animate';
 
