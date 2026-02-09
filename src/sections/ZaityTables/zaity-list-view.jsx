@@ -244,7 +244,7 @@ function applyFilter({ inputData, comparator, filters, dateError }) {
   }
 
   if (status !== 'all') {
-    inputData = inputData.filter((order) => order.status === status);
+    inputData = inputData.filter((order) => (order.status?.key || order.status) === status);
   }
 
   if (!dateError) {

@@ -465,7 +465,7 @@ export default function OrdersListView({ product_id }) {
     const RformulateTable = (data) => {
         return data?.map((item) => {
             // Use centralized order status configuration
-            const statusConfig = getOrderStatus(item?.status);
+            const statusConfig = getOrderStatus(item?.status?.key || item?.status);
             const color = statusConfig?.color || "default";
             const translatedStatus = statusConfig ? t(statusConfig.labelKey) : "";
 
@@ -553,11 +553,11 @@ export default function OrdersListView({ product_id }) {
             },
             color: 'primary'
         },
-        { key: 'pending', label: t('pending'), match: (item) => item?.status === 'pending', color: 'warning' },
-        { key: 'confirmed', label: t('confirmed'), match: (item) => item?.status === 'confirmed', color: 'secondary' },
-        { key: 'shipped', label: t('shipped'), match: (item) => item?.status === 'shipped', color: 'info' },
-        { key: 'delivered', label: t('delivered'), match: (item) => item?.status === 'delivered', color: 'success' },
-        { key: 'cancelled', label: t('cancelled'), match: (item) => item?.status === 'cancelled', color: 'error' },
+        { key: 'pending', label: t('pending'), match: (item) => (item?.status?.key || item?.status) === 'pending', color: 'warning' },
+        { key: 'confirmed', label: t('confirmed'), match: (item) => (item?.status?.key || item?.status) === 'confirmed', color: 'secondary' },
+        { key: 'shipped', label: t('shipped'), match: (item) => (item?.status?.key || item?.status) === 'shipped', color: 'info' },
+        { key: 'delivered', label: t('delivered'), match: (item) => (item?.status?.key || item?.status) === 'delivered', color: 'success' },
+        { key: 'cancelled', label: t('cancelled'), match: (item) => (item?.status?.key || item?.status) === 'cancelled', color: 'error' },
     ];
 
     const filterFunction = (data, filters) => {
@@ -706,7 +706,7 @@ const ElementActions = ({ item, setTableData }) => {
                 <Divider sx={{ borderStyle: 'dashed', my: 0.5 }} />
 
                 {statuses
-                    .filter(status => status.value !== item?.status) // Don't show current status
+                    .filter(status => status.value !== (item?.status?.key || item?.status)) // Don't show current status
                     .map((status) => (
                         <MenuItem
                             key={status.value}

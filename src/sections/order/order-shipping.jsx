@@ -8,7 +8,6 @@ import Typography from '@mui/material/Typography';
 import CardHeader from '@mui/material/CardHeader';
 import Chip from '@mui/material/Chip';
 import Alert from '@mui/material/Alert';
-import CircularProgress from '@mui/material/CircularProgress';
 import Button from '@mui/material/Button';
 import Radio from '@mui/material/Radio';
 import RadioGroup from '@mui/material/RadioGroup';
@@ -22,16 +21,15 @@ import { LoadingScreen } from 'src/components/loading-screen';
 
 // ----------------------------------------------------------------------
 
-export default function OrderShippingRates({ quotesGroupedByProvider, loading, error, onRefresh, onSelect, selectedQuoteId, onShip }) {
+export default function OrderShipping({ quotesGroupedByProvider, loading, error, onRefresh, onSelect, selectedQuoteId, onShip }) {
   const { t } = useTranslate();
 
-  // Calculate if we have any quotes
   const hasQuotes = quotesGroupedByProvider && Object.keys(quotesGroupedByProvider).length > 0;
 
   if (loading) {
     return (
       <Card>
-        <CardHeader title={t('shipping_rates')} />
+        <CardHeader title={t('shipping')} />
         <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
           <LoadingScreen />
         </Box>
@@ -42,10 +40,10 @@ export default function OrderShippingRates({ quotesGroupedByProvider, loading, e
   if (error) {
     return (
       <Card>
-        <CardHeader title={t('shipping_rates')} />
+        <CardHeader title={t('shipping')} />
         <Alert severity="error" sx={{ m: 2 }}>
           <Typography variant="body2">
-            {t('error_loading_shipping_rates')}
+            {t('error_loading_shipping')}
           </Typography>
         </Alert>
       </Card>
@@ -56,7 +54,7 @@ export default function OrderShippingRates({ quotesGroupedByProvider, loading, e
     return (
       <Card>
         <CardHeader
-          title={t('shipping_rates')}
+          title={t('shipping')}
           action={
             onRefresh && (
               <Button
@@ -71,7 +69,7 @@ export default function OrderShippingRates({ quotesGroupedByProvider, loading, e
         />
         <Alert severity="info" sx={{ m: 2 }}>
           <Typography variant="body2">
-            {t('no_shipping_rates_available')}
+            {t('no_shipping_available')}
           </Typography>
         </Alert>
       </Card>
@@ -81,7 +79,7 @@ export default function OrderShippingRates({ quotesGroupedByProvider, loading, e
   return (
     <Card>
       <CardHeader
-        title={t('shipping_rates')}
+        title={t('shipping')}
         action={
           onRefresh && (
             <Button
@@ -94,6 +92,15 @@ export default function OrderShippingRates({ quotesGroupedByProvider, loading, e
           )
         }
       />
+
+      {/* Contextual guidance */}
+      <Alert
+        severity="info"
+        icon={<Iconify icon="solar:delivery-bold" width={22} />}
+        sx={{ mx: 2, mt: 1 }}
+      >
+        {t('select_delivery_provider')}
+      </Alert>
 
       {/* Quotes List Grouped by Provider */}
       <Box sx={{ p: 3 }}>
@@ -183,7 +190,7 @@ export default function OrderShippingRates({ quotesGroupedByProvider, loading, e
                               {/* Price */}
                               <Box sx={{ textAlign: 'end' }}>
                                 <Typography variant="h6" color="primary">
-                                  {fCurrency(quote.price)} 
+                                  {fCurrency(quote.price)}
                                 </Typography>
                                 {quote.metadata?.base_fee && quote.metadata?.base_fee !== quote.price && (
                                   <Typography variant="caption" color="text.secondary">
@@ -206,7 +213,7 @@ export default function OrderShippingRates({ quotesGroupedByProvider, loading, e
         {selectedQuoteId && onShip && (
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
             <Button variant="contained" onClick={onShip} startIcon={<Iconify icon="solar:delivery-bold" />}>
-              {t('ship_order')}
+              {t('create_shipment')}
             </Button>
           </Box>
         )}
@@ -215,7 +222,7 @@ export default function OrderShippingRates({ quotesGroupedByProvider, loading, e
   );
 }
 
-OrderShippingRates.propTypes = {
+OrderShipping.propTypes = {
   quotesGroupedByProvider: PropTypes.oneOfType([PropTypes.object, PropTypes.array]),
   loading: PropTypes.bool,
   error: PropTypes.object,

@@ -38,7 +38,7 @@ export default function InventoryDetailsView() {
   const [updating, setUpdating] = useState(false);
   const [adjustmentDialogOpen, setAdjustmentDialogOpen] = useState(false);
 
-  const { inventoryItem, inventoryItemLoading, mutate } = useGetInventoryItem(id);
+  const { inventoryItem, inventoryItemLoading, inventoryItemError, mutate } = useGetInventoryItem(id);
 
   // Get stock status
   const getStockStatus = (item) => {
@@ -77,7 +77,7 @@ export default function InventoryDetailsView() {
     return <LoadingScreen />;
   }
 
-  if (!inventoryItem) {
+  if (inventoryItemError || !inventoryItem) {
     return (
       <ZaityHeadContainer
         heading={t('inventory')}
@@ -92,6 +92,14 @@ export default function InventoryDetailsView() {
           <Typography variant="h6" color="text.secondary">
             {t('inventory_item_not_found')}
           </Typography>
+          <Button
+            component={RouterLink}
+            href={paths.dashboard.inventory.root}
+            startIcon={<Iconify icon="eva:arrow-ios-back-fill" width={16} />}
+            sx={{ mt: 2 }}
+          >
+            {t('back_to_list')}
+          </Button>
         </Card>
       </ZaityHeadContainer>
     );

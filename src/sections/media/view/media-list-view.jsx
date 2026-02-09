@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import PropTypes from 'prop-types';
 
 import Box from '@mui/material/Box';
@@ -12,22 +12,28 @@ import CircularProgress from '@mui/material/CircularProgress';
 import Alert from '@mui/material/Alert';
 import Grid from '@mui/material/Grid';
 import MenuItem from '@mui/material/MenuItem';
+import TextField from '@mui/material/TextField';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
 import { alpha } from '@mui/material/styles';
 import { Divider } from '@mui/material';
 
 import { useTranslate } from 'src/locales';
-import { useGetMedia, uploadMedia, deleteMedia } from 'src/api/media';
+import { useGetMedia, uploadMedia, deleteMedia, updateMediaAltText } from 'src/api/media';
 import { useSettingsContext } from 'src/components/settings';
 import { useSnackbar } from 'src/components/snackbar';
 import Iconify from 'src/components/iconify';
-import { fDate, fDateTime } from 'src/utils/format-time';
+import { fDate } from 'src/utils/format-time';
 import { fData } from 'src/utils/format-number';
 import CustomPopover, { usePopover } from 'src/components/custom-popover';
 import { ConfirmDialog } from 'src/components/custom-dialog';
 import { captureEvent } from 'src/utils/posthog';
 import showError from 'src/utils/show_error';
-import { STORAGE_API } from 'src/config-global';
 import { LoadingScreen } from 'src/components/loading-screen';
+import Lightbox, { useLightBox } from 'src/components/lightbox';
+import { useCopyToClipboard } from 'src/hooks/use-copy-to-clipboard';
 
 // ----------------------------------------------------------------------
 
@@ -85,6 +91,18 @@ export default function MediaListView() {
     return groups;
   }, {});
 
+  // Lightbox slides from all media
+  const slides = useMemo(
+    () => allMedia.map((item) => ({ src: item.full_url })),
+    [allMedia]
+  );
+
+  const lightbox = useLightBox(slides);
+
+  const handlePreview = useCallback((item) => {
+    lightbox.onOpen(item.full_url);
+  }, [lightbox]);
+
   // Handle file upload
   const handleFileSelect = useCallback(async (event) => {
     const files = event.target.files;
@@ -129,8 +147,21 @@ export default function MediaListView() {
       enqueueSnackbar(t('media_deleted_successfully'), { variant: 'success' });
     } catch (error) {
       console.error('Failed to delete media:', error);
-      // enqueueSnackbar(error.message || t('failed_to_delete_media'), { variant: 'error' });
-      showError(error)
+      showError(error);
+    }
+  }, [enqueueSnackbar, t]);
+
+  // Handle alt text update
+  const handleUpdateAltText = useCallback(async (mediaId, newAltText) => {
+    try {
+      await updateMediaAltText(mediaId, newAltText);
+      setAllMedia((prev) =>
+        prev.map((item) => (item.id === mediaId ? { ...item, alt_text: newAltText } : item))
+      );
+      enqueueSnackbar(t('alt_text_updated'), { variant: 'success' });
+    } catch (error) {
+      console.error('Failed to update alt text:', error);
+      showError(error);
     }
   }, [enqueueSnackbar, t]);
 
@@ -181,7 +212,7 @@ export default function MediaListView() {
           <Box key={date} sx={{ mb: 4 }}>
 
             <Divider orientation="horizontal" sx={{ mt: 4, display: 'flex' }} />
-            <Typography variant="subtitle1" color={"text.secondary"} sx={{ mb: 2, mt: 2, display: "flex", alignItems: "center", fontWeight: 600 }} >
+            <Typography variant="subtitle1" color="text.secondary" sx={{ mb: 2, mt: 2, display: 'flex', alignItems: 'center', fontWeight: 600 }} >
               <Iconify icon="solar:calendar-bold" width="20px" height="20px" sx={{ mr: 1, color: 'primary.main' }} />
               {date}
             </Typography>
@@ -189,7 +220,12 @@ export default function MediaListView() {
             <Grid container spacing={2}>
               {items.map((item) => (
                 <Grid item xs={4} sm={3} md={2} lg={1.5} key={item.id}>
-                  <MediaItem item={item} onDelete={handleDeleteMedia} />
+                  <MediaItem
+                    item={item}
+                    onDelete={handleDeleteMedia}
+                    onPreview={handlePreview}
+                    onUpdateAltText={handleUpdateAltText}
+                  />
                 </Grid>
               ))}
             </Grid>
@@ -198,21 +234,33 @@ export default function MediaListView() {
 
         {mediaLoading && (
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
-            {/* <CircularProgress /> */}
             <LoadingScreen />
           </Box>
         )}
       </Box>
+
+      <Lightbox
+        index={lightbox.selected}
+        slides={slides}
+        open={lightbox.open}
+        close={lightbox.onClose}
+        onGetCurrentIndex={(index) => lightbox.setSelected(index)}
+      />
     </Container>
   );
 }
 
 // ----------------------------------------------------------------------
 
-function MediaItem({ item, onDelete }) {
+function MediaItem({ item, onDelete, onPreview, onUpdateAltText }) {
   const { t } = useTranslate();
+  const { enqueueSnackbar } = useSnackbar();
+  const { copy } = useCopyToClipboard();
   const popover = usePopover();
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [altTextDialog, setAltTextDialog] = useState(false);
+  const [altTextValue, setAltTextValue] = useState(item.alt_text || '');
+
   const handleDeleteClick = useCallback(() => {
     popover.onClose();
     setConfirmDelete(true);
@@ -227,6 +275,28 @@ function MediaItem({ item, onDelete }) {
     setConfirmDelete(false);
   }, []);
 
+  const handleCopyUrl = useCallback(() => {
+    popover.onClose();
+    copy(item.full_url);
+    enqueueSnackbar(t('url_copied'), { variant: 'success' });
+  }, [copy, item.full_url, popover, enqueueSnackbar, t]);
+
+  const handlePreviewClick = useCallback(() => {
+    popover.onClose();
+    onPreview(item);
+  }, [popover, onPreview, item]);
+
+  const handleEditAltText = useCallback(() => {
+    popover.onClose();
+    setAltTextValue(item.alt_text || '');
+    setAltTextDialog(true);
+  }, [popover, item.alt_text]);
+
+  const handleSaveAltText = useCallback(async () => {
+    setAltTextDialog(false);
+    await onUpdateAltText(item.id, altTextValue);
+  }, [onUpdateAltText, item.id, altTextValue]);
+
   return (
     <>
       <Card
@@ -236,11 +306,16 @@ function MediaItem({ item, onDelete }) {
           transition: 'all 0.2s',
           '&:hover': {
             boxShadow: (theme) => theme.customShadows.z8,
+            transform: 'scale(1.02)',
             '& .media-overlay': {
               opacity: 1,
             },
           },
+          '&:active': {
+            transform: 'scale(0.98)',
+          },
         }}
+        onClick={() => onPreview(item)}
       >
         <Box
           sx={{
@@ -286,7 +361,10 @@ function MediaItem({ item, onDelete }) {
             <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
               <IconButton
                 size="small"
-                onClick={popover.onOpen}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  popover.onOpen(e);
+                }}
                 sx={{
                   color: 'white',
                   bgcolor: (theme) => alpha(theme.palette.common.black, 0.4),
@@ -330,8 +408,25 @@ function MediaItem({ item, onDelete }) {
         open={popover.open}
         onClose={popover.onClose}
         arrow="right-top"
-        sx={{ width: 140 }}
+        sx={{ width: 160 }}
       >
+        <MenuItem onClick={handlePreviewClick}>
+          <Iconify icon="solar:eye-bold" />
+          {t('preview')}
+        </MenuItem>
+
+        <MenuItem onClick={handleCopyUrl}>
+          <Iconify icon="solar:copy-bold" />
+          {t('copy_link')}
+        </MenuItem>
+
+        <MenuItem onClick={handleEditAltText}>
+          <Iconify icon="solar:pen-bold" />
+          {t('edit_alt_text')}
+        </MenuItem>
+
+        <Divider sx={{ borderStyle: 'dashed' }} />
+
         <MenuItem
           onClick={handleDeleteClick}
           sx={{ color: 'error.main' }}
@@ -340,6 +435,33 @@ function MediaItem({ item, onDelete }) {
           {t('delete')}
         </MenuItem>
       </CustomPopover>
+
+      {/* Alt Text Edit Dialog */}
+      <Dialog
+        open={altTextDialog}
+        onClose={() => setAltTextDialog(false)}
+        maxWidth="sm"
+        fullWidth
+        onClick={(e) => e.stopPropagation()}
+      >
+        <DialogTitle>{t('edit_alt_text')}</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            fullWidth
+            multiline
+            rows={3}
+            value={altTextValue}
+            onChange={(e) => setAltTextValue(e.target.value)}
+            placeholder={t('edit_alt_text')}
+            sx={{ mt: 1 }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setAltTextDialog(false)}>{t('cancel')}</Button>
+          <Button variant="contained" onClick={handleSaveAltText}>{t('save')}</Button>
+        </DialogActions>
+      </Dialog>
 
       <ConfirmDialog
         open={confirmDelete}
@@ -359,4 +481,6 @@ function MediaItem({ item, onDelete }) {
 MediaItem.propTypes = {
   item: PropTypes.object.isRequired,
   onDelete: PropTypes.func.isRequired,
+  onPreview: PropTypes.func.isRequired,
+  onUpdateAltText: PropTypes.func.isRequired,
 };

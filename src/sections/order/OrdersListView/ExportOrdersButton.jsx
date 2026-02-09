@@ -69,7 +69,7 @@ export default function ExportOrdersButton({ orders }) {
 
             if (!selectedStatuses.includes('all')) {
                 ordersToExport = orders?.filter(order =>
-                    selectedStatuses.includes(order.status)
+                    selectedStatuses.includes(order.status?.key || order.status)
                 ) || [];
             }
 
@@ -83,7 +83,7 @@ export default function ExportOrdersButton({ orders }) {
                 'Quantity': order.quantity,
                 'Price': order.product?.sale_price || '',
                 'Total': (parseFloat(order.product?.sale_price || 0) * order.quantity).toFixed(2),
-                'Status': getStatusWithSymbol(order.status),
+                'Status': getStatusWithSymbol(order.status?.key || order.status),
                 'Street Address': order.address?.street_address || '',
                 'Commune': order.address?.commune?.name_ar || order.address?.commune?.name || '',
                 'Wilaya': order.address?.wilaya?.name_ar || order.address?.wilaya?.name || '',
@@ -198,7 +198,7 @@ export default function ExportOrdersButton({ orders }) {
                         onClick={handleExportOrders}
                         startIcon={<Iconify icon="solar:download-bold" />}
                     >
-                        {t('export_selected')} ({selectedStatuses.includes('all') ? orders?.length || 0 : orders?.filter(o => selectedStatuses.includes(o.status)).length || 0})
+                        {t('export_selected')} ({selectedStatuses.includes('all') ? orders?.length || 0 : orders?.filter(o => selectedStatuses.includes(o.status?.key || o.status)).length || 0})
                     </LoadingButton>
                 </Stack>
             </CustomPopover>

@@ -18,6 +18,8 @@ import Avatar from '@mui/material/Avatar';
 import CircularProgress from '@mui/material/CircularProgress';
 import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
+import Switch from '@mui/material/Switch';
+import FormControlLabel from '@mui/material/FormControlLabel';
 
 import { useTranslate } from 'src/locales';
 import Iconify from 'src/components/iconify';
@@ -25,7 +27,6 @@ import Iconify from 'src/components/iconify';
 import { useSnackbar } from 'src/components/snackbar';
 import FormProvider, {
   RHFTextField,
-  RHFSwitch,
 } from 'src/components/hook-form';
 import showError from 'src/utils/show_error';
 import { updateStoreConfig, useGetMyStore } from 'src/api/store';
@@ -59,6 +60,7 @@ export default function DeliveryCompaniesForm() {
   const [savingProvider, setSavingProvider] = useState(null);
   const [validatingConnection, setValidatingConnection] = useState(null);
   const [editingProviders, setEditingProviders] = useState({});
+  const [expandedAccordions, setExpandedAccordions] = useState({});
 
   // Transform API providers to component structure and merge with existing connections
   const deliveryCompanies = useMemo(() => {
@@ -242,6 +244,24 @@ export default function DeliveryCompaniesForm() {
     }));
   };
 
+  // Handle accordion expand/collapse
+  const handleAccordionChange = (companyId) => (event, isExpanded) => {
+    setExpandedAccordions((prev) => ({
+      ...prev,
+      [companyId]: isExpanded,
+    }));
+  };
+
+  // Handle switch toggle - also expands/collapses accordion
+  const handleSwitchToggle = (companyId) => (event) => {
+    const isEnabled = event.target.checked;
+    methods.setValue(`${companyId}_enabled`, isEnabled);
+    setExpandedAccordions((prev) => ({
+      ...prev,
+      [companyId]: isEnabled,
+    }));
+  };
+
   // Save individual provider handler
   const handleSaveProvider = async (company) => {
     try {
@@ -304,8 +324,39 @@ export default function DeliveryCompaniesForm() {
         };
 
         console.log('Create connection payload:', connectionBody);
-        await createShippingConnection(connectionBody);
-        enqueueSnackbar(t('connection_created_successfully', { name: company.name }), { variant: 'success' });
+        const createResponse = await createShippingConnection(connectionBody);
+        const newConnectionId = createResponse?.data?.data?.id || createResponse?.data?.id;
+
+        // Auto-verify the new connection before refreshing UI
+        if (newConnectionId) {
+          try {
+            const validateResponse = await validateShippingConnection(newConnectionId);
+            const responseData = validateResponse?.data || validateResponse;
+            const isValid = responseData?.success === true || responseData?.valid === true;
+
+            if (isValid) {
+              enqueueSnackbar(t('connection_validated_successfully', { name: company.name }), { variant: 'success' });
+            } else {
+              const errorMessage = responseData?.message || responseData?.error || t('connection_validation_failed', { name: company.name });
+              enqueueSnackbar(errorMessage, { variant: 'error' });
+            }
+          } catch (validationError) {
+            const errorData = validationError?.response?.data || validationError?.data || {};
+            const errorMessage = errorData?.message || errorData?.error || t('connection_validation_failed', { name: company.name });
+            enqueueSnackbar(errorMessage, { variant: 'error' });
+          }
+        } else {
+          enqueueSnackbar(t('connection_created_successfully', { name: company.name }), { variant: 'success' });
+        }
+
+        // Refresh UI only after the full create+verify flow completes
+        await mutateConnections();
+        setEditingProviders(prev => ({
+          ...prev,
+          [company.id]: false,
+        }));
+        setSavingProvider(null);
+        return;
       }
 
       // Refresh connections data
@@ -371,9 +422,12 @@ export default function DeliveryCompaniesForm() {
         <Grid xs={12} display="flex" flexDirection="column" gap={4}>
           {deliveryCompanies.map((company) => (
             <Card xs={12} key={company.id} width="100%">
-              <Accordion>
+              <Accordion
+                disableGutters
+                expanded={!!expandedAccordions[company.id]}
+                onChange={handleAccordionChange(company.id)}
+              >
                 <AccordionSummary
-                  expandIcon={<Iconify icon="eva:arrow-ios-downward-fill" />}
                   sx={{
                     backgroundColor: 'background.neutral',
                     '&:hover': {
@@ -431,11 +485,19 @@ export default function DeliveryCompaniesForm() {
                       </Typography>
                     </Box>
                     <Box onClick={(e) => e.stopPropagation()} sx={{ mr: 2 }}>
-                      <RHFSwitch name={`${company.id}_enabled`} label={t('enabled')} />
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={!!values[`${company.id}_enabled`]}
+                            onChange={handleSwitchToggle(company.id)}
+                          />
+                        }
+                        label={t('enabled')}
+                      />
                     </Box>
                   </Stack>
                 </AccordionSummary>
-                <AccordionDetails>
+                <AccordionDetails sx={{ p: 3 }}>
                   <Stack spacing={3}>
                     {/* Connected State - Show connection info and action buttons */}
                     {company.isConnected && !editingProviders[company.id] ? (
@@ -531,14 +593,14 @@ export default function DeliveryCompaniesForm() {
                           <Stack direction="row" spacing={2} flexWrap="wrap" gap={1}>
                             {/* Submit/Create Button */}
                             <LoadingButton
-                              variant="contained"
-                              color={company.isConnected ? "primary" : "success"}
+                              variant={company.isConnected ? "contained" : "outlined"}
+                              color={company.isConnected ? "primary" : "info"}
                               size="small"
                               loading={savingProvider === company.id}
                               onClick={() => handleSaveProvider(company)}
-                              startIcon={<Iconify icon={company.isConnected ? "eva:save-fill" : "eva:plus-fill"} />}
+                              startIcon={<Iconify icon={company.isConnected ? "eva:save-fill" : "eva:shield-checkmark-fill"} />}
                             >
-                              {company.isConnected ? t('submit') : t('create')}
+                              {company.isConnected ? t('submit') : t('verify_connection')}
                             </LoadingButton>
 
                             {/* Cancel Button - only show in edit mode */}

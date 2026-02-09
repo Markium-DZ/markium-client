@@ -74,7 +74,7 @@ function buildTimelineEvents(order) {
     });
   }
 
-  if (order.status === 'cancelled') {
+  if ((order.status?.key || order.status) === 'cancelled') {
     events.push({
       key: 'cancelled',
       labelKey: 'cancelled',

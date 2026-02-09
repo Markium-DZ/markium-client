@@ -53,7 +53,7 @@ export default function ProductDetailsView({ id }) {
   const { copy } = useCopyToClipboard();
 
   const publicProductUrl = user?.store?.slug
-    ? `https://${user.store.slug}.markium.online/?product_slug=${product.slug}`
+    ? `https://${user.store.slug}.markium.online/?product_slug=${product?.slug}`
     : '';
 
   const handleCopyLink = useCallback(() => {
@@ -143,7 +143,7 @@ export default function ProductDetailsView({ id }) {
   const renderError = (
     <EmptyContent
       filled
-      title={`${productError?.message}`}
+      title={t('product_not_found')}
       action={
         <Button
           component={RouterLink}
@@ -151,7 +151,7 @@ export default function ProductDetailsView({ id }) {
           startIcon={<Iconify icon="eva:arrow-ios-back-fill" width={16} />}
           sx={{ mt: 3 }}
         >
-          Back to List
+          {t('back_to_list')}
         </Button>
       }
       sx={{ py: 10 }}
@@ -300,7 +300,7 @@ export default function ProductDetailsView({ id }) {
       <Container maxWidth={settings.themeStretch ? false : 'lg'}>
         {productLoading && renderSkeleton}
 
-        {productError && renderError}
+        {(productError || (!productLoading && !product)) && renderError}
 
         {product && renderProduct}
       </Container>

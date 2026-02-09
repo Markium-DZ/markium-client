@@ -137,12 +137,12 @@ export default function OverviewEcommerceView() {
 
   // Derived data for Grade C widgets
   const pendingOrders = useMemo(
-    () => (orders || []).filter((o) => o.status === 'pending').length,
+    () => (orders || []).filter((o) => (o.status?.key || o.status) === 'pending').length,
     [orders]
   );
 
   const ordersToShip = useMemo(
-    () => (orders || []).filter((o) => o.status === 'confirmed').length,
+    () => (orders || []).filter((o) => (o.status?.key || o.status) === 'confirmed').length,
     [orders]
   );
 

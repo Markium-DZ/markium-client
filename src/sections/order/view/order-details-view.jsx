@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 
 import Stack from '@mui/material/Stack';
 import Container from '@mui/material/Container';
@@ -27,11 +27,14 @@ import { paths } from 'src/routes/paths';
 import { useGetOrder, updateOrder } from 'src/api/orders';
 import { useGetShippingRates, refreshShippingRates, createShipment } from 'src/api/shipping';
 
+import { RouterLink } from 'src/routes/components';
+
 import { useSettingsContext } from 'src/components/settings';
 import { useSnackbar } from 'src/components/snackbar';
 import { useTranslate } from 'src/locales';
 import Iconify from 'src/components/iconify';
 import Label from 'src/components/label';
+import EmptyContent from 'src/components/empty-content';
 import { getOrderStatus, getOrderStatusColor } from 'src/constants/order-status';
 import { fToNow } from 'src/utils/format-time';
 
@@ -39,7 +42,7 @@ import OrderDetailsInfo from '../order-details-info';
 import OrderDetailsItems from '../order-details-item';
 import OrderDetailsToolbar from '../order-details-toolbar';
 import OrderDetailsHistory from '../order-details-history';
-import OrderShippingRates from '../order-shipping-rates';
+import OrderShipping from '../order-shipping';
 import OrderDetailsSkeleton from '../order-details-skeleton';
 
 // ----------------------------------------------------------------------
@@ -47,7 +50,7 @@ import OrderDetailsSkeleton from '../order-details-skeleton';
 const STATUS_STEPS = ['pending', 'confirmed', 'shipment_created', 'shipped', 'delivered'];
 
 function getActiveStep(order) {
-  const status = order?.status;
+  const status = order?.status?.key || order?.status;
   if (status === 'cancelled') return -1;
   const shipment = order?.active_shipment;
 
@@ -136,22 +139,24 @@ export default function OrderDetailsView({ id }) {
   const { enqueueSnackbar } = useSnackbar();
   const { t, i18n } = useTranslate();
 
-  const { order: orderData, orderLoading, mutate } = useGetOrder(id);
+  const { order: orderData, orderLoading, orderError, mutate } = useGetOrder(id);
   const currentOrder = orderData;
 
   const { quotes, quotesGroupedByProvider, ratesLoading, ratesError, mutate: mutateRates } = useGetShippingRates(id);
 
-  const [status, setStatus] = useState(currentOrder?.status);
+  const [status, setStatus] = useState(currentOrder?.status?.key || currentOrder?.status);
   const [selectedQuoteId, setSelectedQuoteId] = useState(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+
+  const shippingRatesRef = useRef(null);
 
   // Confirmation dialog state
   const [confirmDialog, setConfirmDialog] = useState({ open: false, newStatus: null });
 
   useEffect(() => {
     if (currentOrder?.status) {
-      setStatus(currentOrder.status);
+      setStatus(currentOrder.status?.key || currentOrder.status);
     }
   }, [currentOrder?.status]);
 
@@ -174,7 +179,7 @@ export default function OrderDetailsView({ id }) {
 
       enqueueSnackbar(t('operation_success'), { variant: 'success' });
     } catch (error) {
-      setStatus(currentOrder?.status);
+      setStatus(currentOrder?.status?.key || currentOrder?.status);
       enqueueSnackbar(t('failed_update_order_status'), { variant: 'error' });
     } finally {
       setIsUpdatingStatus(false);
@@ -192,9 +197,9 @@ export default function OrderDetailsView({ id }) {
       await refreshShippingRates(id);
       // Revalidate SWR to load the fresh rates in the correct shape
       await mutateRates();
-      enqueueSnackbar(t('shipping_rates_refreshed'), { variant: 'success' });
+      enqueueSnackbar(t('shipping_refreshed'), { variant: 'success' });
     } catch (error) {
-      enqueueSnackbar(t('error_loading_shipping_rates'), { variant: 'error' });
+      enqueueSnackbar(t('error_loading_shipping'), { variant: 'error' });
     } finally {
       setIsRefreshing(false);
     }
@@ -250,6 +255,10 @@ export default function OrderDetailsView({ id }) {
     setStopdeskDialog({ open: false, quote: null, selectedCenterId: null });
   }, []);
 
+  const handleScrollToShipping = useCallback(() => {
+    shippingRatesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, []);
+
   const shippingCost = currentOrder?.total_price && currentOrder?.subtotal
     ? currentOrder.total_price - currentOrder.subtotal
     : 0;
@@ -265,6 +274,28 @@ export default function OrderDetailsView({ id }) {
     );
   }
 
+  if (orderError || !currentOrder) {
+    return (
+      <Container maxWidth={settings.themeStretch ? false : 'lg'}>
+        <EmptyContent
+          filled
+          title={t('order_not_found')}
+          action={
+            <Button
+              component={RouterLink}
+              href={paths.dashboard.order.root}
+              startIcon={<Iconify icon="eva:arrow-ios-back-fill" width={16} />}
+              sx={{ mt: 3 }}
+            >
+              {t('back_to_list')}
+            </Button>
+          }
+          sx={{ py: 10 }}
+        />
+      </Container>
+    );
+  }
+
   return (
     <Container maxWidth={settings.themeStretch ? false : 'lg'}>
       <OrderDetailsToolbar
@@ -273,6 +304,7 @@ export default function OrderDetailsView({ id }) {
         createdAt={currentOrder?.created_at}
         status={status}
         onChangeStatus={handleRequestStatusChange}
+        onShipOrder={handleScrollToShipping}
         loading={isUpdatingStatus}
       />
 
@@ -341,15 +373,17 @@ export default function OrderDetailsView({ id }) {
             />
 
             {(status === 'confirmed' || status === 'pending') && (
-              <OrderShippingRates
-                quotesGroupedByProvider={quotesGroupedByProvider}
-                loading={ratesLoading || isRefreshing}
-                error={ratesError}
-                onRefresh={handleRefreshRates}
-                onSelect={handleSelectQuote}
-                selectedQuoteId={selectedQuoteId}
-                onShip={handleShipOrder}
-              />
+              <div ref={shippingRatesRef}>
+                <OrderShipping
+                  quotesGroupedByProvider={quotesGroupedByProvider}
+                  loading={ratesLoading || isRefreshing}
+                  error={ratesError}
+                  onRefresh={handleRefreshRates}
+                  onSelect={handleSelectQuote}
+                  selectedQuoteId={selectedQuoteId}
+                  onShip={handleShipOrder}
+                />
+              </div>
             )}
           </Stack>
         </Grid>

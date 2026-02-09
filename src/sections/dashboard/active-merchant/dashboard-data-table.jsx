@@ -70,7 +70,7 @@ export default function DashboardDataTable({
       .slice(0, 10);
 
     return sorted.map((order) => {
-      const statusConfig = getOrderStatus(order?.status);
+      const statusConfig = getOrderStatus(order?.status?.key || order?.status);
       const color = statusConfig?.color || 'default';
       const translatedStatus = statusConfig ? t(statusConfig.labelKey) : '';
 

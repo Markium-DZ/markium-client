@@ -208,7 +208,7 @@ export default function OrderListView() {
                     }
                   >
                     {['completed', 'pending', 'cancelled', 'refunded'].includes(tab.value)
-                      ? tableData.filter((user) => user.status === tab.value).length
+                      ? tableData.filter((user) => (user.status?.key || user.status) === tab.value).length
                       : tableData.length}
                   </Label>
                 }
@@ -364,7 +364,7 @@ function applyFilter({ inputData, comparator, filters, dateError }) {
   }
 
   if (status !== 'all') {
-    inputData = inputData.filter((order) => order.status === status);
+    inputData = inputData.filter((order) => (order.status?.key || order.status) === status);
   }
 
   if (!dateError) {

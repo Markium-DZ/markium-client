@@ -23,6 +23,7 @@ import { POST_PUBLISH_OPTIONS } from 'src/_mock';
 import Iconify from 'src/components/iconify';
 import Markdown from 'src/components/markdown';
 import EmptyContent from 'src/components/empty-content';
+import { useTranslate } from 'src/locales';
 
 import PostDetailsHero from '../post-details-hero';
 import PostCommentList from '../post-comment-list';
@@ -33,6 +34,7 @@ import PostDetailsToolbar from '../post-details-toolbar';
 // ----------------------------------------------------------------------
 
 export default function PostDetailsView({ title }) {
+  const { t } = useTranslate();
   const [publish, setPublish] = useState('');
 
   const { post, postLoading, postError } = useGetPost(title);
@@ -52,7 +54,7 @@ export default function PostDetailsView({ title }) {
   const renderError = (
     <EmptyContent
       filled
-      title={`${postError?.message}`}
+      title={t('resource_not_found')}
       action={
         <Button
           component={RouterLink}
@@ -60,7 +62,7 @@ export default function PostDetailsView({ title }) {
           startIcon={<Iconify icon="eva:arrow-ios-back-fill" width={16} />}
           sx={{ mt: 3 }}
         >
-          Back to List
+          {t('back_to_list')}
         </Button>
       }
       sx={{
