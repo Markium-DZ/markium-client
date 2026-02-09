@@ -122,7 +122,7 @@ export default function OrderShippingRates({ quotesGroupedByProvider, loading, e
                           p: 2,
                           borderRadius: 1,
                           border: (theme) => `1px solid ${theme.palette.divider}`,
-                          bgcolor: selectedQuoteId === quote.id ? 'action.selected' : 'background.paper',
+                          bgcolor: Number(selectedQuoteId) === quote.id ? 'action.selected' : 'background.paper',
                           transition: 'all 0.2s',
                           '&:hover': {
                             bgcolor: 'action.hover',
@@ -216,7 +216,7 @@ export default function OrderShippingRates({ quotesGroupedByProvider, loading, e
 }
 
 OrderShippingRates.propTypes = {
-  quotesGroupedByProvider: PropTypes.object,
+  quotesGroupedByProvider: PropTypes.oneOfType([PropTypes.object, PropTypes.array]),
   loading: PropTypes.bool,
   error: PropTypes.object,
   onRefresh: PropTypes.func,

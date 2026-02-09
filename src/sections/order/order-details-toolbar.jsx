@@ -5,6 +5,7 @@ import Button from '@mui/material/Button';
 import MenuItem from '@mui/material/MenuItem';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
+import CircularProgress from '@mui/material/CircularProgress';
 
 import { RouterLink } from 'src/routes/components';
 
@@ -23,8 +24,8 @@ export default function OrderDetailsToolbar({
   backLink,
   createdAt,
   orderNumber,
-  statusOptions,
   onChangeStatus,
+  loading,
 }) {
   const popover = usePopover();
   const statuses = getOrderStatusOptions(t);
@@ -70,9 +71,10 @@ export default function OrderDetailsToolbar({
           <Button
             color="inherit"
             variant="outlined"
-            endIcon={<Iconify icon="eva:arrow-ios-downward-fill" />}
+            endIcon={loading ? <CircularProgress size={16} /> : <Iconify icon="eva:arrow-ios-downward-fill" />}
             onClick={popover.onOpen}
             sx={{ textTransform: 'capitalize' }}
+            disabled={loading}
           >
             {t(status)}
           </Button>
@@ -119,9 +121,9 @@ export default function OrderDetailsToolbar({
 
 OrderDetailsToolbar.propTypes = {
   backLink: PropTypes.string,
-  createdAt: PropTypes.instanceOf(Date),
+  createdAt: PropTypes.string,
   onChangeStatus: PropTypes.func,
   orderNumber: PropTypes.string,
   status: PropTypes.string,
-  statusOptions: PropTypes.array,
+  loading: PropTypes.bool,
 };

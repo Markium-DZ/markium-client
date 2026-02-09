@@ -1433,6 +1433,8 @@
     "no_orders_yet": "Aucune commande pour le moment",
     "no_orders_description": "Lorsque les clients passent des commandes, elles apparaîtront ici.",
     "ship_order": "Expédier la commande",
+    "select_stopdesk": "Sélectionner un point relais",
+    "shipment_created": "Expédition créée",
     "shipment_created_successfully": "Expédition créée avec succès",
     "error_creating_shipment": "Échec de la création de l'expédition",
     "actions_required": "Actions requises",

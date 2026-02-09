@@ -1529,6 +1529,8 @@
     "no_orders_yet": "لا توجد طلبات بعد",
     "no_orders_description": "عندما يقوم العملاء بتقديم طلبات، ستظهر هنا.",
     "ship_order": "شحن الطلب",
+    "select_stopdesk": "اختر مكتب التوصيل",
+    "shipment_created": "تم إنشاء الشحنة",
     "shipment_created_successfully": "تم إنشاء الشحنة بنجاح",
     "error_creating_shipment": "فشل في إنشاء الشحنة",
     "actions_required": "إجراءات مطلوبة",

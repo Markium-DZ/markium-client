@@ -1509,6 +1509,8 @@
     "no_orders_yet": "No Orders Yet",
     "no_orders_description": "When customers place orders, they will appear here.",
     "ship_order": "Ship Order",
+    "select_stopdesk": "Select Stop Desk",
+    "shipment_created": "Shipment Created",
     "shipment_created_successfully": "Shipment created successfully",
     "error_creating_shipment": "Failed to create shipment",
     "actions_required": "Actions Required",

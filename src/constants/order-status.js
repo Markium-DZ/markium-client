@@ -25,6 +25,12 @@ export const ORDER_STATUSES = [
     icon: 'solar:check-circle-bold',
   },
   {
+    key: 'shipment_created',
+    labelKey: 'shipment_created',
+    color: 'primary',
+    icon: 'solar:delivery-bold',
+  },
+  {
     key: 'shipped',
     labelKey: 'shipped',
     color: 'info',
