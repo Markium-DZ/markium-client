@@ -1,6 +1,5 @@
 import PropTypes from 'prop-types';
 
-import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import Timeline from '@mui/lab/Timeline';
 import TimelineDot from '@mui/lab/TimelineDot';
@@ -11,97 +10,126 @@ import TimelineSeparator from '@mui/lab/TimelineSeparator';
 import TimelineConnector from '@mui/lab/TimelineConnector';
 import TimelineItem, { timelineItemClasses } from '@mui/lab/TimelineItem';
 
-import { fDateTime } from 'src/utils/format-time';
+import { fToNow } from 'src/utils/format-time';
 import { useTranslate } from 'src/locales';
+import { useLocales } from 'src/locales';
 import Iconify from 'src/components/iconify';
 
 // ----------------------------------------------------------------------
 
-// Build timeline events from actual order timestamps
-function buildTimelineEvents(order) {
-  if (!order) return [];
+const STATUS_ICON = {
+  pending: 'solar:clock-circle-bold',
+  confirmed: 'solar:check-circle-bold',
+  shipment_created: 'solar:delivery-bold',
+  shipped: 'solar:box-bold',
+  in_transit: 'solar:delivery-bold',
+  out_for_delivery: 'solar:map-point-wave-bold',
+  delivered: 'solar:verified-check-bold',
+  failed: 'solar:close-circle-bold',
+  returned: 'solar:undo-left-bold',
+  cancelled: 'solar:close-circle-bold',
+  preparing: 'solar:clock-circle-bold',
+  parcel_created: 'solar:delivery-bold',
+};
 
-  const events = [];
-  const ts = order.active_shipment?.timestamps;
+const STATUS_COLOR = {
+  pending: 'warning',
+  confirmed: 'secondary',
+  shipment_created: 'primary',
+  shipped: 'info',
+  in_transit: 'info',
+  out_for_delivery: 'primary',
+  delivered: 'success',
+  failed: 'error',
+  returned: 'error',
+  cancelled: 'error',
+  preparing: 'warning',
+  parcel_created: 'primary',
+};
 
-  if (order.created_at) {
-    events.push({
-      key: 'pending',
-      labelKey: 'pending',
-      time: order.created_at,
-      icon: 'solar:clock-circle-bold',
-      color: 'warning',
-    });
+// Get localized status name from an order timeline entry (status is an object)
+function getTimelineStatusLabel(entry, langValue) {
+  const status = entry?.status;
+  if (!status) return entry?.note || '—';
+
+  if (langValue === 'ar' && status.name_ar) return status.name_ar;
+  return status.name || status.key || '—';
+}
+
+// Extract status key — handles both string and object {key, name, name_ar}
+function getStatusKey(status) {
+  if (!status) return '';
+  if (typeof status === 'string') return status;
+  return status.key || '';
+}
+
+// Readable label for tracking_history entries
+function getTrackingLabel(entry, langValue) {
+  const status = entry?.status;
+  if (typeof status === 'object' && status !== null) {
+    if (langValue === 'ar' && status.name_ar) return status.name_ar;
+    return status.name || status.key?.replace(/_/g, ' ') || '—';
   }
+  return entry?.description || (typeof status === 'string' ? status.replace(/_/g, ' ') : '—');
+}
 
-  if (order.confirmed_at) {
-    events.push({
-      key: 'confirmed',
-      labelKey: 'order_confirmed',
-      time: order.confirmed_at,
-      icon: 'solar:check-circle-bold',
-      color: 'secondary',
-    });
-  }
-
-  if (ts?.created_at) {
-    events.push({
-      key: 'shipment_created',
-      labelKey: 'shipment_created',
-      time: ts.created_at,
-      icon: 'solar:delivery-bold',
-      color: 'primary',
-    });
-  }
-
-  if (ts?.shipped_at) {
-    events.push({
-      key: 'shipped',
-      labelKey: 'shipped',
-      time: ts.shipped_at,
-      icon: 'solar:box-bold',
-      color: 'info',
-    });
-  }
-
-  if (ts?.delivered_at) {
-    events.push({
-      key: 'delivered',
-      labelKey: 'delivered',
-      time: ts.delivered_at,
-      icon: 'solar:verified-check-bold',
-      color: 'success',
-    });
-  }
-
-  if ((order.status?.key || order.status) === 'cancelled') {
-    events.push({
-      key: 'cancelled',
-      labelKey: 'cancelled',
-      time: order.cancelled_at || order.updated_at,
-      icon: 'solar:close-circle-bold',
-      color: 'error',
-    });
-  }
-
-  // Most recent first
-  events.sort((a, b) => new Date(b.time) - new Date(a.time));
-
-  return events;
+// Build location string from wilaya_name and commune_name
+function getLocationText(entry) {
+  const parts = [entry?.commune_name, entry?.wilaya_name].filter(Boolean);
+  return parts.length > 0 ? parts.join(', ') : null;
 }
 
 // ----------------------------------------------------------------------
 
 export default function OrderDetailsHistory({ currentOrder }) {
-  const { t } = useTranslate();
+  const { t, i18n } = useTranslate();
+  const { currentLang } = useLocales();
+  const langValue = currentLang?.value || 'en';
 
-  const events = buildTimelineEvents(currentOrder);
+  const shipment = currentOrder?.active_shipment;
+  const trackingHistory = shipment?.tracking_history || [];
+
+  // Use tracking_history (filtered) when shipment exists, otherwise fall back to order.timeline
+  const hasTrackingHistory = shipment && trackingHistory.length > 0;
+
+  let events;
+
+  if (hasTrackingHistory) {
+    events = trackingHistory
+      .filter((entry) => entry.source !== 'webhook')
+      .map((entry, idx) => {
+        const sk = getStatusKey(entry.status);
+        return {
+          key: `tracking-${idx}`,
+          label: getTrackingLabel(entry, langValue),
+          location: getLocationText(entry),
+          time: entry.timestamp,
+          statusKey: sk,
+          icon: STATUS_ICON[sk] || 'solar:delivery-bold',
+          color: STATUS_COLOR[sk] || 'grey',
+        };
+      })
+      .sort((a, b) => new Date(b.time) - new Date(a.time));
+  } else {
+    const orderTimeline = currentOrder?.timeline || [];
+    events = orderTimeline
+      .map((entry) => ({
+        key: `order-${entry.id}`,
+        label: getTimelineStatusLabel(entry, langValue),
+        location: null,
+        time: entry.created_at,
+        statusKey: entry.status?.key,
+        icon: STATUS_ICON[entry.status?.key] || 'solar:clock-circle-bold',
+        color: STATUS_COLOR[entry.status?.key] || 'grey',
+      }))
+      .sort((a, b) => new Date(b.time) - new Date(a.time));
+  }
 
   if (events.length === 0) return null;
 
   return (
     <Card>
-      <CardHeader title={t('order_history')} />
+      <CardHeader title={hasTrackingHistory ? t('tracking_status') : t('order_history')} />
 
       <Timeline
         sx={{
@@ -133,10 +161,13 @@ export default function OrderDetailsHistory({ currentOrder }) {
 
               <TimelineContent sx={{ py: 0.5, px: 2 }}>
                 <Typography variant="subtitle2" sx={{ mb: 0.25 }}>
-                  {t(event.labelKey)}
+                  {event.label}
                 </Typography>
                 <Typography variant="caption" sx={{ color: 'text.disabled' }}>
-                  {fDateTime(event.time)}
+                  {event.location && (
+                    <>{event.location} · </>
+                  )}
+                  {fToNow(event.time, i18n.language)}
                 </Typography>
               </TimelineContent>
             </TimelineItem>

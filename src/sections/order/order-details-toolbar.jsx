@@ -59,6 +59,7 @@ export default function OrderDetailsToolbar({
   onChangeStatus,
   onShipOrder,
   loading,
+  labelUrl,
 }) {
   const morePopover = usePopover();
   const [statusExpanded, setStatusExpanded] = useState(false);
@@ -86,6 +87,17 @@ export default function OrderDetailsToolbar({
     morePopover.onClose();
     setStatusExpanded(false);
   }, [morePopover]);
+
+  const handlePrint = useCallback(() => {
+    if (labelUrl) {
+      const printWindow = window.open(labelUrl, '_blank');
+      printWindow?.addEventListener('load', () => {
+        printWindow.print();
+      });
+    } else {
+      window.print();
+    }
+  }, [labelUrl]);
 
   return (
     <>
@@ -141,8 +153,9 @@ export default function OrderDetailsToolbar({
             color="inherit"
             variant="outlined"
             startIcon={<Iconify icon="solar:printer-minimalistic-bold" />}
+            onClick={handlePrint}
           >
-            {t('print')}
+            {labelUrl ? t('print_label') : t('print')}
           </Button>
 
           <Button
@@ -217,4 +230,5 @@ OrderDetailsToolbar.propTypes = {
   orderNumber: PropTypes.string,
   status: PropTypes.string,
   loading: PropTypes.bool,
+  labelUrl: PropTypes.string,
 };

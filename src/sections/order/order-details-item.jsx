@@ -2,20 +2,18 @@ import PropTypes from 'prop-types';
 
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
-import Chip from '@mui/material/Chip';
 import Stack from '@mui/material/Stack';
-import Avatar from '@mui/material/Avatar';
-import CardHeader from '@mui/material/CardHeader';
-import IconButton from '@mui/material/IconButton';
+// import Divider from '@mui/material/Divider';
 import Typography from '@mui/material/Typography';
-import ListItemText from '@mui/material/ListItemText';
+import Accordion from '@mui/material/Accordion';
+import AccordionSummary from '@mui/material/AccordionSummary';
+import AccordionDetails from '@mui/material/AccordionDetails';
 
 import { useTranslate } from 'src/locales';
 
 import { fCurrency } from 'src/utils/format-number';
 
 import Iconify from 'src/components/iconify';
-import Scrollbar from 'src/components/scrollbar';
 
 // ----------------------------------------------------------------------
 
@@ -28,67 +26,41 @@ export default function OrderDetailsItems({
 }) {
   const { t } = useTranslate();
 
-  const renderTotal = (
-    <Stack
-      spacing={2}
-      alignItems="flex-end"
-      sx={{ my: 3, textAlign: 'end', typography: 'body2' }}
-    >
-      <Stack direction="row">
-        <Box sx={{ color: 'text.secondary' }}>{t('subtotal')}</Box>
-        <Box sx={{ width: 160, typography: 'subtitle2' }}>{fCurrency(subTotal) || '-'}</Box>
-      </Stack>
-
-      <Stack direction="row">
-        <Box sx={{ color: 'text.secondary' }}>{t('shipping')}</Box>
-        <Box
-          sx={{
-            width: 160,
-            ...(shipping && { color: 'success.main' }),
-          }}
-        >
-          {shipping ? fCurrency(shipping) : '-'}
-        </Box>
-      </Stack>
-
-      <Stack direction="row">
-        <Box sx={{ color: 'text.secondary' }}>{t('discount')}</Box>
-        <Box
-          sx={{
-            width: 160,
-            ...(discount && { color: 'error.main' }),
-          }}
-        >
-          {discount ? `- ${fCurrency(discount)}` : '-'}
-        </Box>
-      </Stack>
-
-      <Stack direction="row" sx={{ typography: 'subtitle1' }}>
-        <Box>{t('total')}</Box>
-        <Box sx={{ width: 160 }}>{fCurrency(totalAmount) || '-'}</Box>
-      </Stack>
-    </Stack>
-  );
-
   return (
     <Card>
-      <CardHeader
-        title={t('details')}
-      />
-
-      <Stack
+      <Accordion
+        defaultExpanded={false}
+        disableGutters
         sx={{
-          px: 3,
+          boxShadow: 'none',
+          '&:before': { display: 'none' },
+          bgcolor: 'transparent',
         }}
       >
-        {/* <Scrollbar> */}
+        <AccordionSummary
+          expandIcon={<Iconify icon="eva:arrow-ios-downward-fill" />}
+          sx={{
+            px: 3,
+            py: 0,
+            alignItems: 'flex-start',
+            '& .MuiAccordionSummary-content': {
+              my: 0,
+              flexDirection: 'column',
+            },
+            '& .MuiAccordionSummary-expandIconWrapper': {
+              mt: 2.5,
+            },
+          }}
+        >
+          <Typography variant="h6" sx={{ pt: 2, pb: 1 }}>{t('details')}</Typography>
+
           {items?.map((item) => {
-            // Handle media as array or single object
             const mediaArray = Array.isArray(item.variant?.media)
               ? item.variant.media
               : (item.variant?.media ? [item.variant.media] : []);
             const mediaUrl = mediaArray.length > 0 ? (mediaArray[0]?.full_url || mediaArray[0]?.url || null) : null;
             const variantOptions = item.variant?.options || [];
+            const optionsText = variantOptions.map((opt) => opt.value).filter(Boolean).join('  |  ');
 
             return (
               <Stack
@@ -96,61 +68,83 @@ export default function OrderDetailsItems({
                 direction="row"
                 alignItems="center"
                 sx={{
-                  py: 3,
-                  // minWidth: 640,
-                  borderBottom: (theme) => `dashed 2px ${theme.palette.background.neutral}`,
+                  py: 2,
+                  width: 1,
+                  borderBottom: (theme) => `dashed 1px ${theme.palette.divider}`,
                 }}
               >
-                <Avatar src={mediaUrl} variant="rounded" sx={{ width: 48, height: 48, mr: 2 }} />
+                <Box
+                  component="img"
+                  src={mediaUrl}
+                  alt={item.product?.name}
+                  sx={{
+                    width: 64,
+                    height: 64,
+                    flexShrink: 0,
+                    objectFit: 'cover',
+                    borderRadius: 1.5,
+                    bgcolor: 'background.neutral',
+                    mr: 2,
+                  }}
+                />
 
                 <Box sx={{ flexGrow: 1, minWidth: 0 }}>
-                  <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
+                  <Typography variant="subtitle2" noWrap>
                     {item.product?.name}
                   </Typography>
 
-                  {variantOptions.length > 0 && (
-                    <Stack direction="row" spacing={0.5} flexWrap="wrap" sx={{ mt: 0.5 }}>
-                      {variantOptions.map((opt, idx) => (
-                        <Chip
-                          key={idx}
-                          size="small"
-                          label={
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                              {opt.color_hex && (
-                                <Box
-                                  sx={{
-                                    width: 12,
-                                    height: 12,
-                                    borderRadius: '50%',
-                                    bgcolor: opt.color_hex,
-                                    border: (theme) => `1px solid ${theme.palette.divider}`,
-                                  }}
-                                />
-                              )}
-                              <Typography variant="caption">
-                                {opt.definition_name}: {opt.value}
-                              </Typography>
-                            </Box>
-                          }
-                          sx={{ height: 20 }}
-                        />
-                      ))}
-                    </Stack>
+                  {optionsText && (
+                    <Typography variant="caption" color="text.secondary" noWrap sx={{ mt: 0.25, display: 'block' }}>
+                      {optionsText}
+                    </Typography>
                   )}
                 </Box>
 
-                <Box sx={{ typography: 'body2', mx: 2 }}>×{item.quantity}</Box>
-
-                <Box sx={{ width: 110, textAlign: 'end', typography: 'subtitle2' }}>
-                  {fCurrency(item.unit_price)}
-                </Box>
+                <Stack alignItems="flex-end" sx={{ flexShrink: 0, ml: 2 }}>
+                  <Typography variant="subtitle2">
+                    {fCurrency(item.unit_price)}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {t('quantity')}: {item.quantity}
+                  </Typography>
+                </Stack>
               </Stack>
             );
           })}
-        {/* </Scrollbar> */}
+        </AccordionSummary>
 
-        {renderTotal}
-      </Stack>
+        <AccordionDetails sx={{ px: 3, pt: 0, pb: 2 }}>
+          <Stack
+            spacing={1.5}
+            alignItems="flex-end"
+            sx={{ mt: 1, textAlign: 'end', typography: 'body2' }}
+          >
+            <Stack direction="row">
+              <Box sx={{ color: 'text.secondary' }}>{t('subtotal')}</Box>
+              <Box sx={{ width: 160, typography: 'subtitle2' }}>{fCurrency(subTotal) || '-'}</Box>
+            </Stack>
+
+            <Stack direction="row">
+              <Box sx={{ color: 'text.secondary' }}>{t('shipping')}</Box>
+              <Box sx={{ width: 160, ...(shipping && { color: 'success.main' }) }}>
+                {shipping ? fCurrency(shipping) : '-'}
+              </Box>
+            </Stack>
+
+            <Stack direction="row">
+              <Box sx={{ color: 'text.secondary' }}>{t('discount')}</Box>
+              <Box sx={{ width: 160, ...(discount && { color: 'error.main' }) }}>
+                {discount ? `- ${fCurrency(discount)}` : '-'}
+              </Box>
+            </Stack>
+
+            <Stack direction="row" sx={{ typography: 'subtitle1' }}>
+              <Box>{t('total')}</Box>
+              <Box sx={{ width: 160 }}>{fCurrency(totalAmount) || '-'}</Box>
+            </Stack>
+          </Stack>
+        </AccordionDetails>
+      </Accordion>
     </Card>
   );
 }

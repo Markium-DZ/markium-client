@@ -9,6 +9,7 @@ import Step from '@mui/material/Step';
 import StepLabel from '@mui/material/StepLabel';
 import StepConnector, { stepConnectorClasses } from '@mui/material/StepConnector';
 import Card from '@mui/material/Card';
+import CardHeader from '@mui/material/CardHeader';
 import Box from '@mui/material/Box';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
@@ -43,6 +44,7 @@ import OrderDetailsItems from '../order-details-item';
 import OrderDetailsToolbar from '../order-details-toolbar';
 import OrderDetailsHistory from '../order-details-history';
 import OrderShipping from '../order-shipping';
+import OrderTracking from '../order-tracking';
 import OrderDetailsSkeleton from '../order-details-skeleton';
 
 // ----------------------------------------------------------------------
@@ -259,9 +261,10 @@ export default function OrderDetailsView({ id }) {
     shippingRatesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }, []);
 
-  const shippingCost = currentOrder?.total_price && currentOrder?.subtotal
-    ? currentOrder.total_price - currentOrder.subtotal
-    : 0;
+  const shippingCost = currentOrder?.active_shipment?.cost?.amount
+    || (currentOrder?.total_price && currentOrder?.subtotal
+      ? currentOrder.total_price - currentOrder.subtotal
+      : 0);
 
   const activeStep = getActiveStep(currentOrder);
   const isCancelled = status === 'cancelled';
@@ -306,6 +309,7 @@ export default function OrderDetailsView({ id }) {
         onChangeStatus={handleRequestStatusChange}
         onShipOrder={handleScrollToShipping}
         loading={isUpdatingStatus}
+        labelUrl={currentOrder?.active_shipment?.label_url}
       />
 
       {/* Order Status Stepper */}
@@ -371,6 +375,15 @@ export default function OrderDetailsView({ id }) {
               subTotal={currentOrder?.subtotal}
               totalAmount={currentOrder?.total_price}
             />
+
+            {!!currentOrder?.active_shipment && status !== 'pending' && status !== 'confirmed' && (
+              <Card>
+                <CardHeader title={t('shipping')} />
+                <Stack sx={{ p: 3, pt: 1 }}>
+                  <OrderTracking order={currentOrder} onRefresh={mutate} />
+                </Stack>
+              </Card>
+            )}
 
             {(status === 'confirmed' || status === 'pending') && (
               <div ref={shippingRatesRef}>
