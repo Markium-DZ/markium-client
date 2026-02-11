@@ -26,7 +26,6 @@ const ACTION_TYPES = [
     color: 'warning',
     prop: 'pendingOrders',
     getPath: () => paths.dashboard.order.root,
-    hasFakeAction: true,
   },
   {
     key: 'ship',
@@ -193,23 +192,7 @@ export default function ActionCenter({ pendingOrders = 0, ordersToShip = 0, lowS
                       {t('view')}
                     </Button>
 
-                    {action.hasFakeAction && (
-                      <Button
-                        size="small"
-                        variant="soft"
-                        color="error"
-                        disabled
-                        sx={{
-                          minWidth: 0,
-                          px: 1.5,
-                          py: 0.5,
-                          fontSize: '0.75rem',
-                          fontWeight: 600,
-                        }}
-                      >
-                        {t('mark_fake')}
-                      </Button>
-                    )}
+
                   </Stack>
                 </Stack>
               );
