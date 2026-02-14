@@ -157,6 +157,8 @@
     "variant_image": "Image de la Variante",
     "variant_images": "Images de la Variante",
     "select_variant_images": "Sélectionner les Images de la Variante",
+    "bulk_images": "Images (appliquées à toutes les variantes)",
+    "select_bulk_images": "Sélectionner les images pour toutes les variantes",
     "product_details": "Détails du Produit",
     "variant_options": "Options de Variante",
     "or_select_from_uploaded": "Ou sélectionner parmi les téléchargées",

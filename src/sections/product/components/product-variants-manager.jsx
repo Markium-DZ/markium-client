@@ -61,6 +61,8 @@ export default function ProductVariantsManager({ options, variants, onChange, im
   const { t } = useTranslate();
   const [expandedVariant, setExpandedVariant] = useState(null);
   const [bulkEditOpen, setBulkEditOpen] = useState(false);
+  const [bulkMediaPickerOpen, setBulkMediaPickerOpen] = useState(false);
+  const [bulkSelectedMedia, setBulkSelectedMedia] = useState([]);
   const [bulkValues, setBulkValues] = useState({
     price: '',
     compare_at_price: '',
@@ -138,17 +140,33 @@ export default function ProductVariantsManager({ options, variants, onChange, im
   }, [syncedVariants, onChange]);
 
   const handleBulkApply = () => {
+    const bulkMediaIds = bulkSelectedMedia.map((m) => m.id);
     onChange(
       syncedVariants.map((variant) => ({
         ...variant,
         ...(bulkValues.price && { price: parseFloat(bulkValues.price) }),
         ...(bulkValues.compare_at_price && { compare_at_price: parseFloat(bulkValues.compare_at_price) }),
         ...(bulkValues.quantity && { quantity: parseInt(bulkValues.quantity, 10) }),
+        ...(bulkSelectedMedia.length > 0 && {
+          media_ids: bulkMediaIds,
+          selected_media: bulkSelectedMedia,
+        }),
       }))
     );
     setBulkEditOpen(false);
     setBulkValues({ price: '', compare_at_price: '', quantity: '' });
+    setBulkSelectedMedia([]);
   };
+
+  const handleBulkMediaSelect = useCallback((selectedMedia) => {
+    const mediaArray = Array.isArray(selectedMedia) ? selectedMedia : [selectedMedia];
+    setBulkSelectedMedia(mediaArray);
+    setBulkMediaPickerOpen(false);
+  }, []);
+
+  const handleBulkMediaRemove = useCallback((mediaId) => {
+    setBulkSelectedMedia((prev) => prev.filter((m) => m.id !== mediaId));
+  }, []);
 
 
   if (possibleVariants.length === 0 && options.length > 0) {
@@ -267,20 +285,93 @@ export default function ProductVariantsManager({ options, variants, onChange, im
             />
           </Box>
 
+          {/* Bulk Images Section */}
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
+              {t('bulk_images')} ({bulkSelectedMedia.length})
+            </Typography>
+
+            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
+              <Box
+                onClick={() => setBulkMediaPickerOpen(true)}
+                sx={{
+                  width: 60,
+                  height: 60,
+                  borderRadius: 1,
+                  border: (theme) => `2px dashed ${alpha(theme.palette.grey[500], 0.32)}`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  bgcolor: (theme) => alpha(theme.palette.grey[500], 0.04),
+                  '&:hover': {
+                    borderColor: 'primary.main',
+                    bgcolor: (theme) => alpha(theme.palette.primary.main, 0.04),
+                  },
+                }}
+              >
+                <Iconify icon="eva:plus-fill" width={24} color="text.disabled" />
+              </Box>
+
+              {bulkSelectedMedia.map((media) => (
+                <Box
+                  key={media.id}
+                  sx={{
+                    position: 'relative',
+                    border: (theme) => `2px solid ${theme.palette.primary.main}`,
+                    borderRadius: 1,
+                    overflow: 'hidden',
+                  }}
+                >
+                  <Image
+                    src={media.full_url || media.url}
+                    alt={media.alt_text || 'Selected media'}
+                    sx={{ width: 60, height: 60, objectFit: 'cover' }}
+                  />
+                  <IconButton
+                    size="small"
+                    onClick={() => handleBulkMediaRemove(media.id)}
+                    sx={{
+                      position: 'absolute',
+                      top: 2,
+                      right: 2,
+                      bgcolor: 'rgba(0,0,0,0.6)',
+                      color: 'white',
+                      width: 20,
+                      height: 20,
+                      '&:hover': { bgcolor: 'rgba(0,0,0,0.8)' },
+                    }}
+                  >
+                    <Iconify icon="eva:close-fill" width={14} />
+                  </IconButton>
+                </Box>
+              ))}
+            </Box>
+          </Box>
+
           <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
-            <Button size="small" onClick={() => setBulkEditOpen(false)}>
+            <Button size="small" onClick={() => { setBulkEditOpen(false); setBulkSelectedMedia([]); }}>
               {t('cancel')}
             </Button>
             <Button
               size="small"
               variant="contained"
               onClick={handleBulkApply}
-              disabled={!bulkValues.price && !bulkValues.compare_at_price && !bulkValues.quantity}
+              disabled={!bulkValues.price && !bulkValues.compare_at_price && !bulkValues.quantity && bulkSelectedMedia.length === 0}
             >
               {t('apply_to_all')}
             </Button>
           </Box>
         </Card>
+
+        <MediaPickerDialog
+          open={bulkMediaPickerOpen}
+          onClose={() => setBulkMediaPickerOpen(false)}
+          onSelect={handleBulkMediaSelect}
+          multiple
+          title={t('select_bulk_images')}
+        />
       </Collapse>
 
       {/* Variants List */}

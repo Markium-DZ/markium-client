@@ -170,6 +170,8 @@
     "variant_image": "Variant Image",
     "variant_images": "Variant Images",
     "select_variant_images": "Select Variant Images",
+    "bulk_images": "Images (applied to all variants)",
+    "select_bulk_images": "Select Images for All Variants",
     "product_details": "Product Details",
     "variant_options": "Variant Options",
     "or_select_from_uploaded": "Or select from uploaded",
