@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { paths } from 'src/routes/paths';
 import { useRouter } from 'src/routes/hooks';
 
+import { PATH_AFTER_LOGIN } from 'src/config-global';
+
 import { SplashScreen } from 'src/components/loading-screen';
 import { OtpVerifyModal } from 'src/sections/auth/jwt';
 
@@ -11,23 +13,13 @@ import { useAuthContext } from '../hooks';
 
 // ----------------------------------------------------------------------
 
-const loginPaths = {
-  jwt: paths.auth.jwt.login,
-  auth0: paths.auth.auth0.login,
-  amplify: paths.auth.amplify.login,
-  firebase: paths.auth.firebase.login,
-  supabase: paths.auth.supabase.login,
-};
-
-// ----------------------------------------------------------------------
-
-export default function AuthGuard({ children }) {
+export default function PhoneVerifiedGuard({ children }) {
   const { loading } = useAuthContext();
 
-  return <>{loading ? <SplashScreen /> : <Container> {children}</Container>}</>;
+  return <>{loading ? <SplashScreen /> : <Container>{children}</Container>}</>;
 }
 
-AuthGuard.propTypes = {
+PhoneVerifiedGuard.propTypes = {
   children: PropTypes.node,
 };
 
@@ -36,7 +28,7 @@ AuthGuard.propTypes = {
 function Container({ children }) {
   const router = useRouter();
 
-  const { authenticated, method, user } = useAuthContext();
+  const { authenticated, user } = useAuthContext();
 
   const [checked, setChecked] = useState(false);
 
@@ -44,9 +36,7 @@ function Container({ children }) {
     if (!authenticated) {
       const returnTo = window.location.pathname + window.location.search;
       const searchParams = new URLSearchParams({ returnTo }).toString();
-      const loginPath = loginPaths[method];
-      const href = `${loginPath}?${searchParams}`;
-      router.replace(href);
+      router.replace(`${paths.auth.jwt.login}?${searchParams}`);
       return;
     }
 
@@ -56,14 +46,14 @@ function Container({ children }) {
       return;
     }
 
-    // Store not set up -> onboarding wizard
-    if (!user?.has_store || !user?.store_setup_complete) {
-      router.replace(paths.onboarding.storeSetup);
+    // If already fully set up, go to dashboard
+    if (user?.has_store && user?.store_setup_complete) {
+      router.replace(PATH_AFTER_LOGIN);
       return;
     }
 
     setChecked(true);
-  }, [authenticated, method, user, router]);
+  }, [authenticated, user, router]);
 
   useEffect(() => {
     check();

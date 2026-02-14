@@ -94,6 +94,16 @@ export const endpoints = {
     changePasswordByAdmin: `/auth/changePasswordByAdmin`,
     sendOtp: `/auth/send-otp`,
     verifyOtp: `/auth/verify-otp`,
+    resendOtp: `/auth/resend-otp`,
+  },
+  storeSetup: {
+    basics: `/store/setup/basics`,
+    branding: `/store/setup/branding`,
+    categories: `/store/setup/categories`,
+    status: `/store/setup/status`,
+  },
+  categories: {
+    root: `/categories`,
   },
   mail: {
     list: '/api/mail/list',

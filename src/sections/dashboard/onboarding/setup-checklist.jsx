@@ -3,14 +3,13 @@ import { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import Box from '@mui/material/Box';
-import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
 import Drawer from '@mui/material/Drawer';
-import Tooltip from '@mui/material/Tooltip';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
-import LinearProgress from '@mui/material/LinearProgress';
+import CircularProgress from '@mui/material/CircularProgress';
+import Link from '@mui/material/Link';
 import { alpha, useTheme } from '@mui/material/styles';
 
 import { useRouter } from 'src/routes/hooks';
@@ -23,7 +22,14 @@ import ProductNewEditForm from 'src/sections/product/product-new-edit-form';
 
 // ----------------------------------------------------------------------
 
-export default function SetupChecklist({ productsCount = 0, ordersCount = 0, hasMedia = false, isPhoneVerified = true, onRefresh }) {
+export default function SetupChecklist({
+  userName,
+  productsCount = 0,
+  ordersCount = 0,
+  hasMedia = false,
+  isPhoneVerified = true,
+  onRefresh,
+}) {
   const { t } = useTranslation();
   const theme = useTheme();
   const router = useRouter();
@@ -38,16 +44,12 @@ export default function SetupChecklist({ productsCount = 0, ordersCount = 0, has
 
   const handleCloseMediaPicker = useCallback(() => {
     setMediaPickerOpen(false);
-    // Refresh data after closing media picker (media may have been uploaded)
     onRefresh?.();
-    // Additional delayed refresh to catch backend processing
     setTimeout(() => onRefresh?.(), 2000);
   }, [onRefresh]);
 
   const handleMediaSelect = useCallback((selectedMedia) => {
-    // Media was selected/uploaded, close the dialog
     setMediaPickerOpen(false);
-    // Refresh data to update the checklist
     onRefresh?.();
     setTimeout(() => onRefresh?.(), 2000);
   }, [onRefresh]);
@@ -59,7 +61,6 @@ export default function SetupChecklist({ productsCount = 0, ordersCount = 0, has
   const handleCloseProductDialog = useCallback(() => {
     setProductDialogOpen(false);
     setIsFormDirty(false);
-    // Refresh data to update the checklist (product may have been created)
     onRefresh?.();
     setTimeout(() => onRefresh?.(), 2000);
   }, [onRefresh]);
@@ -78,30 +79,12 @@ export default function SetupChecklist({ productsCount = 0, ordersCount = 0, has
   }, [handleCloseProductDialog]);
 
   const steps = [
-    // {
-    //   id: 'account',
-    //   title: t('onboarding_account_created'),
-    //   description: t('onboarding_account_created_desc'),
-    //   completed: true,
-    //   icon: 'solar:user-check-bold',
-    //   action: null,
-    // },
-    // Phone verification step hidden for now
-    // {
-    //   id: 'phone',
-    //   title: t('onboarding_verify_phone'),
-    //   description: t('onboarding_verify_phone_desc'),
-    //   completed: isPhoneVerified,
-    //   icon: 'solar:phone-bold',
-    //   action: () => router.push(paths.dashboard.settings.account),
-    //   actionLabel: t('onboarding_verify_now'),
-    // },
     {
       id: 'media',
       title: t('onboarding_upload_images'),
       description: t('onboarding_upload_images_desc'),
       completed: hasMedia,
-      icon: 'solar:gallery-bold',
+      icon: 'solar:gallery-bold-duotone',
       action: handleOpenMediaPicker,
       actionLabel: t('onboarding_upload_now'),
     },
@@ -110,7 +93,7 @@ export default function SetupChecklist({ productsCount = 0, ordersCount = 0, has
       title: t('onboarding_add_product'),
       description: t('onboarding_add_product_desc'),
       completed: productsCount > 0,
-      icon: 'solar:box-bold',
+      icon: 'solar:box-bold-duotone',
       action: handleOpenProductDialog,
       actionLabel: t('onboarding_create_product'),
     },
@@ -119,7 +102,7 @@ export default function SetupChecklist({ productsCount = 0, ordersCount = 0, has
       title: t('onboarding_customize_store'),
       description: t('onboarding_customize_store_desc'),
       completed: false,
-      icon: 'solar:palette-bold',
+      icon: 'solar:palette-bold-duotone',
       action: () => router.push(paths.dashboard.settings.root),
       actionLabel: t('onboarding_customize_now'),
     },
@@ -129,212 +112,265 @@ export default function SetupChecklist({ productsCount = 0, ordersCount = 0, has
   const progress = (completedSteps / steps.length) * 100;
   const allCompleted = completedSteps === steps.length;
 
-  if (allCompleted) {
-    return null;
-  }
+  if (allCompleted) return null;
 
   return (
     <>
-    <Card
-      sx={{
-        p: 2.5,
-        border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
-      }}
-    >
-      <Stack spacing={2}>
-        {/* Header */}
-        <Stack direction="row" alignItems="center" justifyContent="space-between">
-          <Stack spacing={0.5}>
-            <Typography variant="h6">{t('onboarding_setup_store')}</Typography>
-            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-              {t('onboarding_complete_steps')}
-            </Typography>
-          </Stack>
-          <Button
-            size="small"
-            color="primary"
-            component="a"
-            href="https://markium.online/tutorials/getting-started"
-            target="_blank"
-            rel="noopener noreferrer"
-            startIcon={<Iconify icon="solar:play-circle-bold" width={16} />}
-          >
-            {t('empty_products_watch_tutorial')}
-          </Button>
-        </Stack>
-
-        {/* Progress */}
-        <Stack spacing={1}>
+      <Stack
+        alignItems="center"
+        justifyContent="center"
+        sx={{ minHeight: 'calc(100vh - 280px)' }}
+      >
+        <Stack
+          spacing={4}
+          sx={{
+            width: 1,
+            maxWidth: 560,
+            mx: 'auto',
+          }}
+        >
+          {/* Header: greeting + progress ring */}
           <Stack direction="row" alignItems="center" justifyContent="space-between">
-            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-              {t('onboarding_progress')}
-            </Typography>
-            <Typography variant="body2" fontWeight="bold" color="primary">
-              {completedSteps}/{steps.length}
-            </Typography>
-          </Stack>
-          <Tooltip title={t('onboarding_progress_tooltip')} arrow>
-            <LinearProgress
-              variant="determinate"
-              value={progress}
-              aria-label={`${t('onboarding_progress')}: ${completedSteps}/${steps.length}`}
-              sx={{
-                height: 8,
-                borderRadius: 4,
-                bgcolor: alpha(theme.palette.primary.main, 0.1),
-                '& .MuiLinearProgress-bar': {
-                  borderRadius: 4,
-                },
-              }}
-            />
-          </Tooltip>
-        </Stack>
+            <Stack spacing={0.5}>
+              <Typography variant="h4">
+                {t('welcome_new_user_title')} {userName}
+              </Typography>
+              <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                {t('onboarding_complete_steps')}
+              </Typography>
+            </Stack>
 
-        {/* Steps */}
-        <Stack spacing={1.5}>
-          {steps.map((step, index) => (
-            <Stack
-              key={step.id}
-              direction={{ xs: 'column', sm: 'row' }}
-              alignItems={{ xs: 'flex-start', sm: 'center' }}
-              spacing={1.5}
-              sx={{
-                p: 1.5,
-                borderRadius: 1.5,
-                bgcolor: step.completed
-                  ? alpha(theme.palette.success.main, 0.08)
-                  : alpha(theme.palette.grey[500], 0.04),
-                border: `1px solid ${
-                  step.completed
-                    ? alpha(theme.palette.success.main, 0.2)
-                    : alpha(theme.palette.grey[500], 0.08)
-                }`,
-                transition: 'all 0.2s ease-in-out',
-                '&:hover': {
-                  bgcolor: step.completed
-                    ? alpha(theme.palette.success.main, 0.12)
-                    : alpha(theme.palette.grey[500], 0.08),
-                },
-              }}
-            >
-              {/* Step Icon */}
+            {/* Circular progress */}
+            <Box sx={{ position: 'relative', display: 'inline-flex' }}>
+              <CircularProgress
+                variant="determinate"
+                value={100}
+                size={56}
+                thickness={4}
+                sx={{ color: alpha(theme.palette.primary.main, 0.12) }}
+              />
+              <CircularProgress
+                variant="determinate"
+                value={progress}
+                size={56}
+                thickness={4}
+                sx={{
+                  position: 'absolute',
+                  inset: 0,
+                  color: 'primary.main',
+                  '& .MuiCircularProgress-circle': {
+                    strokeLinecap: 'round',
+                  },
+                }}
+              />
               <Box
                 sx={{
-                  width: 38,
-                  height: 38,
-                  borderRadius: '50%',
+                  position: 'absolute',
+                  inset: 0,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  bgcolor: step.completed
-                    ? alpha(theme.palette.success.main, 0.16)
-                    : alpha(theme.palette.grey[500], 0.08),
-                  color: step.completed ? 'success.main' : 'text.secondary',
                 }}
               >
-                {step.completed ? (
-                  <Iconify icon="solar:check-circle-bold" width={24} />
-                ) : (
-                  <Iconify icon={step.icon} width={24} />
-                )}
+                <Typography variant="caption" sx={{ fontWeight: 700, color: 'text.primary' }}>
+                  {completedSteps}/{steps.length}
+                </Typography>
               </Box>
+            </Box>
+          </Stack>
 
-              {/* Step Content */}
-              <Stack spacing={0.25} sx={{ flexGrow: 1 }}>
-                <Typography
-                  variant="subtitle2"
+          {/* Steps */}
+          <Stack spacing={1.5}>
+            {steps.map((step, index) => {
+              const isActive = !step.completed && steps.slice(0, index).every((s) => s.completed);
+
+              return (
+                <Stack
+                  key={step.id}
+                  direction="row"
+                  alignItems="center"
+                  spacing={2}
                   sx={{
-                    textDecoration: step.completed ? 'line-through' : 'none',
-                    color: step.completed ? 'text.secondary' : 'text.primary',
+                    p: 2,
+                    borderRadius: 2,
+                    cursor: !step.completed && step.action ? 'pointer' : 'default',
+                    bgcolor: step.completed
+                      ? alpha(theme.palette.success.main, 0.06)
+                      : isActive
+                        ? 'background.paper'
+                        : alpha(theme.palette.grey[500], 0.04),
+                    border: `1px solid`,
+                    borderColor: step.completed
+                      ? alpha(theme.palette.success.main, 0.2)
+                      : isActive
+                        ? alpha(theme.palette.primary.main, 0.2)
+                        : alpha(theme.palette.grey[500], 0.08),
+                    boxShadow: isActive
+                      ? `0 0 0 1px ${alpha(theme.palette.primary.main, 0.08)}`
+                      : 'none',
+                    transition: 'all 0.2s ease',
+                    '&:hover': !step.completed ? {
+                      borderColor: alpha(theme.palette.primary.main, 0.3),
+                      bgcolor: alpha(theme.palette.primary.main, 0.04),
+                    } : {},
                   }}
+                  onClick={!step.completed && step.action ? step.action : undefined}
                 >
-                  {step.title}
-                </Typography>
-                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                  {step.description}
-                </Typography>
-              </Stack>
+                  {/* Step number / check */}
+                  <Box
+                    sx={{
+                      width: 44,
+                      height: 44,
+                      borderRadius: '50%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                      bgcolor: step.completed
+                        ? alpha(theme.palette.success.main, 0.12)
+                        : isActive
+                          ? alpha(theme.palette.primary.main, 0.1)
+                          : alpha(theme.palette.grey[500], 0.08),
+                      color: step.completed
+                        ? 'success.main'
+                        : isActive
+                          ? 'primary.main'
+                          : 'text.disabled',
+                    }}
+                  >
+                    {step.completed ? (
+                      <Iconify icon="solar:check-circle-bold" width={26} />
+                    ) : (
+                      <Iconify icon={step.icon} width={24} />
+                    )}
+                  </Box>
 
-              {/* Action Button */}
-              {!step.completed && step.action && (
-                <Button
-                  size="small"
-                  variant="contained"
-                  onClick={step.action}
-                  sx={{ flexShrink: 0 }}
-                >
-                  {step.actionLabel}
-                </Button>
-              )}
-            </Stack>
-          ))}
+                  {/* Content */}
+                  <Stack spacing={0.25} sx={{ flexGrow: 1, minWidth: 0 }}>
+                    <Typography
+                      variant="subtitle2"
+                      sx={{
+                        fontWeight: isActive ? 700 : 600,
+                        textDecoration: step.completed ? 'line-through' : 'none',
+                        color: step.completed
+                          ? 'text.disabled'
+                          : isActive
+                            ? 'text.primary'
+                            : 'text.secondary',
+                      }}
+                    >
+                      {step.title}
+                    </Typography>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        color: 'text.secondary',
+                        opacity: step.completed ? 0.6 : 1,
+                      }}
+                    >
+                      {step.description}
+                    </Typography>
+                  </Stack>
+
+                  {/* Arrow / action indicator */}
+                  {!step.completed && step.action && (
+                    <Iconify
+                      icon={theme.direction === 'rtl' ? 'solar:alt-arrow-left-outline' : 'solar:alt-arrow-right-outline'}
+                      width={20}
+                      sx={{
+                        color: isActive ? 'primary.main' : 'text.disabled',
+                        flexShrink: 0,
+                      }}
+                    />
+                  )}
+                </Stack>
+              );
+            })}
+          </Stack>
+
+          {/* Tutorial link */}
+          <Stack direction="row" alignItems="center" justifyContent="center" spacing={0.75}>
+            <Iconify icon="solar:play-circle-bold-duotone" width={18} sx={{ color: 'primary.main' }} />
+            <Link
+              href="https://markium.online/tutorials/getting-started"
+              target="_blank"
+              rel="noopener noreferrer"
+              variant="body2"
+              sx={{ color: 'primary.main', fontWeight: 600 }}
+            >
+              {t('empty_products_watch_tutorial')}
+            </Link>
+          </Stack>
         </Stack>
       </Stack>
-    </Card>
 
-    <MediaPickerDialog
-      open={mediaPickerOpen}
-      onClose={handleCloseMediaPicker}
-      onSelect={handleMediaSelect}
-      multiple
-      title={t('onboarding_upload_images')}
-    />
+      {/* Media picker dialog */}
+      <MediaPickerDialog
+        open={mediaPickerOpen}
+        onClose={handleCloseMediaPicker}
+        onSelect={handleMediaSelect}
+        multiple
+        title={t('onboarding_upload_images')}
+      />
 
-    <Drawer
-      anchor={theme.direction === 'rtl' ? 'right' : 'left'}
-      open={productDialogOpen}
-      onClose={handleRequestCloseProductDialog}
-      PaperProps={{
-        sx: {
-          width: { xs: '100%', sm: '80vw', md: '60vw', lg: '50vw' },
-        },
-        role: 'dialog',
-        'aria-modal': 'true',
-        'aria-label': t('create_new_product'),
-      }}
-    >
-      <Stack
-        direction="row"
-        alignItems="center"
-        justifyContent="space-between"
-        sx={{
-          px: 2.5,
-          py: 2,
-          borderBottom: `1px solid ${alpha(theme.palette.grey[500], 0.12)}`,
+      {/* Product creation drawer */}
+      <Drawer
+        anchor={theme.direction === 'rtl' ? 'right' : 'left'}
+        open={productDialogOpen}
+        onClose={handleRequestCloseProductDialog}
+        PaperProps={{
+          sx: {
+            width: { xs: '100%', sm: '80vw', md: '60vw', lg: '50vw' },
+          },
+          role: 'dialog',
+          'aria-modal': 'true',
+          'aria-label': t('create_new_product'),
         }}
       >
-        <Typography variant="h6">{t('create_new_product')}</Typography>
-        <IconButton onClick={handleRequestCloseProductDialog} size="small" aria-label={t('cancel')}>
-          <Iconify icon="mingcute:close-line" width={20} />
-        </IconButton>
-      </Stack>
+        <Stack
+          direction="row"
+          alignItems="center"
+          justifyContent="space-between"
+          sx={{
+            px: 2.5,
+            py: 2,
+            borderBottom: `1px solid ${alpha(theme.palette.grey[500], 0.12)}`,
+          }}
+        >
+          <Typography variant="h6">{t('create_new_product')}</Typography>
+          <IconButton onClick={handleRequestCloseProductDialog} size="small" aria-label={t('cancel')}>
+            <Iconify icon="mingcute:close-line" width={20} />
+          </IconButton>
+        </Stack>
 
-      <Box sx={{ p: 2.5, overflowY: 'auto', flexGrow: 1 }}>
-        <ProductNewEditForm
-          drawerMode
-          onSuccess={handleCloseProductDialog}
-          onCancel={handleRequestCloseProductDialog}
-          onDirtyChange={setIsFormDirty}
-        />
-      </Box>
-    </Drawer>
+        <Box sx={{ p: 2.5, overflowY: 'auto', flexGrow: 1 }}>
+          <ProductNewEditForm
+            drawerMode
+            onSuccess={handleCloseProductDialog}
+            onCancel={handleRequestCloseProductDialog}
+            onDirtyChange={setIsFormDirty}
+          />
+        </Box>
+      </Drawer>
 
-    <ConfirmDialog
-      open={unsavedDialogOpen}
-      onClose={() => setUnsavedDialogOpen(false)}
-      title={t('unsaved_changes_title')}
-      content={t('unsaved_changes_message')}
-      action={
-        <Button variant="contained" color="error" onClick={handleDiscardChanges}>
-          {t('discard_changes')}
-        </Button>
-      }
-    />
+      {/* Unsaved changes confirmation */}
+      <ConfirmDialog
+        open={unsavedDialogOpen}
+        onClose={() => setUnsavedDialogOpen(false)}
+        title={t('unsaved_changes_title')}
+        content={t('unsaved_changes_message')}
+        action={
+          <Button variant="contained" color="error" onClick={handleDiscardChanges}>
+            {t('discard_changes')}
+          </Button>
+        }
+      />
     </>
   );
 }
 
 SetupChecklist.propTypes = {
+  userName: PropTypes.string,
   productsCount: PropTypes.number,
   ordersCount: PropTypes.number,
   hasMedia: PropTypes.bool,

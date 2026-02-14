@@ -138,27 +138,20 @@ export function AuthProvider({ children }) {
   }, []);
 
   // REGISTER
-  const register = useCallback(async (name, phone, password, store_name,store_slug) => {
-    const formData = new FormData();
-    formData.append('name', name);
-    formData.append('phone', phone);
-    formData.append('password', password);
-    formData.append('store_name', store_name);
-    formData.append('store_slug', store_slug);
-    formData.append('is_phone_verified', true);
+  const register = useCallback(async (name, phone, password, turnstileToken) => {
+    const body = { name, phone, password };
+    if (turnstileToken) {
+      body['cf-turnstile-response'] = turnstileToken;
+    }
 
-    const response = await axios.post(endpoints.auth.register, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+    const response = await axios.post(endpoints.auth.register, body);
 
     const { token, client } = response.data.data;
 
     setSession(token);
     localStorage.setItem(USER_STORAGE_KEY, JSON.stringify({ ...client }));
     identifyUser(client);
-    captureEvent('client_signed_up', { method: 'phone', store_name, store_slug });
+    captureEvent('client_signed_up', { method: 'phone' });
 
     dispatch({
       type: 'REGISTER',
@@ -204,6 +197,25 @@ export function AuthProvider({ children }) {
     });
   }, [state.user]);
 
+  // REFRESH USER (fetch latest from server)
+  const refreshUser = useCallback(async () => {
+    try {
+      const response = await axios.get(endpoints.auth.me);
+      const client = response.data.data;
+      const token = localStorage.getItem(STORAGE_KEY);
+      const updatedUser = { ...client, token };
+      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(client));
+      dispatch({
+        type: 'UPDATE_USER',
+        payload: { user: updatedUser },
+      });
+      return updatedUser;
+    } catch (error) {
+      console.error('Failed to refresh user:', error);
+      return null;
+    }
+  }, []);
+
   // ----------------------------------------------------------------------
 
   const checkAuthenticated = state.user ? 'authenticated' : 'unauthenticated';
@@ -225,8 +237,9 @@ export function AuthProvider({ children }) {
       register,
       logout,
       updateUser,
+      refreshUser,
     }),
-    [login, logout, register, updateUser, state.user, status]
+    [login, logout, register, updateUser, refreshUser, state.user, status]
   );
 
   return <AuthContext.Provider value={memoizedValue}>{children}</AuthContext.Provider>;

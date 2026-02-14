@@ -4,6 +4,7 @@ import { paths } from 'src/routes/paths';
 import { authRoutes } from './auth';
 import { mainRoutes } from './main';
 import { dashboardRoutes } from './dashboard';
+import { onboardingRoutes } from './onboarding';
 
 // ----------------------------------------------------------------------
 
@@ -19,6 +20,9 @@ export default function Router() {
     ...mainRoutes,
     // Auth routes
     ...authRoutes,
+
+    // Onboarding routes
+    ...onboardingRoutes,
 
     // Dashboard routes
     ...dashboardRoutes,

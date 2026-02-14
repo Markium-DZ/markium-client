@@ -5,8 +5,6 @@ import Container from '@mui/material/Container';
 import Grid from '@mui/material/Unstable_Grid2';
 import { useTheme } from '@mui/material/styles';
 
-import { useRouter } from 'src/routes/hooks';
-import { paths } from 'src/routes/paths';
 
 import { useGetProducts } from 'src/api/product';
 import { useGetOrders } from 'src/api/orders';
@@ -24,8 +22,6 @@ import { AuthContext } from 'src/auth/context/jwt';
 import { useSettingsContext } from 'src/components/settings';
 import ConnectionError from 'src/components/connection-error';
 import { MotivationIllustration } from 'src/assets/illustrations';
-import { Walktour, useWalktour } from 'src/components/walktour';
-
 
 import EcommerceEventsCalendar from '../ecommerce-events-calendar';
 import DashboardMetrics from '../dashboard-metrics';
@@ -54,24 +50,7 @@ export default function OverviewEcommerceView() {
   const { orders, ordersLoading, ordersError, mutate: ordersMutate } = useGetOrders();
   const { media, total: mediaTotal, mutate: mediaMutate } = useGetMedia(1, 1);
 
-  const router = useRouter();
   const settings = useSettingsContext();
-
-  const { run: tourRun, handleCallback: tourCallback } = useWalktour();
-
-  const tourSteps = useMemo(() => [
-    {
-      target: '[data-tour="welcome-banner"]',
-      title: t('tour_welcome_title'),
-      content: t('tour_welcome_content'),
-      disableBeacon: true,
-    },
-    {
-      target: '[data-tour="setup-checklist"]',
-      title: t('tour_setup_title'),
-      content: t('tour_setup_content'),
-    },
-  ], [t]);
 
   // Refresh data when tasks are completed in SetupChecklist
   const handleRefreshData = useCallback(() => {
@@ -205,8 +184,6 @@ export default function OverviewEcommerceView() {
         }),
       }}
     >
-      {isNewUser && <Walktour steps={tourSteps} run={tourRun} callback={tourCallback} />}
-
       <Grid
         container
         spacing={3}
@@ -216,10 +193,23 @@ export default function OverviewEcommerceView() {
           }),
         }}
       >
-        {/* ===== GRADE A & B: Original layout ===== */}
-        {!isThirdGradeUser && (
+        {/* ===== GRADE A: Clean centered checklist ===== */}
+        {isNewUser && (
+          <Grid xs={12} data-tour="setup-checklist">
+            <SetupChecklist
+              userName={user?.name}
+              productsCount={productsCount}
+              ordersCount={ordersCount}
+              hasMedia={hasMedia}
+              isPhoneVerified={user?.is_phone_verified ?? true}
+              onRefresh={handleRefreshData}
+            />
+          </Grid>
+        )}
+
+        {/* ===== GRADE B: Welcome + Calendar + Empty Orders ===== */}
+        {isBGradeMerchant && (
           <>
-            {/* Welcome Banner */}
             <Grid xs={12} md={8} data-tour="welcome-banner">
               <WelcomeNewUser
                 userName={user?.name}
@@ -228,30 +218,13 @@ export default function OverviewEcommerceView() {
               />
             </Grid>
 
-            {/* Events Calendar */}
             <Grid xs={12} md={4}>
               <EcommerceEventsCalendar />
             </Grid>
 
-            {/* Setup Checklist - Only for new users or incomplete setup */}
-            {isNewUser && (
-              <Grid xs={12} data-tour="setup-checklist">
-                <SetupChecklist
-                  productsCount={productsCount}
-                  ordersCount={ordersCount}
-                  hasMedia={hasMedia}
-                  isPhoneVerified={user?.is_phone_verified ?? true}
-                  onRefresh={handleRefreshData}
-                />
-              </Grid>
-            )}
-
-            {/* B Grade Merchant: has products but no orders - show EmptyStateOrders */}
-            {isBGradeMerchant && (
-              <Grid xs={12}>
-                <EmptyStateOrders hasProducts />
-              </Grid>
-            )}
+            <Grid xs={12}>
+              <EmptyStateOrders hasProducts />
+            </Grid>
           </>
         )}
 

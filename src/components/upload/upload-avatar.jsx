@@ -12,7 +12,7 @@ import RejectionFiles from './errors-rejection-files';
 
 // ----------------------------------------------------------------------
 
-export default function UploadAvatar({ error, file, disabled, helperText, sx, ...other }) {
+export default function UploadAvatar({ error, file, disabled, helperText, uploadText, updateText, sx, ...other }) {
   const { getRootProps, getInputProps, isDragActive, isDragReject, fileRejections } = useDropzone({
     multiple: false,
     disabled,
@@ -77,7 +77,7 @@ export default function UploadAvatar({ error, file, disabled, helperText, sx, ..
     >
       <Iconify icon="solar:camera-add-bold" width={32} />
 
-      <Typography variant="caption">{file ? 'Update photo' : 'Upload photo'}</Typography>
+      <Typography variant="caption">{file ? (updateText || 'Update photo') : (uploadText || 'Upload photo')}</Typography>
     </Stack>
   );
 

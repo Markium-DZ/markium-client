@@ -106,9 +106,9 @@ export default function NavVertical({ openNav, onCloseNav }) {
         </Stack>
       </Box>
 
-      <Box sx={{ px: 2.5, pt: 2, pb: 3 }}>
+      <Box sx={{ px: 2.5, pt: 2, pb: 3, visibility: 'hidden' }}>
         <Typography variant="h5" sx={{ whiteSpace: 'pre-line' }}>
-          {`${t('welcome_back')}\n${user?.name} 👋`}
+          {`${t('welcome_back')}\n${user?.name}`}
         </Typography>
       </Box>
 

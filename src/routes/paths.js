@@ -64,6 +64,7 @@ export const paths = {
     jwt: {
       login: `${ROOTS.AUTH}/jwt/login`,
       register: `${ROOTS.AUTH}/jwt/register`,
+      verify: `${ROOTS.AUTH}/jwt/verify`,
     },
     firebase: {
       login: `${ROOTS.AUTH}/firebase/login`,
@@ -97,6 +98,10 @@ export const paths = {
       newPassword: `${ROOTS.AUTH_DEMO}/modern/new-password`,
       verify: `${ROOTS.AUTH_DEMO}/modern/verify`,
     },
+  },
+  // ONBOARDING
+  onboarding: {
+    storeSetup: '/onboarding/store-setup',
   },
   // DASHBOARD
   dashboard: {

@@ -1,16 +1,11 @@
 import PropTypes from 'prop-types';
-import { useEffect } from 'react';
 
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import { alpha, useTheme } from '@mui/material/styles';
 
-import { useRouter } from 'src/routes/hooks';
-
 import { useResponsive } from 'src/hooks/use-responsive';
-
-import { useAuthContext } from 'src/auth/hooks';
 
 import Logo from 'src/components/logo';
 import SkipToContent from 'src/components/skip-to-content';
@@ -19,19 +14,9 @@ import { useTranslate } from 'src/locales';
 // ----------------------------------------------------------------------
 
 export default function AuthClassicLayout({ children, image, title }) {
-  const { authenticated } = useAuthContext();
-
   const theme = useTheme();
-  const router = useRouter();
   const mdUp = useResponsive('up', 'md');
   const { t } = useTranslate();
-
-  // Redirect to dashboard if already authenticated
-  useEffect(() => {
-    if (authenticated) {
-      router.push('/dashboard');
-    }
-  }, [authenticated, router]);
 
   const renderContent = (
     <Stack

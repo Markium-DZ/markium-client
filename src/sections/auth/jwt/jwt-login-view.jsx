@@ -27,6 +27,7 @@ import { HOST_API, PATH_AFTER_LOGIN } from 'src/config-global';
 import Iconify from 'src/components/iconify';
 import FormProvider from 'src/components/hook-form/form-provider';
 import RHFTextField from 'src/components/hook-form/rhf-text-field';
+import { TurnstileWidget } from 'src/components/turnstile';
 import axios from 'axios';
 import { endpoints } from 'src/utils/axios';
 
@@ -38,6 +39,7 @@ export default function JwtLoginView() {
   const router = useRouter();
 
   const [errorMsg, setErrorMsg] = useState('');
+  const [turnstileToken, setTurnstileToken] = useState(null);
 
   const { t } = useTranslation();
 
@@ -46,6 +48,9 @@ export default function JwtLoginView() {
   const returnTo = searchParams.get('returnTo');
 
   const password = useBoolean();
+
+  // Turnstile site key from env
+  const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || '1x00000000000000000000AA';
 
   const validatePhone = (phone) => {
     if (!phone) return false;
@@ -109,11 +114,12 @@ export default function JwtLoginView() {
       const response = await axios.post(HOST_API + endpoints.auth.login, {
         ...data,
         phone: formatPhoneWithPrefix(data.phone),
+        'cf-turnstile-response': turnstileToken,
       });
 
       if (response?.data?.success) {
         await login(formatPhoneWithPrefix(data.phone), data.password);
-        router.push(returnTo || PATH_AFTER_LOGIN);
+        // GuestGuard will detect authenticated=true and perform smart redirect
       } else {
         setErrorMsg(t('please_check_your_phone_and_password'));
       }
@@ -195,6 +201,14 @@ export default function JwtLoginView() {
         }}
       />
 
+      <TurnstileWidget
+        siteKey={TURNSTILE_SITE_KEY}
+        onVerify={(token) => setTurnstileToken(token)}
+        onExpire={() => setTurnstileToken(null)}
+        onError={() => setTurnstileToken(null)}
+        sx={{ display: 'flex', justifyContent: 'center' }}
+      />
+
       <LoadingButton
         fullWidth
         color="primary"
@@ -202,6 +216,7 @@ export default function JwtLoginView() {
         type="submit"
         variant="contained"
         loading={isSubmitting}
+        disabled={!turnstileToken}
         sx={{
           mt: 1,
           py: 1.5,
