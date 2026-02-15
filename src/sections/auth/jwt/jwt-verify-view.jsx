@@ -7,6 +7,7 @@ import Stack from '@mui/material/Stack';
 import Dialog from '@mui/material/Dialog';
 import DialogContent from '@mui/material/DialogContent';
 import Typography from '@mui/material/Typography';
+import IconButton from '@mui/material/IconButton';
 import Link from '@mui/material/Link';
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
@@ -24,7 +25,7 @@ const COUNTDOWN_DURATION = 60000; // 60 seconds
 
 // ----------------------------------------------------------------------
 
-export default function OtpVerifyModal({ open }) {
+export default function OtpVerifyModal({ open, onClose }) {
   const { user, refreshUser } = useAuthContext();
   const { t } = useTranslation();
 
@@ -34,6 +35,7 @@ export default function OtpVerifyModal({ open }) {
   const [errorMsg, setErrorMsg] = useState('');
   const [countdown, setCountdown] = useState(0);
   const [initialSendDone, setInitialSendDone] = useState(false);
+  const [confirmingClose, setConfirmingClose] = useState(false);
 
   // Restore countdown from localStorage on mount
   useEffect(() => {
@@ -74,6 +76,13 @@ export default function OtpVerifyModal({ open }) {
 
     return () => clearInterval(timer);
   }, [countdown]);
+
+  // Auto-revert close confirmation after 3 seconds
+  useEffect(() => {
+    if (!confirmingClose) return undefined;
+    const timer = setTimeout(() => setConfirmingClose(false), 3000);
+    return () => clearTimeout(timer);
+  }, [confirmingClose]);
 
   const sendOtp = useCallback(async () => {
     setSendingOtp(true);
@@ -125,17 +134,76 @@ export default function OtpVerifyModal({ open }) {
     sendOtp();
   }, [sendOtp]);
 
+  const handleClose = useCallback(() => {
+    // If OTP field is empty, close immediately
+    if (!otpValue || otpValue.length === 0) {
+      onClose?.();
+      return;
+    }
+    // If digits are partially entered, require two-tap confirmation
+    if (!confirmingClose) {
+      setConfirmingClose(true);
+      return;
+    }
+    // Second tap — actually close
+    setConfirmingClose(false);
+    onClose?.();
+  }, [otpValue, confirmingClose, onClose]);
+
   return (
     <Dialog
       open={open}
       maxWidth="xs"
       fullWidth
       disableEscapeKeyDown
+      onClose={(event, reason) => {
+        // Block backdrop click — only the back button can close
+        if (reason === 'backdropClick') return;
+      }}
       PaperProps={{
-        sx: { borderRadius: 2 },
+        sx: { borderRadius: 2, position: 'relative' },
       }}
     >
       <DialogContent sx={{ py: 4, px: 3 }}>
+        {/* Close button — hidden during loading to prevent interrupting verification */}
+        {onClose && !loading && (
+          <Box sx={{ position: 'absolute', top: 10, left: 10, zIndex: 1 }}>
+            {confirmingClose ? (
+              <Stack direction="row" alignItems="center" spacing={0.5}>
+                <Typography
+                  variant="caption"
+                  sx={{ color: 'warning.main', fontWeight: 600, whiteSpace: 'nowrap' }}
+                >
+                  {t('otp_discard_code')}
+                </Typography>
+                <Link
+                  component="button"
+                  variant="caption"
+                  onClick={() => { setConfirmingClose(false); onClose?.(); }}
+                  sx={{ color: 'error.main', fontWeight: 700 }}
+                >
+                  {t('yes')}
+                </Link>
+              </Stack>
+            ) : (
+              <IconButton
+                onClick={handleClose}
+                aria-label={t('go_back')}
+                size="small"
+                sx={{
+                  color: 'text.disabled',
+                  '&:hover': {
+                    color: 'text.secondary',
+                    bgcolor: 'action.hover',
+                  },
+                }}
+              >
+                <Iconify icon="eva:arrow-back-fill" width={20} />
+              </IconButton>
+            )}
+          </Box>
+        )}
+
         <Stack spacing={3} alignItems="center" sx={{ textAlign: 'center' }}>
           <Box
             sx={{
@@ -238,4 +306,5 @@ export default function OtpVerifyModal({ open }) {
 
 OtpVerifyModal.propTypes = {
   open: PropTypes.bool.isRequired,
+  onClose: PropTypes.func,
 };

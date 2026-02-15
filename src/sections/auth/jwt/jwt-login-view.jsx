@@ -6,7 +6,6 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import Link from '@mui/material/Link';
 import Alert from '@mui/material/Alert';
 import Stack from '@mui/material/Stack';
-import Divider from '@mui/material/Divider';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import LoadingButton from '@mui/lab/LoadingButton';
@@ -174,7 +173,6 @@ export default function JwtLoginView() {
                 <Typography variant="body2" sx={{ color: 'text.secondary', fontWeight: 600 }}>
                   +213
                 </Typography>
-                <Divider orientation="vertical" flexItem sx={{ mx: 0.5, height: 20, alignSelf: 'center' }} />
               </Stack>
             </InputAdornment>
           ),
@@ -187,6 +185,11 @@ export default function JwtLoginView() {
         type={password.value ? 'text' : 'password'}
         autoComplete="current-password"
         InputProps={{
+          startAdornment: (
+            <InputAdornment position="start">
+              <Iconify icon="solar:lock-password-bold-duotone" width={22} sx={{ color: 'text.disabled' }} />
+            </InputAdornment>
+          ),
           endAdornment: (
             <InputAdornment position="end">
               <IconButton

@@ -142,7 +142,17 @@ export default function JwtRegisterView() {
 
   const renderForm = (
     <Stack spacing={2.5}>
-      <RHFTextField name="name" label={t('name')} />
+      <RHFTextField
+        name="name"
+        label={t('name')}
+        InputProps={{
+          startAdornment: (
+            <InputAdornment position="start">
+              <Iconify icon="solar:user-bold-duotone" width={22} sx={{ color: 'text.disabled' }} />
+            </InputAdornment>
+          ),
+        }}
+      />
 
       <RHFTextField
         name="phone"
@@ -172,6 +182,11 @@ export default function JwtRegisterView() {
         type={password.value ? 'text' : 'password'}
         inputProps={{ dir: 'ltr' }}
         InputProps={{
+          startAdornment: (
+            <InputAdornment position="start">
+              <Iconify icon="solar:lock-password-bold-duotone" width={22} sx={{ color: 'text.disabled' }} />
+            </InputAdornment>
+          ),
           endAdornment: (
             <InputAdornment position="end">
               <IconButton onClick={password.onToggle} edge="end">

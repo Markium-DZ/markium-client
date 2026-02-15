@@ -36,7 +36,7 @@ AuthGuard.propTypes = {
 function Container({ children }) {
   const router = useRouter();
 
-  const { authenticated, method, user } = useAuthContext();
+  const { authenticated, method, user, logout } = useAuthContext();
 
   const [checked, setChecked] = useState(false);
 
@@ -65,6 +65,11 @@ function Container({ children }) {
     setChecked(true);
   }, [authenticated, method, user, router]);
 
+  const handleOtpClose = useCallback(async () => {
+    await logout();
+    router.replace(loginPaths[method]);
+  }, [logout, router, method]);
+
   useEffect(() => {
     check();
   }, [check]);
@@ -75,7 +80,7 @@ function Container({ children }) {
 
   // Show OTP modal if phone not verified
   if (authenticated && !user?.is_phone_verified) {
-    return <OtpVerifyModal open />;
+    return <OtpVerifyModal open onClose={handleOtpClose} />;
   }
 
   return <>{children}</>;

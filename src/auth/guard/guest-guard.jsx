@@ -32,7 +32,7 @@ function Container({ children }) {
 
   const returnTo = searchParams.get('returnTo');
 
-  const { authenticated, user } = useAuthContext();
+  const { authenticated, user, logout } = useAuthContext();
 
   const check = useCallback(() => {
     if (authenticated) {
@@ -55,12 +55,17 @@ function Container({ children }) {
     check();
   }, [check]);
 
+  const handleOtpClose = useCallback(async () => {
+    await logout();
+    router.replace(paths.auth.jwt.login);
+  }, [logout, router]);
+
   // Show OTP modal over the current page if authenticated but phone not verified
   if (authenticated && !user?.is_phone_verified) {
     return (
       <>
         {children}
-        <OtpVerifyModal open />
+        <OtpVerifyModal open onClose={handleOtpClose} />
       </>
     );
   }
