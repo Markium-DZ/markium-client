@@ -21,8 +21,6 @@ import { AuthContext } from 'src/auth/context/jwt';
 
 import { useSettingsContext } from 'src/components/settings';
 import ConnectionError from 'src/components/connection-error';
-import { MotivationIllustration } from 'src/assets/illustrations';
-
 import EcommerceEventsCalendar from '../ecommerce-events-calendar';
 import DashboardMetrics from '../dashboard-metrics';
 import DashboardChart from '../dashboard-chart';
@@ -31,8 +29,8 @@ import DashboardSkeleton from './dashboard-skeleton';
 
 import {
   SetupChecklist,
-  WelcomeNewUser,
   EmptyStateOrders,
+  YouTubeEmbed,
 } from 'src/sections/dashboard/onboarding';
 
 import {
@@ -80,7 +78,8 @@ export default function OverviewEcommerceView() {
   // Analytics state
   const [dateRange, setDateRange] = useState('-7d');
 
-  // Fetch analytics data only for third grade users
+  // Fetch analytics data for Grade B and Grade C merchants
+  const shouldFetchAnalytics = isThirdGradeUser || isBGradeMerchant;
   const {
     totalOrders: analyticsOrders,
     totalOrdersData,
@@ -89,7 +88,7 @@ export default function OverviewEcommerceView() {
     totalVisitors,
     totalVisitorsData,
     overviewLoading,
-  } = useGetAnalyticsOverview(isThirdGradeUser ? dateRange : null);
+  } = useGetAnalyticsOverview(shouldFetchAnalytics ? dateRange : null);
 
   // Fetch traffic time-series (hourly for 1-day, daily otherwise)
   const trafficInterval = dateRange === '-1d' ? 'hour' : 'day';
@@ -98,7 +97,7 @@ export default function OverviewEcommerceView() {
     productViews: trafficProductViews,
     orderCompleted: trafficOrders,
     trafficLoading,
-  } = useGetAnalyticsTraffic(isThirdGradeUser ? dateRange : null, trafficInterval);
+  } = useGetAnalyticsTraffic(shouldFetchAnalytics ? dateRange : null, trafficInterval);
 
   const { topProducts, topProductsLoading } = useGetAnalyticsTopProducts(isThirdGradeUser ? dateRange : null);
 
@@ -178,7 +177,7 @@ export default function OverviewEcommerceView() {
     <Container
       maxWidth={settings.themeStretch ? false : 'xl'}
       sx={{
-        ...(isThirdGradeUser && {
+        ...((isThirdGradeUser || isBGradeMerchant) && {
           height: { lg: `calc(100vh - ${MAIN_VERTICAL_PADDING}px)` },
           overflow: { lg: 'auto' },
         }),
@@ -188,7 +187,7 @@ export default function OverviewEcommerceView() {
         container
         spacing={3}
         sx={{
-          ...(isThirdGradeUser && {
+          ...((isThirdGradeUser || isBGradeMerchant) && {
             height: { lg: '100%' },
           }),
         }}
@@ -207,23 +206,40 @@ export default function OverviewEcommerceView() {
           </Grid>
         )}
 
-        {/* ===== GRADE B: Welcome + Calendar + Empty Orders ===== */}
+        {/* ===== GRADE B: Metrics + Chart + Calendar + EmptyOrders + Video ===== */}
         {isBGradeMerchant && (
           <>
-            <Grid xs={12} md={8} data-tour="welcome-banner">
-              <WelcomeNewUser
-                userName={user?.name}
-                productsCount={productsCount}
-                img={<MotivationIllustration />}
+            {/* Row 1: Metrics + Chart + Calendar (same as Grade C) */}
+            <Grid xs={12} md={6} lg={3} sx={{ height: { lg: '50%' } }}>
+              <DashboardMetrics
+                metrics={metricCards}
+                dateRange={dateRange}
+                onDateRangeChange={setDateRange}
               />
             </Grid>
 
-            <Grid xs={12} md={4}>
+            <Grid xs={12} md={6} lg={6} sx={{ height: { lg: '50%' } }}>
+              <DashboardChart
+                visitorsData={trafficVisitors.data}
+                visitorsLabels={trafficVisitors.days || trafficVisitors.labels}
+                ordersData={trafficOrders.data}
+                ordersLabels={trafficOrders.days || trafficOrders.labels}
+                loading={trafficLoading}
+                interval={trafficInterval}
+              />
+            </Grid>
+
+            <Grid xs={12} lg={3} sx={{ height: { lg: '50%' } }}>
               <EcommerceEventsCalendar />
             </Grid>
 
-            <Grid xs={12}>
-              <EmptyStateOrders hasProducts />
+            {/* Row 2: EmptyStateOrders (compact) + YouTubeEmbed */}
+            <Grid xs={12} lg={9} sx={{ height: { lg: '50%' } }}>
+              <EmptyStateOrders hasProducts compact sx={{ height: '100%' }} />
+            </Grid>
+
+            <Grid xs={12} lg={3} sx={{ height: { lg: '50%' } }}>
+              <YouTubeEmbed />
             </Grid>
           </>
         )}

@@ -1,250 +1,463 @@
-import { useState, useCallback } from 'react';
+import { useRef, useState, useCallback, useMemo, useEffect } from 'react';
 import PropTypes from 'prop-types';
 
 import Box from '@mui/material/Box';
 import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import Button from '@mui/material/Button';
 import Stack from '@mui/material/Stack';
 import Grid from '@mui/material/Grid';
-import Card from '@mui/material/Card';
 import Typography from '@mui/material/Typography';
 import CircularProgress from '@mui/material/CircularProgress';
-import Divider from '@mui/material/Divider';
-import { alpha } from '@mui/material/styles';
+import LinearProgress from '@mui/material/LinearProgress';
+import IconButton from '@mui/material/IconButton';
+import { alpha, keyframes } from '@mui/material/styles';
 
 import { useTranslate } from 'src/locales';
 import { useGetMedia, uploadMedia } from 'src/api/media';
 import { useSnackbar } from 'src/components/snackbar';
 import Iconify from 'src/components/iconify';
-import { Upload } from 'src/components/upload';
-import { fData } from 'src/utils/format-number';
-import { STORAGE_API } from 'src/config-global';
 
-// ----------------------------------------------------------------------
+// ── Animations ──────────────────────────────────────────────────────────
 
-export default function MediaPickerDialog({ open, onClose, onSelect, multiple = false, title }) {
+const checkPop = keyframes`
+  0% { transform: scale(0); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+`;
+
+const spin = keyframes`
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+`;
+
+const breathe = keyframes`
+  0%, 100% { transform: scale(1); opacity: 0.6; }
+  50% { transform: scale(1.08); opacity: 1; }
+`;
+
+// ── Component ───────────────────────────────────────────────────────────
+
+export default function MediaPickerDialog({ open, onClose, onSelect, multiple = false, title, confirmLabel }) {
   const { t } = useTranslate();
   const { enqueueSnackbar } = useSnackbar();
+  const fileInputRef = useRef(null);
 
   const [selectedMedia, setSelectedMedia] = useState([]);
-  const [localPreviews, setLocalPreviews] = useState([]); // Local previews for immediate display
   const [uploading, setUploading] = useState(false);
+
+  // Local previews keyed by real server ID (assigned after upload response)
+  // Shape: Map<serverId, blobUrl>
+  const [localPreviewMap, setLocalPreviewMap] = useState(new Map());
 
   const { media, mediaLoading, mediaValidating, mutate } = useGetMedia(1, 100);
 
-  // Combine local previews with server media (local previews first)
-  const allMedia = [...localPreviews, ...(media || [])];
+  const serverMediaCount = (media || []).length;
 
-  const handleToggleMedia = useCallback((mediaItem) => {
-    setSelectedMedia((prev) => {
-      const isSelected = prev.some((item) => item.id === mediaItem.id);
+  // ── Display: merge server items with local blob overrides ──
+  const displayMedia = useMemo(() => {
+    const serverItems = media || [];
 
-      if (multiple) {
-        if (isSelected) {
-          return prev.filter((item) => item.id !== mediaItem.id);
-        }
-        return [...prev, mediaItem];
+    if (localPreviewMap.size === 0) return serverItems;
+
+    // For items that have a local blob preview, use the blob URL instead of server URL
+    const merged = serverItems.map((item) => {
+      const blobUrl = localPreviewMap.get(item.id);
+      if (blobUrl) {
+        return { ...item, full_url: blobUrl, _hasLocalPreview: true };
+      }
+      return item;
+    });
+
+    return merged;
+  }, [localPreviewMap, media]);
+
+  const isEmpty = displayMedia.length === 0;
+
+  // ── Background: verify server images ready, then clear local blobs ──
+  useEffect(() => {
+    if (localPreviewMap.size === 0) return;
+
+    let active = true;
+    let timer;
+
+    const checkImages = async () => {
+      const entries = Array.from(localPreviewMap.entries());
+      const serverItems = media || [];
+
+      // Check each local preview's server counterpart
+      const results = await Promise.all(
+        entries.map(async ([serverId]) => {
+          const serverItem = serverItems.find((m) => m.id === serverId);
+          if (!serverItem) return { serverId, ready: false };
+
+          // Test if the server image is actually loadable
+          const ready = await new Promise((resolve) => {
+            const img = new Image();
+            img.onload = () => resolve(true);
+            img.onerror = () => resolve(false);
+            img.src = serverItem.full_url;
+          });
+
+          return { serverId, ready };
+        })
+      );
+
+      if (!active) return;
+
+      const readyIds = results.filter((r) => r.ready).map((r) => r.serverId);
+
+      if (readyIds.length > 0) {
+        setLocalPreviewMap((prev) => {
+          const next = new Map(prev);
+          readyIds.forEach((id) => {
+            const blobUrl = next.get(id);
+            if (blobUrl) URL.revokeObjectURL(blobUrl);
+            next.delete(id);
+          });
+          return next;
+        });
       }
 
-      // Single selection
-      return isSelected ? [] : [mediaItem];
-    });
-  }, [multiple]);
+      // If some still pending, keep polling
+      const stillPending = results.filter((r) => !r.ready);
+      if (stillPending.length > 0 && active) {
+        timer = setTimeout(() => {
+          if (active) mutate();
+        }, 3000);
+      }
+    };
 
-  const handleDrop = useCallback(async (acceptedFiles) => {
-    try {
-      setUploading(true);
+    checkImages();
 
-      // Create local previews immediately for instant feedback
-      const previews = acceptedFiles.map((file, index) => ({
-        id: `local-${Date.now()}-${index}`,
-        full_url: URL.createObjectURL(file),
-        alt_text: file.name,
-        width: 0,
-        height: 0,
-        file_size: file.size,
-        isLocal: true, // Flag to identify local previews
-      }));
-      setLocalPreviews((prev) => [...previews, ...prev]);
+    return () => {
+      active = false;
+      clearTimeout(timer);
+    };
+  }, [localPreviewMap, media, mutate]);
 
-      await uploadMedia(acceptedFiles);
+  // ── Handlers ──────────────────────────────────────────────────────────
 
-      // Refresh media list immediately
-      mutate();
+  const handleToggleMedia = useCallback(
+    (mediaItem) => {
+      setSelectedMedia((prev) => {
+        const isSelected = prev.some((item) => item.id === mediaItem.id);
 
-      // Auto-refresh after delay to ensure media is fully created on backend
-      // Then remove local previews as server data should be available
-      setTimeout(() => {
+        if (multiple) {
+          return isSelected
+            ? prev.filter((item) => item.id !== mediaItem.id)
+            : [...prev, mediaItem];
+        }
+
+        return isSelected ? [] : [mediaItem];
+      });
+    },
+    [multiple]
+  );
+
+  const handleUploadFiles = useCallback(
+    async (files) => {
+      try {
+        setUploading(true);
+
+        // Create blob URLs for instant preview
+        const blobUrls = files.map((file) => URL.createObjectURL(file));
+
+        const response = await uploadMedia(files);
+
+        // Extract server IDs from response
+        const uploadedItems = response?.data?.data || [];
+
+        // Map each server ID to its local blob URL
+        const newEntries = new Map();
+        uploadedItems.forEach((item, index) => {
+          if (blobUrls[index]) {
+            newEntries.set(item.id, blobUrls[index]);
+          }
+        });
+
+        setLocalPreviewMap((prev) => new Map([...prev, ...newEntries]));
+
+        // Refresh server list so new items appear in the grid
         mutate();
-      }, 1500);
 
-      setTimeout(() => {
-        mutate();
-        // Remove local previews after server data is likely available
-        setLocalPreviews([]);
-      }, 3000);
+        enqueueSnackbar(t('media_uploaded_successfully'), { variant: 'success' });
+      } catch (error) {
+        console.error('Failed to upload media:', error);
+        enqueueSnackbar(error.message || t('failed_to_upload_media'), { variant: 'error' });
+      } finally {
+        setUploading(false);
+      }
+    },
+    [mutate, enqueueSnackbar, t]
+  );
 
-      enqueueSnackbar(t('media_uploaded_successfully'), { variant: 'success' });
-    } catch (error) {
-      console.error('Failed to upload media:', error);
-      enqueueSnackbar(error.message || t('failed_to_upload_media'), { variant: 'error' });
-      // Remove local previews on error
-      setLocalPreviews([]);
-    } finally {
-      setUploading(false);
-    }
-  }, [mutate, enqueueSnackbar, t]);
+  const handleFileInputChange = useCallback(
+    (event) => {
+      const files = Array.from(event.target.files);
+      if (files.length > 0) handleUploadFiles(files);
+      event.target.value = '';
+    },
+    [handleUploadFiles]
+  );
+
+  const handleAddClick = useCallback(() => {
+    fileInputRef.current?.click();
+  }, []);
 
   const handleSelect = useCallback(() => {
-    // Filter out local previews from selection (they can't be used as actual media)
-    const validSelection = selectedMedia.filter((item) => !item.isLocal);
-    onSelect(multiple ? validSelection : validSelection[0]);
-
-    // Reset state
+    onSelect(multiple ? selectedMedia : selectedMedia[0]);
     setSelectedMedia([]);
-    setLocalPreviews([]);
-
+    // Revoke remaining blob URLs
+    localPreviewMap.forEach((blobUrl) => URL.revokeObjectURL(blobUrl));
+    setLocalPreviewMap(new Map());
     onClose();
-  }, [selectedMedia, multiple, onSelect, onClose]);
+  }, [selectedMedia, multiple, onSelect, onClose, localPreviewMap]);
 
   const handleCancel = useCallback(() => {
     setSelectedMedia([]);
-    setLocalPreviews([]);
+    localPreviewMap.forEach((blobUrl) => URL.revokeObjectURL(blobUrl));
+    setLocalPreviewMap(new Map());
     onClose();
-  }, [onClose]);
+  }, [onClose, localPreviewMap]);
 
-  const handleRefresh = useCallback(() => {
-    mutate();
-  }, [mutate]);
+  // ── Render ────────────────────────────────────────────────────────────
 
   return (
     <Dialog
       open={open}
       onClose={handleCancel}
-      maxWidth="md"
+      maxWidth="sm"
       fullWidth
       PaperProps={{
-        sx: { height: '80vh' },
+        sx: {
+          borderRadius: 3,
+          overflow: 'hidden',
+          maxHeight: '75vh',
+        },
       }}
     >
-      <DialogTitle>
-        {title || t('select_media')}
-      </DialogTitle>
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        onChange={handleFileInputChange}
+        style={{ display: 'none' }}
+      />
 
-      <DialogContent sx={{ p: 3 }}>
-        <Stack spacing={3}>
-          {/* Upload Section */}
-          <Box>
-            <Upload
-              multiple
-              onDrop={handleDrop}
-              disabled={uploading}
-              accept={{ 'image/*': [] }}
-              placeholder={
-                <Stack spacing={2.5} alignItems="center" sx={{ py: 2 }}>
-                  {/* Upload Icon */}
-                  <Box
-                    sx={{
-                      width: 80,
-                      height: 80,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      borderRadius: '50%',
-                      bgcolor: (theme) => alpha(theme.palette.primary.main, 0.08),
-                    }}
-                  >
-                    <Iconify
-                      icon="eva:cloud-upload-fill"
-                      width={40}
-                      sx={{ color: 'primary.main' }}
-                    />
-                  </Box>
-
-                  {/* Upload Text */}
-                  <Stack spacing={0.5} alignItems="center">
-                    <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                      {t('drop_or_select_file')}
-                    </Typography>
-                    <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                      {t('supported_formats')}: JPG, PNG, GIF (max 3MB)
-                    </Typography>
-                  </Stack>
-                </Stack>
-              }
-            />
-
-            {uploading && (
-              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 3 }}>
-                <CircularProgress />
-                <Typography sx={{ ml: 2 }}>{t('uploading')}</Typography>
-              </Box>
-            )}
+      {/* ── Header ── */}
+      <Stack
+        direction="row"
+        alignItems="center"
+        justifyContent="space-between"
+        sx={{
+          px: 2.5,
+          py: 1.5,
+          borderBottom: (theme) => `1px solid ${alpha(theme.palette.grey[500], 0.12)}`,
+        }}
+      >
+        <Stack direction="row" alignItems="center" spacing={1.25}>
+          <Box
+            sx={{
+              width: 34,
+              height: 34,
+              borderRadius: 1.5,
+              bgcolor: (theme) => alpha(theme.palette.primary.main, 0.08),
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}
+          >
+            <Iconify icon="solar:gallery-bold-duotone" width={18} sx={{ color: 'primary.main' }} />
           </Box>
 
-          <Divider />
-
-          {/* Media Library Section */}
-          <Box>
-            <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
-              <Typography variant="h6">
-                {t('media_library')}
+          <Stack spacing={0}>
+            <Typography variant="subtitle2" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
+              {title || t('media_library')}
+            </Typography>
+            {serverMediaCount > 0 && (
+              <Typography variant="caption" sx={{ color: 'text.disabled', fontSize: '0.68rem' }}>
+                {serverMediaCount} {t('photos')}
               </Typography>
-              <Button
-                size="small"
-                startIcon={<Iconify icon="solar:refresh-bold" />}
-                onClick={handleRefresh}
-                disabled={mediaLoading || mediaValidating}
-              >
-                {mediaValidating ? t('refreshing') : t('refresh')}
-              </Button>
-            </Stack>
-
-            {mediaLoading && localPreviews.length === 0 ? (
-              <Box sx={{ display: 'flex', justifyContent: 'center', py: 5 }}>
-                <CircularProgress />
-              </Box>
-            ) : allMedia.length > 0 ? (
-              <Grid container spacing={2}>
-                {allMedia.map((item) => (
-                  <Grid item xs={6} sm={4} md={3} key={item.id}>
-                    <MediaCard
-                      item={item}
-                      selected={selectedMedia.some((m) => m.id === item.id)}
-                      onToggle={() => handleToggleMedia(item)}
-                      isLocal={item.isLocal}
-                    />
-                  </Grid>
-                ))}
-              </Grid>
-            ) : (
-              <Box sx={{ textAlign: 'center', py: 5 }}>
-                <Iconify icon="solar:gallery-bold" width={64} sx={{ color: 'text.disabled', mb: 2 }} />
-                <Typography variant="h6" color="text.secondary">
-                  {t('no_media_found')}
-                </Typography>
-                <Typography variant="body2" color="text.disabled" sx={{ mt: 1 }}>
-                  {t('upload_media_to_get_started')}
-                </Typography>
-              </Box>
             )}
-          </Box>
+          </Stack>
         </Stack>
+
+        <Stack direction="row" alignItems="center" spacing={0.75}>
+          <Button
+            size="small"
+            variant="soft"
+            color="primary"
+            startIcon={<Iconify icon="solar:add-circle-bold" width={18} />}
+            onClick={handleAddClick}
+            disabled={uploading}
+            sx={{
+              height: 32,
+              fontSize: '0.78rem',
+              fontWeight: 600,
+              px: 1.5,
+              borderRadius: 1.5,
+              textTransform: 'none',
+            }}
+          >
+            {uploading ? t('uploading') : t('add')}
+          </Button>
+
+          <IconButton
+            size="small"
+            onClick={() => mutate()}
+            disabled={mediaLoading || mediaValidating}
+            sx={{
+              width: 32,
+              height: 32,
+              color: 'text.disabled',
+              '&:hover': { color: 'text.primary' },
+            }}
+          >
+            <Iconify
+              icon="solar:refresh-bold"
+              width={16}
+              sx={mediaValidating ? { animation: `${spin} 0.8s linear infinite` } : {}}
+            />
+          </IconButton>
+
+          <IconButton
+            size="small"
+            onClick={handleCancel}
+            sx={{
+              width: 32,
+              height: 32,
+              color: 'text.disabled',
+              '&:hover': { color: 'text.primary' },
+            }}
+          >
+            <Iconify icon="mingcute:close-line" width={16} />
+          </IconButton>
+        </Stack>
+      </Stack>
+
+      {/* ── Upload progress ── */}
+      {uploading && (
+        <LinearProgress
+          sx={{
+            height: 2,
+            bgcolor: (theme) => alpha(theme.palette.primary.main, 0.06),
+            '& .MuiLinearProgress-bar': { borderRadius: 2 },
+          }}
+        />
+      )}
+
+      {/* ── Content ── */}
+      <DialogContent
+        sx={{
+          p: 2,
+          overflow: 'auto',
+          display: 'flex',
+          flexDirection: 'column',
+          ...(isEmpty && !mediaLoading && { justifyContent: 'center', alignItems: 'center' }),
+        }}
+      >
+        {mediaLoading && displayMedia.length === 0 ? (
+          <Stack alignItems="center" justifyContent="center" sx={{ py: 8 }}>
+            <CircularProgress size={28} thickness={4} />
+          </Stack>
+        ) : isEmpty ? (
+          /* ── Empty state ── */
+          <Stack
+            alignItems="center"
+            spacing={2.5}
+            onClick={handleAddClick}
+            sx={{
+              py: 4,
+              px: 3,
+              cursor: 'pointer',
+              borderRadius: 3,
+              border: (theme) => `2px dashed ${alpha(theme.palette.grey[500], 0.2)}`,
+              bgcolor: (theme) => alpha(theme.palette.grey[500], 0.02),
+              transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+              width: '100%',
+              maxWidth: 320,
+              '&:hover': {
+                borderColor: (theme) => alpha(theme.palette.primary.main, 0.3),
+                bgcolor: (theme) => alpha(theme.palette.primary.main, 0.02),
+                '& .empty-icon-wrap': {
+                  bgcolor: (theme) => alpha(theme.palette.primary.main, 0.1),
+                },
+              },
+            }}
+          >
+            <Box
+              className="empty-icon-wrap"
+              sx={{
+                width: 64,
+                height: 64,
+                borderRadius: 2,
+                bgcolor: (theme) => alpha(theme.palette.grey[500], 0.06),
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'background-color 0.25s',
+                animation: `${breathe} 3s ease-in-out infinite`,
+              }}
+            >
+              <Iconify icon="solar:cloud-upload-bold-duotone" width={32} sx={{ color: 'text.disabled' }} />
+            </Box>
+
+            <Stack spacing={0.5} alignItems="center">
+              <Typography variant="subtitle2" sx={{ color: 'text.secondary', fontWeight: 600 }}>
+                {t('no_media_found')}
+              </Typography>
+              <Typography
+                variant="caption"
+                sx={{ color: 'text.disabled', textAlign: 'center', lineHeight: 1.5 }}
+              >
+                {t('upload_media_to_get_started')}
+              </Typography>
+            </Stack>
+          </Stack>
+        ) : (
+          /* ── Photo grid ── */
+          <Grid container spacing={1}>
+            {displayMedia.map((item) => (
+              <Grid item xs={4} sm={3} key={item.id}>
+                <MediaCard
+                  item={item}
+                  selected={selectedMedia.some((m) => m.id === item.id)}
+                  onToggle={() => handleToggleMedia(item)}
+                />
+              </Grid>
+            ))}
+          </Grid>
+        )}
       </DialogContent>
 
-      <DialogActions sx={{ px: 3, py: 2 }}>
-        <Button onClick={handleCancel} color="inherit">
+      {/* ── Footer ── */}
+      <DialogActions
+        sx={{
+          px: 2.5,
+          py: 1.5,
+          borderTop: (theme) => `1px solid ${alpha(theme.palette.grey[500], 0.08)}`,
+        }}
+      >
+        <Button onClick={handleCancel} color="inherit" sx={{ fontWeight: 500 }}>
           {t('cancel')}
         </Button>
         <Button
           onClick={handleSelect}
           variant="contained"
           disabled={selectedMedia.length === 0}
+          sx={{
+            minWidth: 100,
+            fontWeight: 600,
+            boxShadow: 'none',
+            '&:hover': { boxShadow: 'none' },
+          }}
         >
-          {t('select')} {selectedMedia.length > 0 && `(${selectedMedia.length})`}
+          {confirmLabel || (selectedMedia.length > 0 ? `${t('select')} (${selectedMedia.length})` : t('select'))}
         </Button>
       </DialogActions>
     </Dialog>
@@ -257,110 +470,93 @@ MediaPickerDialog.propTypes = {
   onSelect: PropTypes.func.isRequired,
   multiple: PropTypes.bool,
   title: PropTypes.string,
+  confirmLabel: PropTypes.string,
 };
 
-// ----------------------------------------------------------------------
+// ── MediaCard ───────────────────────────────────────────────────────────
 
-function MediaCard({ item, selected, onToggle, isLocal }) {
+function MediaCard({ item, selected, onToggle }) {
   return (
-    <Card
-      onClick={isLocal ? undefined : onToggle}
+    <Box
+      onClick={onToggle}
       sx={{
         position: 'relative',
-        cursor: isLocal ? 'default' : 'pointer',
-        transition: 'all 0.2s',
-        border: (theme) => `2px solid ${selected ? theme.palette.primary.main : 'transparent'}`,
-        opacity: isLocal ? 0.7 : 1,
+        width: '100%',
+        paddingTop: '100%',
+        borderRadius: 1.5,
+        overflow: 'hidden',
+        cursor: 'pointer',
+        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+        outline: (theme) =>
+          selected
+            ? `3px solid ${theme.palette.primary.main}`
+            : '3px solid transparent',
+        outlineOffset: -3,
+        boxShadow: (theme) =>
+          selected
+            ? `0 0 0 1px ${alpha(theme.palette.primary.main, 0.3)}, 0 4px 14px ${alpha(theme.palette.primary.main, 0.25)}`
+            : 'none',
+        transform: selected ? 'scale(0.95)' : 'scale(1)',
         '&:hover': {
-          boxShadow: isLocal ? 'none' : (theme) => theme.customShadows.z8,
+          transform: selected ? 'scale(0.95)' : 'scale(1.03)',
+          boxShadow: (theme) =>
+            selected
+              ? `0 0 0 1px ${alpha(theme.palette.primary.main, 0.3)}, 0 4px 14px ${alpha(theme.palette.primary.main, 0.25)}`
+              : `0 4px 16px ${alpha(theme.palette.common.black, 0.1)}`,
         },
       }}
     >
       <Box
+        component="img"
+        src={item.full_url}
+        alt={item.alt_text || ''}
+        loading="lazy"
         sx={{
-          position: 'relative',
+          position: 'absolute',
+          top: 0,
+          left: 0,
           width: '100%',
-          paddingTop: '100%',
-          overflow: 'hidden',
+          height: '100%',
+          objectFit: 'cover',
         }}
-      >
+      />
+
+      {/* Selection scrim — gradient from bottom for depth */}
+      {selected && (
         <Box
-          component="img"
-          src={item.full_url}
-          alt={item.alt_text || 'Media'}
-          loading="lazy"
           sx={{
             position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover',
+            inset: 0,
+            background: (theme) =>
+              `linear-gradient(to top, ${alpha(theme.palette.primary.darker || theme.palette.primary.dark, 0.35)} 0%, ${alpha(theme.palette.primary.main, 0.12)} 60%, ${alpha(theme.palette.primary.main, 0.06)} 100%)`,
+            pointerEvents: 'none',
           }}
         />
+      )}
 
-        {/* Loading overlay for local previews */}
-        {isLocal && (
-          <Box
-            sx={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              bgcolor: (theme) => alpha(theme.palette.common.black, 0.4),
-            }}
-          >
-            <CircularProgress size={24} sx={{ color: 'white' }} />
-          </Box>
-        )}
-
-        {selected && !isLocal && (
-          <Box
-            sx={{
-              position: 'absolute',
-              top: 8,
-              right: 8,
-              width: 24,
-              height: 24,
-              borderRadius: '50%',
-              bgcolor: 'primary.main',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <Iconify icon="eva:checkmark-fill" width={16} sx={{ color: 'white' }} />
-          </Box>
-        )}
-
+      {/* Check badge */}
+      {selected && (
         <Box
           sx={{
             position: 'absolute',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            bgcolor: (theme) => alpha(theme.palette.common.black, 0.6),
-            p: 0.5,
+            top: 6,
+            right: 6,
+            width: 26,
+            height: 26,
+            borderRadius: '50%',
+            bgcolor: 'primary.main',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            animation: `${checkPop} 0.3s cubic-bezier(0.4, 0, 0.2, 1)`,
+            boxShadow: (theme) =>
+              `0 2px 8px ${alpha(theme.palette.primary.main, 0.5)}, 0 0 0 2px ${alpha(theme.palette.common.white, 0.9)}`,
           }}
         >
-          <Typography
-            variant="caption"
-            sx={{
-              color: 'white',
-              fontSize: '0.65rem',
-              display: 'block',
-              textAlign: 'center',
-            }}
-          >
-            {isLocal ? item.alt_text : `${item.width} × ${item.height} • ${fData(item.file_size)}`}
-          </Typography>
+          <Iconify icon="eva:checkmark-fill" width={16} sx={{ color: 'white' }} />
         </Box>
-      </Box>
-    </Card>
+      )}
+    </Box>
   );
 }
 
@@ -368,5 +564,4 @@ MediaCard.propTypes = {
   item: PropTypes.object.isRequired,
   selected: PropTypes.bool.isRequired,
   onToggle: PropTypes.func.isRequired,
-  isLocal: PropTypes.bool,
 };

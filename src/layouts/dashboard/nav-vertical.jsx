@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import PropTypes from 'prop-types';
 
 import Box from '@mui/material/Box';
@@ -9,6 +9,7 @@ import Drawer from '@mui/material/Drawer';
 import Typography from '@mui/material/Typography';
 
 import { usePathname } from 'src/routes/hooks';
+import { paths } from 'src/routes/paths';
 
 import { useResponsive } from 'src/hooks/use-responsive';
 
@@ -19,6 +20,7 @@ import { NavSectionVertical } from 'src/components/nav-section';
 
 import { useAuthContext } from 'src/auth/hooks';
 import { useGetCurrentSubscription } from 'src/api/subscriptions';
+import { useGetProducts } from 'src/api/product';
 import { useTranslate } from 'src/locales';
 
 import { NAV } from '../config-layout';
@@ -38,6 +40,22 @@ export default function NavVertical({ openNav, onCloseNav }) {
   const lgUp = useResponsive('up', 'lg');
 
   const navData = useNavData();
+  const { products } = useGetProducts();
+  const isNewUser = (products?.length || 0) === 0;
+
+  // Dim irrelevant nav items for Grade A (new users with 0 products)
+  const DIMMED_PATHS = [paths.dashboard.order.root, paths.dashboard.inventory.root];
+
+  const adjustedNavData = useMemo(() => {
+    if (!isNewUser) return navData;
+    return navData.map((group) => ({
+      ...group,
+      items: group.items.map((item) => ({
+        ...item,
+        dimmed: DIMMED_PATHS.includes(item.path),
+      })),
+    }));
+  }, [navData, isNewUser]);
 
   useEffect(() => {
     if (openNav) {
@@ -106,7 +124,7 @@ export default function NavVertical({ openNav, onCloseNav }) {
         </Stack>
       </Box>
 
-      <Box sx={{ px: 2.5, pt: 2, pb: 3, visibility: 'hidden' }}>
+      <Box sx={{ px: 2.5, pt: 2, pb: 3, visibility: isNewUser ? 'hidden' : 'visible' }}>
         <Typography variant="h5" sx={{ whiteSpace: 'pre-line' }}>
           {`${t('welcome_back')}\n${user?.name}`}
         </Typography>
@@ -115,7 +133,7 @@ export default function NavVertical({ openNav, onCloseNav }) {
       <Divider sx={{ borderStyle: 'dashed', mx: 2.5, mb: 2 }} />
 
       <NavSectionVertical
-        data={navData}
+        data={adjustedNavData}
         slotProps={{
           currentRole: user?.role,
         }}

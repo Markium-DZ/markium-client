@@ -9,6 +9,8 @@ import { HOST_API } from 'src/config-global';
 export function useGetProducts() {
   const URL = endpoints.product.root;
   const { data, isLoading, error, isValidating, mutate } = useSWR(URL, fetcher, {
+    revalidateOnFocus: false,
+    revalidateOnReconnect: false,
     onErrorRetry: (err, key, config, revalidate, { retryCount }) => {
       const delays = [5000, 10000, 20000, 30000];
       if (retryCount >= delays.length) return;

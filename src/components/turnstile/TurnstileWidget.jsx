@@ -53,8 +53,8 @@ export default function TurnstileWidget({ siteKey, onVerify, onExpire, onError, 
         'error-callback': () => onErrorRef.current?.(),
         theme: 'light',
         size: 'flexible',
-        retry: 'never',
-        'refresh-expired': 'never',
+        retry: 'auto',
+        'refresh-expired': 'auto',
       });
     });
 

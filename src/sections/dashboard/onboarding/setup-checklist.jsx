@@ -45,13 +45,11 @@ export default function SetupChecklist({
   const handleCloseMediaPicker = useCallback(() => {
     setMediaPickerOpen(false);
     onRefresh?.();
-    setTimeout(() => onRefresh?.(), 2000);
   }, [onRefresh]);
 
   const handleMediaSelect = useCallback((selectedMedia) => {
     setMediaPickerOpen(false);
     onRefresh?.();
-    setTimeout(() => onRefresh?.(), 2000);
   }, [onRefresh]);
 
   const handleOpenProductDialog = useCallback(() => {
@@ -62,7 +60,6 @@ export default function SetupChecklist({
     setProductDialogOpen(false);
     setIsFormDirty(false);
     onRefresh?.();
-    setTimeout(() => onRefresh?.(), 2000);
   }, [onRefresh]);
 
   const handleRequestCloseProductDialog = useCallback(() => {
@@ -311,6 +308,7 @@ export default function SetupChecklist({
         onSelect={handleMediaSelect}
         multiple
         title={t('onboarding_upload_images')}
+        confirmLabel={t('done')}
       />
 
       {/* Product creation drawer */}

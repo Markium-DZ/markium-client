@@ -4,3 +4,5 @@ export { default as WelcomeNewUser } from './welcome-new-user';
 export { default as EmptyStateProducts } from './empty-state-products';
 export { default as EmptyStateOrders } from './empty-state-orders';
 export { default as WaitingForOrders } from './waiting-for-orders';
+export { default as GradeBMetrics } from './grade-b-metrics';
+export { default as YouTubeEmbed } from './youtube-embed';

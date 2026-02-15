@@ -58,6 +58,7 @@ export default function NavList({ data, depth, slotProps }) {
         sx={{
           mb: `${slotProps?.gap}px`,
           ...(depth === 1 ? slotProps?.rootItem : slotProps?.subItem),
+          ...(data.dimmed && { opacity: 0.38, pointerEvents: 'none' }),
         }}
       />
 
