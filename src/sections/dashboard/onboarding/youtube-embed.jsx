@@ -9,7 +9,7 @@ import Iconify from 'src/components/iconify';
 
 // ----------------------------------------------------------------------
 
-const DEFAULT_VIDEO_ID = 'dQw4w9WgXcQ'; // Replace with actual Markium tutorial video ID
+const DEFAULT_VIDEO_ID = 'tpOTvEBquHM';
 
 // ----------------------------------------------------------------------
 
