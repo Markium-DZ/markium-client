@@ -325,6 +325,8 @@
     "are_you_sure_delete_media": "Are you sure you want to delete this media? This action cannot be undone.",
     "media_deleted_successfully": "Media deleted successfully",
     "failed_to_delete_media": "Failed to delete media",
+    "deleting": "Deleting...",
+    "photos_count": "{{count}} photos",
     "upload_photos": "Upload photos",
     "click_or_drag_to_upload": "Click or drag to upload",
     "selected": "selected",

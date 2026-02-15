@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { mutate as swrMutate } from 'swr';
 
 import { HOST_API } from 'src/config-global';
 
@@ -22,6 +23,8 @@ axiosInstance.interceptors.response.use(
       // Clear session data
       localStorage.removeItem('accessToken');
       localStorage.removeItem('zaity-user-info');
+      // Clear SWR cache so next user doesn't see stale data
+      swrMutate(() => true, undefined, { revalidate: false });
 
       // Redirect to login
       window.location.href = '/auth/jwt/login';

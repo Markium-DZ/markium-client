@@ -1,6 +1,8 @@
 import PropTypes from 'prop-types';
 import { useMemo, useEffect, useReducer, useCallback } from 'react';
 
+import { mutate as swrMutate } from 'swr';
+
 import axios, { endpoints } from 'src/utils/axios';
 
 import { AuthContext } from './auth-context';
@@ -121,6 +123,8 @@ export function AuthProvider({ children }) {
       localStorage.setItem(USER_STORAGE_KEY, JSON.stringify({ ...client }));
       identifyUser(client);
       captureEvent('client_logged_in', { method: 'phone' });
+      // Clear stale SWR cache from previous user session
+      swrMutate(() => true, undefined, { revalidate: false });
       dispatch({
         type: 'LOGIN',
         payload: {
@@ -152,6 +156,8 @@ export function AuthProvider({ children }) {
     localStorage.setItem(USER_STORAGE_KEY, JSON.stringify({ ...client }));
     identifyUser(client);
     captureEvent('client_signed_up', { method: 'phone' });
+    // Clear stale SWR cache from any previous session
+    swrMutate(() => true, undefined, { revalidate: false });
 
     dispatch({
       type: 'REGISTER',
@@ -169,6 +175,8 @@ export function AuthProvider({ children }) {
     setSession(null);
     localStorage.removeItem(USER_STORAGE_KEY);
     resetPostHog();
+    // Clear all SWR cache so next user doesn't see stale data
+    swrMutate(() => true, undefined, { revalidate: false });
     dispatch({
       type: 'LOGOUT',
     });

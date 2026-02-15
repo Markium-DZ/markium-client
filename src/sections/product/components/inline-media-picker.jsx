@@ -256,7 +256,7 @@ export default function InlineMediaPicker({ selectedIds, onToggle, onAdd }) {
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/*"
+        accept="image/*,.heic,.heif"
         multiple
         onChange={handleFileChange}
         style={{ display: 'none' }}

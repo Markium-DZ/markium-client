@@ -319,7 +319,7 @@ export default function StoreSetupBasics({ onNext }) {
               onDrop={handleDrop}
               uploadText={t('upload_photo')}
               updateText={t('update_photo')}
-              accept={{ 'image/*': ['.jpeg', '.jpg', '.png', '.gif', '.webp'] }}
+              accept={{ 'image/*': ['.jpeg', '.jpg', '.png', '.gif', '.webp', '.heic', '.heif', '.avif', '.bmp', '.tiff', '.tif', '.svg'] }}
             />
             <Typography variant="caption" sx={{ color: 'text.secondary', textAlign: 'center' }}>
               {t('store_logo_hint')}

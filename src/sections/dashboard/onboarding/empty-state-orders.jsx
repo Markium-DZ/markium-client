@@ -19,9 +19,9 @@ import Iconify from 'src/components/iconify';
 // ── Tip config ────────────────────────────────────────────────────
 
 const TIPS = [
-  { icon: 'solar:share-circle-bold', color: '#2563EB' },
-  { icon: 'solar:users-group-rounded-bold', color: '#7C3AED' },
-  { icon: 'solar:tag-price-bold', color: '#059669' },
+  { icon: 'solar:share-circle-bold', color: '#2563EB', darkColor: '#60A5FA' },
+  { icon: 'solar:users-group-rounded-bold', color: '#7C3AED', darkColor: '#A78BFA' },
+  { icon: 'solar:tag-price-bold', color: '#059669', darkColor: '#34D399' },
 ];
 
 // ----------------------------------------------------------------------
@@ -52,16 +52,17 @@ export default function EmptyStateOrders({ hasProducts = false, compact = false,
     router.push(paths.dashboard.settings.contact_support || paths.dashboard.settings.root);
   }, [router]);
 
+  const isDark = theme.palette.mode === 'dark';
+
   const tips = TIPS.map((cfg, i) => ({
     ...cfg,
+    color: isDark ? cfg.darkColor : cfg.color,
     step: `0${i + 1}`,
     title: t(`empty_orders_tip${i + 1}_title`),
     text: t(`empty_orders_tip${i + 1}`),
   }));
 
   // ── Tip card ────────────────────────────────────────────────────
-
-  const isDark = theme.palette.mode === 'dark';
 
   const renderTipCard = (tip, index) => (
     <Box

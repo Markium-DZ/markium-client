@@ -307,6 +307,7 @@ export default function SetupChecklist({
         onClose={handleCloseMediaPicker}
         onSelect={handleMediaSelect}
         multiple
+        selectable={false}
         title={t('onboarding_upload_images')}
         confirmLabel={t('done')}
       />

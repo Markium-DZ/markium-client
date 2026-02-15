@@ -183,7 +183,7 @@ export default function MediaListView() {
           ref={fileInputRef}
           type="file"
           multiple
-          accept="image/*"
+          accept="image/*,.heic,.heif"
           style={{ display: 'none' }}
           onChange={handleFileSelect}
         />

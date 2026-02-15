@@ -15,9 +15,10 @@ import IconButton from '@mui/material/IconButton';
 import { alpha, keyframes } from '@mui/material/styles';
 
 import { useTranslate } from 'src/locales';
-import { useGetMedia, uploadMedia } from 'src/api/media';
+import { useGetMedia, uploadMedia, deleteMedia } from 'src/api/media';
 import { useSnackbar } from 'src/components/snackbar';
 import Iconify from 'src/components/iconify';
+import { ConfirmDialog } from 'src/components/custom-dialog';
 
 // ── Animations ──────────────────────────────────────────────────────────
 
@@ -39,13 +40,15 @@ const breathe = keyframes`
 
 // ── Component ───────────────────────────────────────────────────────────
 
-export default function MediaPickerDialog({ open, onClose, onSelect, multiple = false, title, confirmLabel }) {
+export default function MediaPickerDialog({ open, onClose, onSelect, multiple = false, selectable = true, title, confirmLabel }) {
   const { t } = useTranslate();
   const { enqueueSnackbar } = useSnackbar();
   const fileInputRef = useRef(null);
 
   const [selectedMedia, setSelectedMedia] = useState([]);
   const [uploading, setUploading] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
   // Local previews keyed by real server ID (assigned after upload response)
   // Shape: Map<serverId, blobUrl>
@@ -222,6 +225,22 @@ export default function MediaPickerDialog({ open, onClose, onSelect, multiple = 
     onClose();
   }, [onClose, localPreviewMap]);
 
+  const handleDeleteMedia = useCallback(async () => {
+    if (!deleteTarget) return;
+    try {
+      setDeleting(true);
+      await deleteMedia(deleteTarget.id);
+      setSelectedMedia((prev) => prev.filter((m) => m.id !== deleteTarget.id));
+      mutate();
+      enqueueSnackbar(t('media_deleted_successfully'), { variant: 'success' });
+    } catch (error) {
+      enqueueSnackbar(error.message || t('failed_to_delete_media'), { variant: 'error' });
+    } finally {
+      setDeleting(false);
+      setDeleteTarget(null);
+    }
+  }, [deleteTarget, mutate, enqueueSnackbar, t]);
+
   // ── Render ────────────────────────────────────────────────────────────
 
   return (
@@ -242,7 +261,7 @@ export default function MediaPickerDialog({ open, onClose, onSelect, multiple = 
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/*"
+        accept="image/*,.heic,.heif"
         multiple
         onChange={handleFileInputChange}
         style={{ display: 'none' }}
@@ -281,7 +300,7 @@ export default function MediaPickerDialog({ open, onClose, onSelect, multiple = 
             </Typography>
             {serverMediaCount > 0 && (
               <Typography variant="caption" sx={{ color: 'text.disabled', fontSize: '0.68rem' }}>
-                {serverMediaCount} {t('photos')}
+                {t('photos_count', { count: serverMediaCount })}
               </Typography>
             )}
           </Stack>
@@ -426,8 +445,10 @@ export default function MediaPickerDialog({ open, onClose, onSelect, multiple = 
               <Grid item xs={4} sm={3} key={item.id}>
                 <MediaCard
                   item={item}
-                  selected={selectedMedia.some((m) => m.id === item.id)}
-                  onToggle={() => handleToggleMedia(item)}
+                  selected={selectable && selectedMedia.some((m) => m.id === item.id)}
+                  selectable={selectable}
+                  onToggle={() => selectable && handleToggleMedia(item)}
+                  onDelete={() => setDeleteTarget(item)}
                 />
               </Grid>
             ))}
@@ -447,9 +468,9 @@ export default function MediaPickerDialog({ open, onClose, onSelect, multiple = 
           {t('cancel')}
         </Button>
         <Button
-          onClick={handleSelect}
+          onClick={selectable ? handleSelect : handleCancel}
           variant="contained"
-          disabled={selectedMedia.length === 0}
+          disabled={selectable && selectedMedia.length === 0}
           sx={{
             minWidth: 100,
             fontWeight: 600,
@@ -457,9 +478,27 @@ export default function MediaPickerDialog({ open, onClose, onSelect, multiple = 
             '&:hover': { boxShadow: 'none' },
           }}
         >
-          {confirmLabel || (selectedMedia.length > 0 ? `${t('select')} (${selectedMedia.length})` : t('select'))}
+          {confirmLabel || (selectable && selectedMedia.length > 0 ? `${t('select')} (${selectedMedia.length})` : t('select'))}
         </Button>
       </DialogActions>
+
+      {/* ── Delete confirmation ── */}
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        title={t('delete_media')}
+        content={t('are_you_sure_delete_media')}
+        action={
+          <Button
+            variant="contained"
+            color="error"
+            onClick={handleDeleteMedia}
+            disabled={deleting}
+          >
+            {deleting ? t('deleting') : t('delete')}
+          </Button>
+        }
+      />
     </Dialog>
   );
 }
@@ -467,25 +506,26 @@ export default function MediaPickerDialog({ open, onClose, onSelect, multiple = 
 MediaPickerDialog.propTypes = {
   open: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
-  onSelect: PropTypes.func.isRequired,
+  onSelect: PropTypes.func,
   multiple: PropTypes.bool,
+  selectable: PropTypes.bool,
   title: PropTypes.string,
   confirmLabel: PropTypes.string,
 };
 
 // ── MediaCard ───────────────────────────────────────────────────────────
 
-function MediaCard({ item, selected, onToggle }) {
+function MediaCard({ item, selected, selectable = true, onToggle, onDelete }) {
   return (
     <Box
-      onClick={onToggle}
+      onClick={selectable ? onToggle : undefined}
       sx={{
         position: 'relative',
         width: '100%',
         paddingTop: '100%',
         borderRadius: 1.5,
         overflow: 'hidden',
-        cursor: 'pointer',
+        cursor: selectable ? 'pointer' : 'default',
         transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
         outline: (theme) =>
           selected
@@ -498,11 +538,14 @@ function MediaCard({ item, selected, onToggle }) {
             : 'none',
         transform: selected ? 'scale(0.95)' : 'scale(1)',
         '&:hover': {
-          transform: selected ? 'scale(0.95)' : 'scale(1.03)',
+          transform: selected ? 'scale(0.95)' : selectable ? 'scale(1.03)' : 'scale(1)',
           boxShadow: (theme) =>
             selected
               ? `0 0 0 1px ${alpha(theme.palette.primary.main, 0.3)}, 0 4px 14px ${alpha(theme.palette.primary.main, 0.25)}`
-              : `0 4px 16px ${alpha(theme.palette.common.black, 0.1)}`,
+              : selectable
+                ? `0 4px 16px ${alpha(theme.palette.common.black, 0.1)}`
+                : 'none',
+          '& .media-delete-btn': { opacity: 1 },
         },
       }}
     >
@@ -556,6 +599,34 @@ function MediaCard({ item, selected, onToggle }) {
           <Iconify icon="eva:checkmark-fill" width={16} sx={{ color: 'white' }} />
         </Box>
       )}
+
+      {/* Delete button — shown on hover when not selectable */}
+      {!selectable && onDelete && (
+        <IconButton
+          className="media-delete-btn"
+          size="small"
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete();
+          }}
+          sx={{
+            position: 'absolute',
+            top: 4,
+            right: 4,
+            width: 28,
+            height: 28,
+            opacity: 0,
+            transition: 'opacity 0.2s',
+            bgcolor: (theme) => alpha(theme.palette.error.main, 0.85),
+            color: 'common.white',
+            '&:hover': {
+              bgcolor: 'error.dark',
+            },
+          }}
+        >
+          <Iconify icon="solar:trash-bin-trash-bold" width={15} />
+        </IconButton>
+      )}
     </Box>
   );
 }
@@ -563,5 +634,7 @@ function MediaCard({ item, selected, onToggle }) {
 MediaCard.propTypes = {
   item: PropTypes.object.isRequired,
   selected: PropTypes.bool.isRequired,
+  selectable: PropTypes.bool,
   onToggle: PropTypes.func.isRequired,
+  onDelete: PropTypes.func,
 };

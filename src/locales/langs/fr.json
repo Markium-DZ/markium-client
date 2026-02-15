@@ -314,6 +314,8 @@
     "are_you_sure_delete_media": "Êtes-vous sûr de vouloir supprimer ce média ? Cette action est irréversible.",
     "media_deleted_successfully": "Média supprimé avec succès",
     "failed_to_delete_media": "Échec de la suppression du média",
+    "deleting": "Suppression...",
+    "photos_count": "{{count}} photos",
     "upload_photos": "Télécharger des photos",
     "click_or_drag_to_upload": "Cliquez ou glissez pour télécharger",
     "selected": "sélectionné(s)",

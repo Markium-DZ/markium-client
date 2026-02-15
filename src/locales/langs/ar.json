@@ -326,6 +326,8 @@
     "are_you_sure_delete_media": "هل أنت متأكد من حذف هذه الوسائط؟ لا يمكن التراجع عن هذا الإجراء.",
     "media_deleted_successfully": "تم حذف الوسائط بنجاح",
     "failed_to_delete_media": "فشل حذف الوسائط",
+    "deleting": "جاري الحذف...",
+    "photos_count": "{{count}} صور",
     "upload_photos": "رفع الصور",
     "click_or_drag_to_upload": "اضغط أو اسحب لرفع الصور",
     "selected": "محدد",
