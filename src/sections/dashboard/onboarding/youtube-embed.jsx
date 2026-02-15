@@ -37,9 +37,12 @@ export default function YouTubeEmbed({ videoId = DEFAULT_VIDEO_ID, sx, ...other 
           <iframe
             title={t('learn_more')}
             style={{ width: '100%', height: '100%', border: 0 }}
-            src={`https://www.youtube.com/embed/${videoId}`}
+            src={`https://www.youtube-nocookie.com/embed/${videoId}`}
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            referrerPolicy="no-referrer"
+            sandbox="allow-scripts allow-same-origin allow-popups"
             allowFullScreen
+            loading="lazy"
           />
         </Box>
       </Box>

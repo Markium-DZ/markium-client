@@ -8,7 +8,10 @@ import { fetcher, endpoints } from 'src/utils/axios';
 export function useValues() {
   const URL = endpoints.utils.values;
 
-  const { data, isLoading, error, isValidating } = useSWR(URL, fetcher);
+  const { data, isLoading, error, isValidating } = useSWR(URL, fetcher, {
+    revalidateOnFocus: false,
+    revalidateOnReconnect: false,
+  });
 
   const memoizedValue = useMemo(
     () => ({

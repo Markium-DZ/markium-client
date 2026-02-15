@@ -40,8 +40,6 @@ export const navConfig = [
           { title: 'Shop', path: paths.product.root },
           { title: 'Product', path: paths.product.demo.details },
           { title: 'Checkout', path: paths.product.checkout },
-          { title: 'Posts', path: paths.post.root },
-          { title: 'Post', path: paths.post.demo.details },
         ],
       },
       {

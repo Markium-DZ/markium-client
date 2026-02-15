@@ -61,6 +61,8 @@ export default function EmptyStateOrders({ hasProducts = false, compact = false,
 
   // ── Tip card ────────────────────────────────────────────────────
 
+  const isDark = theme.palette.mode === 'dark';
+
   const renderTipCard = (tip, index) => (
     <Box
       key={index}
@@ -69,14 +71,14 @@ export default function EmptyStateOrders({ hasProducts = false, compact = false,
         p: compact ? 2 : 2.5,
         borderRadius: 1.5,
         overflow: 'hidden',
-        bgcolor: alpha(tip.color, 0.03),
-        border: `1px solid ${alpha(tip.color, 0.08)}`,
+        bgcolor: alpha(tip.color, isDark ? 0.12 : 0.03),
+        border: `1px solid ${alpha(tip.color, isDark ? 0.24 : 0.08)}`,
         transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
         '&:hover': {
-          bgcolor: alpha(tip.color, 0.06),
+          bgcolor: alpha(tip.color, isDark ? 0.18 : 0.06),
           transform: 'translateY(-2px)',
-          boxShadow: `0 4px 16px ${alpha(tip.color, 0.12)}`,
-          borderColor: alpha(tip.color, 0.16),
+          boxShadow: `0 4px 16px ${alpha(tip.color, isDark ? 0.2 : 0.12)}`,
+          borderColor: alpha(tip.color, isDark ? 0.36 : 0.16),
         },
         '&::before': {
           content: '""',
@@ -85,7 +87,7 @@ export default function EmptyStateOrders({ hasProducts = false, compact = false,
           left: 0,
           right: 0,
           height: 3,
-          background: `linear-gradient(90deg, ${tip.color}, ${alpha(tip.color, 0.3)})`,
+          background: `linear-gradient(90deg, ${tip.color}, ${alpha(tip.color, isDark ? 0.4 : 0.3)})`,
         },
       }}
     >
@@ -98,7 +100,7 @@ export default function EmptyStateOrders({ hasProducts = false, compact = false,
           fontSize: compact ? '2.5rem' : '3.5rem',
           fontWeight: 900,
           lineHeight: 1,
-          color: alpha(tip.color, 0.06),
+          color: alpha(tip.color, isDark ? 0.12 : 0.06),
           userSelect: 'none',
           pointerEvents: 'none',
         }}
@@ -116,7 +118,7 @@ export default function EmptyStateOrders({ hasProducts = false, compact = false,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            bgcolor: alpha(tip.color, 0.1),
+            bgcolor: alpha(tip.color, isDark ? 0.16 : 0.1),
             color: tip.color,
             flexShrink: 0,
           }}

@@ -38,7 +38,10 @@ export function useGetProducts() {
 export function useGetProduct(productId) {
   const URL = endpoints.product.root ;
 
-  const { data, isLoading, error, isValidating, mutate } = useSWR(URL, fetcher);
+  const { data, isLoading, error, isValidating, mutate } = useSWR(URL, fetcher, {
+    revalidateOnFocus: false,
+    revalidateOnReconnect: false,
+  });
 
   const memoizedValue = useMemo(
     () => ({
@@ -61,6 +64,8 @@ export function useSearchProducts(query) {
 
   const { data, isLoading, error, isValidating } = useSWR(URL, fetcher, {
     keepPreviousData: true,
+    revalidateOnFocus: false,
+    revalidateOnReconnect: false,
   });
 
   const memoizedValue = useMemo(
