@@ -1,5 +1,5 @@
 import * as Yup from 'yup';
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 
@@ -36,9 +36,10 @@ export default function JwtRegisterView() {
 
   const password = useBoolean();
 
-  // Turnstile state
+  // Turnstile
   const [turnstileToken, setTurnstileToken] = useState(null);
   const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || '1x00000000000000000000AA';
+  const turnstileRef = useRef(null);
 
   const handleTurnstileVerify = useCallback((token) => setTurnstileToken(token), []);
   const handleTurnstileExpire = useCallback(() => setTurnstileToken(null), []);
@@ -98,6 +99,10 @@ export default function JwtRegisterView() {
       await register?.(data.name, formatPhoneWithPrefix(data.phone), data.password, turnstileToken);
     } catch (error) {
       console.error(error);
+      // Reset turnstile for next attempt
+      turnstileRef.current?.reset();
+      setTurnstileToken(null);
+
       const message = error.error?.message || '';
       const details = error.error?.details ? Object.values(error.error.details).flat().join(' ') : '';
       setErrorMsg(`${message} ${details}`.trim());
@@ -198,6 +203,7 @@ export default function JwtRegisterView() {
       />
 
       <TurnstileWidget
+        ref={turnstileRef}
         siteKey={TURNSTILE_SITE_KEY}
         onVerify={handleTurnstileVerify}
         onExpire={handleTurnstileExpire}

@@ -1,5 +1,5 @@
 import * as Yup from 'yup';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 
@@ -48,8 +48,12 @@ export default function JwtLoginView() {
 
   const password = useBoolean();
 
-  // Turnstile site key from env
+  // Turnstile
   const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || '1x00000000000000000000AA';
+  const turnstileRef = useRef(null);
+
+  const handleTurnstileVerify = useCallback((token) => setTurnstileToken(token), []);
+  const handleTurnstileExpire = useCallback(() => setTurnstileToken(null), []);
 
   const validatePhone = (phone) => {
     if (!phone) return false;
@@ -118,11 +122,14 @@ export default function JwtLoginView() {
 
       if (response?.data?.success) {
         await login(formatPhoneWithPrefix(data.phone), data.password);
-        // GuestGuard will detect authenticated=true and perform smart redirect
       } else {
         setErrorMsg(t('please_check_your_phone_and_password'));
       }
     } catch (error) {
+      // Reset turnstile for next attempt
+      turnstileRef.current?.reset();
+      setTurnstileToken(null);
+
       if (error?.response?.status === 403) {
         setErrorMsg(t('user_is_banned'));
       } else {
@@ -205,10 +212,11 @@ export default function JwtLoginView() {
       />
 
       <TurnstileWidget
+        ref={turnstileRef}
         siteKey={TURNSTILE_SITE_KEY}
-        onVerify={(token) => setTurnstileToken(token)}
-        onExpire={() => setTurnstileToken(null)}
-        onError={() => setTurnstileToken(null)}
+        onVerify={handleTurnstileVerify}
+        onExpire={handleTurnstileExpire}
+        onError={handleTurnstileExpire}
         sx={{ display: 'flex', justifyContent: 'center' }}
       />
 

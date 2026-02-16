@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
 import PropTypes from 'prop-types';
 import Box from '@mui/material/Box';
 
@@ -29,7 +29,7 @@ function loadTurnstileScript() {
   });
 }
 
-export default function TurnstileWidget({ siteKey, onVerify, onExpire, onError, ...other }) {
+const TurnstileWidget = forwardRef(({ siteKey, onVerify, onExpire, onError, sx, ...other }, ref) => {
   const containerRef = useRef(null);
   const widgetIdRef = useRef(null);
 
@@ -41,6 +41,19 @@ export default function TurnstileWidget({ siteKey, onVerify, onExpire, onError, 
   onVerifyRef.current = onVerify;
   onExpireRef.current = onExpire;
   onErrorRef.current = onError;
+
+  useImperativeHandle(ref, () => ({
+    execute: () => {
+      if (widgetIdRef.current != null && window.turnstile) {
+        window.turnstile.execute(containerRef.current);
+      }
+    },
+    reset: () => {
+      if (widgetIdRef.current != null && window.turnstile) {
+        window.turnstile.reset(widgetIdRef.current);
+      }
+    },
+  }));
 
   useEffect(() => {
     loadTurnstileScript().then(() => {
@@ -66,12 +79,29 @@ export default function TurnstileWidget({ siteKey, onVerify, onExpire, onError, 
     };
   }, [siteKey]);
 
-  return <Box ref={containerRef} {...other} />;
-}
+  return (
+    <Box
+      ref={containerRef}
+      sx={{
+        // contain: paint traps any position:fixed overlays Turnstile creates
+        // during verification, preventing them from blocking the rest of the page
+        position: 'relative',
+        contain: 'paint',
+        ...sx,
+      }}
+      {...other}
+    />
+  );
+});
+
+TurnstileWidget.displayName = 'TurnstileWidget';
 
 TurnstileWidget.propTypes = {
   siteKey: PropTypes.string.isRequired,
   onVerify: PropTypes.func.isRequired,
   onExpire: PropTypes.func,
   onError: PropTypes.func,
+  sx: PropTypes.object,
 };
+
+export default TurnstileWidget;
