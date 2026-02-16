@@ -101,7 +101,7 @@ export default function ProductNewEditForm({ currentProduct, drawerMode = false,
     {
       id: Date.now(),
       price: 0,
-      compare_at_price: 0,
+      compare_at_price: null,
       quantity: 0,
       sku: '',
       option_values: [],
@@ -179,7 +179,7 @@ export default function ProductNewEditForm({ currentProduct, drawerMode = false,
       tags: currentProduct?.tags || [],
       quantity: defaultVariant?.quantity || 1,
       sale_price: defaultVariant?.price || 0,
-      compare_at_price: defaultVariant?.compare_at_price || 0,
+      compare_at_price: defaultVariant?.compare_at_price || null,
       option_definitions: currentProduct?.option_definitions || [],
       variants: currentProduct?.variants || [],
     };
@@ -226,7 +226,7 @@ export default function ProductNewEditForm({ currentProduct, drawerMode = false,
           currentProduct.variants.map((v) => ({
             id: v.id || Date.now(),
             price: v.price || 0,
-            compare_at_price: v.compare_at_price || 0,
+            compare_at_price: v.compare_at_price || null,
             quantity: v.quantity || 0,
             sku: v.sku || '',
             option_values: v.option_values?.map((ov) => ov.value) || v.options || [],
@@ -428,7 +428,7 @@ export default function ProductNewEditForm({ currentProduct, drawerMode = false,
           payload.variants = variants.map((variant, index) => {
             const variantData = {
               price: parseFloat(variant.price) || 0,
-              compare_at_price: parseFloat(variant.compare_at_price) || 0,
+              compare_at_price: variant.compare_at_price ? parseFloat(variant.compare_at_price) : null,
               quantity: parseInt(variant.quantity, 10) || 0,
               sku: variant.sku || '',
               option_values: variant.option_values || [],
@@ -707,7 +707,7 @@ export default function ProductNewEditForm({ currentProduct, drawerMode = false,
               onChange={(e) => {
                 setShowDiscount(e.target.checked);
                 if (!e.target.checked) {
-                  setValue('compare_at_price', 0);
+                  setValue('compare_at_price', null);
                 }
               }}
             />

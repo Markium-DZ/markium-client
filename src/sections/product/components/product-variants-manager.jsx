@@ -116,7 +116,7 @@ export default function ProductVariantsManager({ options, variants, onChange, im
             {
               id: Date.now(),
               price: 0,
-              compare_at_price: 0,
+              compare_at_price: null,
               quantity: 0,
               option_values: [],
               media_ids: [],
@@ -151,7 +151,7 @@ export default function ProductVariantsManager({ options, variants, onChange, im
       return {
         id: Date.now() + index,
         price: 0,
-        compare_at_price: 0,
+        compare_at_price: null,
         quantity: 0,
         option_values: optionValues,
         media_ids: allMediaIds,
@@ -740,7 +740,7 @@ function VariantRow({ variant, index, expanded, onToggleExpand, onUpdate, produc
                       onChange={(e) => {
                         setShowVariantDiscount(e.target.checked);
                         if (!e.target.checked) {
-                          onUpdate(variant.id, 'compare_at_price', 0);
+                          onUpdate(variant.id, 'compare_at_price', null);
                         }
                       }}
                     />
