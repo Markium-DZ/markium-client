@@ -59,6 +59,8 @@ const TurnstileWidget = forwardRef(({ siteKey, onVerify, onExpire, onError, sx, 
     loadTurnstileScript().then(() => {
       if (!containerRef.current || !window.turnstile || widgetIdRef.current) return;
 
+      // Use execution: 'execute' to prevent Turnstile from creating a
+      // full-page overlay that blocks form fields during verification.
       widgetIdRef.current = window.turnstile.render(containerRef.current, {
         sitekey: siteKey,
         callback: (token) => onVerifyRef.current(token),
@@ -68,7 +70,12 @@ const TurnstileWidget = forwardRef(({ siteKey, onVerify, onExpire, onError, sx, 
         size: 'flexible',
         retry: 'auto',
         'refresh-expired': 'auto',
+        execution: 'execute',
       });
+
+      // Immediately trigger verification so it auto-verifies like 'render'
+      // mode, but without the blocking overlay.
+      window.turnstile.execute(containerRef.current);
     });
 
     return () => {
@@ -79,19 +86,7 @@ const TurnstileWidget = forwardRef(({ siteKey, onVerify, onExpire, onError, sx, 
     };
   }, [siteKey]);
 
-  return (
-    <Box
-      ref={containerRef}
-      sx={{
-        // contain: paint traps any position:fixed overlays Turnstile creates
-        // during verification, preventing them from blocking the rest of the page
-        position: 'relative',
-        contain: 'paint',
-        ...sx,
-      }}
-      {...other}
-    />
-  );
+  return <Box ref={containerRef} sx={sx} {...other} />;
 });
 
 TurnstileWidget.displayName = 'TurnstileWidget';
