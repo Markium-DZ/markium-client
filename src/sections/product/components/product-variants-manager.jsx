@@ -782,8 +782,19 @@ function VariantRow({ variant, index, expanded, onToggleExpand, onUpdate, produc
 
                 {/* Media Section */}
                 <Box>
-                  <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
+                  <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block' }}>
                     {t('variant_images')} ({totalMediaCount})
+                  </Typography>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      mb: 1,
+                      display: 'block',
+                      color: 'info.main',
+                      fontStyle: 'italic',
+                    }}
+                  >
+                    {t('variant_images_override_hint')}
                   </Typography>
 
                   <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
