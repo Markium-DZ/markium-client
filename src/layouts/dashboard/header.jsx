@@ -14,16 +14,12 @@ import { bgBlur } from 'src/theme/css';
 import Logo from 'src/components/logo';
 import SvgColor from 'src/components/svg-color';
 import { useSettingsContext } from 'src/components/settings';
-import { useTranslate } from 'src/locales';
 
 import Searchbar from '../common/searchbar';
 import { NAV, HEADER } from '../config-layout';
-import SettingsButton from '../common/settings-button';
 import LanguagePopover from '../common/language-popover';
-import { useState } from 'react';
-
-import { Icon } from '@iconify/react';
 import SettingsLink from '../common/settings-link';
+import AccountPopover from '../common/account-popover';
 import SubscriptionWalletWidget from 'src/sections/subscription/subscription-wallet-widget';
 
 // ----------------------------------------------------------------------
@@ -32,8 +28,6 @@ export default function Header({ onOpenNav }) {
   const theme = useTheme();
 
   const settings = useSettingsContext();
-
-  const { t } = useTranslate();
 
   const isNavHorizontal = settings.themeLayout === 'horizontal';
 
@@ -44,14 +38,6 @@ export default function Header({ onOpenNav }) {
   const offset = useOffSetTop(HEADER.H_DESKTOP);
 
   const offsetTop = offset && !isNavHorizontal;
-
-  const [darkMode, setDarkMode] = useState(settings.themeMode);
-
-  const Toggle = () => {
-    const mode = darkMode == "dark" ? "light" : "dark"
-    setDarkMode(mode)
-    settings.onUpdate('themeMode', mode)
-  }
 
   const renderContent = (
     <>
@@ -72,36 +58,13 @@ export default function Header({ onOpenNav }) {
         justifyContent="flex-end"
         spacing={{ xs: 0.5, sm: 1 }}
       >
-
-
         <SubscriptionWalletWidget />
-
-        <IconButton
-          onClick={Toggle}
-          aria-label={darkMode === 'dark' ? t('switch_to_light_mode') : t('switch_to_dark_mode')}
-          sx={{ width: 40, height: 40 }}
-        >
-          <Icon
-            icon={darkMode === 'dark' ? 'duo-icons:moon-stars' : 'duo-icons:sun'}
-            width={24}
-            height={24}
-            style={darkMode === 'dark' ? { color: '#fffefe' } : undefined}
-          />
-        </IconButton>
-
 
         <LanguagePopover />
 
-        {/* <NotificationsPopover /> */}
-
-        {/* <ContactsPopover /> */}
-
-        {/* <SettingsButton /> */}
-        {/* <Link  href={paths?.dashboard.settings.root} >
-          <Iconify icon="solar:settings-bold-duotone" width={24} />
-        </Link> */}
         <SettingsLink />
-        <SettingsButton />
+
+        <AccountPopover />
       </Stack>
     </>
   );

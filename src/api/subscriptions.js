@@ -1,5 +1,6 @@
 import useSWR from 'swr';
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import axios, { fetcher, endpoints } from 'src/utils/axios';
 
@@ -23,9 +24,14 @@ const options = {
  * GET /subscriptions/packages
  */
 export function useGetSubscriptionPackages() {
+  const { i18n } = useTranslation();
   const url = endpoints.subscriptions.packages;
 
-  const { data, isLoading, error, isValidating, mutate } = useSWR(url, fetcher, options);
+  const { data, isLoading, error, isValidating, mutate } = useSWR(
+    [url, { lang: i18n.language }],
+    fetcher,
+    options
+  );
 
   const memoizedValue = useMemo(
     () => ({
@@ -102,9 +108,14 @@ export function useGetSubscriptionPayment(paymentId) {
  * GET /subscriptions/current
  */
 export function useGetCurrentSubscription() {
+  const { i18n } = useTranslation();
   const url = endpoints.subscriptions.current;
 
-  const { data, isLoading, error, isValidating, mutate } = useSWR(url, fetcher, options);
+  const { data, isLoading, error, isValidating, mutate } = useSWR(
+    [url, { lang: i18n.language }],
+    fetcher,
+    options
+  );
 
   const memoizedValue = useMemo(
     () => ({

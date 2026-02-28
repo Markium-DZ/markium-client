@@ -229,6 +229,8 @@
     "item_external_link": "Item External Link",
     "only_admin_can_see_this_item": "Only admin can see this item",
     "upgrade_to_pro": "Upgrade to Pro",
+    "upgrade_to_pro_description": "Advanced reports, unlimited storage and pro features",
+    "upgrade_now": "Upgrade Now",
     "demo": {
         "title": "English"
     },
@@ -587,6 +589,7 @@
     "copy_link": "Copy link",
     "copy_store_url": "Copy Store URL",
     "store_url_copied": "Store URL copied to clipboard",
+    "open_store": "Open Store",
     "failed_to_copy": "Failed to copy to clipboard",
     "see_orders": "See Orders",
     "are_you_sure_you_want_to_deploy_this_product": "Are you sure you want to deploy this product?",
@@ -1708,6 +1711,7 @@
     "analytics_revenue_breakdown": "Revenue Breakdown",
     "analytics_export_csv": "Export CSV",
     "analytics_upgrade_to_unlock": "Upgrade to unlock",
+    "analytics_unlock_description": "Unlock advanced analytics and insights with a higher plan",
     "analytics_upgrade_cta": "This feature requires a higher plan",
     "analytics_tier_basic": "Basic",
     "analytics_tier_medium": "Pro",
@@ -1785,6 +1789,7 @@
     "subscription_renews_on": "Renews on",
     "subscription_expires_on": "Expires on",
     "subscription_upgrade": "Upgrade",
+    "subscribe": "Subscribe",
     "subscription_downgrade": "Downgrade",
     "billing_cycle_monthly": "month",
     "billing_cycle_yearly": "year",

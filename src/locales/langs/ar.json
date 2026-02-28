@@ -232,6 +232,8 @@
     "item_external_link": "رابط خارجي للعنصر",
     "only_admin_can_see_this_item": "يمكن للمسؤول فقط رؤية هذا العنصر",
     "upgrade_to_pro": "الترقية إلى Pro",
+    "upgrade_to_pro_description": "تقارير متقدمة، مساحة تخزين غير محدودة وميزات احترافية",
+    "upgrade_now": "ترقية الآن",
     "demo": {
         "title": "Arabic"
     },
@@ -590,6 +592,7 @@
     "copy_link": "نسخ الرابط",
     "copy_store_url": "نسخ رابط المتجر",
     "store_url_copied": "تم نسخ رابط المتجر",
+    "open_store": "فتح المتجر",
     "failed_to_copy": "فشل النسخ",
     "are_you_sure_you_want_to_deploy_this_product": "هل أنت متأكد من نشر هذا المنتج؟",
     "deploy": "نشر",
@@ -1728,6 +1731,7 @@
     "analytics_revenue_breakdown": "تفصيل الإيرادات",
     "analytics_export_csv": "تصدير CSV",
     "analytics_upgrade_to_unlock": "قم بالترقية للفتح",
+    "analytics_unlock_description": "افتح التحليلات المتقدمة والرؤى مع خطة أعلى",
     "analytics_upgrade_cta": "هذه الميزة تتطلب خطة أعلى",
     "analytics_tier_basic": "أساسي",
     "analytics_tier_medium": "احترافي",
@@ -1805,6 +1809,7 @@
     "subscription_renews_on": "يتجدد في",
     "subscription_expires_on": "ينتهي في",
     "subscription_upgrade": "ترقية",
+    "subscribe": "اشتراك",
     "subscription_downgrade": "تخفيض",
     "billing_cycle_monthly": "شهر",
     "billing_cycle_yearly": "سنة",

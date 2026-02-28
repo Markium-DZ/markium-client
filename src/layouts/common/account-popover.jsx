@@ -1,71 +1,44 @@
+import { useContext } from 'react';
 import { m } from 'framer-motion';
 
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Avatar from '@mui/material/Avatar';
 import Divider from '@mui/material/Divider';
+import Switch from '@mui/material/Switch';
 import { alpha } from '@mui/material/styles';
 import MenuItem from '@mui/material/MenuItem';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 
-import { paths } from 'src/routes/paths';
 import { useRouter } from 'src/routes/hooks';
 
-import { useMockedUser } from 'src/hooks/use-mocked-user';
-
 import { useAuthContext } from 'src/auth/hooks';
+import { AuthContext } from 'src/auth/context/jwt';
 
 import { varHover } from 'src/components/animate';
+import Iconify from 'src/components/iconify';
 import { useSnackbar } from 'src/components/snackbar';
 import CustomPopover, { usePopover } from 'src/components/custom-popover';
+import { useSettingsContext } from 'src/components/settings';
 import { useTranslate } from 'src/locales';
-import Iconify from 'src/components/iconify';
-
-// ----------------------------------------------------------------------
-
-const OPTIONS = [
-  {
-    label: t('home'),
-    linkTo: '/dashboard',
-  },
-  // {
-  //   label: t('profile'),
-  //   linkTo: paths.dashboard.user.profile,
-  // },
-  // {
-  //   label: 'Settings',
-  //   linkTo: paths.dashboard.user.account,
-  // },
-];
-
-import { useContext } from 'react';
-import { AuthContext } from 'src/auth/context/jwt';
-import { t } from 'i18next';
-import ContentDialog from 'src/components/custom-dialog/content-dialog';
-import ChangePasswordView from 'src/sections/user/Users/changePasswordView';
-import { useBoolean } from 'src/hooks/use-boolean';
-// import { AuthContext } from 'path-to-auth-context/auth-context'; // Adjust the path accordingly
-
 
 // ----------------------------------------------------------------------
 
 export default function AccountPopover() {
   const router = useRouter();
   const { user } = useContext(AuthContext);
-
-  console.log("user : ", user);
-  // const { user } = useMockedUser();
-
-
   const { logout } = useAuthContext();
-
   const { t } = useTranslate();
-
   const { enqueueSnackbar } = useSnackbar();
-
   const popover = usePopover();
-  const complete = useBoolean()
+  const settings = useSettingsContext();
+
+  const isDarkMode = settings.themeMode === 'dark';
+
+  const handleToggleDarkMode = () => {
+    settings.onUpdate('themeMode', isDarkMode ? 'light' : 'dark');
+  };
 
   const handleLogout = async () => {
     try {
@@ -74,18 +47,19 @@ export default function AccountPopover() {
       router.replace('/auth/jwt/login');
     } catch (error) {
       console.error(error);
-      enqueueSnackbar('Unable to logout!', { variant: 'error' });
+      enqueueSnackbar(t('logout_failed'), { variant: 'error' });
     }
   };
 
-  const handleClickItem = (path) => {
+  const handleHome = () => {
     popover.onClose();
-    router.push(path);
+    router.push('/dashboard');
   };
 
   const handleCopyStoreUrl = () => {
     const storeUrl = `https://${user?.store?.slug}.markium.online`;
-    navigator.clipboard.writeText(storeUrl)
+    navigator.clipboard
+      .writeText(storeUrl)
       .then(() => {
         enqueueSnackbar(t('store_url_copied'), { variant: 'success' });
         popover.onClose();
@@ -95,6 +69,8 @@ export default function AccountPopover() {
         enqueueSnackbar(t('failed_to_copy'), { variant: 'error' });
       });
   };
+
+  const storeUrl = user?.store?.slug ? `${user.store.slug}.markium.online` : '';
 
   return (
     <>
@@ -127,57 +103,88 @@ export default function AccountPopover() {
         </Avatar>
       </IconButton>
 
-      <CustomPopover open={popover.open} onClose={popover.onClose} sx={{ width: 200, p: 0 }}>
+      <CustomPopover open={popover.open} onClose={popover.onClose} sx={{ width: 220, p: 0 }}>
+        {/* Identity block */}
         <Box sx={{ p: 2, pb: 1.5 }}>
-          <Typography variant="subtitle2" noWrap>
-            {user?.name}
-          </Typography>
+          <Stack direction="row" alignItems="center" spacing={1.5}>
+            <Avatar
+              src={user?.photoURL}
+              alt={user?.name}
+              sx={{ width: 40, height: 40 }}
+            >
+              {user?.name?.charAt(0).toUpperCase()}
+            </Avatar>
 
-          <Typography variant="body2" sx={{ color: 'text.secondary' }} noWrap>
-            {user?.phone}
-          </Typography>
+            <Box sx={{ minWidth: 0, flexGrow: 1 }}>
+              <Typography variant="subtitle2" noWrap>
+                {user?.name}
+              </Typography>
+              <Typography variant="caption" sx={{ color: 'text.disabled' }} noWrap>
+                {user?.phone}
+              </Typography>
+            </Box>
+          </Stack>
+
+          {storeUrl && (
+            <Typography
+              variant="caption"
+              sx={{ color: 'text.secondary', mt: 1, display: 'block', direction: 'ltr', textAlign: 'end' }}
+              noWrap
+            >
+              {storeUrl}
+            </Typography>
+          )}
         </Box>
 
         <Divider sx={{ borderStyle: 'dashed' }} />
 
+        {/* Dark mode toggle */}
+        <MenuItem
+          onClick={handleToggleDarkMode}
+          sx={{ px: 2, py: 1 }}
+        >
+          <Iconify
+            icon={isDarkMode ? 'duo-icons:moon-stars' : 'duo-icons:sun'}
+            width={20}
+            sx={{ mr: 1.5 }}
+          />
+          <Typography variant="body2" sx={{ flexGrow: 1 }}>
+            {t('dark_mode')}
+          </Typography>
+          <Switch
+            size="small"
+            checked={isDarkMode}
+            onChange={handleToggleDarkMode}
+            onClick={(e) => e.stopPropagation()}
+          />
+        </MenuItem>
+
+        <Divider sx={{ borderStyle: 'dashed' }} />
+
+        {/* Actions */}
         <Stack sx={{ p: 1 }}>
-          {OPTIONS.map((option) => (
-            <MenuItem key={option.label} onClick={() => handleClickItem(option.linkTo)}>
-              {option.label}
-            </MenuItem>
-          ))}
-          {/* <MenuItem key={"change_password"} onClick={() => {complete.onTrue(); popover.onClose()}}>
-            {t("edit_password")}
-          </MenuItem> */}
-          <MenuItem
-            onClick={handleCopyStoreUrl}
-          >
-            {/* <Iconify icon="solar:copy-bold" sx={{ mr: 1 }} /> */}
+          <MenuItem onClick={handleHome}>
+            <Iconify icon="solar:home-2-bold-duotone" width={20} sx={{ mr: 1.5 }} />
+            {t('home')}
+          </MenuItem>
+
+          <MenuItem onClick={handleCopyStoreUrl}>
+            <Iconify icon="solar:copy-bold-duotone" width={20} sx={{ mr: 1.5 }} />
             {t('copy_store_url')}
           </MenuItem>
         </Stack>
 
-        {/* <Divider sx={{ borderStyle: 'dashed' }} /> */}
-
-
         <Divider sx={{ borderStyle: 'dashed' }} />
 
+        {/* Logout */}
         <MenuItem
           onClick={handleLogout}
           sx={{ m: 1, fontWeight: 'fontWeightBold', color: 'error.main' }}
         >
-          {t("logout")}
+          <Iconify icon="solar:logout-2-bold-duotone" width={20} sx={{ mr: 1.5 }} />
+          {t('logout')}
         </MenuItem>
       </CustomPopover>
-      <ContentDialog
-
-        open={complete.value}
-        onClose={complete.onFalse}
-        title={t("edit_password")}
-        content={
-          <ChangePasswordView selfAccount={true} currentUser={user} onClose={() => { complete.onFalse() }} />
-        }
-      />
     </>
   );
 }

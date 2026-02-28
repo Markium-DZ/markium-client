@@ -42,7 +42,7 @@ export function fNumber(inputValue) {
 export function fCurrency(inputValue) {
   const { code, currency } = getLocaleCode();
 
-  if (!inputValue) return '';
+  if (inputValue === null || inputValue === undefined || inputValue === '') return '';
 
   const number = Number(inputValue);
 

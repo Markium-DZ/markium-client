@@ -3,24 +3,25 @@ import PropTypes from 'prop-types';
 
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
-import Avatar from '@mui/material/Avatar';
 import Divider from '@mui/material/Divider';
 import Drawer from '@mui/material/Drawer';
 import Typography from '@mui/material/Typography';
+import { useTheme } from '@mui/material/styles';
 
 import { usePathname } from 'src/routes/hooks';
+import { RouterLink } from 'src/routes/components';
 import { paths } from 'src/routes/paths';
 
 import { useResponsive } from 'src/hooks/use-responsive';
 
-import Scrollbar from 'src/components/scrollbar';
-import Label from 'src/components/label';
+import Logo from 'src/components/logo';
 import Iconify from 'src/components/iconify';
+import Scrollbar from 'src/components/scrollbar';
 import { NavSectionVertical } from 'src/components/nav-section';
 
 import { useAuthContext } from 'src/auth/hooks';
-import { useGetCurrentSubscription } from 'src/api/subscriptions';
 import { useGetProducts } from 'src/api/product';
+import { useGetCurrentSubscription } from 'src/api/subscriptions';
 import { useTranslate } from 'src/locales';
 
 import { NAV } from '../config-layout';
@@ -30,10 +31,21 @@ import NavToggleButton from '../common/nav-toggle-button';
 
 // ----------------------------------------------------------------------
 
+const FREE_SLUGS = ['payg', 'free-trial'];
+
+function getPlanTier(slug) {
+  if (!slug || FREE_SLUGS.includes(slug)) return 'free';
+  if (slug.startsWith('business')) return 'business';
+  return 'pro';
+}
+
 export default function NavVertical({ openNav, onCloseNav }) {
+  const theme = useTheme();
   const { user } = useAuthContext();
   const { t } = useTranslate();
   const { subscription } = useGetCurrentSubscription();
+
+  const planTier = getPlanTier(subscription?.package?.slug);
 
   const pathname = usePathname();
 
@@ -64,19 +76,6 @@ export default function NavVertical({ openNav, onCloseNav }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname]);
 
-  const storeName = user?.store?.name || t('markium');
-  const storeLogo = user?.store?.logo_url;
-  const storeInitials = storeName?.substring(0, 2).toUpperCase();
-
-  const packageName = subscription?.package?.name;
-  const packageSlug = subscription?.package?.slug;
-  const packageTranslationKey = packageSlug ? `package_${packageSlug}` : '';
-  const translatedPackageName = packageTranslationKey ? t(packageTranslationKey) : '';
-  const displayPackageName =
-    translatedPackageName && translatedPackageName !== packageTranslationKey
-      ? translatedPackageName
-      : packageName;
-
   const renderContent = (
     <Scrollbar
       sx={{
@@ -88,46 +87,45 @@ export default function NavVertical({ openNav, onCloseNav }) {
         },
       }}
     >
-      <Box sx={{ px: 2.5, pt: 3, pb: 2 }}>
-        <Stack direction="row" alignItems="center" spacing={1.5}>
-          <Avatar
-            src={storeLogo}
-            alt={storeName}
-            sx={{
-              width: 40,
-              height: 40,
-              bgcolor: 'grey.800',
-              color: 'common.white',
-              fontSize: 14,
-              fontWeight: 700,
-            }}
-          >
-            {storeInitials}
-          </Avatar>
-
-          <Box sx={{ minWidth: 0, flexGrow: 1 }}>
-            <Typography variant="subtitle2" noWrap>
-              {storeName}
-            </Typography>
-
-            {displayPackageName && (
-              <Label
-                color="success"
-                variant="soft"
-                startIcon={<Iconify icon="solar:cart-3-bold" width={14} />}
-                sx={{ mt: 0.5 }}
-              >
-                {displayPackageName}
-              </Label>
-            )}
-          </Box>
-        </Stack>
-      </Box>
-
-      <Box sx={{ px: 2.5, pt: 2, pb: 3, visibility: isNewUser ? 'hidden' : 'visible' }}>
-        <Typography variant="h5" sx={{ whiteSpace: 'pre-line' }}>
-          {`${t('welcome_back')}\n${user?.name}`}
+      <Box
+        component={RouterLink}
+        href={paths.dashboard.root}
+        sx={{
+          px: 2.5,
+          pt: 3,
+          pb: 2,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1.5,
+          textDecoration: 'none',
+          color: 'inherit',
+        }}
+      >
+        <Logo disabledLink sx={{ width: 36, height: 36 }} />
+        <Typography
+          variant="subtitle1"
+          noWrap
+          sx={{
+            fontWeight: 700,
+            ...(planTier === 'pro' && {
+              color: theme.palette.primary.main,
+            }),
+            ...(planTier === 'business' && {
+              background: `linear-gradient(135deg, ${theme.palette.warning.main}, ${theme.palette.warning.dark})`,
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+            }),
+          }}
+        >
+          {t('markium')}
         </Typography>
+        {planTier === 'business' && (
+          <Iconify
+            icon="solar:crown-bold"
+            width={18}
+            sx={{ color: 'warning.main', ml: -0.5 }}
+          />
+        )}
       </Box>
 
       <Divider sx={{ borderStyle: 'dashed', mx: 2.5, mb: 2 }} />

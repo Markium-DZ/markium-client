@@ -55,11 +55,8 @@ axiosInstance.interceptors.response.use(
 // Add a request interceptor
 axiosInstance.interceptors.request.use(
   (config) => {
-    const settings = localStorage.getItem('settings');
-    if (settings !== null) {
-      const getLang = JSON.parse(settings);
-      config.headers['Accept-Language'] = getLang?.themeDirection === 'rtl' ? 'ar-AR' : 'en-US';
-    }
+    const lang = localStorage.getItem('i18nextLng') || 'ar';
+    config.headers['Accept-Language'] = lang;
     return config;
   },
   (error) => {

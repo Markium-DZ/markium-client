@@ -12,7 +12,8 @@ import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import CardContent from '@mui/material/CardContent';
 import CircularProgress from '@mui/material/CircularProgress';
-import Chip from '@mui/material/Chip';
+import Divider from '@mui/material/Divider';
+import { alpha, useTheme } from '@mui/material/styles';
 
 import { useTranslate } from 'src/locales';
 import { fCurrency } from 'src/utils/format-number';
@@ -28,6 +29,7 @@ import { useGetWalletBalance, useGetWalletTransactions, walletTopup } from 'src/
 
 export default function SubscriptionWallet() {
   const { t } = useTranslate();
+  const theme = useTheme();
   const { enqueueSnackbar } = useSnackbar();
 
   const { balance, currency, balanceLoading } = useGetWalletBalance();
@@ -65,66 +67,102 @@ export default function SubscriptionWallet() {
 
   return (
     <>
-      <Card>
-        <CardContent>
+      <Card sx={{ height: '100%' }}>
+        <CardContent sx={{ p: { xs: 2.5, md: 3 } }}>
           <Stack spacing={3}>
-            {/* Balance header */}
-            <Stack direction="row" alignItems="center" justifyContent="space-between">
-              <Typography variant="h6">{t('wallet_balance')}</Typography>
+            {/* Header */}
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Box
+                sx={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 1.5,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  bgcolor: alpha(theme.palette.warning.main, 0.12),
+                  flexShrink: 0,
+                }}
+              >
+                <Iconify
+                  icon="solar:wallet-bold"
+                  width={24}
+                  sx={{ color: 'warning.dark' }}
+                />
+              </Box>
+              <Typography variant="h6" sx={{ flexGrow: 1 }}>
+                {t('wallet_balance')}
+              </Typography>
+            </Stack>
+
+            {/* Balance */}
+            <Stack direction="row" alignItems="baseline" justifyContent="space-between">
+              <Stack direction="row" alignItems="baseline" spacing={1}>
+                <Typography variant="h3">
+                  {balanceLoading ? (
+                    <CircularProgress size={28} />
+                  ) : (
+                    fCurrency(balance) || '0'
+                  )}
+                </Typography>
+                {!balanceLoading && (
+                  <Typography variant="subtitle1" color="text.secondary">
+                    {currency}
+                  </Typography>
+                )}
+              </Stack>
+
               <Button
                 variant="contained"
                 size="small"
+                color="warning"
                 startIcon={<Iconify icon="solar:add-circle-bold" />}
                 onClick={handleOpenTopup}
+                sx={{ flexShrink: 0 }}
               >
                 {t('wallet_topup')}
               </Button>
             </Stack>
 
-            {/* Balance amount */}
-            <Typography variant="h3">
-              {balanceLoading ? (
-                <CircularProgress size={24} />
-              ) : (
-                `${fCurrency(balance)} ${currency}`
-              )}
-            </Typography>
-
             {/* Recent transactions */}
             {!transactionsLoading && transactions.length > 0 && (
-              <Stack spacing={1.5}>
-                <Typography variant="subtitle2" color="text.secondary">
-                  {t('wallet_transactions')}
-                </Typography>
+              <>
+                <Divider />
+                <Stack spacing={1.5}>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    {t('wallet_transactions')}
+                  </Typography>
 
-                {transactions.map((tx) => (
-                  <Stack
-                    key={tx.id}
-                    direction="row"
-                    alignItems="center"
-                    justifyContent="space-between"
-                    sx={{ py: 0.5 }}
-                  >
-                    <Stack direction="row" alignItems="center" spacing={1}>
-                      <Label color={tx.type === 'credit' ? 'success' : 'error'}>
-                        {t(`wallet_${tx.type}`)}
-                      </Label>
-                      <Typography variant="body2">{tx.description}</Typography>
+                  {transactions.map((tx) => (
+                    <Stack
+                      key={tx.id}
+                      direction="row"
+                      alignItems="center"
+                      justifyContent="space-between"
+                      sx={{ py: 0.5 }}
+                    >
+                      <Stack direction="row" alignItems="center" spacing={1}>
+                        <Label color={tx.type === 'credit' ? 'success' : 'error'}>
+                          {t(`wallet_${tx.type}`)}
+                        </Label>
+                        <Typography variant="body2">{tx.description}</Typography>
+                      </Stack>
+                      <Stack alignItems="flex-end">
+                        <Typography
+                          variant="subtitle2"
+                          color={tx.type === 'credit' ? 'success.main' : 'error.main'}
+                        >
+                          {tx.type === 'credit' ? '+' : '-'}
+                          {fCurrency(tx.amount) || '0'}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {fDateTime(tx.created_at)}
+                        </Typography>
+                      </Stack>
                     </Stack>
-                    <Stack alignItems="flex-end">
-                      <Typography
-                        variant="subtitle2"
-                        color={tx.type === 'credit' ? 'success.main' : 'error.main'}
-                      >
-                        {tx.type === 'credit' ? '+' : '-'}{fCurrency(tx.amount)}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {fDateTime(tx.created_at)}
-                      </Typography>
-                    </Stack>
-                  </Stack>
-                ))}
-              </Stack>
+                  ))}
+                </Stack>
+              </>
             )}
           </Stack>
         </CardContent>

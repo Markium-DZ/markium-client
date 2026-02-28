@@ -23,14 +23,9 @@ export default function SubscriptionBillingView() {
       </Typography>
 
       <Grid container spacing={3}>
-        {/* Current Plan */}
-        <Grid xs={12} md={8}>
+        {/* Current Plan — hero banner */}
+        <Grid xs={12}>
           <SubscriptionCurrentPlan />
-        </Grid>
-
-        {/* Usage */}
-        <Grid xs={12} md={4}>
-          <SubscriptionUsage />
         </Grid>
 
         {/* Wallet */}
@@ -38,8 +33,13 @@ export default function SubscriptionBillingView() {
           <SubscriptionWallet />
         </Grid>
 
-        {/* Add-ons */}
+        {/* Usage */}
         <Grid xs={12} md={6}>
+          <SubscriptionUsage />
+        </Grid>
+
+        {/* Add-ons */}
+        <Grid xs={12}>
           <SubscriptionAddons />
         </Grid>
       </Grid>

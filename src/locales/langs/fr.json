@@ -218,6 +218,8 @@
     "item_external_link": "Lien externe de l'élément",
     "only_admin_can_see_this_item": "Seul l'administrateur peut voir cet élément",
     "upgrade_to_pro": "Passer à Pro",
+    "upgrade_to_pro_description": "Rapports avancés, stockage illimité et fonctionnalités pro",
+    "upgrade_now": "Passer au Pro",
     "demo": {
         "title": "Français"
     },
@@ -507,6 +509,7 @@
     "copy_link": "Copier le lien",
     "copy_store_url": "Copier l'URL de la boutique",
     "store_url_copied": "URL de la boutique copiée",
+    "open_store": "Ouvrir la boutique",
     "failed_to_copy": "Échec de la copie",
     "are_you_sure_you_want_to_deploy_this_product": "Êtes-vous sûr de vouloir publier ce produit ?",
     "deploy": "Publier",
