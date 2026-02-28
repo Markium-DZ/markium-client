@@ -103,7 +103,7 @@ const types = {
         add_new_item_lable: "add_new_color",
         keyInValues: "colors",
         TABLE_HEAD: [
-            { id: 'name', label: t('color'), type: "text", width: 290, align: 'start' },
+            { id: 'name', label: t('color'), type: "text", width: 290, align: 'left' },
             // { id: 'actions', label: t('actions'), type: "threeDots", width: 88, align: "right" },
         ],
         href: paths.dashboard.settings.colorsNew,

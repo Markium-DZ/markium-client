@@ -57,6 +57,7 @@ axiosInstance.interceptors.request.use(
   (config) => {
     const lang = localStorage.getItem('i18nextLng') || 'ar';
     config.headers['Accept-Language'] = lang;
+    config.headers['Accept'] = 'application/json';
     return config;
   },
   (error) => {

@@ -21,15 +21,21 @@ import { useGetSubscriptionPackages, useGetCurrentSubscription } from 'src/api/s
 import Iconify from 'src/components/iconify';
 import { bgGradient } from 'src/theme/css';
 
-// Map tier names to package slug prefixes for highlighting
-const TIER_PACKAGE_PREFIX = {
-  medium: 'pro',
-  advanced: 'business',
+// Map feature keys to package slug prefixes for upgrade suggestions
+const FEATURE_PACKAGE_PREFIX = {
+  analytics_traffic: 'pro',
+  analytics_funnel: 'pro',
+  analytics_engagement: 'pro',
+  analytics_orders: 'pro',
+  analytics_export: 'pro',
+  analytics_customers: 'business',
+  analytics_delivery: 'business',
+  analytics_revenue: 'business',
 };
 
 // ----------------------------------------------------------------------
 
-export default function AnalyticsUpgradeModal({ open, onClose, requiredTier }) {
+export default function AnalyticsUpgradeModal({ open, onClose, requiredFeature }) {
   const { t } = useTranslate();
   const router = useRouter();
   const theme = useTheme();
@@ -37,7 +43,7 @@ export default function AnalyticsUpgradeModal({ open, onClose, requiredTier }) {
   const { subscription } = useGetCurrentSubscription();
 
   const currentPackageSlug = subscription?.package?.slug || null;
-  const suggestedPrefix = TIER_PACKAGE_PREFIX[requiredTier] || 'pro';
+  const suggestedPrefix = FEATURE_PACKAGE_PREFIX[requiredFeature] || 'pro';
 
   // Find the cheapest matching package (monthly)
   const suggestedPackage = packages.find(

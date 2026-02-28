@@ -62,6 +62,7 @@ const StoreTemplateView = lazy(() => import('src/pages/dashboard/settings/store-
 const YearlyPaymentView = lazy(() => import('src/pages/dashboard/settings/yearly-payment-view'));
 const SystemPointsView = lazy(() => import('src/pages/dashboard/settings/system-points-view'));
 const MarketingPixelsView = lazy(() => import('src/pages/dashboard/settings/marketing-pixels-view'));
+const SessionReplayView = lazy(() => import('src/pages/dashboard/settings/session-replay-view'));
 const DeliveryCompaniesView = lazy(() => import('src/pages/dashboard/settings/delivery-companies-view'));
 const ContactsSocialView = lazy(() => import('src/pages/dashboard/settings/contacts-social-view'));
 const ColorPaletteView = lazy(() => import('src/pages/dashboard/settings/color-palette-view'));
@@ -183,8 +184,8 @@ export const dashboardRoutes = [
       },
       {
         path: 'settings',
+        element: <SettingsView />,
         children: [
-          { element: <SettingsView />, index: true },
           { path: 'general', element: <GeneralSettingsView /> },
           { path: 'account', element: <AccountSettingsView /> },
           { path: 'store-logo', element: <StoreLogoView /> },
@@ -193,27 +194,28 @@ export const dashboardRoutes = [
           { path: 'yearly-payment', element: <YearlyPaymentView /> },
           { path: 'points', element: <SystemPointsView /> },
           { path: 'marketing-pixels', element: <MarketingPixelsView /> },
+          { path: 'session-replay', element: <SessionReplayView /> },
           { path: 'delivery-companies', element: <DeliveryCompaniesView /> },
           { path: 'contacts-social', element: <ContactsSocialView /> },
           { path: 'color-palette', element: <ColorPaletteView /> },
           { path: 'store-language', element: <StoreLanguageView /> },
-          { path: ":model/admin", element: <AdminSystemItemListPage />, index: true },
-          { path: "payment_methods", element: <SystemItemListPage collection={{metadata:"Payment Method",type:"payment_method"}} />, index: true },
+          { path: ":model/admin", element: <AdminSystemItemListPage /> },
+          { path: "payment_methods", element: <SystemItemListPage collection={{metadata:"Payment Method",type:"payment_method"}} /> },
           { path: 'payment_methods/new', element: <SystemItemCreatePage collection={{metadata:"Payment Method",type:"payment_method"}} /> },
           { path: 'payment_methods/:id/edit', element: <SystemItemEditPage collection={{metadata:"Payment Method",type:"payment_method"}} /> },
-          { path: "states", element: <SystemItemListPage collection={{metadata:"States",type:"state"}} />, index: true },
+          { path: "states", element: <SystemItemListPage collection={{metadata:"States",type:"state"}} /> },
           { path: 'states/new', element: <SystemItemCreatePage collection={{metadata:"States",type:"state"}} /> },
           { path: 'states/:id/edit', element: <SystemItemEditPage collection={{metadata:"States",type:"state"}} /> },
-          { path: "colors", element: <SystemItemListPage collection={{metadata:"Colors",type:"color"}} />, index: true },
+          { path: "colors", element: <SystemItemListPage collection={{metadata:"Colors",type:"color"}} /> },
           { path: 'colors/new', element: <SystemItemCreatePage collection={{metadata:"Colors",type:"color"}} /> },
           { path: 'colors/:id/edit', element: <SystemItemEditPage collection={{metadata:"Colors",type:"color"}} /> },
-          { path: "countries", element: <SystemItemListPage collection={{metadata:"Countries",type:"country"}} />, index: true },
+          { path: "countries", element: <SystemItemListPage collection={{metadata:"Countries",type:"country"}} /> },
           { path: 'countries/new', element: <SystemItemCreatePage collection={{metadata:"Countries",type:"country"}} /> },
           { path: 'countries/:id/edit', element: <SystemItemEditPage /> },
-          { path: "neighborhood", element: <SystemItemListPage collection={{metadata:"Neighborhood",type:"neighborhood"}} />, index: true },
+          { path: "neighborhood", element: <SystemItemListPage collection={{metadata:"Neighborhood",type:"neighborhood"}} /> },
           { path: 'neighborhood/new', element: <SystemItemCreatePage collection={{metadata:"Neighborhood",type:"neighborhood"}} /> },
           { path: 'neighborhood/:id/edit', element: <SystemItemEditPage collection={{metadata:"Neighborhood",type:"neighborhood"}} /> },
-          { path: "categories", element: <SystemItemListPage collection={{metadata:"Categories",type:"categories"}} />, index: true },
+          { path: "categories", element: <SystemItemListPage collection={{metadata:"Categories",type:"categories"}} /> },
           { path: 'categories/new', element: <SystemItemCreatePage collection={{metadata:"Categories",type:"categories"}} /> },
           { path: 'categories/:id/edit', element: <SystemItemEditPage collection={{metadata:"Categories",type:"categories"}} /> },
         ],

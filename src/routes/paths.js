@@ -151,6 +151,7 @@ export const paths = {
       yearly_payment: `${ROOTS.DASHBOARD}/settings/yearly-payment`,
       points: `${ROOTS.DASHBOARD}/settings/points`,
       marketing_pixels: `${ROOTS.DASHBOARD}/settings/marketing-pixels`,
+      session_replay: `${ROOTS.DASHBOARD}/settings/session-replay`,
       delivery_companies: `${ROOTS.DASHBOARD}/settings/delivery-companies`,
       contacts_social: `${ROOTS.DASHBOARD}/settings/contacts-social`,
       color_palette: `${ROOTS.DASHBOARD}/settings/color-palette`,

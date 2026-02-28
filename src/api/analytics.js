@@ -30,7 +30,7 @@ export const DATE_RANGE_OPTIONS = [
 
 /**
  * Fetch analytics capabilities — what sections the current user can access.
- * This is the single source of truth for tier gating in the UI.
+ * Each section has { accessible, required_feature } based on per-feature gating.
  */
 export function useGetAnalyticsCapabilities() {
   const url = endpoints.analytics.capabilities;
@@ -40,12 +40,8 @@ export function useGetAnalyticsCapabilities() {
   const memoizedValue = useMemo(
     () => ({
       capabilities: data?.data || null,
-      tier: data?.data?.tier || 'basic',
       sections: data?.data?.sections || {},
-      allowedDateRanges: data?.data?.allowed_date_ranges || ['-1d', '-7d'],
-      maxDays: data?.data?.max_days || 7,
       exportEnabled: data?.data?.export_enabled || false,
-      presentationMode: data?.data?.presentation_mode || 'numbers_only',
       capabilitiesLoading: isLoading,
       capabilitiesError: error,
       capabilitiesValidating: isValidating,

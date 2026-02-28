@@ -13,6 +13,7 @@ import { Link as RouterLink } from 'react-router-dom';
 import { useGetProducts } from 'src/api/product';
 import { useGetOrders } from 'src/api/orders';
 import { useGetMedia } from 'src/api/media';
+import { useGetMyStore } from 'src/api/store';
 import { useGetLowStockInventory } from 'src/api/inventory';
 import {
   useGetAnalyticsOverview,
@@ -54,6 +55,7 @@ export default function OverviewEcommerceView() {
   const { products, productsLoading, productsError, productsMutate } = useGetProducts();
   const { orders, ordersLoading, ordersError, mutate: ordersMutate } = useGetOrders();
   const { media, total: mediaTotal, mutate: mediaMutate } = useGetMedia(1, 1);
+  const { store, mutate: storeMutate } = useGetMyStore(user?.store?.slug);
 
   const settings = useSettingsContext();
 
@@ -61,7 +63,8 @@ export default function OverviewEcommerceView() {
   const handleRefreshData = useCallback(() => {
     productsMutate?.();
     mediaMutate?.();
-  }, [productsMutate, mediaMutate]);
+    storeMutate?.();
+  }, [productsMutate, mediaMutate, storeMutate]);
 
   // Show skeleton while core data is loading or on connection error (prevents grade misclassification)
   const isStillLoading = productsLoading || ordersLoading;
@@ -72,10 +75,12 @@ export default function OverviewEcommerceView() {
   const ordersCount = orders?.length || 0;
   const hasMedia = mediaTotal > 0 || (media && media.length > 0);
 
-  // Determine if user is new (no products)
-  const isNewUser = !gradeLoading && productsCount === 0;
-  // B grade merchant: has products but no orders yet
-  const isBGradeMerchant = !gradeLoading && productsCount > 0 && ordersCount === 0;
+  const onboardingCompleted = !!store?.config?.onboarding_completed;
+
+  // Determine if user is new (no products, or has products but hasn't completed onboarding step 3)
+  const isNewUser = !gradeLoading && (productsCount === 0 || (productsCount > 0 && !onboardingCompleted));
+  // B grade merchant: has products, completed onboarding, but no orders yet
+  const isBGradeMerchant = !gradeLoading && productsCount > 0 && onboardingCompleted && ordersCount === 0;
   // Third grade user: has products and orders (established merchant)
   const isThirdGradeUser = !gradeLoading && !isNewUser && !isBGradeMerchant;
 
@@ -208,6 +213,8 @@ export default function OverviewEcommerceView() {
               ordersCount={ordersCount}
               hasMedia={hasMedia}
               isPhoneVerified={user?.is_phone_verified ?? true}
+              onboardingCompleted={onboardingCompleted}
+              products={products}
               onRefresh={handleRefreshData}
             />
           </Grid>

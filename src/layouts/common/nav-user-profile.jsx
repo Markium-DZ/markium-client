@@ -122,7 +122,7 @@ export default function NavUserProfile() {
 
             <Typography
               variant="caption"
-              sx={{ color: alpha('#fff', 0.6), display: 'block', mb: 1.5, lineHeight: 1.4 }}
+              sx={{ color: alpha('#fff', 0.85), display: 'block', mb: 1.5, lineHeight: 1.4 }}
             >
               {t('upgrade_to_pro_description')}
             </Typography>

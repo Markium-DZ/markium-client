@@ -109,7 +109,7 @@ export default function AnalyticsWidgetSummary({
         <AnalyticsUpgradeModal
           open={upgradeOpen}
           onClose={handleCloseUpgrade}
-          requiredTier={sectionInfo?.required_tier}
+          requiredFeature={sectionInfo?.required_feature}
         />
       )}
     </>

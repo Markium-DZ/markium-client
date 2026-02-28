@@ -134,7 +134,7 @@ export default function AnalyticsGate({ sectionKey, children }) {
       <AnalyticsUpgradeModal
         open={upgradeOpen}
         onClose={handleCloseUpgrade}
-        requiredTier={sectionInfo?.required_tier}
+        requiredFeature={sectionInfo?.required_feature}
       />
     </>
   );

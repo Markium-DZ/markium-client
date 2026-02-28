@@ -10,7 +10,6 @@ import Grid from '@mui/material/Unstable_Grid2';
 import Typography from '@mui/material/Typography';
 import LoadingButton from '@mui/lab/LoadingButton';
 import Alert from '@mui/material/Alert';
-import Divider from '@mui/material/Divider';
 import Radio from '@mui/material/Radio';
 import RadioGroup from '@mui/material/RadioGroup';
 import FormControlLabel from '@mui/material/FormControlLabel';
@@ -23,7 +22,6 @@ import Iconify from 'src/components/iconify';
 
 import { useSnackbar } from 'src/components/snackbar';
 import FormProvider, {
-  RHFTextField,
   RHFUploadAvatar,
 } from 'src/components/hook-form';
 import showError from 'src/utils/show_error';
@@ -73,16 +71,6 @@ export default function GeneralSettingsForm() {
     logo: Yup.mixed().nullable(),
     // Language
     default_language: Yup.string().required(t('default_language_required')),
-    // Contact Information
-    phone: Yup.string(),
-    whatsapp: Yup.string(),
-    telegram: Yup.string(),
-    email: Yup.string().email(t('email_must_be_valid')),
-    // Social Media Links
-    facebook: Yup.string().url(t('must_be_valid_url')).nullable(),
-    instagram: Yup.string().url(t('must_be_valid_url')).nullable(),
-    tiktok: Yup.string().url(t('must_be_valid_url')).nullable(),
-    youtube: Yup.string().url(t('must_be_valid_url')).nullable(),
   });
 
   const defaultValues = useMemo(
@@ -91,16 +79,6 @@ export default function GeneralSettingsForm() {
       logo: store?.logo_url || null,
       // Language
       default_language: store?.config?.default_language || 'en',
-      // Contact
-      phone: store?.config?.contacts_social?.contacts?.phone || '',
-      whatsapp: store?.config?.contacts_social?.contacts?.whatsapp || '',
-      telegram: store?.config?.contacts_social?.contacts?.telegram || '',
-      email: store?.config?.contacts_social?.contacts?.email || '',
-      // Social Media
-      facebook: store?.config?.contacts_social?.social_media?.facebook || '',
-      instagram: store?.config?.contacts_social?.social_media?.instagram || '',
-      tiktok: store?.config?.contacts_social?.social_media?.tiktok || '',
-      youtube: store?.config?.contacts_social?.social_media?.youtube || '',
     }),
     [store]
   );
@@ -150,23 +128,9 @@ export default function GeneralSettingsForm() {
         }
       }
 
-      // Transform flat form data into structured objects for config
+      // Save language config
       const configData = {
         default_language: data.default_language,
-        contacts_social: {
-          contacts: {
-            phone: data.phone,
-            whatsapp: data.whatsapp,
-            telegram: data.telegram,
-            email: data.email,
-          },
-          social_media: {
-            facebook: data.facebook,
-            instagram: data.instagram,
-            tiktok: data.tiktok,
-            youtube: data.youtube,
-          },
-        },
       };
 
       await updateStoreConfig({ config: configData });
@@ -194,20 +158,6 @@ export default function GeneralSettingsForm() {
   const handleRemoveLogo = () => {
     setValue('logo', null, { shouldValidate: true });
   };
-
-  const contactFields = [
-    { name: 'phone', label: t('phone_number'), icon: 'solar:phone-bold', placeholder: '+213 555 123 456' },
-    { name: 'whatsapp', label: t('whatsapp'), icon: 'ic:baseline-whatsapp', placeholder: '+213 555 123 456' },
-    { name: 'telegram', label: t('telegram'), icon: 'ic:baseline-telegram', placeholder: '@yourusername' },
-    { name: 'email', label: t('email'), icon: 'solar:letter-bold', placeholder: 'contact@example.com' },
-  ];
-
-  const socialFields = [
-    { name: 'facebook', label: 'Facebook', icon: 'eva:facebook-fill', color: '#1877F2', placeholder: 'https://facebook.com/yourpage' },
-    { name: 'instagram', label: 'Instagram', icon: 'ant-design:instagram-filled', color: '#E4405F', placeholder: 'https://instagram.com/youraccount' },
-    { name: 'tiktok', label: 'TikTok', icon: 'ic:baseline-tiktok', color: '#000000', placeholder: 'https://tiktok.com/@youraccount' },
-    { name: 'youtube', label: 'YouTube', icon: 'ant-design:youtube-filled', color: '#FF0000', placeholder: 'https://youtube.com/c/yourchannel' },
-  ];
 
   return (
     <FormProvider methods={methods} onSubmit={onSubmit}>
@@ -413,85 +363,6 @@ export default function GeneralSettingsForm() {
           </Card>
         </Grid>
 
-        {/* Contact Information Section */}
-        <Grid xs={12}>
-          <Card sx={{ p: 3 }}>
-            <Stack spacing={3}>
-              <Box>
-                <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
-                  <Iconify icon="solar:phone-calling-bold-duotone" width={28} sx={{ color: 'primary.main' }} />
-                  <Typography variant="h6">{t('contact_information')}</Typography>
-                </Stack>
-                <Typography variant="body2" color="text.secondary">
-                  {t('contact_information_description')}
-                </Typography>
-              </Box>
-
-              <Divider />
-
-              <Grid container spacing={3}>
-                {contactFields.map((field) => (
-                  <Grid xs={12} md={6} key={field.name}>
-                    <RHFTextField
-                      name={field.name}
-                      label={field.label}
-                      placeholder={field.placeholder}
-                      InputProps={{
-                        startAdornment: (
-                          <Iconify
-                            icon={field.icon}
-                            width={20}
-                            sx={{ mr: 1, color: 'text.disabled' }}
-                          />
-                        ),
-                      }}
-                    />
-                  </Grid>
-                ))}
-              </Grid>
-            </Stack>
-          </Card>
-        </Grid>
-
-        {/* Social Media Links Section */}
-        <Grid xs={12}>
-          <Card sx={{ p: 3 }}>
-            <Stack spacing={3}>
-              <Box>
-                <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
-                  <Iconify icon="solar:share-bold-duotone" width={28} sx={{ color: 'primary.main' }} />
-                  <Typography variant="h6">{t('social_media_links')}</Typography>
-                </Stack>
-                <Typography variant="body2" color="text.secondary">
-                  {t('social_media_links_description')}
-                </Typography>
-              </Box>
-
-              <Divider />
-
-              <Grid container spacing={3}>
-                {socialFields.map((field) => (
-                  <Grid xs={12} md={6} key={field.name}>
-                    <RHFTextField
-                      name={field.name}
-                      label={field.label}
-                      placeholder={field.placeholder}
-                      InputProps={{
-                        startAdornment: (
-                          <Iconify
-                            icon={field.icon}
-                            width={20}
-                            sx={{ mr: 1, color: field.color }}
-                          />
-                        ),
-                      }}
-                    />
-                  </Grid>
-                ))}
-              </Grid>
-            </Stack>
-          </Card>
-        </Grid>
       </Grid>
     </FormProvider>
   );

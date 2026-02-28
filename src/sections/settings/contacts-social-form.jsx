@@ -28,7 +28,6 @@ import { AuthContext } from 'src/auth/context/jwt';
 export default function ContactsSocialForm() {
   const { user } = useContext(AuthContext)
   const { store } = useGetMyStore(user?.store?.slug);
-  console.log("store :store : ", store);
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslate();
 
@@ -102,9 +101,6 @@ export default function ContactsSocialForm() {
           youtube: data.youtube,
         },
       };
-
-      // Console log the structured data
-      console.log('Contacts & Social Media data:', structuredData);
 
       await updateStoreConfig({ config: { contacts_social: structuredData } });
 

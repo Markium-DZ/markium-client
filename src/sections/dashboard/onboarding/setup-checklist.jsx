@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useContext } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import Box from '@mui/material/Box';
@@ -12,13 +12,14 @@ import CircularProgress from '@mui/material/CircularProgress';
 import Link from '@mui/material/Link';
 import { alpha, useTheme } from '@mui/material/styles';
 
-import { useRouter } from 'src/routes/hooks';
-import { paths } from 'src/routes/paths';
-
 import Iconify from 'src/components/iconify';
+import { useSnackbar } from 'src/components/snackbar';
 import { ConfirmDialog } from 'src/components/custom-dialog';
 import { MediaPickerDialog } from 'src/components/media-picker';
 import ProductNewEditForm from 'src/sections/product/product-new-edit-form';
+import { AuthContext } from 'src/auth/context/jwt';
+import { updateStoreConfig } from 'src/api/store';
+import { deployProduct } from 'src/api/product';
 
 // ----------------------------------------------------------------------
 
@@ -28,15 +29,20 @@ export default function SetupChecklist({
   ordersCount = 0,
   hasMedia = false,
   isPhoneVerified = true,
+  onboardingCompleted = false,
+  products = [],
   onRefresh,
 }) {
   const { t } = useTranslation();
   const theme = useTheme();
-  const router = useRouter();
+  const { user } = useContext(AuthContext);
+  const { enqueueSnackbar } = useSnackbar();
   const [mediaPickerOpen, setMediaPickerOpen] = useState(false);
   const [productDialogOpen, setProductDialogOpen] = useState(false);
   const [isFormDirty, setIsFormDirty] = useState(false);
   const [unsavedDialogOpen, setUnsavedDialogOpen] = useState(false);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [shareLoading, setShareLoading] = useState(false);
 
   const handleOpenMediaPicker = useCallback(() => {
     setMediaPickerOpen(true);
@@ -75,6 +81,33 @@ export default function SetupChecklist({
     handleCloseProductDialog();
   }, [handleCloseProductDialog]);
 
+  const handlePublishConfirm = useCallback(async () => {
+    const slug = user?.store?.slug;
+    if (!slug) {
+      enqueueSnackbar(t('store_url_not_available'), { variant: 'warning' });
+      return;
+    }
+    setShareLoading(true);
+    try {
+      // Deploy the product created in step 2
+      const product = products?.[0];
+      if (product?.id) {
+        await deployProduct(product.id);
+      }
+
+      const storeUrl = `https://${slug}.markium.online/?store=${slug}`;
+      await navigator.clipboard.writeText(storeUrl);
+      await updateStoreConfig({ config: { onboarding_completed: true } });
+      enqueueSnackbar(t('store_url_copied'), { variant: 'success' });
+      setShareDialogOpen(false);
+      onRefresh?.();
+    } catch (error) {
+      enqueueSnackbar(t('operation_failed'), { variant: 'error' });
+    } finally {
+      setShareLoading(false);
+    }
+  }, [user, products, enqueueSnackbar, t, onRefresh]);
+
   const steps = [
     {
       id: 'media',
@@ -95,13 +128,13 @@ export default function SetupChecklist({
       actionLabel: t('onboarding_create_product'),
     },
     {
-      id: 'customize',
-      title: t('onboarding_customize_store'),
-      description: t('onboarding_customize_store_desc'),
-      completed: false,
-      icon: 'solar:palette-bold-duotone',
-      action: () => router.push(paths.dashboard.settings.root),
-      actionLabel: t('onboarding_customize_now'),
+      id: 'share',
+      title: t('onboarding_share_product'),
+      description: t('onboarding_share_product_desc'),
+      completed: onboardingCompleted,
+      icon: 'solar:upload-bold-duotone',
+      action: () => setShareDialogOpen(true),
+      actionLabel: t('onboarding_share_now'),
     },
   ];
 
@@ -190,7 +223,7 @@ export default function SetupChecklist({
                   sx={{
                     p: 2,
                     borderRadius: 2,
-                    cursor: !step.completed && step.action ? 'pointer' : 'default',
+                    cursor: isActive && step.action ? 'pointer' : 'default',
                     bgcolor: step.completed
                       ? alpha(theme.palette.success.main, 0.06)
                       : isActive
@@ -206,12 +239,12 @@ export default function SetupChecklist({
                       ? `0 0 0 1px ${alpha(theme.palette.primary.main, 0.08)}`
                       : 'none',
                     transition: 'all 0.2s ease',
-                    '&:hover': !step.completed ? {
+                    '&:hover': isActive ? {
                       borderColor: alpha(theme.palette.primary.main, 0.3),
                       bgcolor: alpha(theme.palette.primary.main, 0.04),
                     } : {},
                   }}
-                  onClick={!step.completed && step.action ? step.action : undefined}
+                  onClick={isActive && step.action ? step.action : undefined}
                 >
                   {/* Step number / check */}
                   <Box
@@ -270,7 +303,7 @@ export default function SetupChecklist({
                   </Stack>
 
                   {/* Arrow / action indicator */}
-                  {!step.completed && step.action && (
+                  {isActive && step.action && (
                     <Iconify
                       icon={theme.direction === 'rtl' ? 'solar:alt-arrow-left-outline' : 'solar:alt-arrow-right-outline'}
                       width={20}
@@ -364,6 +397,25 @@ export default function SetupChecklist({
           </Button>
         }
       />
+
+      {/* Share product confirmation */}
+      <ConfirmDialog
+        open={shareDialogOpen}
+        onClose={() => setShareDialogOpen(false)}
+        title={t('onboarding_share_product')}
+        content={t('onboarding_share_confirm_message')}
+        action={
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handlePublishConfirm}
+            disabled={shareLoading}
+            startIcon={<Iconify icon="solar:upload-bold" width={18} />}
+          >
+            {shareLoading ? t('loading') : t('onboarding_share_now')}
+          </Button>
+        }
+      />
     </>
   );
 }
@@ -374,5 +426,7 @@ SetupChecklist.propTypes = {
   ordersCount: PropTypes.number,
   hasMedia: PropTypes.bool,
   isPhoneVerified: PropTypes.bool,
+  onboardingCompleted: PropTypes.bool,
+  products: PropTypes.array,
   onRefresh: PropTypes.func,
 };

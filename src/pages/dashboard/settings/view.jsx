@@ -1,141 +1,279 @@
-import React, { useState, useCallback } from 'react';
+import { useMemo, useState, useCallback, useEffect } from 'react';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 
 import Box from '@mui/material/Box';
-import Card from '@mui/material/Card';
+import Tab from '@mui/material/Tab';
+import Tabs from '@mui/material/Tabs';
+import List from '@mui/material/List';
+import ListItemButton from '@mui/material/ListItemButton';
+import ListItemIcon from '@mui/material/ListItemIcon';
+import ListItemText from '@mui/material/ListItemText';
 import Container from '@mui/material/Container';
-import CardHeader from '@mui/material/CardHeader';
-import Typography from '@mui/material/Typography';
-import ToggleButton from '@mui/material/ToggleButton';
-import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
+import { alpha, useTheme } from '@mui/material/styles';
 
 import { paths } from 'src/routes/paths';
 
+import { useTranslate } from 'src/locales';
+
 import { RoleBasedGuard } from 'src/auth/guard';
 
+import Iconify from 'src/components/iconify';
 import { useSettingsContext } from 'src/components/settings';
 import CustomBreadcrumbs from 'src/components/custom-breadcrumbs';
-import { t } from 'i18next';
-import { Divider, Link } from '@mui/material';
-import Iconify from 'src/components/iconify';
+
+// ----------------------------------------------------------------------
+
+const TABS = [
+  {
+    value: 'store',
+    labelKey: 'store_settings',
+    icon: 'solar:shop-bold-duotone',
+    items: [
+      {
+        key: 'general',
+        titleKey: 'general_settings',
+        icon: 'solar:settings-bold-duotone',
+        href: paths?.dashboard.settings.general,
+      },
+      {
+        key: 'contacts',
+        titleKey: 'contacts_social_media',
+        icon: 'solar:chat-round-dots-bold-duotone',
+        href: paths?.dashboard.settings.contacts_social,
+      },
+      {
+        key: 'template',
+        titleKey: 'store_template',
+        icon: 'solar:palette-round-bold-duotone',
+        href: paths?.dashboard.settings.store_template,
+      },
+      {
+        key: 'colors',
+        titleKey: 'color_palette',
+        icon: 'solar:tuning-2-bold-duotone',
+        href: paths?.dashboard.settings.color_palette,
+      },
+      {
+        key: 'categories',
+        titleKey: 'categories',
+        icon: 'solar:widget-5-bold-duotone',
+        href: paths?.dashboard.settings.categories,
+      },
+    ],
+  },
+  {
+    value: 'marketing',
+    labelKey: 'marketing_settings',
+    icon: 'solar:chart-2-bold-duotone',
+    items: [
+      {
+        key: 'pixels',
+        titleKey: 'social_media_pixels',
+        icon: 'solar:target-bold-duotone',
+        href: paths?.dashboard.settings.marketing_pixels,
+      },
+      {
+        key: 'session_replay',
+        titleKey: 'session_replay',
+        icon: 'solar:videocamera-record-bold-duotone',
+        href: paths?.dashboard.settings.session_replay,
+      },
+    ],
+  },
+  {
+    value: 'shipping',
+    labelKey: 'delivery_settings',
+    icon: 'solar:box-bold-duotone',
+    items: [
+      {
+        key: 'delivery',
+        titleKey: 'delivery_companies',
+        icon: 'solar:delivery-bold-duotone',
+        href: paths?.dashboard.settings.delivery_companies,
+      },
+    ],
+  },
+];
+
+// Build a flat map: href → { tabValue, titleKey }
+const ALL_ITEMS = TABS.flatMap((tab) =>
+  tab.items.map((item) => ({ ...item, tabValue: tab.value }))
+);
+
 // ----------------------------------------------------------------------
 
 export default function SettingsView() {
-  const settings = useSettingsContext();
-  const [role, setRole] = useState('admin');
+  const appSettings = useSettingsContext();
+  const { t } = useTranslate();
+  const theme = useTheme();
+  const { pathname } = useLocation();
+  const navigate = useNavigate();
 
-  const groups = [
-    {
-      title: "general_settings",
-      icon: "solar:user-bold-duotone",
-      items: [
-        { type: "general", header: "general_settings", subheader: "manage_store_general_settings", href: paths?.dashboard.settings.general },
-      ]
-    },
-    {
-      title: "store_settings",
-      icon: "solar:shop-bold-duotone",
-      items: [
-        { type: "general_settings", header: "general_settings", subheader: "manage_logo_language_contacts", href: paths?.dashboard.settings.general },
-        // { type: "store_logo", header: "store_logo", subheader: "upload_and_update_store_logo", href: paths?.dashboard.settings.store_logo },
-        // { type: "store_data", header: "store_data", subheader: "manage_store_information", href: paths?.dashboard.settings.store_data },
-        { type: "store_template", header: "store_template", subheader: "choose_and_update_store_theme", href: paths?.dashboard.settings.store_template },
-        // { type: "store_language", header: "store_language", subheader: "set_default_store_language", href: paths?.dashboard.settings.store_language },
-        { type: "color_palette", header: "color_palette", subheader: "customize_color_scheme_and_branding", href: paths?.dashboard.settings.color_palette },
-        { type: "add-categories", header: "categories", subheader: "manage_product_categories", href: paths?.dashboard.settings.categories },
+  // Determine active item from the current URL
+  const activeItem = useMemo(
+    () => ALL_ITEMS.find((item) => pathname.includes(item.href)) || ALL_ITEMS[0],
+    [pathname]
+  );
 
-      ]
-    },
-    // {
-    //   title: "payment_settings",
-    //   icon: "solar:card-bold-duotone",
-    //   items: [
-    //     { type: "yearly_payment", header: "yearly_payment", subheader: "manage_yearly_subscription_payment", href: paths?.dashboard.settings.yearly_payment },
-    //     { type: "points_settings", header: "points_settings", subheader: "configure_points_and_rewards_system", href: paths?.dashboard.settings.points },
-    //   ]
-    // },
-    {
-      title: "marketing_settings",
-      icon: "solar:chart-2-bold-duotone",
-      items: [
-        { type: "marketing_pixels", header: "social_media_pixels", subheader: "configure_tracking_pixels_and_analytics", href: paths?.dashboard.settings.marketing_pixels },
-        { type: "contacts_social", header: "contacts_social_media", subheader: "manage_contact_info_and_social_links", href: paths?.dashboard.settings.contacts_social },
+  const [currentTab, setCurrentTab] = useState(activeItem.tabValue);
 
-      ]
-    },
-    {
-      title: "delivery_settings",
-      icon: "solar:box-bold-duotone",
-      items: [
-        { type: "delivery_companies", header: "delivery_companies", subheader: "configure_delivery_companies_integration", href: paths?.dashboard.settings.delivery_companies },
-      ]
-    },
-    // {
-    //   title: "appearance_settings",
-    //   icon: "solar:palette-bold-duotone",
-    //   items: [
-    //     { type: "color_palette", header: "color_palette", subheader: "customize_color_scheme_and_branding", href: paths?.dashboard.settings.color_palette },
-    //   ]
-    // },
-  ]
-
-
-  const handleChangeRole = useCallback((event, newRole) => {
-    if (newRole !== null) {
-      setRole(newRole);
+  // Sync tab when URL changes (e.g. browser back/forward)
+  useEffect(() => {
+    if (activeItem.tabValue !== currentTab) {
+      setCurrentTab(activeItem.tabValue);
     }
-  }, []);
+  }, [activeItem.tabValue]);
+
+  const activeTab = TABS.find((tab) => tab.value === currentTab) || TABS[0];
+
+  const handleChangeTab = useCallback(
+    (event, newValue) => {
+      setCurrentTab(newValue);
+      // Navigate to first item in the new tab
+      const firstItem = TABS.find((tab) => tab.value === newValue)?.items[0];
+      if (firstItem) {
+        navigate(firstItem.href);
+      }
+    },
+    [navigate]
+  );
+
+  const handleSidebarClick = useCallback(
+    (href) => {
+      navigate(href);
+    },
+    [navigate]
+  );
+
+  // Check if we're on the settings index (no sub-route)
+  const isIndex = pathname === paths.dashboard.settings.root || pathname === `${paths.dashboard.settings.root}/`;
+
+  // Redirect index to first item
+  useEffect(() => {
+    if (isIndex) {
+      navigate(ALL_ITEMS[0].href, { replace: true });
+    }
+  }, [isIndex, navigate]);
+
+  // Breadcrumb: Dashboard > Settings > Active Item
+  const breadcrumbLinks = [
+    { name: t('dashboard'), href: paths.dashboard.root },
+    { name: t('system_settings'), href: paths.dashboard.settings.root },
+    ...(activeItem ? [{ name: t(activeItem.titleKey) }] : []),
+  ];
 
   return (
-    <Container maxWidth={settings.themeStretch ? false : 'lg'}>
+    <Container maxWidth={false}>
       <CustomBreadcrumbs
-        heading={t("system_settings")}
-        links={[
-          {
-            name: t('dashboard'),
-            href: paths.dashboard.root,
-          },
-          {
-            name: t("system_settings"),
-          },
-        ]}
-        sx={{
-          mb: { xs: 3, md: 5 },
-        }}
+        heading={t('system_settings')}
+        links={breadcrumbLinks}
+        sx={{ mb: { xs: 3, md: 4 } }}
       />
 
-      <RoleBasedGuard hasContent roles={[role]} sx={{ py: 10 }}>
-        {
-          groups?.map((group, index) => (
-            <React.Fragment key={group.title}>
-              {index > 0 && <Divider orientation="horizontal" sx={{ mt: 4, display: 'flex' }} />}
-              <Typography variant="h4" sx={{ mb: 2, mt: 2, display: "flex", alignItems: "center" }} >
-                <Iconify icon={group?.icon} width={40} height={40} sx={{ mx: 1, color: 'primary.main' }} />
-                {t(group?.title)}
-              </Typography>
-              {/* <Box gap={3} display="grid" gridTemplateColumns="repeat(3, 1fr)"> */}
-              <Box
-                rowGap={3}
-                columnGap={2}
-                display="grid"
-                gridTemplateColumns={{
-                  xs: 'repeat(1, 1fr)',
-                  sm: 'repeat(3, 1fr)',
-                }}
-              >
-                {
-                  group.items?.map((item, index2) => (
-                    <Link key={item.type} href={item?.href} underline='none'>
-                      <Card sx={{ pb: 2 }}>
-                        <CardHeader title={t(item?.header)} subheader={<Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>{t(item?.subheader)}<Iconify icon="tabler:arrow-narrow-left" width={32} height={32} sx={{ color: 'primary.main' }} /></Box>} />
-                      </Card>
-                    </Link>
-                  ))
-                }
-              </Box>
-            </React.Fragment>
-          ))
-        }
+      <RoleBasedGuard hasContent roles={['admin', 'manager']} sx={{ py: 10 }}>
+        {/* Tabs */}
+        <Tabs
+          value={currentTab}
+          onChange={handleChangeTab}
+          sx={{
+            mb: 3,
+            borderBottom: (theme) => `1px solid ${theme.palette.divider}`,
+            '& .MuiTab-root': {
+              minHeight: 48,
+              fontWeight: 600,
+              gap: 1,
+            },
+          }}
+        >
+          {TABS.map((tab) => (
+            <Tab
+              key={tab.value}
+              value={tab.value}
+              icon={<Iconify icon={tab.icon} width={22} />}
+              iconPosition="start"
+              label={t(tab.labelKey)}
+            />
+          ))}
+        </Tabs>
 
+        {/* Sidebar + Content */}
+        <Box
+          sx={{
+            display: 'flex',
+            gap: { xs: 0, md: 3 },
+            flexDirection: { xs: 'column', md: 'row' },
+          }}
+        >
+          {/* Secondary Sidebar — only shown when tab has multiple items */}
+          {activeTab.items.length > 1 && (
+            <Box
+              sx={{
+                width: { xs: '100%', md: 260 },
+                flexShrink: 0,
+                mb: { xs: 2, md: 0 },
+              }}
+            >
+              <List disablePadding>
+                {activeTab.items.map((item) => {
+                  const isActive = activeItem?.key === item.key;
+
+                  return (
+                    <ListItemButton
+                      key={item.key}
+                      onClick={() => handleSidebarClick(item.href)}
+                      sx={{
+                        px: 2,
+                        py: 1.25,
+                        mb: 0.5,
+                        borderRadius: 1,
+                        ...(isActive && {
+                          bgcolor: alpha(theme.palette.primary.main, 0.08),
+                          color: 'primary.main',
+                          fontWeight: 700,
+                          borderLeft: `3px solid ${theme.palette.primary.main}`,
+                          '[dir=rtl] &': {
+                            borderLeft: 'none',
+                            borderRight: `3px solid ${theme.palette.primary.main}`,
+                          },
+                        }),
+                        ...(!isActive && {
+                          color: 'text.secondary',
+                          '&:hover': {
+                            bgcolor: 'action.hover',
+                            color: 'text.primary',
+                          },
+                        }),
+                      }}
+                    >
+                      <ListItemIcon
+                        sx={{
+                          minWidth: 36,
+                          color: isActive ? 'primary.main' : 'text.disabled',
+                        }}
+                      >
+                        <Iconify icon={item.icon} width={22} />
+                      </ListItemIcon>
+
+                      <ListItemText
+                        primary={t(item.titleKey)}
+                        primaryTypographyProps={{
+                          variant: 'body2',
+                          fontWeight: isActive ? 700 : 500,
+                          noWrap: true,
+                        }}
+                      />
+                    </ListItemButton>
+                  );
+                })}
+              </List>
+            </Box>
+          )}
+
+          {/* Content Area */}
+          <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+            <Outlet />
+          </Box>
+        </Box>
       </RoleBasedGuard>
     </Container>
   );

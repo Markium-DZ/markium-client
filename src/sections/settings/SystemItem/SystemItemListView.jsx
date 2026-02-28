@@ -26,7 +26,7 @@ const types = {
         add_new_item_lable: "add_new_category",
         keyInValues: "categories",
         TABLE_HEAD: [
-            { id: 'name', label: t('category'), type: "text", width: 290, align: 'start' },
+            { id: 'name', label: t('category'), type: "text", width: 290, align: 'left' },
             // { id: 'actions', label: t('actions'), type: "threeDots", width: 88, align: "right" },
         ],
         href: paths.dashboard.settings.categoriesNew,
@@ -51,13 +51,11 @@ export default function SystemItemListView({ collection }) {
     const [dataFiltered, setDataFiltered] = useState([]);
 
     const currentType = collection?.type;
-    console.log("currentType : ", currentType);
 
 
 
 
     const { items: gVisibleItems, itemsLoading } = useGetSystemCategories();
-    console.log("gVisibleItems : ", gVisibleItems)
     const [visibleItems, setVisibleItems] = useState(gVisibleItems);
     useEffect(() => {
         setVisibleItems(gVisibleItems)

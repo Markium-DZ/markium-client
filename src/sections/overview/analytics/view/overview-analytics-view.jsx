@@ -18,6 +18,7 @@ import { useTranslate } from 'src/locales';
 import {
   useGetAnalyticsCapabilities,
   downloadAnalyticsExport,
+  DATE_RANGE_OPTIONS,
 } from 'src/api/analytics';
 
 import AnalyticsTabOverview from './analytics-tab-overview';
@@ -51,15 +52,12 @@ export default function OverviewAnalyticsView() {
   const { t } = useTranslate();
 
   const {
-    allowedDateRanges,
     exportEnabled,
     capabilitiesLoading,
     sections,
   } = useGetAnalyticsCapabilities();
 
-  const [dateFrom, setDateFrom] = useState(
-    allowedDateRanges[allowedDateRanges.length - 1] || '-7d'
-  );
+  const [dateFrom, setDateFrom] = useState('-30d');
 
   const [currentTab, setCurrentTab] = useState('overview');
 
@@ -106,9 +104,9 @@ export default function OverviewAnalyticsView() {
               onChange={(e) => setDateFrom(e.target.value)}
               sx={{ minWidth: 160 }}
             >
-              {allowedDateRanges.map((range) => (
-                <MenuItem key={range} value={range}>
-                  {t(DATE_RANGE_LABELS[range] || range)}
+              {DATE_RANGE_OPTIONS.map((opt) => (
+                <MenuItem key={opt.value} value={opt.value}>
+                  {t(DATE_RANGE_LABELS[opt.value] || opt.value)}
                 </MenuItem>
               ))}
             </TextField>
