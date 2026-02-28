@@ -65,6 +65,11 @@ export function useNavData() {
           {
             title: t('overview'),
             path: paths.dashboard.root,
+            icon: ICONS.dashboard,
+          },
+          {
+            title: t('analytics_title'),
+            path: paths.dashboard.general.analytics,
             icon: ICONS.analytics,
           },
         ],

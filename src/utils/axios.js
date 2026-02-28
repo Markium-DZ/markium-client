@@ -159,6 +159,21 @@ export const endpoints = {
     traffic: '/analytics/traffic',
     funnel: '/analytics/funnel',
     topProducts: '/analytics/top-products',
+    capabilities: '/analytics/capabilities',
+    trafficSources: '/analytics/traffic-sources',
+    conversion: '/analytics/conversion',
+    ordersGeography: '/analytics/orders-geography',
+    cartAbandonment: '/analytics/cart-abandonment',
+    customerInsights: '/analytics/customer-insights',
+    deliveryPerformance: '/analytics/delivery-performance',
+    revenueBreakdown: '/analytics/revenue-breakdown',
+    export: '/analytics/export',
+    deviceBreakdown: '/analytics/device-breakdown',
+    visitorTypes: '/analytics/visitor-types',
+    landingPages: '/analytics/landing-pages',
+    bounceRate: '/analytics/bounce-rate',
+    sessionDuration: '/analytics/session-duration',
+    aov: '/analytics/aov',
   },
 
   store: {
@@ -192,5 +207,16 @@ export const endpoints = {
     payments: '/subscriptions/payments',
     payment: (id) => `/subscriptions/payments/${id}`,
     current: '/subscriptions/current',
+  },
+  wallet: {
+    balance: '/wallet/balance',
+    topup: '/wallet/topup',
+    transactions: '/wallet/transactions',
+  },
+  addons: {
+    available: '/add-ons',
+    active: '/add-ons/active',
+    checkout: '/add-ons/checkout',
+    cancel: (id) => `/add-ons/${id}/cancel`,
   },
 };

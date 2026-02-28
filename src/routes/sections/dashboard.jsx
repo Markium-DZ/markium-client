@@ -14,6 +14,7 @@ const PermissionsRouteContext = lazy(() => import('src/auth/context/permissions/
 // OVERVIEW
 const IndexPage = lazy(() => import('src/pages/dashboard/app'));
 const OverviewEcommercePage = lazy(() => import('src/pages/dashboard/ecommerce'));
+const OverviewAnalyticsPage = lazy(() => import('src/pages/dashboard/analytics'));
 const OverviewFilePage = lazy(() => import('src/pages/dashboard/file'));
 // PRODUCT
 const ProductDetailsPage = lazy(() => import('src/pages/dashboard/product/details'));
@@ -100,6 +101,7 @@ const BlankPage = lazy(() => import('src/pages/dashboard/blank'));
 const HomePage = lazy(() => import('src/pages/home'));
 
 // SUBSCRIPTION
+const SubscriptionBillingPage = lazy(() => import('src/pages/dashboard/subscription/billing'));
 const SubscriptionCheckoutPage = lazy(() => import('src/pages/dashboard/subscription/checkout'));
 const SubscriptionHistoryPage = lazy(() => import('src/pages/dashboard/subscription/history'));
 
@@ -122,6 +124,7 @@ export const dashboardRoutes = [
     children: [
       { element: <IndexPage />, index: true },
       { path: 'ecommerce', element: <OverviewEcommercePage /> },
+      { path: 'analytics', element: <OverviewAnalyticsPage /> },
       { path: 'file', element: <OverviewFilePage /> },
       {
         path: 'user',
@@ -245,7 +248,7 @@ export const dashboardRoutes = [
       {
         path: 'subscription',
         children: [
-          { element: <SubscriptionCheckoutPage />, index: true },
+          { element: <SubscriptionBillingPage />, index: true },
           { path: 'checkout', element: <SubscriptionCheckoutPage /> },
           { path: 'history', element: <SubscriptionHistoryPage /> },
         ],
