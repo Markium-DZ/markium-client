@@ -65,6 +65,7 @@ export default function NavVertical({ openNav, onCloseNav }) {
       items: group.items.map((item) => ({
         ...item,
         dimmed: DIMMED_PATHS.includes(item.path),
+        dimmedReason: DIMMED_PATHS.includes(item.path) ? t('nav_dimmed_create_product_first') : undefined,
       })),
     }));
   }, [navData, isNewUser]);

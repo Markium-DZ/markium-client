@@ -1,4 +1,5 @@
 {
+    "nav_dimmed_create_product_first": "Create your first product to unlock this section",
     "form_step_product_info": "Product Info",
     "form_step_media": "Media",
     "form_step_category_tags": "Category & Tags",
@@ -1353,6 +1354,7 @@
     "shipping_rates_refreshed": "Shipping rates refreshed successfully",
     "error_loading_shipping": "Error loading shipping options. Please try again.",
     "no_shipping_available": "No shipping options available for this order.",
+    "integrate_shipping_company": "Integrate Shipping Company",
     "shipping_refreshed": "Shipping options refreshed successfully",
     "select_delivery_provider": "Select a delivery provider to create the shipment",
     "create_shipment": "Create Shipment",

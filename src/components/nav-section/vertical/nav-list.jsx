@@ -1,7 +1,9 @@
 import PropTypes from 'prop-types';
 import { useState, useEffect, useCallback } from 'react';
 
+import Box from '@mui/material/Box';
 import Collapse from '@mui/material/Collapse';
+import Tooltip from '@mui/material/Tooltip';
 
 import { usePathname } from 'src/routes/hooks';
 import { useActiveLink } from 'src/routes/hooks/use-active-link';
@@ -34,33 +36,43 @@ export default function NavList({ data, depth, slotProps }) {
     setOpenMenu(false);
   }, []);
 
+  const navItem = (
+    <NavItem
+      open={openMenu}
+      onClick={handleToggleMenu}
+      //
+      title={data.title}
+      path={data.path}
+      icon={data.icon}
+      info={data.info}
+      roles={data.roles}
+      caption={data.caption}
+      disabled={data.disabled}
+      //
+      depth={depth}
+      hasChild={!!data.children}
+      externalLink={data.path.includes('http')}
+      currentRole={slotProps?.currentRole}
+      //
+      active={active}
+      className={active ? 'active' : ''}
+      sx={{
+        mb: `${slotProps?.gap}px`,
+        ...(depth === 1 ? slotProps?.rootItem : slotProps?.subItem),
+        ...(data.dimmed && { opacity: 0.38, pointerEvents: 'none' }),
+      }}
+    />
+  );
+
   return (
     <>
-      <NavItem
-        open={openMenu}
-        onClick={handleToggleMenu}
-        //
-        title={data.title}
-        path={data.path}
-        icon={data.icon}
-        info={data.info}
-        roles={data.roles}
-        caption={data.caption}
-        disabled={data.disabled}
-        //
-        depth={depth}
-        hasChild={!!data.children}
-        externalLink={data.path.includes('http')}
-        currentRole={slotProps?.currentRole}
-        //
-        active={active}
-        className={active ? 'active' : ''}
-        sx={{
-          mb: `${slotProps?.gap}px`,
-          ...(depth === 1 ? slotProps?.rootItem : slotProps?.subItem),
-          ...(data.dimmed && { opacity: 0.38, pointerEvents: 'none' }),
-        }}
-      />
+      {data.dimmed && data.dimmedReason ? (
+        <Tooltip title={data.dimmedReason} placement="right" arrow>
+          <Box>{navItem}</Box>
+        </Tooltip>
+      ) : (
+        navItem
+      )}
 
       {!!data.children && (
         <Collapse in={openMenu} unmountOnExit>

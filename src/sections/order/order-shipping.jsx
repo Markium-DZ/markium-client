@@ -13,6 +13,9 @@ import Radio from '@mui/material/Radio';
 import RadioGroup from '@mui/material/RadioGroup';
 import FormControlLabel from '@mui/material/FormControlLabel';
 
+import { RouterLink } from 'src/routes/components';
+import { paths } from 'src/routes/paths';
+
 import { useTranslate } from 'src/locales';
 import { fCurrency } from 'src/utils/format-number';
 
@@ -71,6 +74,17 @@ export default function OrderShipping({ quotesGroupedByProvider, loading, error,
           <Typography variant="body2">
             {t('no_shipping_available')}
           </Typography>
+          <Button
+            component={RouterLink}
+            href={paths.dashboard.settings.delivery_companies}
+            size="small"
+            variant="outlined"
+            color="info"
+            startIcon={<Iconify icon="solar:settings-bold-duotone" width={18} />}
+            sx={{ mt: 1 }}
+          >
+            {t('integrate_shipping_company')}
+          </Button>
         </Alert>
       </Card>
     );

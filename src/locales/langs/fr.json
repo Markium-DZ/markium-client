@@ -1275,6 +1275,7 @@
     "shipping_rates_refreshed": "Tarifs de livraison actualisés avec succès",
     "error_loading_shipping": "Erreur lors du chargement des options de livraison. Veuillez réessayer.",
     "no_shipping_available": "Aucune option de livraison disponible pour cette commande.",
+    "integrate_shipping_company": "Intégrer une société de livraison",
     "shipping_refreshed": "Options de livraison actualisées avec succès",
     "select_delivery_provider": "Sélectionnez un transporteur pour créer l'expédition",
     "create_shipment": "Créer une expédition",

@@ -1,4 +1,5 @@
 {
+    "nav_dimmed_create_product_first": "أنشئ منتجك الأول لفتح هذا القسم",
     "form_step_product_info": "معلومات المنتج",
     "form_step_media": "الوسائط",
     "form_step_category_tags": "الفئة والعلامات",
@@ -1373,6 +1374,7 @@
     "shipping_rates_refreshed": "تم تحديث أسعار الشحن بنجاح",
     "error_loading_shipping": "خطأ في تحميل خيارات الشحن. يرجى المحاولة مرة أخرى.",
     "no_shipping_available": "لا توجد خيارات شحن متاحة لهذا الطلب.",
+    "integrate_shipping_company": "ربط شركة شحن",
     "shipping_refreshed": "تم تحديث خيارات الشحن بنجاح",
     "select_delivery_provider": "اختر شركة التوصيل لإنشاء الشحنة",
     "create_shipment": "إنشاء شحنة",

@@ -64,9 +64,6 @@ export default function NavUserProfile() {
       .catch(() => enqueueSnackbar(t('failed_to_copy'), { variant: 'error' }));
   };
 
-  const handleSettings = () => {
-    router.push(paths.dashboard.settings.root);
-  };
 
   return (
     <Box sx={{ px: 2, pb: 2 }}>
@@ -137,6 +134,7 @@ export default function NavUserProfile() {
                 py: 0.75,
                 px: 2,
                 borderRadius: 1.5,
+                fontFamily: 'inherit',
                 fontWeight: 700,
                 fontSize: 12,
                 color: theme.palette.primary.darker,
@@ -205,12 +203,6 @@ export default function NavUserProfile() {
         <Tooltip title={t('copy_store_url')}>
           <IconButton size="small" onClick={handleCopyUrl} sx={{ color: 'text.secondary' }}>
             <Iconify icon="solar:copy-bold-duotone" width={18} />
-          </IconButton>
-        </Tooltip>
-
-        <Tooltip title={t('settings')}>
-          <IconButton size="small" onClick={handleSettings} sx={{ color: 'text.secondary' }}>
-            <Iconify icon="solar:settings-bold-duotone" width={18} />
           </IconButton>
         </Tooltip>
       </Stack>
