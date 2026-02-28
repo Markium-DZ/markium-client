@@ -3,8 +3,12 @@ import { useTranslation } from 'react-i18next';
 
 import Container from '@mui/material/Container';
 import Grid from '@mui/material/Unstable_Grid2';
+import Button from '@mui/material/Button';
+import Box from '@mui/material/Box';
+import Card from '@mui/material/Card';
+import CardHeader from '@mui/material/CardHeader';
 import { useTheme } from '@mui/material/styles';
-
+import { Link as RouterLink } from 'react-router-dom';
 
 import { useGetProducts } from 'src/api/product';
 import { useGetOrders } from 'src/api/orders';
@@ -18,14 +22,10 @@ import {
 } from 'src/api/analytics';
 
 import { AuthContext } from 'src/auth/context/jwt';
-
+import { paths } from 'src/routes/paths';
+import Iconify from 'src/components/iconify';
 import { useSettingsContext } from 'src/components/settings';
 import ConnectionError from 'src/components/connection-error';
-import EcommerceEventsCalendar from '../ecommerce-events-calendar';
-import DashboardMetrics from '../dashboard-metrics';
-import DashboardChart from '../dashboard-chart';
-import DashboardFunnel from '../dashboard-funnel';
-import DashboardSkeleton from './dashboard-skeleton';
 
 import {
   SetupChecklist,
@@ -37,6 +37,13 @@ import {
   ActionCenter,
   DashboardDataTable,
 } from 'src/sections/dashboard/active-merchant';
+
+import AnalyticsGate from '../../analytics/analytics-gate';
+import EcommerceEventsCalendar from '../ecommerce-events-calendar';
+import DashboardMetrics from '../dashboard-metrics';
+import DashboardChart from '../dashboard-chart';
+import DashboardFunnel from '../dashboard-funnel';
+import DashboardSkeleton from './dashboard-skeleton';
 
 // ----------------------------------------------------------------------
 
@@ -219,14 +226,33 @@ export default function OverviewEcommerceView() {
             </Grid>
 
             <Grid xs={12} md={6} lg={6} sx={{ height: { lg: '50%' } }}>
-              <DashboardChart
-                visitorsData={trafficVisitors.data}
-                visitorsLabels={trafficVisitors.days || trafficVisitors.labels}
-                ordersData={trafficOrders.data}
-                ordersLabels={trafficOrders.days || trafficOrders.labels}
-                loading={trafficLoading}
-                interval={trafficInterval}
-              />
+              <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                <CardHeader
+                  title={t('analytics_traffic')}
+                  action={
+                    <Button
+                      component={RouterLink}
+                      to={paths.dashboard.general.analytics}
+                      size="small"
+                      endIcon={<Iconify icon="eva:arrow-ios-forward-fill" />}
+                    >
+                      {t('analytics_overview')}
+                    </Button>
+                  }
+                />
+                <AnalyticsGate sectionKey="traffic">
+                  <Box sx={{ flexGrow: 1, minHeight: 0 }}>
+                    <DashboardChart
+                      visitorsData={trafficVisitors.data}
+                      visitorsLabels={trafficVisitors.days || trafficVisitors.labels}
+                      ordersData={trafficOrders.data}
+                      ordersLabels={trafficOrders.days || trafficOrders.labels}
+                      loading={trafficLoading}
+                      interval={trafficInterval}
+                    />
+                  </Box>
+                </AnalyticsGate>
+              </Card>
             </Grid>
 
             <Grid xs={12} lg={3} sx={{ height: { lg: '50%' } }}>
@@ -282,14 +308,33 @@ export default function OverviewEcommerceView() {
             </Grid>
 
             <Grid xs={12} md={6} lg={6} sx={{ height: { lg: '50%' } }}>
-              <DashboardChart
-                visitorsData={trafficVisitors.data}
-                visitorsLabels={trafficVisitors.days || trafficVisitors.labels}
-                ordersData={trafficOrders.data}
-                ordersLabels={trafficOrders.days || trafficOrders.labels}
-                loading={trafficLoading}
-                interval={trafficInterval}
-              />
+              <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                <CardHeader
+                  title={t('analytics_traffic')}
+                  action={
+                    <Button
+                      component={RouterLink}
+                      to={paths.dashboard.general.analytics}
+                      size="small"
+                      endIcon={<Iconify icon="eva:arrow-ios-forward-fill" />}
+                    >
+                      {t('analytics_overview')}
+                    </Button>
+                  }
+                />
+                <AnalyticsGate sectionKey="traffic">
+                  <Box sx={{ flexGrow: 1, minHeight: 0 }}>
+                    <DashboardChart
+                      visitorsData={trafficVisitors.data}
+                      visitorsLabels={trafficVisitors.days || trafficVisitors.labels}
+                      ordersData={trafficOrders.data}
+                      ordersLabels={trafficOrders.days || trafficOrders.labels}
+                      loading={trafficLoading}
+                      interval={trafficInterval}
+                    />
+                  </Box>
+                </AnalyticsGate>
+              </Card>
             </Grid>
 
             <Grid xs={12} lg={3} sx={{ height: { lg: '50%' } }}>

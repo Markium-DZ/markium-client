@@ -51,6 +51,8 @@ const TurnstileWidget = forwardRef(({ siteKey, onVerify, onExpire, onError, sx, 
     reset: () => {
       if (widgetIdRef.current != null && window.turnstile) {
         window.turnstile.reset(widgetIdRef.current);
+        // Re-trigger verification after reset since we use execution: 'execute'
+        window.turnstile.execute(containerRef.current);
       }
     },
   }));

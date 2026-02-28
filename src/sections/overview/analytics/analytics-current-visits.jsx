@@ -2,94 +2,90 @@ import PropTypes from 'prop-types';
 
 import Card from '@mui/material/Card';
 import CardHeader from '@mui/material/CardHeader';
-import { styled, useTheme } from '@mui/material/styles';
-
-import { fNumber } from 'src/utils/format-number';
-
-import Chart, { useChart } from 'src/components/chart';
-
-// ----------------------------------------------------------------------
-
-const CHART_HEIGHT = 400;
-
-const LEGEND_HEIGHT = 72;
-
-const StyledChart = styled(Chart)(({ theme }) => ({
-  height: CHART_HEIGHT,
-  '& .apexcharts-canvas, .apexcharts-inner, svg, foreignObject': {
-    height: `100% !important`,
-  },
-  '& .apexcharts-legend': {
-    height: LEGEND_HEIGHT,
-    borderTop: `dashed 1px ${theme.palette.divider}`,
-    top: `calc(${CHART_HEIGHT - LEGEND_HEIGHT}px) !important`,
-  },
-}));
+import Box from '@mui/material/Box';
+import Stack from '@mui/material/Stack';
+import Typography from '@mui/material/Typography';
+import { PieChart } from '@mui/x-charts/PieChart';
+import { useTheme } from '@mui/material/styles';
 
 // ----------------------------------------------------------------------
+
+const DEFAULT_COLORS = [
+  '#2065D1', '#22C55E', '#FFAB00', '#FF5630',
+  '#00B8D9', '#8E33FF', '#FF6C40', '#36B37E',
+];
 
 export default function AnalyticsCurrentVisits({ title, subheader, chart, ...other }) {
   const theme = useTheme();
+  const { colors, series } = chart;
 
-  const { colors, series, options } = chart;
+  const palette = colors || [
+    theme.palette.primary.main,
+    theme.palette.success.main,
+    theme.palette.warning.main,
+    theme.palette.error.main,
+    theme.palette.info.main,
+    ...DEFAULT_COLORS,
+  ];
 
-  const chartSeries = series.map((i) => i.value);
+  const pieData = (series || []).map((item, index) => ({
+    id: index,
+    value: item.value || 0,
+    label: item.label || '',
+    color: palette[index % palette.length],
+  }));
 
-  const chartOptions = useChart({
-    chart: {
-      sparkline: {
-        enabled: true,
-      },
-    },
-    colors,
-    labels: series.map((i) => i.label),
-    stroke: {
-      colors: [theme.palette.background.paper],
-    },
-    legend: {
-      floating: true,
-      position: 'bottom',
-      horizontalAlign: 'center',
-    },
-    dataLabels: {
-      enabled: true,
-      dropShadow: {
-        enabled: false,
-      },
-    },
-    tooltip: {
-      fillSeriesColor: false,
-      y: {
-        formatter: (value) => fNumber(value),
-        title: {
-          formatter: (seriesName) => `${seriesName}`,
-        },
-      },
-    },
-    plotOptions: {
-      pie: {
-        donut: {
-          labels: {
-            show: false,
-          },
-        },
-      },
-    },
-    ...options,
-  });
+  const isEmpty = !series || series.length === 0 || pieData.every((d) => d.value === 0);
+
+  const chartContent = isEmpty ? (
+    <Box sx={{ height: 280, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <Typography variant="body2" color="text.secondary">No data</Typography>
+    </Box>
+  ) : (
+    <Box sx={{ p: 3 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+        <PieChart
+          height={280}
+          width={400}
+          series={[
+            {
+              data: pieData,
+              innerRadius: 0,
+              paddingAngle: 1,
+              cornerRadius: 3,
+            },
+          ]}
+          slotProps={{ legend: { hidden: true } }}
+        />
+      </Box>
+
+      <Stack direction="row" spacing={3} justifyContent="center" flexWrap="wrap" sx={{ mt: 2 }}>
+        {pieData.map((item, idx) => (
+          <Stack key={idx} direction="row" alignItems="center" spacing={1}>
+            <Box
+              sx={{
+                width: 12,
+                height: 12,
+                borderRadius: '50%',
+                flexShrink: 0,
+                bgcolor: item.color,
+              }}
+            />
+            <Typography variant="body2" color="text.secondary">
+              {item.label}
+            </Typography>
+          </Stack>
+        ))}
+      </Stack>
+    </Box>
+  );
+
+  if (!title) return chartContent;
 
   return (
     <Card {...other}>
-      <CardHeader title={title} subheader={subheader} sx={{ mb: 5 }} />
-
-      <StyledChart
-        dir="ltr"
-        type="pie"
-        series={chartSeries}
-        options={chartOptions}
-        width="100%"
-        height={280}
-      />
+      <CardHeader title={title} subheader={subheader} sx={{ mb: 2 }} />
+      {chartContent}
     </Card>
   );
 }

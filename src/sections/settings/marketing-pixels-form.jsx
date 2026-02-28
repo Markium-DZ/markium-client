@@ -11,6 +11,9 @@ import Typography from '@mui/material/Typography';
 import LoadingButton from '@mui/lab/LoadingButton';
 import Alert from '@mui/material/Alert';
 import Divider from '@mui/material/Divider';
+import Switch from '@mui/material/Switch';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import CircularProgress from '@mui/material/CircularProgress';
 import Accordion from '@mui/material/Accordion';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import AccordionDetails from '@mui/material/AccordionDetails';
@@ -25,6 +28,7 @@ import FormProvider, {
 } from 'src/components/hook-form';
 import showError from 'src/utils/show_error';
 import { updateStoreConfig, useGetMyStore } from 'src/api/store';
+import { useGetCurrentSubscription } from 'src/api/subscriptions';
 import { AuthContext } from 'src/auth/context/jwt';
 
 // ----------------------------------------------------------------------
@@ -32,10 +36,37 @@ import { AuthContext } from 'src/auth/context/jwt';
 export default function MarketingPixelsForm() {
   const { user } = useContext(AuthContext)
   const { store } = useGetMyStore(user?.store?.slug);
+  const { subscription } = useGetCurrentSubscription();
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslate();
 
   const [loading, setLoading] = useState(false);
+  const [sessionReplayEnabled, setSessionReplayEnabled] = useState(false);
+  const [sessionReplayLoading, setSessionReplayLoading] = useState(false);
+
+  const hasAdvancedAnalytics = subscription?.features?.some(
+    (f) => f.name === 'advanced_analytics' && f.enabled
+  ) ?? false;
+
+  useEffect(() => {
+    if (store) {
+      setSessionReplayEnabled(store?.config?.session_replay ?? false);
+    }
+  }, [store]);
+
+  const handleSessionReplayToggle = async (event) => {
+    const newValue = event.target.checked;
+    setSessionReplayLoading(true);
+    try {
+      await updateStoreConfig({ config: { session_replay: newValue } });
+      setSessionReplayEnabled(newValue);
+      enqueueSnackbar(t('marketing_pixels_saved_successfully'), { variant: 'success' });
+    } catch (error) {
+      showError(error);
+    } finally {
+      setSessionReplayLoading(false);
+    }
+  };
 
   const MarketingPixelsSchema = Yup.object().shape({
     // Facebook Pixel
@@ -331,6 +362,42 @@ export default function MarketingPixelsForm() {
               </Accordion>
             </Card>
           ))}
+        </Grid>
+
+        {/* Session Replay */}
+        <Grid xs={12}>
+          <Card sx={{ p: 3 }}>
+            <Stack direction="row" alignItems="center" justifyContent="space-between">
+              <Stack spacing={0.5}>
+                <Stack direction="row" alignItems="center" spacing={1}>
+                  <Iconify icon="solar:videocamera-record-bold" width={24} />
+                  <Typography variant="h6">{t('settings_session_replay')}</Typography>
+                </Stack>
+                <Typography variant="body2" color="text.secondary">
+                  {t('settings_session_replay_description')}
+                </Typography>
+                {!hasAdvancedAnalytics && (
+                  <Typography variant="caption" color="warning.main">
+                    {t('settings_session_replay_business_only')}
+                  </Typography>
+                )}
+              </Stack>
+              {sessionReplayLoading ? (
+                <CircularProgress size={24} />
+              ) : (
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={sessionReplayEnabled}
+                      onChange={handleSessionReplayToggle}
+                      disabled={!hasAdvancedAnalytics}
+                    />
+                  }
+                  label=""
+                />
+              )}
+            </Stack>
+          </Card>
         </Grid>
 
         {/* Instructions Card */}

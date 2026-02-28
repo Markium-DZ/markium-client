@@ -36,7 +36,7 @@ import { createProduct, updateProduct, createMedia } from 'src/api/product';
 import showError from 'src/utils/show_error';
 import { captureEvent } from 'src/utils/posthog';
 import { useGetSystemCategories } from 'src/api/settings';
-import { Checkbox, FormControlLabel, IconButton, ListSubheader, MenuItem } from '@mui/material';
+import { Alert, Checkbox, FormControlLabel, IconButton, ListSubheader, MenuItem } from '@mui/material';
 import Iconify from 'src/components/iconify';
 import OptionDefinitionBuilder from './components/option-definition-builder';
 import ProductVariantsManager from './components/product-variants-manager';
@@ -546,6 +546,23 @@ export default function ProductNewEditForm({ currentProduct, drawerMode = false,
           onToggle={handleMediaToggle}
           onAdd={handleMediaAdd}
         />
+
+        {(values.images?.length || 0) > 0 && (
+          <Alert
+            severity="info"
+            icon={<Iconify icon="solar:info-circle-bold" width={20} />}
+            sx={{
+              '& .MuiAlert-message': { width: '100%' },
+            }}
+          >
+            <Typography variant="subtitle2" sx={{ fontWeight: 600, lineHeight: 1.4 }}>
+              {t('media_shared_hint')}
+            </Typography>
+            <Typography variant="caption" sx={{ color: 'text.secondary', mt: 0.25, display: 'block' }}>
+              {t('media_shared_hint_detail')}
+            </Typography>
+          </Alert>
+        )}
       </Stack>
     </Card>
   );

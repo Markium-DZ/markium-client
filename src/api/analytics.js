@@ -1,6 +1,6 @@
 import useSWR from 'swr';
 import { useMemo } from 'react';
-import { fetcher, endpoints } from 'src/utils/axios';
+import axios, { fetcher, endpoints } from 'src/utils/axios';
 
 // ----------------------------------------------------------------------
 
@@ -25,6 +25,37 @@ export const DATE_RANGE_OPTIONS = [
   { value: '-30d', label: 'last_30_days' },
   { value: '-90d', label: 'last_90_days' },
 ];
+
+// ----------------------------------------------------------------------
+
+/**
+ * Fetch analytics capabilities — what sections the current user can access.
+ * This is the single source of truth for tier gating in the UI.
+ */
+export function useGetAnalyticsCapabilities() {
+  const url = endpoints.analytics.capabilities;
+
+  const { data, isLoading, error, isValidating, mutate } = useSWR(url, fetcher, options);
+
+  const memoizedValue = useMemo(
+    () => ({
+      capabilities: data?.data || null,
+      tier: data?.data?.tier || 'basic',
+      sections: data?.data?.sections || {},
+      allowedDateRanges: data?.data?.allowed_date_ranges || ['-1d', '-7d'],
+      maxDays: data?.data?.max_days || 7,
+      exportEnabled: data?.data?.export_enabled || false,
+      presentationMode: data?.data?.presentation_mode || 'numbers_only',
+      capabilitiesLoading: isLoading,
+      capabilitiesError: error,
+      capabilitiesValidating: isValidating,
+      capabilitiesMutate: mutate,
+    }),
+    [data, error, isLoading, isValidating, mutate]
+  );
+
+  return memoizedValue;
+}
 
 // ----------------------------------------------------------------------
 
@@ -173,4 +204,412 @@ export function useGetAnalyticsTopProducts(dateFrom = '-30d') {
   );
 
   return memoizedValue;
+}
+
+// ----------------------------------------------------------------------
+
+/**
+ * Fetch traffic sources — breakdown by referring domain
+ * @param {string} dateFrom
+ */
+export function useGetAnalyticsTrafficSources(dateFrom = '-30d') {
+  const shouldFetch = dateFrom !== null;
+  const params = new URLSearchParams({ date_from: dateFrom || '-30d' });
+  const url = `${endpoints.analytics.trafficSources}?${params.toString()}`;
+
+  const { data, isLoading, error, isValidating, mutate } = useSWR(
+    shouldFetch ? url : null,
+    fetcher,
+    options
+  );
+
+  const memoizedValue = useMemo(
+    () => ({
+      trafficSources: data?.data?.traffic_sources || [],
+      trafficSourcesLoading: isLoading,
+      trafficSourcesError: error,
+      trafficSourcesValidating: isValidating,
+      mutate,
+    }),
+    [data, error, isLoading, isValidating, mutate]
+  );
+
+  return memoizedValue;
+}
+
+// ----------------------------------------------------------------------
+
+/**
+ * Fetch conversion rate — visitors vs buyers
+ * @param {string} dateFrom
+ */
+export function useGetAnalyticsConversion(dateFrom = '-30d') {
+  const shouldFetch = dateFrom !== null;
+  const params = new URLSearchParams({ date_from: dateFrom || '-30d' });
+  const url = `${endpoints.analytics.conversion}?${params.toString()}`;
+
+  const { data, isLoading, error, isValidating, mutate } = useSWR(
+    shouldFetch ? url : null,
+    fetcher,
+    options
+  );
+
+  const memoizedValue = useMemo(
+    () => ({
+      conversion: data?.data?.conversion || {},
+      uniqueVisitors: data?.data?.conversion?.unique_visitors ?? 0,
+      uniqueBuyers: data?.data?.conversion?.unique_buyers ?? 0,
+      conversionRate: data?.data?.conversion?.conversion_rate ?? 0,
+      conversionLoading: isLoading,
+      conversionError: error,
+      conversionValidating: isValidating,
+      mutate,
+    }),
+    [data, error, isLoading, isValidating, mutate]
+  );
+
+  return memoizedValue;
+}
+
+// ----------------------------------------------------------------------
+
+/**
+ * Fetch orders geography — orders count by wilaya
+ * @param {string} dateFrom
+ */
+export function useGetAnalyticsOrdersGeography(dateFrom = '-30d') {
+  const shouldFetch = dateFrom !== null;
+  const params = new URLSearchParams({ date_from: dateFrom || '-30d' });
+  const url = `${endpoints.analytics.ordersGeography}?${params.toString()}`;
+
+  const { data, isLoading, error, isValidating, mutate } = useSWR(
+    shouldFetch ? url : null,
+    fetcher,
+    options
+  );
+
+  const memoizedValue = useMemo(
+    () => ({
+      ordersGeography: data?.data?.orders_geography || [],
+      ordersGeographyLoading: isLoading,
+      ordersGeographyError: error,
+      ordersGeographyValidating: isValidating,
+      mutate,
+    }),
+    [data, error, isLoading, isValidating, mutate]
+  );
+
+  return memoizedValue;
+}
+
+// ----------------------------------------------------------------------
+
+/**
+ * Fetch cart abandonment — cart vs checkout vs order trends
+ * @param {string} dateFrom
+ * @param {string} interval
+ */
+export function useGetAnalyticsCartAbandonment(dateFrom = '-30d', interval = 'day') {
+  const shouldFetch = dateFrom !== null;
+  const params = new URLSearchParams({ date_from: dateFrom || '-30d', interval });
+  const url = `${endpoints.analytics.cartAbandonment}?${params.toString()}`;
+
+  const { data, isLoading, error, isValidating, mutate } = useSWR(
+    shouldFetch ? url : null,
+    fetcher,
+    options
+  );
+
+  const memoizedValue = useMemo(
+    () => ({
+      cartAbandonment: data?.data?.cart_abandonment || [],
+      cartAbandonmentLoading: isLoading,
+      cartAbandonmentError: error,
+      cartAbandonmentValidating: isValidating,
+      mutate,
+    }),
+    [data, error, isLoading, isValidating, mutate]
+  );
+
+  return memoizedValue;
+}
+
+// ----------------------------------------------------------------------
+
+/**
+ * Fetch customer insights — repeat buyers, AOV, peak hours
+ * @param {string} dateFrom
+ */
+export function useGetAnalyticsCustomerInsights(dateFrom = '-90d') {
+  const shouldFetch = dateFrom !== null;
+  const params = new URLSearchParams({ date_from: dateFrom || '-90d' });
+  const url = `${endpoints.analytics.customerInsights}?${params.toString()}`;
+
+  const { data, isLoading, error, isValidating, mutate } = useSWR(
+    shouldFetch ? url : null,
+    fetcher,
+    options
+  );
+
+  const memoizedValue = useMemo(
+    () => ({
+      customerInsights: data?.data?.customer_insights || {},
+      customerInsightsLoading: isLoading,
+      customerInsightsError: error,
+      customerInsightsValidating: isValidating,
+      mutate,
+    }),
+    [data, error, isLoading, isValidating, mutate]
+  );
+
+  return memoizedValue;
+}
+
+// ----------------------------------------------------------------------
+
+/**
+ * Fetch delivery performance — delivery/return rates by wilaya
+ * @param {string} dateFrom
+ */
+export function useGetAnalyticsDeliveryPerformance(dateFrom = '-90d') {
+  const shouldFetch = dateFrom !== null;
+  const params = new URLSearchParams({ date_from: dateFrom || '-90d' });
+  const url = `${endpoints.analytics.deliveryPerformance}?${params.toString()}`;
+
+  const { data, isLoading, error, isValidating, mutate } = useSWR(
+    shouldFetch ? url : null,
+    fetcher,
+    options
+  );
+
+  const memoizedValue = useMemo(
+    () => ({
+      deliveryPerformance: data?.data?.delivery_performance || [],
+      deliveryPerformanceLoading: isLoading,
+      deliveryPerformanceError: error,
+      deliveryPerformanceValidating: isValidating,
+      mutate,
+    }),
+    [data, error, isLoading, isValidating, mutate]
+  );
+
+  return memoizedValue;
+}
+
+// ----------------------------------------------------------------------
+
+/**
+ * Fetch revenue breakdown — by product, wilaya, daily trend
+ * @param {string} dateFrom
+ */
+export function useGetAnalyticsRevenueBreakdown(dateFrom = '-90d') {
+  const shouldFetch = dateFrom !== null;
+  const params = new URLSearchParams({ date_from: dateFrom || '-90d' });
+  const url = `${endpoints.analytics.revenueBreakdown}?${params.toString()}`;
+
+  const { data, isLoading, error, isValidating, mutate } = useSWR(
+    shouldFetch ? url : null,
+    fetcher,
+    options
+  );
+
+  const memoizedValue = useMemo(
+    () => ({
+      revenueBreakdown: data?.data?.revenue_breakdown || {},
+      byProduct: data?.data?.revenue_breakdown?.by_product || [],
+      byWilaya: data?.data?.revenue_breakdown?.by_wilaya || [],
+      dailyTrend: data?.data?.revenue_breakdown?.daily_trend || [],
+      revenueBreakdownLoading: isLoading,
+      revenueBreakdownError: error,
+      revenueBreakdownValidating: isValidating,
+      mutate,
+    }),
+    [data, error, isLoading, isValidating, mutate]
+  );
+
+  return memoizedValue;
+}
+
+// ----------------------------------------------------------------------
+
+/**
+ * Fetch device breakdown — desktop vs mobile vs tablet
+ * @param {string} dateFrom
+ */
+export function useGetAnalyticsDeviceBreakdown(dateFrom) {
+  const URL = dateFrom
+    ? [endpoints.analytics.deviceBreakdown, { params: { date_from: dateFrom } }]
+    : null;
+
+  const { data, isLoading, error, isValidating } = useSWR(URL, fetcher, options);
+
+  const memoizedValue = useMemo(
+    () => ({
+      deviceBreakdown: data?.data?.device_breakdown || [],
+      deviceBreakdownLoading: isLoading,
+      deviceBreakdownError: error,
+      deviceBreakdownValidating: isValidating,
+      deviceBreakdownEmpty: !isLoading && (!data?.data?.device_breakdown || data.data.device_breakdown.length === 0),
+    }),
+    [data, error, isLoading, isValidating]
+  );
+
+  return memoizedValue;
+}
+
+// ----------------------------------------------------------------------
+
+/**
+ * Fetch visitor types — new vs returning visitors
+ * @param {string} dateFrom
+ */
+export function useGetAnalyticsVisitorTypes(dateFrom) {
+  const URL = dateFrom
+    ? [endpoints.analytics.visitorTypes, { params: { date_from: dateFrom } }]
+    : null;
+
+  const { data, isLoading, error, isValidating } = useSWR(URL, fetcher, options);
+
+  const memoizedValue = useMemo(
+    () => ({
+      visitorTypes: data?.data?.visitor_types || { new_visitors: 0, returning_visitors: 0 },
+      visitorTypesLoading: isLoading,
+      visitorTypesError: error,
+      visitorTypesValidating: isValidating,
+    }),
+    [data, error, isLoading, isValidating]
+  );
+
+  return memoizedValue;
+}
+
+// ----------------------------------------------------------------------
+
+/**
+ * Fetch landing pages — top entry pages
+ * @param {string} dateFrom
+ */
+export function useGetAnalyticsLandingPages(dateFrom) {
+  const URL = dateFrom
+    ? [endpoints.analytics.landingPages, { params: { date_from: dateFrom } }]
+    : null;
+
+  const { data, isLoading, error, isValidating } = useSWR(URL, fetcher, options);
+
+  const memoizedValue = useMemo(
+    () => ({
+      landingPages: data?.data?.landing_pages || [],
+      landingPagesLoading: isLoading,
+      landingPagesError: error,
+      landingPagesValidating: isValidating,
+      landingPagesEmpty: !isLoading && (!data?.data?.landing_pages || data.data.landing_pages.length === 0),
+    }),
+    [data, error, isLoading, isValidating]
+  );
+
+  return memoizedValue;
+}
+
+// ----------------------------------------------------------------------
+
+/**
+ * Fetch bounce rate — visitors who left after one page
+ * @param {string} dateFrom
+ */
+export function useGetAnalyticsBounceRate(dateFrom) {
+  const URL = dateFrom
+    ? [endpoints.analytics.bounceRate, { params: { date_from: dateFrom } }]
+    : null;
+
+  const { data, isLoading, error, isValidating } = useSWR(URL, fetcher, options);
+
+  const memoizedValue = useMemo(
+    () => ({
+      bounceRate: data?.data?.bounce_rate || { total_visitors: 0, bounced_visitors: 0, bounce_rate: 0 },
+      bounceRateLoading: isLoading,
+      bounceRateError: error,
+      bounceRateValidating: isValidating,
+    }),
+    [data, error, isLoading, isValidating]
+  );
+
+  return memoizedValue;
+}
+
+// ----------------------------------------------------------------------
+
+/**
+ * Fetch session duration — average and median
+ * @param {string} dateFrom
+ */
+export function useGetAnalyticsSessionDuration(dateFrom) {
+  const URL = dateFrom
+    ? [endpoints.analytics.sessionDuration, { params: { date_from: dateFrom } }]
+    : null;
+
+  const { data, isLoading, error, isValidating } = useSWR(URL, fetcher, options);
+
+  const memoizedValue = useMemo(
+    () => ({
+      sessionDuration: data?.data?.session_duration || { avg_duration_seconds: 0, median_duration_seconds: 0 },
+      sessionDurationLoading: isLoading,
+      sessionDurationError: error,
+      sessionDurationValidating: isValidating,
+    }),
+    [data, error, isLoading, isValidating]
+  );
+
+  return memoizedValue;
+}
+
+// ----------------------------------------------------------------------
+
+/**
+ * Fetch average order value
+ * @param {string} dateFrom
+ */
+export function useGetAnalyticsAov(dateFrom) {
+  const URL = dateFrom
+    ? [endpoints.analytics.aov, { params: { date_from: dateFrom } }]
+    : null;
+
+  const { data, isLoading, error, isValidating } = useSWR(URL, fetcher, options);
+
+  const memoizedValue = useMemo(
+    () => ({
+      aov: data?.data?.aov || { average_order_value: 0, total_orders: 0 },
+      aovLoading: isLoading,
+      aovError: error,
+      aovValidating: isValidating,
+    }),
+    [data, error, isLoading, isValidating]
+  );
+
+  return memoizedValue;
+}
+
+// ----------------------------------------------------------------------
+
+/**
+ * Download analytics CSV export
+ * @param {string} dateFrom
+ */
+export async function downloadAnalyticsExport(dateFrom = '-30d') {
+  const params = new URLSearchParams({ date_from: dateFrom });
+  const url = `${endpoints.analytics.export}?${params.toString()}`;
+
+  const response = await axios.get(url, { responseType: 'blob' });
+
+  // Extract filename from Content-Disposition header
+  const disposition = response.headers['content-disposition'] || '';
+  const filenameMatch = disposition.match(/filename="?([^"]+)"?/);
+  const filename = filenameMatch ? filenameMatch[1] : `analytics-export-${dateFrom}.csv`;
+
+  // Trigger browser download
+  const blob = new Blob([response.data], { type: 'text/csv' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(link.href);
 }

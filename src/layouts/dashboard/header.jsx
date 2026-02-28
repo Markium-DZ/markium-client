@@ -24,6 +24,7 @@ import { useState } from 'react';
 
 import { Icon } from '@iconify/react';
 import SettingsLink from '../common/settings-link';
+import SubscriptionWalletWidget from 'src/sections/subscription/subscription-wallet-widget';
 
 // ----------------------------------------------------------------------
 
@@ -72,6 +73,8 @@ export default function Header({ onOpenNav }) {
         spacing={{ xs: 0.5, sm: 1 }}
       >
 
+
+        <SubscriptionWalletWidget />
 
         <IconButton
           onClick={Toggle}
