@@ -57,9 +57,9 @@ export default function AnalyticsTabTraffic({ dateFrom, sections }) {
       <Grid xs={6} md={3}>
         <AnalyticsWidgetSummary
           title={t('analytics_bounce_rate')}
+          description={t('analytics_bounce_rate_desc')}
           total={bounceRate?.bounce_rate || 0}
           formatter={(v) => `${v}%`}
-          caption={`${bounceRate?.bounced_visitors || 0} / ${bounceRate?.total_visitors || 0}`}
           color="error"
           icon={<Iconify icon="solar:arrow-left-down-bold-duotone" width={48} />}
           sectionKey="bounce_rate"
@@ -69,9 +69,9 @@ export default function AnalyticsTabTraffic({ dateFrom, sections }) {
       <Grid xs={6} md={3}>
         <AnalyticsWidgetSummary
           title={t('analytics_session_duration')}
+          description={t('analytics_session_duration_desc')}
           total={sessionDuration?.avg_duration_seconds || 0}
           formatter={(v) => `${Math.round(v)}s`}
-          caption={t('avg_session_duration')}
           color="warning"
           icon={<Iconify icon="solar:clock-circle-bold-duotone" width={48} />}
           sectionKey="session_duration"
@@ -81,8 +81,8 @@ export default function AnalyticsTabTraffic({ dateFrom, sections }) {
       <Grid xs={6} md={3}>
         <AnalyticsWidgetSummary
           title={t('new_visitors')}
+          description={t('new_visitors_widget_desc')}
           total={visitorTypes?.new_visitors || 0}
-          caption={t('new_visitors_desc')}
           color="info"
           icon={<Iconify icon="solar:user-plus-bold-duotone" width={48} />}
           sectionKey="visitor_types"
@@ -92,8 +92,8 @@ export default function AnalyticsTabTraffic({ dateFrom, sections }) {
       <Grid xs={6} md={3}>
         <AnalyticsWidgetSummary
           title={t('returning_visitors')}
+          description={t('returning_visitors_widget_desc')}
           total={visitorTypes?.returning_visitors || 0}
-          caption={t('returning_visitors_desc')}
           color="primary"
           icon={<Iconify icon="solar:users-group-rounded-bold-duotone" width={48} />}
           sectionKey="visitor_types"

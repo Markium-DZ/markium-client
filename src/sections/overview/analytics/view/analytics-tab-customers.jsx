@@ -35,8 +35,8 @@ export default function AnalyticsTabCustomers({ dateFrom, sections }) {
         <Grid xs={6} md={3}>
           <AnalyticsWidgetSummary
             title={t('analytics_total_buyers')}
+            description={t('analytics_total_buyers_desc')}
             total={customerInsights?.total_buyers ?? 0}
-            caption={t('total_buyers_desc')}
             color="primary"
             icon={<Iconify icon="solar:user-check-bold-duotone" width={48} />}
             sectionKey="customer_insights"
@@ -46,8 +46,8 @@ export default function AnalyticsTabCustomers({ dateFrom, sections }) {
         <Grid xs={6} md={3}>
           <AnalyticsWidgetSummary
             title={t('analytics_repeat_buyers')}
+            description={t('analytics_repeat_buyers_desc')}
             total={customerInsights?.repeat_buyers ?? 0}
-            caption={t('repeat_buyers_desc')}
             color="info"
             icon={<Iconify icon="solar:user-heart-bold-duotone" width={48} />}
             sectionKey="customer_insights"

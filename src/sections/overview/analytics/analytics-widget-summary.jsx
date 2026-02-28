@@ -18,6 +18,7 @@ import AnalyticsUpgradeModal from './analytics-upgrade-modal';
 
 export default function AnalyticsWidgetSummary({
   title,
+  description,
   total,
   icon,
   color = 'primary',
@@ -91,6 +92,12 @@ export default function AnalyticsWidgetSummary({
           {title}
         </Typography>
 
+        {description && (
+          <Typography variant="caption" sx={{ opacity: 0.48, mt: 0.5, px: 2 }}>
+            {description}
+          </Typography>
+        )}
+
         {caption && (
           <Typography variant="caption" sx={{ opacity: 0.48, mt: 0.5 }}>
             {caption}
@@ -112,6 +119,7 @@ export default function AnalyticsWidgetSummary({
 AnalyticsWidgetSummary.propTypes = {
   caption: PropTypes.string,
   color: PropTypes.string,
+  description: PropTypes.string,
   formatter: PropTypes.func,
   icon: PropTypes.oneOfType([PropTypes.element, PropTypes.string]),
   sectionKey: PropTypes.string,

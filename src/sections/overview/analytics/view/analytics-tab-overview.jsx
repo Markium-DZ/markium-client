@@ -37,6 +37,7 @@ export default function AnalyticsTabOverview({ dateFrom }) {
       <Grid xs={12} sm={6} md={3}>
         <AnalyticsWidgetSummary
           title={t('analytics_total_orders')}
+          description={t('analytics_total_orders_desc')}
           total={totalOrders}
           icon={<img alt="icon" src="/assets/icons/glass/ic_glass_bag.webp" />}
           sectionKey="overview"
@@ -46,6 +47,7 @@ export default function AnalyticsTabOverview({ dateFrom }) {
       <Grid xs={12} sm={6} md={3}>
         <AnalyticsWidgetSummary
           title={t('analytics_revenue')}
+          description={t('analytics_revenue_desc')}
           total={totalRevenue}
           color="info"
           icon={<img alt="icon" src="/assets/icons/glass/ic_glass_buy.webp" />}
@@ -56,6 +58,7 @@ export default function AnalyticsTabOverview({ dateFrom }) {
       <Grid xs={12} sm={6} md={3}>
         <AnalyticsWidgetSummary
           title={t('analytics_unique_visitors')}
+          description={t('analytics_unique_visitors_desc')}
           total={totalVisitors}
           color="warning"
           icon={<img alt="icon" src="/assets/icons/glass/ic_glass_users.webp" />}
@@ -66,6 +69,7 @@ export default function AnalyticsTabOverview({ dateFrom }) {
       <Grid xs={12} sm={6} md={3}>
         <AnalyticsWidgetSummary
           title={t('analytics_units_sold')}
+          description={t('analytics_units_sold_desc')}
           total={totalProductViews}
           color="error"
           icon={<img alt="icon" src="/assets/icons/glass/ic_glass_message.webp" />}

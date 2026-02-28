@@ -51,9 +51,9 @@ export default function AnalyticsTabProducts({ dateFrom, sections }) {
       <Grid xs={6} md={3}>
         <AnalyticsWidgetSummary
           title={t('analytics_aov')}
+          description={t('analytics_aov_desc')}
           total={aov?.average_order_value || 0}
           formatter={(v) => `${fNumber(v)} DA`}
-          caption={`${aov?.total_orders || 0} ${t('analytics_total_orders')}`}
           color="primary"
           icon={<Iconify icon="solar:tag-price-bold-duotone" width={48} />}
           sectionKey="aov"
@@ -63,9 +63,9 @@ export default function AnalyticsTabProducts({ dateFrom, sections }) {
       <Grid xs={6} md={3}>
         <AnalyticsWidgetSummary
           title={t('analytics_conversion')}
+          description={t('analytics_conversion_desc')}
           total={Number(conversionRate)}
           formatter={(v) => `${v}%`}
-          caption={`${fNumber(uniqueBuyers) || '0'} / ${fNumber(uniqueVisitors) || '0'}`}
           color="info"
           icon={<Iconify icon="solar:chart-bold-duotone" width={48} />}
           sectionKey="conversion"
@@ -75,8 +75,8 @@ export default function AnalyticsTabProducts({ dateFrom, sections }) {
       <Grid xs={6} md={3}>
         <AnalyticsWidgetSummary
           title={t('analytics_add_to_cart')}
+          description={t('analytics_add_to_cart_desc')}
           total={addToCart || 0}
-          caption={t('add_to_cart_desc')}
           color="warning"
           icon={<Iconify icon="solar:cart-plus-bold-duotone" width={48} />}
           sectionKey="funnel"
@@ -86,8 +86,8 @@ export default function AnalyticsTabProducts({ dateFrom, sections }) {
       <Grid xs={6} md={3}>
         <AnalyticsWidgetSummary
           title={t('analytics_total_orders')}
+          description={t('analytics_completed_orders_desc')}
           total={orderCompleted || 0}
-          caption={t('completed_orders_desc')}
           color="error"
           icon={<Iconify icon="solar:bag-check-bold-duotone" width={48} />}
           sectionKey="funnel"
