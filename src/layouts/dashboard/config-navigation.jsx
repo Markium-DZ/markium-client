@@ -77,6 +77,7 @@ export function useNavData() {
             title: t('profitability'),
             path: paths.dashboard.profitability.root,
             icon: ICONS.profitability,
+            info: <Label color="info">PRO</Label>,
             children: [
               { title: t('profitability_overview'), path: paths.dashboard.profitability.root },
               { title: t('products_pnl'), path: paths.dashboard.profitability.products },

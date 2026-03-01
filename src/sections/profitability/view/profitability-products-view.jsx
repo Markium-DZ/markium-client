@@ -27,7 +27,7 @@ import EmptyContent from 'src/components/empty-content';
 
 import ProfitabilityDateFilter from '../components/profitability-date-filter';
 import ProfitabilityGate from '../components/profitability-gate';
-import { DEFAULT_DATE_RANGE } from '../constants';
+import { DEFAULT_DATE_RANGE, fmtAmount, fmtPct } from '../constants';
 
 // ----------------------------------------------------------------------
 
@@ -43,12 +43,6 @@ export default function ProfitabilityProductsView() {
     productsPnLLoading,
     productsPnLForbidden,
   } = useGetProductsPnL(dateFrom);
-
-  const fmtAmount = (val) =>
-    typeof val === 'number' ? `${val.toLocaleString('fr-DZ', { minimumFractionDigits: 0 })} DA` : '—';
-
-  const fmtPct = (val) =>
-    typeof val === 'number' ? `${val.toFixed(1)}%` : '—';
 
   const content = (
     <Stack spacing={3}>

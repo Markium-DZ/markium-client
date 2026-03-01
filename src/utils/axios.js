@@ -48,6 +48,9 @@ axiosInstance.interceptors.response.use(
 
     // Throw the error with consistent structure for all other errors
     const errorData = error.response?.data || { message: 'Something went wrong' };
+    if (error.response?.status) {
+      errorData.status = error.response.status;
+    }
     return Promise.reject(errorData);
   }
 );
