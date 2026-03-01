@@ -1,16 +1,22 @@
 import * as Yup from 'yup';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { useContext, useMemo, useState, useEffect } from 'react';
+import { useContext, useMemo, useState, useEffect, useCallback } from 'react';
 
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
+import Chip from '@mui/material/Chip';
 import Stack from '@mui/material/Stack';
+import Button from '@mui/material/Button';
+import Switch from '@mui/material/Switch';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
 import Typography from '@mui/material/Typography';
 import LoadingButton from '@mui/lab/LoadingButton';
-import Collapse from '@mui/material/Collapse';
-import Divider from '@mui/material/Divider';
-import Switch from '@mui/material/Switch';
+import IconButton from '@mui/material/IconButton';
+import Grid from '@mui/material/Unstable_Grid2';
 import { alpha } from '@mui/material/styles';
 
 import { useTranslate } from 'src/locales';
@@ -33,6 +39,7 @@ export default function MarketingPixelsForm() {
   const { t } = useTranslate();
 
   const [loading, setLoading] = useState(false);
+  const [configDialog, setConfigDialog] = useState(null);
 
   const MarketingPixelsSchema = Yup.object().shape({
     facebook_pixel_enabled: Yup.boolean(),
@@ -102,6 +109,20 @@ export default function MarketingPixelsForm() {
     try {
       setLoading(true);
 
+      // Enable the pixel being configured via dialog
+      if (configDialog) {
+        const enabledKeyMap = {
+          facebook: 'facebook_pixel_enabled',
+          tiktok: 'tiktok_pixel_enabled',
+          google_analytics: 'google_analytics_enabled',
+        };
+        const key = enabledKeyMap[configDialog];
+        if (key) {
+          data[key] = true;
+          setValue(key, true);
+        }
+      }
+
       const structuredData = {
         facebook_pixel: {
           enabled: data.facebook_pixel_enabled,
@@ -124,6 +145,7 @@ export default function MarketingPixelsForm() {
 
       enqueueSnackbar(t('marketing_pixels_saved_successfully'), { variant: 'success' });
       setLoading(false);
+      setConfigDialog(null);
     } catch (error) {
       setLoading(false);
       showError(error);
@@ -134,103 +156,192 @@ export default function MarketingPixelsForm() {
     {
       id: 'facebook',
       title: 'Facebook Pixel',
+      description: t('facebook_pixel_description'),
       icon: 'eva:facebook-fill',
       color: '#1877F2',
+      enabledKey: 'facebook_pixel_enabled',
       enabled: values.facebook_pixel_enabled,
+      hasId: !!values.facebook_pixel_id,
       fields: [
         { name: 'facebook_pixel_id', label: t('facebook_pixel_id'), placeholder: '1234567890123456', required: true },
         { name: 'facebook_access_token', label: t('facebook_access_token'), placeholder: t('optional'), required: false },
       ],
-      description: t('facebook_pixel_description'),
     },
     {
       id: 'tiktok',
       title: 'TikTok Pixel',
+      description: t('tiktok_pixel_description'),
       icon: 'ic:baseline-tiktok',
       color: '#000000',
+      enabledKey: 'tiktok_pixel_enabled',
       enabled: values.tiktok_pixel_enabled,
+      hasId: !!values.tiktok_pixel_id,
       fields: [
         { name: 'tiktok_pixel_id', label: t('tiktok_pixel_id'), placeholder: 'ABCDEFGHIJ1234567890', required: true },
         { name: 'tiktok_access_token', label: t('tiktok_access_token'), placeholder: t('optional'), required: false },
       ],
-      description: t('tiktok_pixel_description'),
     },
     {
       id: 'google_analytics',
       title: 'Google Analytics',
+      description: t('google_analytics_description'),
       icon: 'logos:google-analytics',
       color: '#E37400',
+      enabledKey: 'google_analytics_enabled',
       enabled: values.google_analytics_enabled,
+      hasId: !!values.google_analytics_id,
       fields: [
         { name: 'google_analytics_id', label: t('google_analytics_id'), placeholder: 'UA-XXXXXXXXX-X or G-XXXXXXXXXX', required: true },
         { name: 'google_analytics_measurement_id', label: t('google_analytics_measurement_id'), placeholder: 'G-XXXXXXXXXX', required: false },
       ],
-      description: t('google_analytics_description'),
     },
   ];
 
+  const activeSection = pixelSections.find((s) => s.id === configDialog);
+
+  const handleSwitchToggle = useCallback(
+    (section) => (e) => {
+      e.stopPropagation();
+      if (e.target.checked) {
+        // Trying to enable → open dialog so user enters credentials first
+        setConfigDialog(section.id);
+      } else {
+        // Disabling → turn off and save immediately
+        setValue(section.enabledKey, false);
+        // Auto-save the disabled state
+        const currentValues = methods.getValues();
+        const updatedValues = { ...currentValues, [section.enabledKey]: false };
+        const structuredData = {
+          facebook_pixel: {
+            enabled: updatedValues.facebook_pixel_enabled,
+            pixel_id: updatedValues.facebook_pixel_id,
+            access_token: updatedValues.facebook_access_token,
+          },
+          tiktok_pixel: {
+            enabled: updatedValues.tiktok_pixel_enabled,
+            pixel_id: updatedValues.tiktok_pixel_id,
+            access_token: updatedValues.tiktok_access_token,
+          },
+          google_analytics: {
+            enabled: updatedValues.google_analytics_enabled,
+            tracking_id: updatedValues.google_analytics_id,
+            measurement_id: updatedValues.google_analytics_measurement_id,
+          },
+        };
+        updateStoreConfig({ config: { pixels: structuredData } })
+          .then(() => enqueueSnackbar(t('marketing_pixels_saved_successfully'), { variant: 'success' }))
+          .catch((err) => showError(err));
+      }
+    },
+    [setValue, methods, enqueueSnackbar, t]
+  );
+
   return (
     <FormProvider methods={methods} onSubmit={onSubmit}>
-      <Stack spacing={2.5}>
+      {/* Provider Grid */}
+      <Grid container spacing={2.5}>
         {pixelSections.map((section) => (
-          <Card
-            key={section.id}
-            variant="outlined"
-            sx={{
-              border: (theme) => `1px solid ${theme.palette.divider}`,
-              borderRadius: 2,
-              overflow: 'hidden',
-              transition: 'border-color 0.2s',
-              ...(section.enabled && {
-                borderColor: (theme) => alpha(section.color, 0.4),
-              }),
-            }}
-          >
-            {/* Provider Header */}
-            <Stack
-              direction="row"
-              alignItems="center"
-              justifyContent="space-between"
-              sx={{ px: 2.5, py: 2 }}
+          <Grid xs={12} sm={6} md={4} key={section.id}>
+            <Card
+              variant="outlined"
+              sx={{
+                height: '100%',
+                border: (theme) => `1px solid ${theme.palette.divider}`,
+                borderRadius: 2,
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                '&:hover': {
+                  borderColor: 'text.disabled',
+                  boxShadow: (theme) => theme.customShadows?.z4 || '0 4px 16px 0 rgba(0,0,0,0.06)',
+                },
+                ...(section.enabled && section.hasId && {
+                  borderColor: (theme) => alpha(theme.palette.success.main, 0.5),
+                }),
+              }}
+              onClick={() => setConfigDialog(section.id)}
             >
-              <Stack direction="row" spacing={1.5} alignItems="center" sx={{ minWidth: 0 }}>
-                <Iconify icon={section.icon} width={28} sx={{ color: section.color, flexShrink: 0 }} />
-                <Box sx={{ minWidth: 0 }}>
-                  <Stack direction="row" spacing={1} alignItems="center">
-                    <Typography variant="subtitle2" fontWeight={600} noWrap>
-                      {section.title}
-                    </Typography>
-                    {section.enabled && (
-                      <Box
-                        sx={{
-                          width: 6,
-                          height: 6,
-                          borderRadius: '50%',
-                          bgcolor: 'success.main',
-                          flexShrink: 0,
-                        }}
-                      />
-                    )}
-                  </Stack>
-                  <Typography variant="caption" color="text.disabled" noWrap>
+              <Stack sx={{ height: '100%', p: 2.5 }} spacing={2}>
+                {/* Top: Icon + Switch */}
+                <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
+                  <Iconify icon={section.icon} width={32} sx={{ color: section.color, flexShrink: 0 }} />
+                  <Box onClick={(e) => e.stopPropagation()}>
+                    <Switch
+                      size="small"
+                      checked={!!section.enabled}
+                      onChange={handleSwitchToggle(section)}
+                    />
+                  </Box>
+                </Stack>
+
+                {/* Name + Description */}
+                <Box sx={{ flexGrow: 1 }}>
+                  <Typography variant="subtitle2" fontWeight={600}>
+                    {section.title}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary" sx={{ mt: 0.25, display: 'block' }}>
                     {section.description}
                   </Typography>
                 </Box>
+
+                {/* Status Footer */}
+                <Stack direction="row" spacing={0.75} alignItems="center" flexWrap="wrap" gap={0.5}>
+                  {section.enabled && section.hasId ? (
+                    <Chip
+                      icon={<Iconify icon="eva:checkmark-circle-2-fill" width={14} />}
+                      label={t('configured')}
+                      size="small"
+                      color="success"
+                      variant="soft"
+                      sx={{ height: 24, fontSize: '0.7rem' }}
+                    />
+                  ) : section.enabled ? (
+                    <Chip
+                      icon={<Iconify icon="eva:alert-circle-fill" width={14} />}
+                      label={t('missing_id')}
+                      size="small"
+                      color="warning"
+                      variant="soft"
+                      sx={{ height: 24, fontSize: '0.7rem' }}
+                    />
+                  ) : (
+                    <Chip
+                      label={t('disabled')}
+                      size="small"
+                      variant="soft"
+                      sx={{ height: 24, fontSize: '0.7rem' }}
+                    />
+                  )}
+                </Stack>
               </Stack>
+            </Card>
+          </Grid>
+        ))}
+      </Grid>
 
-              <Switch
-                size="small"
-                checked={!!section.enabled}
-                onChange={(e) => setValue(`${section.id}_pixel_enabled`, e.target.checked)}
-                sx={{ flexShrink: 0 }}
-              />
-            </Stack>
+      {/* Configuration Dialog */}
+      <Dialog
+        open={!!configDialog}
+        onClose={() => setConfigDialog(null)}
+        maxWidth="sm"
+        fullWidth
+      >
+        {activeSection && (
+          <>
+            <DialogTitle sx={{ pb: 1 }}>
+              <Stack direction="row" alignItems="center" justifyContent="space-between">
+                <Stack direction="row" spacing={1.5} alignItems="center">
+                  <Iconify icon={activeSection.icon} width={28} sx={{ color: activeSection.color }} />
+                  <Typography variant="h6">{activeSection.title}</Typography>
+                </Stack>
+                <IconButton size="small" onClick={() => setConfigDialog(null)}>
+                  <Iconify icon="mingcute:close-line" width={20} />
+                </IconButton>
+              </Stack>
+            </DialogTitle>
 
-            {/* Credential Fields */}
-            <Collapse in={!!section.enabled}>
-              <Divider />
-              <Stack spacing={2} sx={{ px: 2.5, py: 2.5 }}>
-                {section.fields.map((field) => (
+            <DialogContent>
+              <Stack spacing={2} sx={{ pt: 1 }}>
+                {activeSection.fields.map((field) => (
                   <RHFTextField
                     key={field.name}
                     name={field.name}
@@ -240,21 +351,23 @@ export default function MarketingPixelsForm() {
                   />
                 ))}
               </Stack>
-            </Collapse>
-          </Card>
-        ))}
+            </DialogContent>
 
-        {/* Save */}
-        <Stack direction="row" justifyContent="flex-end" sx={{ pt: 1 }}>
-          <LoadingButton
-            type="submit"
-            variant="contained"
-            loading={isSubmitting || loading}
-          >
-            {t('save_changes')}
-          </LoadingButton>
-        </Stack>
-      </Stack>
+            <DialogActions>
+              <Button variant="outlined" color="inherit" onClick={() => setConfigDialog(null)}>
+                {t('cancel')}
+              </Button>
+              <LoadingButton
+                variant="contained"
+                loading={isSubmitting || loading}
+                onClick={onSubmit}
+              >
+                {t('save_changes')}
+              </LoadingButton>
+            </DialogActions>
+          </>
+        )}
+      </Dialog>
     </FormProvider>
   );
 }

@@ -204,70 +204,68 @@ export default function SettingsView() {
             flexDirection: { xs: 'column', md: 'row' },
           }}
         >
-          {/* Secondary Sidebar — only shown when tab has multiple items */}
-          {activeTab.items.length > 1 && (
-            <Box
-              sx={{
-                width: { xs: '100%', md: 260 },
-                flexShrink: 0,
-                mb: { xs: 2, md: 0 },
-              }}
-            >
-              <List disablePadding>
-                {activeTab.items.map((item) => {
-                  const isActive = activeItem?.key === item.key;
+          {/* Secondary Sidebar */}
+          <Box
+            sx={{
+              width: { xs: '100%', md: 260 },
+              flexShrink: 0,
+              mb: { xs: 2, md: 0 },
+            }}
+          >
+            <List disablePadding>
+              {activeTab.items.map((item) => {
+                const isActive = activeItem?.key === item.key;
 
-                  return (
-                    <ListItemButton
-                      key={item.key}
-                      onClick={() => handleSidebarClick(item.href)}
+                return (
+                  <ListItemButton
+                    key={item.key}
+                    onClick={() => handleSidebarClick(item.href)}
+                    sx={{
+                      px: 2,
+                      py: 1.25,
+                      mb: 0.5,
+                      borderRadius: 1,
+                      ...(isActive && {
+                        bgcolor: alpha(theme.palette.primary.main, 0.08),
+                        color: 'primary.main',
+                        fontWeight: 700,
+                        borderLeft: `3px solid ${theme.palette.primary.main}`,
+                        '[dir=rtl] &': {
+                          borderLeft: 'none',
+                          borderRight: `3px solid ${theme.palette.primary.main}`,
+                        },
+                      }),
+                      ...(!isActive && {
+                        color: 'text.secondary',
+                        '&:hover': {
+                          bgcolor: 'action.hover',
+                          color: 'text.primary',
+                        },
+                      }),
+                    }}
+                  >
+                    <ListItemIcon
                       sx={{
-                        px: 2,
-                        py: 1.25,
-                        mb: 0.5,
-                        borderRadius: 1,
-                        ...(isActive && {
-                          bgcolor: alpha(theme.palette.primary.main, 0.08),
-                          color: 'primary.main',
-                          fontWeight: 700,
-                          borderLeft: `3px solid ${theme.palette.primary.main}`,
-                          '[dir=rtl] &': {
-                            borderLeft: 'none',
-                            borderRight: `3px solid ${theme.palette.primary.main}`,
-                          },
-                        }),
-                        ...(!isActive && {
-                          color: 'text.secondary',
-                          '&:hover': {
-                            bgcolor: 'action.hover',
-                            color: 'text.primary',
-                          },
-                        }),
+                        minWidth: 36,
+                        color: isActive ? 'primary.main' : 'text.disabled',
                       }}
                     >
-                      <ListItemIcon
-                        sx={{
-                          minWidth: 36,
-                          color: isActive ? 'primary.main' : 'text.disabled',
-                        }}
-                      >
-                        <Iconify icon={item.icon} width={22} />
-                      </ListItemIcon>
+                      <Iconify icon={item.icon} width={22} />
+                    </ListItemIcon>
 
-                      <ListItemText
-                        primary={t(item.titleKey)}
-                        primaryTypographyProps={{
-                          variant: 'body2',
-                          fontWeight: isActive ? 700 : 500,
-                          noWrap: true,
-                        }}
-                      />
-                    </ListItemButton>
-                  );
-                })}
-              </List>
-            </Box>
-          )}
+                    <ListItemText
+                      primary={t(item.titleKey)}
+                      primaryTypographyProps={{
+                        variant: 'body2',
+                        fontWeight: isActive ? 700 : 500,
+                        noWrap: true,
+                      }}
+                    />
+                  </ListItemButton>
+                );
+              })}
+            </List>
+          </Box>
 
           {/* Content Area */}
           <Box sx={{ flexGrow: 1, minWidth: 0 }}>
