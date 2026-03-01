@@ -48,6 +48,7 @@ const ICONS = {
   media: <Iconify icon="solar:gallery-bold" />,
   inventory: <Iconify icon="solar:box-bold" />,
   subscription: <Iconify icon="solar:wallet-bold-duotone" />,
+  profitability: <Iconify icon="solar:chart-2-bold-duotone" />,
 };
 
 // ----------------------------------------------------------------------
@@ -71,6 +72,17 @@ export function useNavData() {
             title: t('analytics_title'),
             path: paths.dashboard.general.analytics,
             icon: ICONS.analytics,
+          },
+          {
+            title: t('profitability'),
+            path: paths.dashboard.profitability.root,
+            icon: ICONS.profitability,
+            children: [
+              { title: t('profitability_overview'), path: paths.dashboard.profitability.root },
+              { title: t('products_pnl'), path: paths.dashboard.profitability.products },
+              { title: t('campaigns_roi'), path: paths.dashboard.profitability.campaigns },
+              { title: t('channels_overview'), path: paths.dashboard.profitability.channels },
+            ],
           },
         ],
       },
