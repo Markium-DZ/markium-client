@@ -31,7 +31,7 @@ import ProfitabilityDateFilter from '../components/profitability-date-filter';
 import ProfitabilitySummaryCards from '../components/profitability-summary-cards';
 import ProfitabilityGate from '../components/profitability-gate';
 import ChannelIcon from '../components/channel-icon';
-import { DEFAULT_DATE_RANGE, COST_TYPE_LABELS } from '../constants';
+import { DEFAULT_DATE_RANGE, COST_TYPE_LABELS, fmtAmount, fmtPct } from '../constants';
 
 // ----------------------------------------------------------------------
 
@@ -54,12 +54,6 @@ export default function ProfitabilityProductView({ id }) {
     productPnLLoading,
     productPnLForbidden,
   } = useGetProductPnL(id, dateFrom);
-
-  const fmtAmount = (val) =>
-    typeof val === 'number' ? `${val.toLocaleString('fr-DZ', { minimumFractionDigits: 0 })} DA` : '—';
-
-  const fmtPct = (val) =>
-    typeof val === 'number' ? `${val.toFixed(1)}%` : '—';
 
   const productName = productInfo?.name || productInfo?.product_name || id;
 

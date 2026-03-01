@@ -29,7 +29,7 @@ import ProfitabilitySummaryCards from '../components/profitability-summary-cards
 import CostBreakdownChart from '../components/cost-breakdown-chart';
 import ProfitabilityGate from '../components/profitability-gate';
 import ChannelIcon from '../components/channel-icon';
-import { DEFAULT_DATE_RANGE } from '../constants';
+import { DEFAULT_DATE_RANGE, fmtAmount, fmtPct } from '../constants';
 
 // ----------------------------------------------------------------------
 
@@ -50,12 +50,6 @@ export default function ProfitabilityOverviewView() {
     storePnLLoading,
     storePnLForbidden,
   } = useGetStorePnL(dateFrom);
-
-  const fmtAmount = (val) =>
-    typeof val === 'number' ? `${val.toLocaleString('fr-DZ', { minimumFractionDigits: 0 })} DA` : '—';
-
-  const fmtPct = (val) =>
-    typeof val === 'number' ? `${val.toFixed(1)}%` : '—';
 
   const summaryCards = [
     { title: t('total_revenue'), value: summary.total_revenue ?? 0, suffix: 'DA', icon: 'solar:wallet-money-bold-duotone', color: 'primary' },

@@ -28,6 +28,13 @@ export const COST_TYPE_COLORS = {
   custom: '#FF5630',
 };
 
+// Format helpers
+export const fmtAmount = (val) =>
+  typeof val === 'number' ? `${val.toLocaleString('fr-DZ', { minimumFractionDigits: 0 })} DA` : '\u2014';
+
+export const fmtPct = (val) =>
+  typeof val === 'number' ? `${val.toFixed(1)}%` : '\u2014';
+
 export const CHANNEL_ICONS = {
   facebook: 'mdi:facebook',
   tiktok: 'ic:baseline-tiktok',

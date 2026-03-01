@@ -29,7 +29,7 @@ import ProfitabilityDateFilter from '../components/profitability-date-filter';
 import ProfitabilitySummaryCards from '../components/profitability-summary-cards';
 import ProfitabilityGate from '../components/profitability-gate';
 import ChannelIcon from '../components/channel-icon';
-import { DEFAULT_DATE_RANGE } from '../constants';
+import { DEFAULT_DATE_RANGE, fmtAmount, fmtPct } from '../constants';
 
 // ----------------------------------------------------------------------
 
@@ -48,12 +48,6 @@ export default function ProfitabilityChannelsView() {
     channelsLoading,
     channelsForbidden,
   } = useGetChannelsOverview(dateFrom);
-
-  const fmtAmount = (val) =>
-    typeof val === 'number' ? `${val.toLocaleString('fr-DZ', { minimumFractionDigits: 0 })} DA` : '—';
-
-  const fmtPct = (val) =>
-    typeof val === 'number' ? `${val.toFixed(1)}%` : '—';
 
   const summaryCards = [
     { title: t('total_marketing_spend'), value: totalMarketingSpend, suffix: 'DA', icon: 'solar:bill-list-bold-duotone', color: 'warning' },

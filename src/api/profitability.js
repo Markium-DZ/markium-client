@@ -37,7 +37,7 @@ export function useGetStorePnL(dateFrom = '-30d') {
       profitPerUnit: data?.data?.profit_per_unit ?? 0,
       storePnLLoading: isLoading,
       storePnLError: error,
-      storePnLForbidden: error?.status === 403 || error?.message?.includes('403'),
+      storePnLForbidden: error?.status === 403,
       storePnLValidating: isValidating,
       storePnLMutate: mutate,
     }),
