@@ -173,6 +173,21 @@ export const endpoints = {
     sessionDuration: '/analytics/session-duration',
     aov: '/analytics/aov',
   },
+  productCosts: {
+    list: (productId) => `/products/${productId}/costs`,
+    create: (productId) => `/products/${productId}/costs`,
+    bulk: (productId) => `/products/${productId}/costs/bulk`,
+    update: (productId, costId) => `/products/${productId}/costs/${costId}`,
+    delete: (productId, costId) => `/products/${productId}/costs/${costId}`,
+  },
+  profitability: {
+    store: '/analytics/profitability',
+    products: '/analytics/profitability/products',
+    product: (id) => `/analytics/profitability/products/${id}`,
+    campaigns: '/analytics/profitability/campaigns',
+    channels: '/analytics/profitability/channels',
+    channel: (ch) => `/analytics/profitability/channels/${ch}`,
+  },
 
   store: {
     logo: '/store/logo',
