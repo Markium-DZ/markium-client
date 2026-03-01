@@ -1,8 +1,8 @@
 import PropTypes from 'prop-types';
-import { Card, CardHeader } from '@mui/material';
+import { Card, CardHeader, Box, Stack, Typography } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
 import Chart from 'react-apexcharts';
 import { useTranslate } from 'src/locales';
-import { useTheme } from '@mui/material/styles';
 import { COST_TYPE_LABELS, COST_TYPE_COLORS } from '../constants';
 
 // ----------------------------------------------------------------------
@@ -15,6 +15,7 @@ export default function CostBreakdownChart({ costsBreakdown, title }) {
   const labels = entries.map(([key]) => t(COST_TYPE_LABELS[key] || key));
   const series = entries.map(([, val]) => val);
   const colors = entries.map(([key]) => COST_TYPE_COLORS[key] || '#919EAB');
+  const total = series.reduce((a, b) => a + b, 0);
 
   const chartOptions = {
     chart: {
@@ -23,21 +24,17 @@ export default function CostBreakdownChart({ costsBreakdown, title }) {
     },
     labels,
     colors,
-    legend: {
-      position: 'right',
-      fontSize: '13px',
-      fontFamily: theme.typography.fontFamily,
-      labels: { colors: theme.palette.text.secondary },
-      formatter: (label, opts) => {
-        const val = opts.w.globals.series[opts.seriesIndex];
-        return `${label}: ${val.toLocaleString('fr-DZ')} DA`;
-      },
-    },
+    legend: { show: false },
     stroke: { show: false },
     dataLabels: {
       enabled: true,
-      formatter: (val) => `${val.toFixed(1)}%`,
+      formatter: (val) => `${val.toFixed(0)}%`,
       dropShadow: { enabled: false },
+      style: {
+        fontSize: '12px',
+        fontWeight: 600,
+        fontFamily: theme.typography.fontFamily,
+      },
     },
     tooltip: {
       y: {
@@ -47,17 +44,32 @@ export default function CostBreakdownChart({ costsBreakdown, title }) {
     plotOptions: {
       pie: {
         donut: {
-          size: '60%',
+          size: '72%',
           labels: {
             show: true,
+            name: {
+              show: true,
+              fontSize: '13px',
+              fontFamily: theme.typography.fontFamily,
+              color: theme.palette.text.secondary,
+              offsetY: -8,
+            },
+            value: {
+              show: true,
+              fontSize: '20px',
+              fontWeight: 700,
+              fontFamily: theme.typography.fontFamily,
+              color: theme.palette.text.primary,
+              offsetY: 4,
+              formatter: (val) => `${Number(val).toLocaleString('fr-DZ')} DA`,
+            },
             total: {
               show: true,
               label: t('total_costs'),
+              fontSize: '13px',
               fontFamily: theme.typography.fontFamily,
-              formatter: (w) => {
-                const total = w.globals.seriesTotals.reduce((a, b) => a + b, 0);
-                return `${total.toLocaleString('fr-DZ')} DA`;
-              },
+              color: theme.palette.text.secondary,
+              formatter: () => `${total.toLocaleString('fr-DZ')} DA`,
             },
           },
         },
@@ -68,9 +80,49 @@ export default function CostBreakdownChart({ costsBreakdown, title }) {
   if (series.length === 0) return null;
 
   return (
-    <Card>
+    <Card sx={{ height: '100%' }}>
       <CardHeader title={title || t('cost_breakdown')} />
-      <Chart type="donut" series={series} options={chartOptions} height={320} />
+
+      <Box sx={{ px: 2, pb: 3 }}>
+        <Stack direction={{ xs: 'column', sm: 'row' }} alignItems="center" spacing={2}>
+          <Box sx={{ flex: 1, minHeight: 280 }}>
+            <Chart type="donut" series={series} options={chartOptions} height={280} />
+          </Box>
+
+          {/* Custom legend */}
+          <Stack spacing={1.5} sx={{ minWidth: 180 }}>
+            {entries.map(([key, val], idx) => {
+              const pct = total > 0 ? ((val / total) * 100).toFixed(1) : 0;
+              return (
+                <Stack key={key} direction="row" alignItems="center" spacing={1.5}>
+                  <Box
+                    sx={{
+                      width: 12,
+                      height: 12,
+                      borderRadius: 0.5,
+                      bgcolor: colors[idx],
+                      flexShrink: 0,
+                    }}
+                  />
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Typography variant="caption" color="text.secondary" noWrap>
+                      {labels[idx]}
+                    </Typography>
+                    <Stack direction="row" alignItems="baseline" spacing={0.5}>
+                      <Typography variant="subtitle2" fontWeight={600}>
+                        {val.toLocaleString('fr-DZ')} DA
+                      </Typography>
+                      <Typography variant="caption" color="text.disabled">
+                        ({pct}%)
+                      </Typography>
+                    </Stack>
+                  </Box>
+                </Stack>
+              );
+            })}
+          </Stack>
+        </Stack>
+      </Box>
     </Card>
   );
 }

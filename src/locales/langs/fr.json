@@ -1738,6 +1738,8 @@
   "products_pnl": "Rentabilité des produits",
   "campaigns_roi": "ROI des campagnes",
   "channels_overview": "Canaux",
+  "active_channels": "Canaux actifs",
+  "avg_spend_per_channel": "Dépense moy. / canal",
   "total_costs": "Coûts totaux",
   "gross_profit": "Bénéfice brut",
   "profit_margin": "Marge bénéficiaire",
@@ -1770,5 +1772,7 @@
   "product_pnl": "Rentabilité du produit",
   "no_campaigns": "Aucune campagne trouvée",
   "no_channels": "Aucun canal trouvé",
-  "no_products_pnl": "Aucune donnée de rentabilité disponible"
+  "no_products_pnl": "Aucune donnée de rentabilité disponible",
+  "channel_detail_subtitle": "Détails des performances du canal marketing",
+  "channels": "Canaux"
 }

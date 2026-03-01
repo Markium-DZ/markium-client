@@ -21,6 +21,7 @@ export default function ProductDetailsToolbar({
   publish,
   backLink,
   editLink,
+  costsLink,
   liveLink,
   publishOptions,
   onChangePublish,
@@ -84,6 +85,25 @@ export default function ProductDetailsToolbar({
               </IconButton>
             </Tooltip>
           )} */}
+
+          {costsLink && (
+            <Button
+              component={RouterLink}
+              href={costsLink}
+              size="small"
+              variant="soft"
+              color="info"
+              startIcon={<Iconify icon="solar:tag-price-bold-duotone" width={18} />}
+              sx={{
+                px: 1.5,
+                py: 0.75,
+                fontWeight: 600,
+                fontSize: '0.8125rem',
+              }}
+            >
+              {t('manage_costs')}
+            </Button>
+          )}
 
           <Tooltip title={t('edit')} arrow>
             <IconButton
@@ -164,6 +184,7 @@ export default function ProductDetailsToolbar({
 
 ProductDetailsToolbar.propTypes = {
   backLink: PropTypes.string,
+  costsLink: PropTypes.string,
   editLink: PropTypes.string,
   liveLink: PropTypes.string,
   onChangePublish: PropTypes.func,

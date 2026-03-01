@@ -1930,6 +1930,8 @@
   "products_pnl": "Products P&L",
   "campaigns_roi": "Campaigns ROI",
   "channels_overview": "Channels",
+  "active_channels": "Active Channels",
+  "avg_spend_per_channel": "Avg. Spend / Channel",
   "total_costs": "Total Costs",
   "gross_profit": "Gross Profit",
   "profit_margin": "Profit Margin",
@@ -1962,5 +1964,7 @@
   "product_pnl": "Product P&L",
   "no_campaigns": "No campaigns found",
   "no_channels": "No channels found",
-  "no_products_pnl": "No product profitability data available"
+  "no_products_pnl": "No product profitability data available",
+  "channel_detail_subtitle": "Marketing channel performance details",
+  "channels": "Channels"
 }

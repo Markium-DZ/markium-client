@@ -37,6 +37,7 @@ import ProductDetailsToolbar from '../product-details-toolbar';
 import ProductDetailsCarousel from '../product-details-carousel';
 import ProductDetailsDescription from '../product-details-description';
 import ProductDetailsVariants from '../product-details-variants';
+import ProductDetailsCosts from '../product-details-costs';
 
 // ----------------------------------------------------------------------
 
@@ -163,6 +164,7 @@ export default function ProductDetailsView({ id }) {
       <ProductDetailsToolbar
         backLink={paths.dashboard.product.root}
         editLink={paths.dashboard.product.edit(`${product?.id}`)}
+        costsLink={paths.dashboard.product.costs(`${product?.id}`)}
         liveLink={paths.product.details(`${product?.id}`)}
         publish={publishLoading ? '' : (publish || '')}
         onChangePublish={handleChangePublish}
@@ -264,11 +266,16 @@ export default function ProductDetailsView({ id }) {
               label: `${t('variants')} (${product?.variants?.length || 0})`,
             },
             {
+              value: 'costs',
+              label: t('costs'),
+              icon: <Iconify icon="solar:tag-price-bold-duotone" width={18} />,
+            },
+            {
               value: 'description',
               label: t('product_description'),
             },
           ].map((tab) => (
-            <Tab key={tab.value} value={tab.value} label={tab.label} />
+            <Tab key={tab.value} value={tab.value} label={tab.label} icon={tab.icon} iconPosition="start" />
           ))}
         </Tabs>
 
@@ -290,6 +297,10 @@ export default function ProductDetailsView({ id }) {
             optionDefinitions={product?.option_definitions || []}
             onRefresh={productMutate}
           />
+        )}
+
+        {currentTab === 'costs' && (
+          <ProductDetailsCosts product={product} />
         )}
       </Card>
     </>
