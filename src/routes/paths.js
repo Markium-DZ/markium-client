@@ -131,10 +131,19 @@ export const paths = {
       orders: (id) => `${ROOTS.DASHBOARD}/product/${id}/orders`,
       edit: (id) => `${ROOTS.DASHBOARD}/product/${id}/edit`,
       uploadAssets: (id) => `${ROOTS.DASHBOARD}/product/${id}/upload-assets`,
+      costs: (id) => `${ROOTS.DASHBOARD}/product/${id}/costs`,
       demo: {
         details: `${ROOTS.DASHBOARD}/product/${MOCK_ID}`,
         edit: `${ROOTS.DASHBOARD}/product/${MOCK_ID}/edit`,
       },
+    },
+    profitability: {
+      root: `${ROOTS.DASHBOARD}/profitability`,
+      products: `${ROOTS.DASHBOARD}/profitability/products`,
+      product: (id) => `${ROOTS.DASHBOARD}/profitability/products/${id}`,
+      campaigns: `${ROOTS.DASHBOARD}/profitability/campaigns`,
+      channels: `${ROOTS.DASHBOARD}/profitability/channels`,
+      channel: (ch) => `${ROOTS.DASHBOARD}/profitability/channels/${ch}`,
     },
 
     log: {
