@@ -22,6 +22,15 @@ const ProductListPage = lazy(() => import('src/pages/dashboard/product/list'));
 const ProductCreatePage = lazy(() => import('src/pages/dashboard/product/new'));
 const ProductEditPage = lazy(() => import('src/pages/dashboard/product/edit'));
 const ProductUploadAssetsPage = lazy(() => import('src/pages/dashboard/product/upload-assets'));
+// PRODUCT COSTS
+const ProductCostsPage = lazy(() => import('src/pages/dashboard/product/costs'));
+// PROFITABILITY
+const ProfitabilityOverviewPage = lazy(() => import('src/pages/dashboard/profitability/overview'));
+const ProfitabilityProductsPage = lazy(() => import('src/pages/dashboard/profitability/products'));
+const ProfitabilityProductDetailPage = lazy(() => import('src/pages/dashboard/profitability/product-detail'));
+const ProfitabilityCampaignsPage = lazy(() => import('src/pages/dashboard/profitability/campaigns'));
+const ProfitabilityChannelsPage = lazy(() => import('src/pages/dashboard/profitability/channels'));
+const ProfitabilityChannelDetailPage = lazy(() => import('src/pages/dashboard/profitability/channel-detail'));
 // ORDER
 const ProductOrdersListPage = lazy(() => import('src/pages/dashboard/order/product-orders'));
 const OrderListPage = lazy(() => import('src/pages/dashboard/order/list'));
@@ -153,6 +162,18 @@ export const dashboardRoutes = [
           { path: ':id/orders', element: <ProductOrdersListPage /> },
           { path: ':id/edit', element: <ProductEditPage /> },
           { path: ':id/upload-assets', element: <ProductUploadAssetsPage /> },
+          { path: ':id/costs', element: <ProductCostsPage /> },
+        ],
+      },
+      {
+        path: 'profitability',
+        children: [
+          { element: <ProfitabilityOverviewPage />, index: true },
+          { path: 'products', element: <ProfitabilityProductsPage /> },
+          { path: 'products/:id', element: <ProfitabilityProductDetailPage /> },
+          { path: 'campaigns', element: <ProfitabilityCampaignsPage /> },
+          { path: 'channels', element: <ProfitabilityChannelsPage /> },
+          { path: 'channels/:channel', element: <ProfitabilityChannelDetailPage /> },
         ],
       },
 
