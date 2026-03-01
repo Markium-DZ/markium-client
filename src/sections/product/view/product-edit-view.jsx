@@ -59,6 +59,16 @@ export default function ProductEditView({ id }) {
           },
           { name: t('edit') },
         ]}
+        action={
+          <Button
+            component={RouterLink}
+            href={paths.dashboard.product.costs(id)}
+            variant="outlined"
+            startIcon={<Iconify icon="solar:tag-price-bold-duotone" />}
+          >
+            {t('manage_costs')}
+          </Button>
+        }
         sx={{
           mb: { xs: 3, md: 5 },
         }}
