@@ -15,7 +15,9 @@ import {
   Stack,
   Box,
   CircularProgress,
+  Chip,
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 
 import { paths } from 'src/routes/paths';
 
@@ -24,12 +26,14 @@ import { useTranslate } from 'src/locales';
 import { useSettingsContext } from 'src/components/settings';
 import CustomBreadcrumbs from 'src/components/custom-breadcrumbs';
 import EmptyContent from 'src/components/empty-content';
+import Label from 'src/components/label';
+import Iconify from 'src/components/iconify';
 
 import ProfitabilityDateFilter from '../components/profitability-date-filter';
 import ProfitabilitySummaryCards from '../components/profitability-summary-cards';
 import ProfitabilityGate from '../components/profitability-gate';
 import ChannelIcon from '../components/channel-icon';
-import { DEFAULT_DATE_RANGE, fmtAmount, fmtPct } from '../constants';
+import { DEFAULT_DATE_RANGE, fmtAmount, fmtPct, CHANNEL_ICONS } from '../constants';
 
 // ----------------------------------------------------------------------
 
@@ -59,12 +63,34 @@ export default function ProfitabilityChannelView({ channel }) {
     { title: t('roi'), value: fmtPct(roi), icon: 'solar:graph-up-bold-duotone', color: 'success' },
   ];
 
+  const channelIcon = CHANNEL_ICONS[channelName] || CHANNEL_ICONS.other;
+
   const content = (
     <Stack spacing={3}>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-        <ChannelIcon channel={channelName} showLabel={false} />
-        <Typography variant="h5">{t(`channel_${channelName}`)}</Typography>
-      </Box>
+      {/* Channel header */}
+      <Card sx={{ p: 3 }}>
+        <Stack direction="row" alignItems="center" spacing={2}>
+          <Box
+            sx={{
+              width: 48,
+              height: 48,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: 1.5,
+              bgcolor: (theme) => alpha(theme.palette.primary.main, 0.08),
+            }}
+          >
+            <Iconify icon={channelIcon} width={28} sx={{ color: 'primary.main' }} />
+          </Box>
+          <Box>
+            <Typography variant="h5">{t(`channel_${channelName}`)}</Typography>
+            <Typography variant="body2" color="text.secondary">
+              {t('channel_detail_subtitle')}
+            </Typography>
+          </Box>
+        </Stack>
+      </Card>
 
       <ProfitabilitySummaryCards cards={summaryCards} />
 
@@ -72,7 +98,17 @@ export default function ProfitabilityChannelView({ channel }) {
         <EmptyContent title={t('no_data')} />
       ) : (
         <Card>
-          <CardHeader title={t('campaigns')} />
+          <CardHeader
+            title={t('campaigns')}
+            action={
+              <Chip
+                label={`${channelCampaigns.length} ${t('campaigns')}`}
+                size="small"
+                variant="soft"
+                color="warning"
+              />
+            }
+          />
           <TableContainer>
             <Table>
               <TableHead>
@@ -85,17 +121,42 @@ export default function ProfitabilityChannelView({ channel }) {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {channelCampaigns.map((row, index) => (
-                  <TableRow key={index} hover>
-                    <TableCell>
-                      <Typography variant="subtitle2">{row.campaign_name}</Typography>
-                    </TableCell>
-                    <TableCell>{row.product_name || '—'}</TableCell>
-                    <TableCell align="right">{fmtAmount(row.spend)}</TableCell>
-                    <TableCell align="right">{fmtAmount(row.attributed_revenue)}</TableCell>
-                    <TableCell align="right">{fmtPct(row.roi)}</TableCell>
-                  </TableRow>
-                ))}
+                {channelCampaigns.map((row, index) => {
+                  const roiPositive = typeof row.roi === 'number' && row.roi >= 0;
+                  return (
+                    <TableRow
+                      key={index}
+                      hover
+                      sx={{
+                        '&:hover': { bgcolor: (theme) => alpha(theme.palette.primary.main, 0.04) },
+                      }}
+                    >
+                      <TableCell>
+                        <Typography variant="subtitle2">{row.campaign_name}</Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2" color="text.secondary">
+                          {row.product_name || '—'}
+                        </Typography>
+                      </TableCell>
+                      <TableCell align="right">
+                        <Typography variant="body2" fontWeight={600} color="warning.main">
+                          {fmtAmount(row.spend)}
+                        </Typography>
+                      </TableCell>
+                      <TableCell align="right">
+                        <Typography variant="body2" fontWeight={500}>
+                          {fmtAmount(row.attributed_revenue)}
+                        </Typography>
+                      </TableCell>
+                      <TableCell align="right">
+                        <Label variant="soft" color={roiPositive ? 'success' : 'error'}>
+                          {fmtPct(row.roi)}
+                        </Label>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </TableContainer>

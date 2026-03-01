@@ -62,7 +62,13 @@ export default function CostFormDialog({
       then: (schema) => schema.required(t('channel') + ' ' + t('name_is_required')).oneOf(MARKETING_CHANNELS.map((ch) => ch.value)),
       otherwise: (schema) => schema.nullable(),
     }),
-    variant_id: Yup.number().nullable(),
+    variant_id: Yup.number()
+      .transform((value, originalValue) => (originalValue === '' ? null : value))
+      .when('type', {
+        is: 'buy_price',
+        then: (schema) => schema.required(t('variant') + ' ' + t('name_is_required')),
+        otherwise: (schema) => schema.nullable(),
+      }),
     notes: Yup.string().max(1000).nullable(),
   });
 
@@ -197,7 +203,7 @@ export default function CostFormDialog({
 
             <RHFTextField name="amount" label={t('amount')} type="number" InputProps={{ endAdornment: 'DZD' }} />
 
-            {variants?.length > 0 && (
+            {watchType === 'buy_price' && variants?.length > 0 && (
               <RHFSelect name="variant_id" label={t('variant')}>
                 <MenuItem value="">{t('all_variants')}</MenuItem>
                 {variants.map((v) => (

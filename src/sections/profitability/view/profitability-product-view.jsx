@@ -16,7 +16,9 @@ import {
   Box,
   Button,
   CircularProgress,
+  Chip,
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 
 import { paths } from 'src/routes/paths';
 import { useRouter } from 'src/routes/hooks';
@@ -26,12 +28,13 @@ import { useTranslate } from 'src/locales';
 import { useSettingsContext } from 'src/components/settings';
 import CustomBreadcrumbs from 'src/components/custom-breadcrumbs';
 import Iconify from 'src/components/iconify';
+import Label from 'src/components/label';
 
 import ProfitabilityDateFilter from '../components/profitability-date-filter';
 import ProfitabilitySummaryCards from '../components/profitability-summary-cards';
 import ProfitabilityGate from '../components/profitability-gate';
 import ChannelIcon from '../components/channel-icon';
-import { DEFAULT_DATE_RANGE, COST_TYPE_LABELS, fmtAmount, fmtPct } from '../constants';
+import { DEFAULT_DATE_RANGE, COST_TYPE_LABELS, COST_TYPE_COLORS, fmtAmount, fmtPct } from '../constants';
 
 // ----------------------------------------------------------------------
 
@@ -74,30 +77,53 @@ export default function ProfitabilityProductView({ id }) {
       <ProfitabilitySummaryCards cards={summaryCards} />
 
       <Stack direction={{ xs: 'column', md: 'row' }} spacing={3}>
-        <Box sx={{ flex: 1 }}>
-          <Card sx={{ p: 3 }}>
-            <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+        {/* Profit per unit highlight card */}
+        <Card
+          sx={{
+            p: 3,
+            flex: 1,
+            bgcolor: (theme) => alpha(theme.palette.success.main, 0.04),
+            border: (theme) => `1px solid ${alpha(theme.palette.success.main, 0.12)}`,
+          }}
+        >
+          <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 1 }}>
+            <Iconify icon="solar:graph-up-bold-duotone" width={20} sx={{ color: 'success.main' }} />
+            <Typography variant="subtitle2" color="text.secondary">
               {t('profit_per_unit')}
             </Typography>
-            <Typography variant="h4" color="success.main">
-              {fmtAmount(profitPerUnit)}
-            </Typography>
-          </Card>
-        </Box>
+          </Stack>
+          <Typography variant="h3" sx={{ fontWeight: 700, letterSpacing: '-0.02em', color: 'success.main' }}>
+            {fmtAmount(profitPerUnit)}
+          </Typography>
+        </Card>
 
-        <Box sx={{ flex: 1 }}>
-          <Button
-            variant="outlined"
-            size="large"
-            startIcon={<Iconify icon="solar:settings-bold-duotone" />}
-            onClick={() => router.push(paths.dashboard.product.costs(id))}
-            sx={{ height: '100%', width: '100%' }}
-          >
-            {t('manage_costs')}
-          </Button>
-        </Box>
+        {/* Manage costs button */}
+        <Card
+          sx={{
+            p: 3,
+            flex: 1,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            transition: 'all 0.2s ease',
+            '&:hover': {
+              bgcolor: (theme) => alpha(theme.palette.info.main, 0.04),
+              borderColor: (theme) => alpha(theme.palette.info.main, 0.2),
+            },
+          }}
+          onClick={() => router.push(paths.dashboard.product.costs(id))}
+        >
+          <Stack alignItems="center" spacing={1}>
+            <Iconify icon="solar:settings-bold-duotone" width={32} sx={{ color: 'info.main' }} />
+            <Typography variant="subtitle1" fontWeight={600}>
+              {t('manage_costs')}
+            </Typography>
+          </Stack>
+        </Card>
       </Stack>
 
+      {/* Cost breakdown table */}
       {costEntries.length > 0 && (
         <Card>
           <CardHeader title={t('cost_breakdown')} />
@@ -112,14 +138,33 @@ export default function ProfitabilityProductView({ id }) {
               </TableHead>
               <TableBody>
                 {costEntries.map(([type, data]) => (
-                  <TableRow key={type}>
+                  <TableRow key={type} hover>
                     <TableCell>
-                      <Typography variant="subtitle2">
-                        {t(COST_TYPE_LABELS[type] || type)}
+                      <Stack direction="row" alignItems="center" spacing={1.5}>
+                        <Box
+                          sx={{
+                            width: 10,
+                            height: 10,
+                            borderRadius: 0.5,
+                            bgcolor: COST_TYPE_COLORS[type] || '#919EAB',
+                            flexShrink: 0,
+                          }}
+                        />
+                        <Typography variant="subtitle2">
+                          {t(COST_TYPE_LABELS[type] || type)}
+                        </Typography>
+                      </Stack>
+                    </TableCell>
+                    <TableCell align="right">
+                      <Typography variant="body2" fontWeight={600} color="warning.main">
+                        {fmtAmount(data?.total)}
                       </Typography>
                     </TableCell>
-                    <TableCell align="right">{fmtAmount(data?.total)}</TableCell>
-                    <TableCell align="right">{fmtAmount(data?.per_unit)}</TableCell>
+                    <TableCell align="right">
+                      <Typography variant="body2" color="text.secondary">
+                        {fmtAmount(data?.per_unit)}
+                      </Typography>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -128,9 +173,20 @@ export default function ProfitabilityProductView({ id }) {
         </Card>
       )}
 
+      {/* Marketing campaigns */}
       {marketingCampaigns.length > 0 && (
         <Card>
-          <CardHeader title={t('marketing_campaigns')} />
+          <CardHeader
+            title={t('marketing_campaigns')}
+            action={
+              <Chip
+                label={`${marketingCampaigns.length} ${t('campaigns')}`}
+                size="small"
+                variant="soft"
+                color="warning"
+              />
+            }
+          />
           <TableContainer>
             <Table>
               <TableHead>
@@ -143,17 +199,30 @@ export default function ProfitabilityProductView({ id }) {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {marketingCampaigns.map((campaign, index) => (
-                  <TableRow key={index} hover>
-                    <TableCell>{campaign.campaign_name}</TableCell>
-                    <TableCell>
-                      <ChannelIcon channel={campaign.channel} />
-                    </TableCell>
-                    <TableCell align="right">{fmtAmount(campaign.spend)}</TableCell>
-                    <TableCell align="right">{campaign.attributed_orders ?? '—'}</TableCell>
-                    <TableCell align="right">{fmtPct(campaign.roi)}</TableCell>
-                  </TableRow>
-                ))}
+                {marketingCampaigns.map((campaign, index) => {
+                  const roiPositive = typeof campaign.roi === 'number' && campaign.roi >= 0;
+                  return (
+                    <TableRow key={index} hover>
+                      <TableCell>
+                        <Typography variant="subtitle2">{campaign.campaign_name}</Typography>
+                      </TableCell>
+                      <TableCell>
+                        <ChannelIcon channel={campaign.channel} />
+                      </TableCell>
+                      <TableCell align="right">
+                        <Typography variant="body2" fontWeight={600} color="warning.main">
+                          {fmtAmount(campaign.spend)}
+                        </Typography>
+                      </TableCell>
+                      <TableCell align="right">{campaign.attributed_orders ?? '—'}</TableCell>
+                      <TableCell align="right">
+                        <Label variant="soft" color={roiPositive ? 'success' : 'error'}>
+                          {fmtPct(campaign.roi)}
+                        </Label>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </TableContainer>
