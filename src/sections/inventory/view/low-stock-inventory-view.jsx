@@ -21,6 +21,7 @@ import ZaityListView from 'src/sections/ZaityTables/zaity-list-view';
 import ZaityHeadContainer from 'src/sections/ZaityTables/ZaityHeadContainer';
 import ZaityTableFilters from 'src/sections/ZaityTables/ZaityTableFilters';
 import InventoryAdjustmentDialog from 'src/sections/inventory/inventory-adjustment-dialog';
+import InventoryMobileCard from 'src/sections/inventory/inventory-mobile-card';
 import { fCurrency } from 'src/utils/format-number';
 
 // ----------------------------------------------------------------------
@@ -341,6 +342,12 @@ export default function LowStockInventoryView() {
               TABLE_HEAD={[...TABLE_HEAD]}
               dense="medium"
               zaityTableDate={dataFiltered || []}
+              mobileCardRender={(row) => (
+                <InventoryMobileCard
+                  row={row}
+                  onOpenAdjustment={handleOpenAdjustment}
+                />
+              )}
             />
           )}
         </ZaityTableFilters>

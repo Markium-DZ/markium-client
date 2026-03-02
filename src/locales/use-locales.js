@@ -41,6 +41,8 @@ export function useTranslate() {
       await i18n.loadLanguageAsync?.(newlang);
       i18n.changeLanguage(newlang);
       settings.onChangeDirectionByLang(newlang);
+      // Sync the HTML lang attribute with the active language
+      document.documentElement.lang = newlang;
     },
     [i18n, settings]
   );

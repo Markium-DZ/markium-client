@@ -433,6 +433,7 @@ export default function DeliveryCompaniesForm() {
                       component="img"
                       src={company.image}
                       alt={company.name}
+                      onError={(e) => { e.target.onerror = null; e.target.src = '/assets/icons/shipping/ic_shipping_default.svg'; }}
                       sx={{
                         height: 36,
                         maxWidth: 100,
@@ -529,6 +530,7 @@ export default function DeliveryCompaniesForm() {
                   component="img"
                   src={activeCompany.image}
                   alt={activeCompany.name}
+                  onError={(e) => { e.target.onerror = null; e.target.src = '/assets/icons/shipping/ic_shipping_default.svg'; }}
                   sx={{
                     height: 32,
                     maxWidth: 80,

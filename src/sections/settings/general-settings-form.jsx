@@ -164,7 +164,18 @@ export default function GeneralSettingsForm() {
       <Grid container spacing={3}>
         {/* Save Button */}
         <Grid xs={12}>
-          <Stack direction="row" justifyContent="flex-end" spacing={2}>
+          <Stack
+            direction="row"
+            justifyContent="flex-end"
+            spacing={2}
+            sx={{
+              position: 'sticky',
+              bottom: 0,
+              py: 2,
+              bgcolor: 'background.default',
+              zIndex: 1,
+            }}
+          >
             <LoadingButton
               type="submit"
               variant="contained"

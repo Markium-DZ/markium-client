@@ -2,11 +2,13 @@ import { useState, useCallback, useEffect } from 'react';
 
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
+import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import Table from '@mui/material/Table';
 import Button from '@mui/material/Button';
 import Tooltip from '@mui/material/Tooltip';
-import { alpha } from '@mui/material/styles';
+import { alpha, useTheme } from '@mui/material/styles';
+import useMediaQuery from '@mui/material/useMediaQuery';
 import Container from '@mui/material/Container';
 import TableBody from '@mui/material/TableBody';
 import IconButton from '@mui/material/IconButton';
@@ -60,9 +62,11 @@ const defaultFilters = {
 
 // ----------------------------------------------------------------------
 
-export default function ZaityListView({ TABLE_HEAD, dense, zaityTableDate, onSelectedRows,maxWidth,rowsPerPage,minHeight,height , rowsPerPageOptions, hidePagination }) {
+export default function ZaityListView({ TABLE_HEAD, dense, zaityTableDate, onSelectedRows,maxWidth,rowsPerPage,minHeight,height , rowsPerPageOptions, hidePagination, mobileCardRender }) {
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslate();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   const table = useTable({ defaultOrderBy: 'orderNumber' });
 
@@ -140,68 +144,62 @@ export default function ZaityListView({ TABLE_HEAD, dense, zaityTableDate, onSel
     },
     [handleFilters]
   );
+  const paginatedData = dataFiltered.slice(
+    table.page * (rowsPerPage || table.rowsPerPage),
+    table.page * (rowsPerPage || table.rowsPerPage) + (rowsPerPage || table.rowsPerPage)
+  );
+
   return (
     <>
-      <TableContainer sx={{ position: 'relative', overflow: 'hidden', height: height ? `${height}px` : 'auto' }}>
-        {/* <TableSelectedAction
-          dense={table.dense ? "small":"small"}
-          numSelected={table.selected.length}
-          rowCount={dataFiltered.length}
-          onSelectAllRows={(checked) =>
-            table.onSelectAllRows(
-              checked,
-              dataFiltered.map((row) => row.id)
-            )
-          }
-          action={
-            <>
-                {onSelectedRows(table.selected,setTableData)}
-            </>
-          }
-        /> */}
-
-        <Scrollbar sx={{ maxHeight: height ? `${height}px` : 'none' }}>
-          <Table size={dense} sx={{ minWidth: 660 , maxWidth ,minHeight, height: height ? `${height}px` : undefined }}>
-            <TableHeadCustom
-              order={table.order}
-              orderBy={table.orderBy}
-              headLabel={TABLE_HEAD}
-              rowCount={dataFiltered.length}
-              numSelected={table.selected.length}
-              onSort={table.onSort}
-              // onSelectAllRows={(checked) =>
-              //   table.onSelectAllRows(
-              //     checked,
-              //     dataFiltered.map((row) => row.id)
-              //   )
-              // }
-            />
-
-            <TableBody>
-              {dataFiltered
-                .slice(
-                  table.page * (rowsPerPage || table.rowsPerPage),
-                  table.page * (rowsPerPage || table.rowsPerPage) + (rowsPerPage || table.rowsPerPage)
-                )
-                .map((row) => (
-                  <OrderTableRow
-                    TABLE_HEAD={TABLE_HEAD}
-                    key={row?.id}
-                    row={row}
-                    selected={table.selected.includes(row.id)}
-                    onSelectRow={() => table.onSelectRow(row.id)}
-                  />
-                ))}
-
-              <TableEmptyRows
-                height={denseHeight}
-                emptyRows={emptyRows(table.page, (rowsPerPage || table.rowsPerPage), dataFiltered.length)}
+      {isMobile && mobileCardRender ? (
+        /* Mobile card layout */
+        <Box sx={{ px: 1, py: 1 }}>
+          {notFound ? (
+            <TableNoData notFound={notFound} />
+          ) : (
+            paginatedData.map((row) => (
+              <Box key={row?.id}>
+                {mobileCardRender(row)}
+              </Box>
+            ))
+          )}
+        </Box>
+      ) : (
+        /* Desktop table layout */
+        <TableContainer sx={{ position: 'relative', overflow: 'hidden', height: height ? `${height}px` : 'auto' }}>
+          <Scrollbar sx={{ maxHeight: height ? `${height}px` : 'none' }}>
+            <Table size={dense} sx={{ minWidth: 660 , maxWidth ,minHeight, height: height ? `${height}px` : undefined }}>
+              <TableHeadCustom
+                order={table.order}
+                orderBy={table.orderBy}
+                headLabel={TABLE_HEAD}
+                rowCount={dataFiltered.length}
+                numSelected={table.selected.length}
+                onSort={table.onSort}
               />
-              <TableNoData notFound={notFound} />
-            </TableBody>
-          </Table>
-        </Scrollbar>
-      </TableContainer>
+
+              <TableBody>
+                {paginatedData
+                  .map((row) => (
+                    <OrderTableRow
+                      TABLE_HEAD={TABLE_HEAD}
+                      key={row?.id}
+                      row={row}
+                      selected={table.selected.includes(row.id)}
+                      onSelectRow={() => table.onSelectRow(row.id)}
+                    />
+                  ))}
+
+                <TableEmptyRows
+                  height={denseHeight}
+                  emptyRows={emptyRows(table.page, (rowsPerPage || table.rowsPerPage), dataFiltered.length)}
+                />
+                <TableNoData notFound={notFound} />
+              </TableBody>
+            </Table>
+          </Scrollbar>
+        </TableContainer>
+      )}
 
       {!hidePagination && (
         <TablePaginationCustom

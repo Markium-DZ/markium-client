@@ -232,13 +232,12 @@ export default function EmptyStateOrders({ hasProducts = false, compact = false,
               <Iconify icon="solar:bag-check-bold" width={18} />
             </Box>
             <Box sx={{ minWidth: 0 }}>
-              <Typography variant="subtitle2" sx={{ fontWeight: 800, lineHeight: 1.2 }} noWrap>
+              <Typography variant="subtitle2" sx={{ fontWeight: 800, lineHeight: 1.2 }}>
                 {t('empty_orders_title')}
               </Typography>
               <Typography
                 variant="caption"
                 sx={{ color: 'text.disabled', lineHeight: 1.3, display: { xs: 'none', lg: 'block' } }}
-                noWrap
               >
                 {hasProducts
                   ? t('empty_orders_description_with_products')

@@ -1891,5 +1891,14 @@
     "tier_pro": "Pro",
     "tier_business": "Business",
     "tier_pro_description": "For growing businesses that need more power",
-    "tier_business_description": "Advanced features for serious e-commerce"
+    "tier_business_description": "Advanced features for serious e-commerce",
+    "search": "Search...",
+    "available": "Available",
+    "contact_number": "Contact Number",
+    "tone": "Tone",
+    "harmony": "Harmony",
+    "update_photo": "Update photo",
+    "products_table": "Products table",
+    "inventory_table": "Inventory table",
+    "orders_table": "Orders table"
 }

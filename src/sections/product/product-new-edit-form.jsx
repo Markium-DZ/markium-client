@@ -515,7 +515,7 @@ export default function ProductNewEditForm({ currentProduct, drawerMode = false,
       <Stack spacing={3} sx={{ p: 3 }}>
         <SectionHeader icon="solar:document-text-bold" title={t('form_step_product_info')} />
 
-        <RHFTextField name="name" label={t('product_name')} />
+        <RHFTextField name="name" label={t('product_name')} required />
         <RHFTextField name="description" label={t('description')} />
 
         <Stack spacing={1.5}>
@@ -655,6 +655,7 @@ export default function ProductNewEditForm({ currentProduct, drawerMode = false,
             label={t('sale_price')}
             placeholder="0.00"
             type="number"
+            required
             InputLabelProps={{ shrink: true }}
             InputProps={{
               startAdornment: (

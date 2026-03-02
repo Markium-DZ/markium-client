@@ -1,3 +1,27 @@
+/* WebView / Mobile app fixes */
+html, body {
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Safe area insets for notched devices */
+body {
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+/* Prevent iOS auto-zoom on input focus (requires >= 16px font-size) */
+input, select, textarea {
+  font-size: 16px !important;
+}
+
+/* Disable text selection and callouts in WebView */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
 /* scrollbar */
 @import 'simplebar-react/dist/simplebar.min.css';
 

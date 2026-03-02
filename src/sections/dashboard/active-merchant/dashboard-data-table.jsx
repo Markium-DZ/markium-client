@@ -319,6 +319,9 @@ export default function DashboardDataTable({
         <Tabs
           value={currentTab}
           onChange={handleChangeTab}
+          variant="scrollable"
+          scrollButtons="auto"
+          allowScrollButtonsMobile
           sx={{
             px: 2.5,
             '& .MuiTab-root': {

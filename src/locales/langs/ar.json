@@ -1911,5 +1911,14 @@
     "tier_pro": "احترافي",
     "tier_business": "أعمال",
     "tier_pro_description": "للأعمال المتنامية التي تحتاج إلى قوة أكبر",
-    "tier_business_description": "ميزات متقدمة للتجارة الإلكترونية الجادة"
+    "tier_business_description": "ميزات متقدمة للتجارة الإلكترونية الجادة",
+    "search": "بحث...",
+    "available": "متوفر",
+    "contact_number": "رقم التواصل",
+    "tone": "النبرة",
+    "harmony": "التناغم",
+    "update_photo": "تحديث الصورة",
+    "products_table": "جدول المنتجات",
+    "inventory_table": "جدول المخزون",
+    "orders_table": "جدول الطلبات"
 }

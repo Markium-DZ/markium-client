@@ -18,7 +18,8 @@ export default function TablePaginationCustom({
     <Box sx={{ position: 'relative', ...sx }}>
       <TablePagination
         rowsPerPageOptions={rowsPerPageOptions}
-        component="div"
+        component="nav"
+        aria-label="pagination"
         {...other}
         sx={{
           borderTopColor: 'transparent',

@@ -1699,5 +1699,14 @@
     "upload_photos_first": "Téléchargez des photos d'abord pour les attribuer aux options",
     "auto": "Auto",
     "no_more_media_available": "Aucune autre photo disponible",
-    "select_product_media_first": "Sélectionnez d'abord les photos du produit dans la section Médias ci-dessus"
+    "select_product_media_first": "Sélectionnez d'abord les photos du produit dans la section Médias ci-dessus",
+    "search": "Rechercher...",
+    "available": "Disponible",
+    "contact_number": "Numéro de contact",
+    "tone": "Ton",
+    "harmony": "Harmonie",
+    "update_photo": "Mettre à jour la photo",
+    "products_table": "Tableau des produits",
+    "inventory_table": "Tableau de l'inventaire",
+    "orders_table": "Tableau des commandes"
 }

@@ -42,6 +42,7 @@ import { cssBaseline } from './components/css-baseline';
 import { buttonGroup } from './components/button-group';
 import { autocomplete } from './components/autocomplete';
 import { toggleButton } from './components/toggle-button';
+import { iconButton } from './components/icon-button';
 import { loadingButton } from './components/loading-button';
 
 // ----------------------------------------------------------------------
@@ -90,6 +91,7 @@ export function componentsOverrides(theme) {
     breadcrumbs(theme),
     cssBaseline(theme),
     autocomplete(theme),
+    iconButton(theme),
     toggleButton(theme),
     loadingButton(theme)
   );

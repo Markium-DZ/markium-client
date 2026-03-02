@@ -80,6 +80,7 @@ export default function AccountPopover() {
         whileHover="hover"
         variants={varHover(1.05)}
         onClick={popover.onOpen}
+        aria-label={t('account')}
         sx={{
           width: 40,
           height: 40,

@@ -21,6 +21,7 @@ import ZaityListView from 'src/sections/ZaityTables/zaity-list-view';
 import ZaityHeadContainer from 'src/sections/ZaityTables/ZaityHeadContainer';
 import ZaityTableFilters from 'src/sections/ZaityTables/ZaityTableFilters';
 import ZaityTableTabs from 'src/sections/ZaityTables/ZaityTableTabs'; // [keep for later use]
+import OrderMobileCard from '../order-mobile-card';
 import { fDate } from 'src/utils/format-time';
 import showError from 'src/utils/show_error';
 import * as Yup from 'yup';
@@ -611,7 +612,7 @@ export default function OrdersListView({ product_id }) {
                                     </Typography>
                                 </Box>
                             ) : (
-                                <ZaityListView TABLE_HEAD={[...TABLE_HEAD]} dense="medium" zaityTableDate={dataFiltered || []} onSelectedRows={({ data, setTableData }) => { return <onSelectedRowsComponent configurable_type={"roles"} setTableData={setTableData} data={orders} /> }} />
+                                <ZaityListView TABLE_HEAD={[...TABLE_HEAD]} dense="medium" zaityTableDate={dataFiltered || []} onSelectedRows={({ data, setTableData }) => { return <onSelectedRowsComponent configurable_type={"roles"} setTableData={setTableData} data={orders} /> }} mobileCardRender={(row) => <OrderMobileCard row={row} />} />
                             )}
                         </ZaityTableFilters>
                         {/* </ZaityTableTabs> */}

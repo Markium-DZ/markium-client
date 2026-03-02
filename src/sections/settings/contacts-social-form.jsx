@@ -129,9 +129,20 @@ export default function ContactsSocialForm() {
   return (
     <FormProvider methods={methods} onSubmit={onSubmit}>
       <Grid container spacing={3}>
-        {/* Information Alert */}
+        {/* Save Button */}
         <Grid xs={12}>
-          <Stack direction="row" justifyContent="flex-end" spacing={2}>
+          <Stack
+            direction="row"
+            justifyContent="flex-end"
+            spacing={2}
+            sx={{
+              position: 'sticky',
+              top: 0,
+              py: 1,
+              bgcolor: 'background.default',
+              zIndex: 1,
+            }}
+          >
             <LoadingButton
               type="submit"
               variant="contained"

@@ -184,6 +184,9 @@ export default function OrderListView() {
           <Tabs
             value={filters.status}
             onChange={handleFilterStatus}
+            variant="scrollable"
+            scrollButtons="auto"
+            allowScrollButtonsMobile
             sx={{
               px: 2.5,
               boxShadow: (theme) => `inset 0 -2px 0 0 ${alpha(theme.palette.grey[500], 0.08)}`,
@@ -256,7 +259,7 @@ export default function OrderListView() {
             />
 
             <Scrollbar>
-              <Table size={table.dense ? 'small' : 'medium'} sx={{ minWidth: 960 }}>
+              <Table size={table.dense ? 'small' : 'medium'} sx={{ minWidth: 960 }} aria-label={t('orders_table')}>
                 <TableHeadCustom
                   order={table.order}
                   orderBy={table.orderBy}

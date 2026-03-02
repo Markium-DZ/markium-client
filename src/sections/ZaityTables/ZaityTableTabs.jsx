@@ -54,6 +54,9 @@ const ZaityTableTabs = ({
       <Tabs
         value={filters?.[filterKey]}
         onChange={handleFilterStatus}
+        variant="scrollable"
+        scrollButtons="auto"
+        allowScrollButtonsMobile
         sx={{
           px: 2.5,
           boxShadow: (theme) => `inset 0 -2px 0 0 ${alpha(theme.palette.grey[500], 0.08)}`,

@@ -78,71 +78,70 @@ export default function NavVertical({ openNav, onCloseNav }) {
   }, [pathname]);
 
   const renderContent = (
-    <Scrollbar
-      sx={{
-        height: 1,
-        '& .simplebar-content': {
-          height: 1,
-          display: 'flex',
-          flexDirection: 'column',
-        },
-      }}
-    >
-      <Box
-        component={RouterLink}
-        href={paths.dashboard.root}
+    <Stack sx={{ height: 1 }}>
+      <Scrollbar
         sx={{
-          px: 2.5,
-          pt: 3,
-          pb: 2,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 1.5,
-          textDecoration: 'none',
-          color: 'inherit',
+          flexGrow: 1,
+          '& .simplebar-content': {
+            display: 'flex',
+            flexDirection: 'column',
+          },
         }}
       >
-        <Logo disabledLink sx={{ width: 36, height: 36 }} />
-        <Typography
-          variant="subtitle1"
-          noWrap
+        <Box
+          component={RouterLink}
+          href={paths.dashboard.root}
           sx={{
-            fontWeight: 700,
-            ...(planTier === 'pro' && {
-              color: theme.palette.primary.main,
-            }),
-            ...(planTier === 'business' && {
-              background: `linear-gradient(135deg, ${theme.palette.warning.main}, ${theme.palette.warning.dark})`,
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-            }),
+            px: 2.5,
+            pt: 3,
+            pb: 2,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1.5,
+            textDecoration: 'none',
+            color: 'inherit',
           }}
         >
-          {t('markium')}
-        </Typography>
-        {planTier === 'business' && (
-          <Iconify
-            icon="solar:crown-bold"
-            width={18}
-            sx={{ color: 'warning.main', ml: -0.5 }}
-          />
-        )}
-      </Box>
+          <Logo disabledLink sx={{ width: 36, height: 36 }} />
+          <Typography
+            variant="subtitle1"
+            noWrap
+            sx={{
+              fontWeight: 700,
+              ...(planTier === 'pro' && {
+                color: theme.palette.primary.main,
+              }),
+              ...(planTier === 'business' && {
+                background: `linear-gradient(135deg, ${theme.palette.warning.main}, ${theme.palette.warning.dark})`,
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+              }),
+            }}
+          >
+            {t('markium')}
+          </Typography>
+          {planTier === 'business' && (
+            <Iconify
+              icon="solar:crown-bold"
+              width={18}
+              sx={{ color: 'warning.main', ml: -0.5 }}
+            />
+          )}
+        </Box>
 
-      <Divider sx={{ borderStyle: 'dashed', mx: 2.5, mb: 2 }} />
+        <Divider sx={{ borderStyle: 'dashed', mx: 2.5, mb: 2 }} />
 
-      <NavSectionVertical
-        data={adjustedNavData}
-        slotProps={{
-          currentRole: user?.role,
-        }}
-        aria-label={t('main_navigation')}
-      />
-
-      <Box sx={{ flexGrow: 1 }} />
+        <NavSectionVertical
+          data={adjustedNavData}
+          slotProps={{
+            currentRole: user?.role,
+          }}
+          aria-label={t('main_navigation')}
+        />
+      </Scrollbar>
 
       <NavUserProfile />
-    </Scrollbar>
+    </Stack>
   );
 
   return (

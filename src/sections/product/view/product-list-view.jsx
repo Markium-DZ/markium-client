@@ -1,10 +1,14 @@
 import isEqual from 'lodash/isEqual';
 import { useState, useEffect, useCallback } from 'react';
 
+import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
+import useMediaQuery from '@mui/material/useMediaQuery';
+import { useTheme } from '@mui/material/styles';
+import TablePagination from '@mui/material/TablePagination';
 import {
   DataGrid,
   GridToolbarExport,
@@ -35,6 +39,7 @@ import CustomBreadcrumbs from 'src/components/custom-breadcrumbs';
 
 import ProductTableToolbar from '../product-table-toolbar';
 import ProductTableFiltersResult from '../product-table-filters-result';
+import ProductMobileCard from '../product-mobile-card';
 import {
   RenderCellStock,
   RenderCellPrice,
@@ -70,11 +75,17 @@ export default function ProductListView() {
 
   const { t } = useTranslate();
 
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+
   const confirmRows = useBoolean();
 
   const router = useRouter();
 
   const settings = useSettingsContext();
+
+  const [mobilePage, setMobilePage] = useState(0);
+  const [mobileRowsPerPage, setMobileRowsPerPage] = useState(10);
 
   const { products, productsLoading, productsError, productsMutate } = useGetProducts();
 
@@ -282,94 +293,138 @@ export default function ProductListView() {
           }}
         />
 
-        <Card
-          sx={{
-            height: { xs: 800, md: 2 },
-            flexGrow: { md: 1 },
-            display: { md: 'flex' },
-            flexDirection: { md: 'column' },
-          }}
-        >
-          {!productsLoading && productsError && !products?.length ? (
+        {!productsLoading && productsError && !products?.length ? (
+          <Card sx={{ p: 3 }}>
             <ConnectionError onRetry={() => productsMutate?.()} />
-          ) : (
-          <DataGrid
-            checkboxSelection
-            disableRowSelectionOnClick
-            rows={dataFiltered}
-            columns={columns}
-            loading={productsLoading}
-            getRowHeight={() => 'auto'}
-            pageSizeOptions={[5, 10, 25]}
-            initialState={{
-              pagination: {
-                paginationModel: { pageSize: 10 },
-              },
-            }}
-            onRowSelectionModelChange={(newSelectionModel) => {
-              setSelectedRowIds(newSelectionModel);
-            }}
-            columnVisibilityModel={columnVisibilityModel}
-            onColumnVisibilityModelChange={(newModel) => setColumnVisibilityModel(newModel)}
-            slots={{
-              toolbar: () => (
-                <>
-                  <GridToolbarContainer>
-                    <ProductTableToolbar
-                      filters={filters}
-                      onFilters={handleFilters}
-                      stockOptions={PRODUCT_STOCK_OPTIONS}
-                      publishOptions={STATUS_OPTIONS}
+          </Card>
+        ) : isMobile ? (
+          /* Mobile card layout */
+          <Box>
+            {dataFiltered.length === 0 ? (
+              <Card sx={{ p: 3 }}>
+                <EmptyContent title={t('no_data')} />
+              </Card>
+            ) : (
+              <>
+                {dataFiltered
+                  .slice(
+                    mobilePage * mobileRowsPerPage,
+                    mobilePage * mobileRowsPerPage + mobileRowsPerPage
+                  )
+                  .map((product) => (
+                    <ProductMobileCard
+                      key={product.id}
+                      product={product}
+                      onViewRow={() => handleViewRow(product.id)}
+                      onEditRow={() => handleEditRow(product.id)}
+                      onDeleteRow={() => handleDeleteRow(product.id)}
                     />
+                  ))}
 
-                    <GridToolbarQuickFilter />
-
-                    <Stack
-                      spacing={1}
-                      flexGrow={1}
-                      direction="row"
-                      alignItems="center"
-                      justifyContent="flex-end"
-                    >
-                      {!!selectedRowIds.length && (
-                        <Button
-                          size="small"
-                          color="error"
-                          startIcon={<Iconify icon="solar:trash-bin-trash-bold" />}
-                          onClick={confirmRows.onTrue}
-                        >
-                          {t('delete')} ({selectedRowIds.length})
-                        </Button>
-                      )}
-
-                      <GridToolbarColumnsButton />
-                      <GridToolbarFilterButton />
-                      <GridToolbarExport />
-                    </Stack>
-                  </GridToolbarContainer>
-
-                  {canReset && (
-                    <ProductTableFiltersResult
-                      filters={filters}
-                      onFilters={handleFilters}
-                      onResetFilters={handleResetFilters}
-                      results={dataFiltered.length}
-                      sx={{ p: 2.5, pt: 0 }}
-                    />
-                  )}
-                </>
-              ),
-              noRowsOverlay: () => <EmptyContent title={t('no_data')} />,
-              noResultsOverlay: () => <EmptyContent title={t('no_results_found')} />,
+                <Card sx={{ mt: 1 }}>
+                  <TablePagination
+                    component="div"
+                    count={dataFiltered.length}
+                    page={mobilePage}
+                    rowsPerPage={mobileRowsPerPage}
+                    onPageChange={(e, newPage) => setMobilePage(newPage)}
+                    onRowsPerPageChange={(e) => {
+                      setMobileRowsPerPage(parseInt(e.target.value, 10));
+                      setMobilePage(0);
+                    }}
+                    rowsPerPageOptions={[5, 10, 25]}
+                  />
+                </Card>
+              </>
+            )}
+          </Box>
+        ) : (
+          /* Desktop DataGrid */
+          <Card
+            sx={{
+              height: { xs: 800, md: 2 },
+              flexGrow: { md: 1 },
+              display: { md: 'flex' },
+              flexDirection: { md: 'column' },
             }}
-            slotProps={{
-              columnsPanel: {
-                getTogglableColumns,
-              },
-            }}
-          />
-          )}
-        </Card>
+          >
+            <DataGrid
+              checkboxSelection
+              disableRowSelectionOnClick
+              rows={dataFiltered}
+              columns={columns}
+              loading={productsLoading}
+              getRowHeight={() => 'auto'}
+              pageSizeOptions={[5, 10, 25]}
+              initialState={{
+                pagination: {
+                  paginationModel: { pageSize: 10 },
+                },
+              }}
+              onRowSelectionModelChange={(newSelectionModel) => {
+                setSelectedRowIds(newSelectionModel);
+              }}
+              columnVisibilityModel={columnVisibilityModel}
+              onColumnVisibilityModelChange={(newModel) => setColumnVisibilityModel(newModel)}
+              slots={{
+                toolbar: () => (
+                  <>
+                    <GridToolbarContainer>
+                      <ProductTableToolbar
+                        filters={filters}
+                        onFilters={handleFilters}
+                        stockOptions={PRODUCT_STOCK_OPTIONS}
+                        publishOptions={STATUS_OPTIONS}
+                      />
+
+                      <GridToolbarQuickFilter />
+
+                      <Stack
+                        spacing={1}
+                        flexGrow={1}
+                        direction="row"
+                        alignItems="center"
+                        justifyContent="flex-end"
+                      >
+                        {!!selectedRowIds.length && (
+                          <Button
+                            size="small"
+                            color="error"
+                            startIcon={<Iconify icon="solar:trash-bin-trash-bold" />}
+                            onClick={confirmRows.onTrue}
+                          >
+                            {t('delete')} ({selectedRowIds.length})
+                          </Button>
+                        )}
+
+                        <GridToolbarColumnsButton />
+                        <GridToolbarFilterButton />
+                        <GridToolbarExport />
+                      </Stack>
+                    </GridToolbarContainer>
+
+                    {canReset && (
+                      <ProductTableFiltersResult
+                        filters={filters}
+                        onFilters={handleFilters}
+                        onResetFilters={handleResetFilters}
+                        results={dataFiltered.length}
+                        sx={{ p: 2.5, pt: 0 }}
+                      />
+                    )}
+                  </>
+                ),
+                noRowsOverlay: () => <EmptyContent title={t('no_data')} />,
+                noResultsOverlay: () => <EmptyContent title={t('no_results_found')} />,
+              }}
+              slotProps={{
+                columnsPanel: {
+                  getTogglableColumns,
+                },
+              }}
+            />
+          </Card>
+        )}
       </Container>
 
       <ConfirmDialog

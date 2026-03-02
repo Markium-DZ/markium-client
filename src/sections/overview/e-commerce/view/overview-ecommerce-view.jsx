@@ -55,7 +55,7 @@ export default function OverviewEcommerceView() {
   const { products, productsLoading, productsError, productsMutate } = useGetProducts();
   const { orders, ordersLoading, ordersError, mutate: ordersMutate } = useGetOrders();
   const { media, total: mediaTotal, mutate: mediaMutate } = useGetMedia(1, 1);
-  const { store, mutate: storeMutate } = useGetMyStore(user?.store?.slug);
+  const { store, storeLoading, mutate: storeMutate } = useGetMyStore(user?.store?.slug);
 
   const settings = useSettingsContext();
 
@@ -67,7 +67,8 @@ export default function OverviewEcommerceView() {
   }, [productsMutate, mediaMutate, storeMutate]);
 
   // Show skeleton while core data is loading or on connection error (prevents grade misclassification)
-  const isStillLoading = productsLoading || ordersLoading;
+  // Include storeLoading — onboardingCompleted depends on store config being loaded
+  const isStillLoading = productsLoading || ordersLoading || storeLoading;
   const hasConnectionError = !isStillLoading && ((productsError && !products?.length) || (ordersError && !orders?.length));
   const gradeLoading = isStillLoading || hasConnectionError;
 

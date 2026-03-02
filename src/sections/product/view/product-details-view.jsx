@@ -253,6 +253,9 @@ export default function ProductDetailsView({ id }) {
         <Tabs
           value={currentTab}
           onChange={handleChangeTab}
+          variant="scrollable"
+          scrollButtons="auto"
+          allowScrollButtonsMobile
           sx={{
             px: 3,
             boxShadow: (theme) => `inset 0 -2px 0 0 ${alpha(theme.palette.grey[500], 0.08)}`,

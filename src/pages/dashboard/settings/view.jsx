@@ -175,6 +175,9 @@ export default function SettingsView() {
         <Tabs
           value={currentTab}
           onChange={handleChangeTab}
+          variant="scrollable"
+          scrollButtons="auto"
+          allowScrollButtonsMobile
           sx={{
             mb: 3,
             borderBottom: (theme) => `1px solid ${theme.palette.divider}`,

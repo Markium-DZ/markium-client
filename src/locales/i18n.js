@@ -56,4 +56,7 @@ i18n.loadLanguageAsync = async (lang) => {
   }
 };
 
+// Sync the HTML lang attribute on initial load
+document.documentElement.lang = lng;
+
 export default i18n;

@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Navigate, Outlet } from 'react-router-dom';
 
 import { LoadingScreen } from 'src/components/loading-screen';
 
@@ -149,6 +149,7 @@ export const dashboardRoutes = [
           { path: 'list', element: <ProductListPage /> },
           { path: ':id', element: <ProductDetailsPage /> },
           { path: 'new', element: <ProductCreatePage /> },
+          { path: 'create', element: <Navigate to="/dashboard/product/new" replace /> },
           { path: ':id/orders', element: <ProductOrdersListPage /> },
           { path: ':id/edit', element: <ProductEditPage /> },
           { path: ':id/upload-assets', element: <ProductUploadAssetsPage /> },
@@ -255,6 +256,7 @@ export const dashboardRoutes = [
           { path: 'history', element: <SubscriptionHistoryPage /> },
         ],
       },
+      { path: '*', element: <Navigate to="/404" replace /> },
     ],
   },
   {
