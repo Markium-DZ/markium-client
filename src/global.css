@@ -1,3 +1,19 @@
+/* scrollbar */
+@import 'simplebar-react/dist/simplebar.min.css';
+
+/* lazy image */
+@import 'react-lazy-load-image-component/src/effects/blur.css';
+
+/* carousel */
+@import 'slick-carousel/slick/slick.css';
+@import 'slick-carousel/slick/slick-theme.css';
+
+/* lightbox */
+@import 'yet-another-react-lightbox/styles.css';
+@import 'yet-another-react-lightbox/plugins/captions.css';
+@import 'yet-another-react-lightbox/plugins/thumbnails.css';
+
+
 /* WebView / Mobile app fixes */
 html, body {
   overscroll-behavior: none;
@@ -17,31 +33,10 @@ input, select, textarea {
   font-size: 16px !important;
 }
 
-/* Disable text selection and callouts in WebView */
+/* Disable tap highlight in WebView */
 * {
   -webkit-tap-highlight-color: transparent;
 }
-
-/* scrollbar */
-@import 'simplebar-react/dist/simplebar.min.css';
-
-
-/* lazy image */
-@import 'react-lazy-load-image-component/src/effects/blur.css';
-
-
-
-/* carousel */
-@import 'slick-carousel/slick/slick.css';
-@import 'slick-carousel/slick/slick-theme.css';
-
-
-/* lightbox */
-@import 'yet-another-react-lightbox/styles.css';
-@import 'yet-another-react-lightbox/plugins/captions.css';
-@import 'yet-another-react-lightbox/plugins/thumbnails.css';
-
-
 
 
 .checkbox {
@@ -99,4 +94,3 @@ input, select, textarea {
 .support a:hover{
   transform: scale(1.1);
 }
-
