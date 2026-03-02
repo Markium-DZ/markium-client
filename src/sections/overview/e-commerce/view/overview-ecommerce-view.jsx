@@ -76,7 +76,8 @@ export default function OverviewEcommerceView() {
   const ordersCount = orders?.length || 0;
   const hasMedia = mediaTotal > 0 || (media && media.length > 0);
 
-  const onboardingCompleted = !!store?.config?.onboarding_completed;
+  const hasDeployedProduct = (products || []).some((p) => p.status === 'deployed');
+  const onboardingCompleted = !!store?.config?.onboarding_completed || hasDeployedProduct;
 
   // Determine if user is new (no products, or has products but hasn't completed onboarding step 3)
   const isNewUser = !gradeLoading && (productsCount === 0 || (productsCount > 0 && !onboardingCompleted));

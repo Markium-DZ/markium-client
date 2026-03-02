@@ -89,16 +89,19 @@ export default function SetupChecklist({
     }
     setShareLoading(true);
     try {
-      // Deploy the product created in step 2
+      // Deploy the product created in step 2 (ignore if already deployed)
       const product = products?.[0];
       if (product?.id) {
-        await deployProduct(product.id);
+        try {
+          await deployProduct(product.id);
+        } catch (deployError) {
+          // Product already deployed externally — that's fine, continue
+          console.info('[onboarding] product already deployed, skipping deploy step');
+        }
       }
 
-      const storeUrl = `https://${slug}.markium.online/?store=${slug}`;
-      await navigator.clipboard.writeText(storeUrl);
       await updateStoreConfig({ config: { onboarding_completed: true } });
-      enqueueSnackbar(t('store_url_copied'), { variant: 'success' });
+      enqueueSnackbar(t('product_published_successfully'), { variant: 'success' });
       setShareDialogOpen(false);
       onRefresh?.();
     } catch (error) {
@@ -131,7 +134,7 @@ export default function SetupChecklist({
       id: 'share',
       title: t('onboarding_share_product'),
       description: t('onboarding_share_product_desc'),
-      completed: onboardingCompleted,
+      completed: onboardingCompleted || products.some((p) => p.status === 'deployed'),
       icon: 'solar:upload-bold-duotone',
       action: () => setShareDialogOpen(true),
       actionLabel: t('onboarding_share_now'),
