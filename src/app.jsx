@@ -23,6 +23,9 @@ import { LiveRegionProvider } from 'src/components/live-region';
 
 import { AuthProvider } from 'src/auth/context/jwt';
 
+import SwUpdatePrompt from 'src/components/pwa/sw-update-prompt';
+import OfflineIndicator from 'src/components/pwa/offline-indicator';
+
 // Lazy-load components not needed for the initial login page render
 const LocalizationProvider = lazy(() => import('src/locales/localization-provider'));
 const SettingsDrawer = lazy(() => import('src/components/settings/drawer/settings-drawer'));
@@ -58,6 +61,8 @@ export default function App() {
               <Suspense fallback={null}>
                 <SettingsDrawer />
               </Suspense>
+              <SwUpdatePrompt />
+              <OfflineIndicator />
               <ProgressBar />
               <Suspense fallback={<ProgressBar />}>
                 <CheckoutProvider>

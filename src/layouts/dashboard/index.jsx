@@ -9,11 +9,15 @@ import { useSettingsContext } from 'src/components/settings';
 import { useTranslate } from 'src/locales';
 
 import SkipToContent from 'src/components/skip-to-content';
+import PageTransition from 'src/components/animate/page-transition';
+import PushPermissionPrompt from 'src/components/pwa/push-permission-prompt';
+import InstallPrompt from 'src/components/pwa/install-prompt';
 import Main from './main';
 import Header from './header';
 import NavMini from './nav-mini';
 import NavVertical from './nav-vertical';
 import NavHorizontal from './nav-horizontal';
+import BottomNav from './bottom-nav';
 
 // ----------------------------------------------------------------------
 
@@ -42,7 +46,10 @@ export default function DashboardLayout({ children }) {
 
         {lgUp ? renderHorizontal : renderNavVertical}
 
-        <Main>{children}</Main>
+        <Main><PageTransition>{children}</PageTransition></Main>
+        <PushPermissionPrompt />
+        <InstallPrompt />
+        {!lgUp && <BottomNav />}
       </>
     );
   }
@@ -62,8 +69,11 @@ export default function DashboardLayout({ children }) {
         >
           {lgUp ? renderNavMini : renderNavVertical}
 
-          <Main>{children}</Main>
+          <Main><PageTransition>{children}</PageTransition></Main>
         </Box>
+        <PushPermissionPrompt />
+        <InstallPrompt />
+        {!lgUp && <BottomNav />}
       </>
     );
   }
@@ -82,8 +92,11 @@ export default function DashboardLayout({ children }) {
       >
         {renderNavVertical}
 
-        <Main>{children}</Main>
+        <Main><PageTransition>{children}</PageTransition></Main>
       </Box>
+      <PushPermissionPrompt />
+      <InstallPrompt />
+      {!lgUp && <BottomNav />}
     </>
   );
 }
