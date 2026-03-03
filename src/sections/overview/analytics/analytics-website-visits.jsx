@@ -6,7 +6,9 @@ import CardHeader from '@mui/material/CardHeader';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import { LineChart } from '@mui/x-charts/LineChart';
+import { alpha, useTheme } from '@mui/material/styles';
 
+import Iconify from 'src/components/iconify';
 import { useTranslate } from 'src/locales';
 
 // ----------------------------------------------------------------------
@@ -15,20 +17,29 @@ const DEFAULT_COLORS = [
   '#2065D1', '#22C55E', '#FFAB00', '#FF5630', '#00B8D9',
 ];
 
-// Parse API date labels like "Feb-2026-20" into a Date object
+// Parse API date labels like "20-Feb-2026" or "1-Mar-2026 14:00" into a Date object
 function parseLabel(label) {
-  if (!label) return null;
-  const parts = label.split('-');
-  if (parts.length === 3) {
-    const d = new Date(`${parts[0]} ${parts[2]}, ${parts[1]}`);
+  if (!label || typeof label !== 'string') return null;
+  // Try "1-Mar-2026 14:00" (hourly) or "1-Mar-2026" (daily)
+  const match = label.match(/^(\d{1,2})-(\w+)-(\d{4})(?:\s+(\d{2}):(\d{2}))?$/);
+  if (match) {
+    const timeStr = match[4] ? ` ${match[4]}:${match[5]}` : '';
+    const d = new Date(`${match[2]} ${match[1]}, ${match[3]}${timeStr}`);
     if (!Number.isNaN(d.getTime())) return d;
   }
   const fallback = new Date(label);
   return Number.isNaN(fallback.getTime()) ? null : fallback;
 }
 
+// Detect if labels contain hourly data (have time component like "14:00")
+function isHourlyData(labels) {
+  if (!labels || labels.length < 2) return false;
+  return labels.some((l) => typeof l === 'string' && /\d{2}:\d{2}/.test(l));
+}
+
 export default function AnalyticsWebsiteVisits({ title, subheader, chart, ...other }) {
-  const { i18n } = useTranslate();
+  const theme = useTheme();
+  const { t, i18n } = useTranslate();
   const lang = i18n.language || 'ar';
   const isRtl = lang === 'ar';
 
@@ -37,38 +48,44 @@ export default function AnalyticsWebsiteVisits({ title, subheader, chart, ...oth
   const xAxisData = (labels || []).map((l, i) => i);
   const xAxisLabels = labels || [];
 
-  // Format x-axis labels as localized dates
-  const dateFmt = new Intl.DateTimeFormat(lang, { month: 'short', day: 'numeric' });
+  // Format x-axis labels — use time for hourly data, date for daily
+  const hourly = isHourlyData(labels);
+  const dateFmt = new Intl.DateTimeFormat(lang, hourly
+    ? { hour: '2-digit', minute: '2-digit', hour12: false }
+    : { month: 'short', day: 'numeric' });
   const formatXLabel = (v) => {
     const raw = xAxisLabels[v];
     if (!raw) return '';
     const d = parseLabel(raw);
-    return d ? dateFmt.format(d) : raw;
+    return d ? dateFmt.format(d) : String(raw);
   };
 
   // Format y-axis as clean localized integers
   const numFmt = new Intl.NumberFormat(lang, { maximumFractionDigits: 0 });
   const formatYLabel = (v) => numFmt.format(Math.round(v));
 
-  const muiSeries = (series || []).map((s, idx) => {
-    const item = {
-      label: s.name || `Series ${idx + 1}`,
-      data: s.data || [],
-      area: s.type === 'area' || s.fill === 'gradient',
-      showMark: false,
-    };
-    if (colors?.[idx]) item.color = colors[idx];
-    return item;
-  });
+  const muiSeries = (series || []).map((s, idx) => ({
+    label: s.name || `Series ${idx + 1}`,
+    data: s.data || [],
+    area: s.type === 'area' || s.fill === 'gradient',
+    showMark: false,
+    color: colors?.[idx] || DEFAULT_COLORS[idx % DEFAULT_COLORS.length],
+  }));
 
   const showLegend = muiSeries.length > 1;
 
   const isEmpty = !labels || labels.length === 0;
 
   const chartContent = isEmpty ? (
-    <Box sx={{ height: 364, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <Typography variant="body2" color="text.secondary">No data</Typography>
-    </Box>
+    <Stack alignItems="center" justifyContent="center" spacing={1} sx={{ height: 364 }}>
+      <Box sx={{ p: 1.5, borderRadius: '50%', bgcolor: alpha(theme.palette.grey[500], 0.08) }}>
+        <Iconify icon="solar:chart-bold-duotone" width={28} sx={{ color: 'text.disabled' }} />
+      </Box>
+      <Typography variant="subtitle2" sx={{ color: 'text.secondary' }}>{t('no_data')}</Typography>
+      <Typography variant="caption" sx={{ color: 'text.disabled', maxWidth: 200, textAlign: 'center' }}>
+        {t('analytics_no_data_hint')}
+      </Typography>
+    </Stack>
   ) : (
     <Box sx={{ p: 3, pb: 1 }}>
       {showLegend && (

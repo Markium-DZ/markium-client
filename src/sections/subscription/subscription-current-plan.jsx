@@ -40,7 +40,10 @@ export default function SubscriptionCurrentPlan() {
   const packageName = subscription?.package?.name || t('subscription_status_payg');
   const status = subscription?.status || 'payg';
   const endsAt = subscription?.ends_at;
+  const daysLeft = subscription?.days_until_expiry;
+  const hasDaysLeft = typeof daysLeft === 'number' && daysLeft >= 0;
   const statusColor = STATUS_COLORS[status] || 'primary';
+  const isFreePlan = ['payg', 'free-trial'].includes(subscription?.package?.slug);
 
   return (
     <Box
@@ -126,17 +129,29 @@ export default function SubscriptionCurrentPlan() {
             )}
 
             {endsAt && (
-              <Stack direction="row" spacing={0.5} alignItems="center" sx={{ mt: 0.5 }}>
-                <Iconify icon="solar:calendar-linear" width={16} sx={{ opacity: 0.64 }} />
-                <Typography variant="caption" sx={{ opacity: 0.72 }}>
-                  {status === 'active'
-                    ? t('subscription_renews_on')
-                    : t('subscription_expires_on')}
-                  :{' '}
-                  <Box component="strong" sx={{ fontWeight: 700 }}>
-                    {fDate(endsAt)}
-                  </Box>
-                </Typography>
+              <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mt: 1, flexWrap: 'wrap', gap: 1 }}>
+                {hasDaysLeft && (
+                  <Label
+                    color={daysLeft <= 3 ? 'error' : daysLeft <= 7 ? 'warning' : 'info'}
+                    startIcon={<Iconify icon="solar:clock-circle-bold" width={14} />}
+                  >
+                    {daysLeft === 0
+                      ? t('subscription_expires_today')
+                      : t('subscription_days_remaining', { count: daysLeft })}
+                  </Label>
+                )}
+                <Stack direction="row" spacing={0.5} alignItems="center">
+                  <Iconify icon="solar:calendar-linear" width={16} sx={{ opacity: 0.64 }} />
+                  <Typography variant="caption" sx={{ opacity: 0.72 }}>
+                    {status === 'active' && !isFreePlan
+                      ? t('subscription_renews_on')
+                      : t('subscription_expires_on')}
+                    :{' '}
+                    <Box component="strong" sx={{ fontWeight: 700 }}>
+                      {fDate(endsAt)}
+                    </Box>
+                  </Typography>
+                </Stack>
               </Stack>
             )}
           </Stack>

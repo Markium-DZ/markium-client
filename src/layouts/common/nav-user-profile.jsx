@@ -50,6 +50,8 @@ export default function NavUserProfile() {
 
   const planTier = getPlanTier(packageSlug);
   const isFreePlan = planTier === 'free';
+  const daysLeft = subscription?.days_until_expiry;
+  const hasDaysLeft = typeof daysLeft === 'number' && daysLeft >= 0;
 
   const storeName = user?.store?.name;
   const storeLogo = user?.store?.logo_url;
@@ -185,18 +187,32 @@ export default function NavUserProfile() {
             {storeName}
           </Typography>
           {displayPackageName && (
-            <Label
-              color={isFreePlan ? 'default' : 'success'}
-              variant="soft"
-              startIcon={
-                isFreePlan
-                  ? <Iconify icon="solar:tag-bold" width={12} />
-                  : <Iconify icon="solar:crown-bold" width={12} />
-              }
-              sx={{ mt: 0.5, height: 22, fontSize: 11 }}
-            >
-              {displayPackageName}
-            </Label>
+            <Stack direction="row" alignItems="center" spacing={0.5} sx={{ mt: 0.5, flexWrap: 'wrap', gap: 0.5 }}>
+              <Label
+                color={isFreePlan ? 'default' : 'success'}
+                variant="soft"
+                startIcon={
+                  isFreePlan
+                    ? <Iconify icon="solar:tag-bold" width={12} />
+                    : <Iconify icon="solar:crown-bold" width={12} />
+                }
+                sx={{ height: 22, fontSize: 11 }}
+              >
+                {displayPackageName}
+              </Label>
+              {hasDaysLeft && (
+                <Label
+                  color={daysLeft <= 3 ? 'error' : daysLeft <= 7 ? 'warning' : 'default'}
+                  variant="soft"
+                  startIcon={<Iconify icon="solar:clock-circle-bold" width={12} />}
+                  sx={{ height: 22, fontSize: 11 }}
+                >
+                  {daysLeft === 0
+                    ? t('subscription_expires_today')
+                    : t('subscription_days_remaining', { count: daysLeft })}
+                </Label>
+              )}
+            </Stack>
           )}
         </Box>
 

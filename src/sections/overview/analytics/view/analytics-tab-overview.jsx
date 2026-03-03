@@ -68,8 +68,8 @@ export default function AnalyticsTabOverview({ dateFrom }) {
 
       <Grid xs={12} sm={6} md={3}>
         <AnalyticsWidgetSummary
-          title={t('analytics_units_sold')}
-          description={t('analytics_units_sold_desc')}
+          title={t('analytics_product_views')}
+          description={t('analytics_product_views_desc')}
           total={totalProductViews}
           color="error"
           icon={<img alt="icon" src="/assets/icons/glass/ic_glass_message.webp" />}
@@ -144,14 +144,14 @@ export default function AnalyticsTabOverview({ dateFrom }) {
 
       <Grid xs={12} md={6}>
         <Card sx={{ height: 1, display: 'flex', flexDirection: 'column' }}>
-          <CardHeader title={t('analytics_units_sold')} subheader={t('analytics_views_trend_desc')} />
+          <CardHeader title={t('analytics_product_views')} subheader={t('analytics_views_trend_desc')} />
           <AnalyticsGate sectionKey="overview">
             <AnalyticsWebsiteVisits
               chart={{
                 labels: totalProductViewsLabels,
                 series: [
                   {
-                    name: t('analytics_units_sold'),
+                    name: t('analytics_product_views'),
                     type: 'area',
                     fill: 'gradient',
                     data: totalProductViewsData,

@@ -184,13 +184,20 @@ export default function AnalyticsTabTraffic({ dateFrom, sections }) {
           <AnalyticsGate sectionKey="landing_pages">
             <AnalyticsTableCard
               columns={[
-                { key: 'page', label: t('landing_page') },
+                { key: 'page', label: t('landing_page'), truncate: 260 },
                 { key: 'entries', label: t('entries'), align: 'right', format: fNumber },
               ]}
-              rows={(landingPages || []).map((lp) => ({
-                page: lp.page || lp.path || '',
-                entries: lp.entries || lp.count || 0,
-              }))}
+              rows={(landingPages || []).map((lp) => {
+                const raw = lp.landing_page || lp.page || lp.path || '';
+                let page = raw;
+                try {
+                  const u = new URL(raw);
+                  page = u.pathname + u.search;
+                } catch {
+                  // keep raw value
+                }
+                return { page, entries: lp.entries || lp.count || 0 };
+              })}
             />
           </AnalyticsGate>
         </Card>

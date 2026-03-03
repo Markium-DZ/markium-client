@@ -6,7 +6,10 @@ import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import { PieChart } from '@mui/x-charts/PieChart';
-import { useTheme } from '@mui/material/styles';
+import { useTheme, alpha } from '@mui/material/styles';
+
+import Iconify from 'src/components/iconify';
+import { useTranslate } from 'src/locales';
 
 // ----------------------------------------------------------------------
 
@@ -17,6 +20,7 @@ const DEFAULT_COLORS = [
 
 export default function AnalyticsCurrentVisits({ title, subheader, chart, ...other }) {
   const theme = useTheme();
+  const { t } = useTranslate();
   const { colors, series } = chart;
 
   const palette = colors || [
@@ -31,16 +35,22 @@ export default function AnalyticsCurrentVisits({ title, subheader, chart, ...oth
   const pieData = (series || []).map((item, index) => ({
     id: index,
     value: item.value || 0,
-    label: item.label || '',
+    label: String(item.label || ''),
     color: palette[index % palette.length],
   }));
 
   const isEmpty = !series || series.length === 0 || pieData.every((d) => d.value === 0);
 
   const chartContent = isEmpty ? (
-    <Box sx={{ height: 280, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <Typography variant="body2" color="text.secondary">No data</Typography>
-    </Box>
+    <Stack alignItems="center" justifyContent="center" spacing={1} sx={{ height: 280 }}>
+      <Box sx={{ p: 1.5, borderRadius: '50%', bgcolor: alpha(theme.palette.grey[500], 0.08) }}>
+        <Iconify icon="solar:chart-2-bold-duotone" width={28} sx={{ color: 'text.disabled' }} />
+      </Box>
+      <Typography variant="subtitle2" sx={{ color: 'text.secondary' }}>{t('no_data')}</Typography>
+      <Typography variant="caption" sx={{ color: 'text.disabled', maxWidth: 200, textAlign: 'center' }}>
+        {t('analytics_no_data_hint')}
+      </Typography>
+    </Stack>
   ) : (
     <Box sx={{ p: 3 }}>
       <Box sx={{ display: 'flex', justifyContent: 'center' }}>

@@ -35,7 +35,7 @@ export default function AnalyticsTabProducts({ dateFrom, sections }) {
   const { aov } = useGetAnalyticsAov(
     sections?.aov?.accessible ? dateFrom : null
   );
-  const { pageviews, productViewed, addToCart, orderCompleted } = useGetAnalyticsFunnel(
+  const { pageviews, productViewed, addToCart, checkoutStarted, orderCompleted } = useGetAnalyticsFunnel(
     sections?.funnel?.accessible ? dateFrom : null
   );
   const { cartAbandonment } = useGetAnalyticsCartAbandonment(
@@ -137,7 +137,7 @@ export default function AnalyticsTabProducts({ dateFrom, sections }) {
                 series: [
                   { label: t('analytics_unique_visitors'), value: pageviews },
                   { label: t('analytics_product_views'), value: productViewed },
-                  { label: t('analytics_add_to_cart'), value: addToCart },
+                  { label: t('analytics_checkout_started'), value: checkoutStarted },
                   { label: t('analytics_total_orders'), value: orderCompleted },
                 ],
               }}
@@ -153,19 +153,19 @@ export default function AnalyticsTabProducts({ dateFrom, sections }) {
           <AnalyticsGate sectionKey="cart_abandonment">
             <AnalyticsWebsiteVisits
               chart={{
-                labels: (cartAbandonment || []).map((d) => d.date || d.label || ''),
+                labels: cartAbandonment?.[0]?.labels || [],
                 series: [
                   {
                     name: t('analytics_add_to_cart'),
                     type: 'area',
                     fill: 'gradient',
-                    data: (cartAbandonment || []).map((d) => d.add_to_cart || 0),
+                    data: cartAbandonment?.[0]?.data || [],
                   },
                   {
                     name: t('analytics_total_orders'),
                     type: 'line',
                     fill: 'solid',
-                    data: (cartAbandonment || []).map((d) => d.order_completed || 0),
+                    data: cartAbandonment?.[2]?.data || [],
                   },
                 ],
               }}
