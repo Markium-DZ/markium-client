@@ -14,7 +14,6 @@ import {
   Stack,
   Box,
   CircularProgress,
-  LinearProgress,
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 
@@ -35,33 +34,10 @@ import ProfitabilitySummaryCards from '../components/profitability-summary-cards
 import CostBreakdownChart from '../components/cost-breakdown-chart';
 import ProfitabilityGate from '../components/profitability-gate';
 import ChannelIcon from '../components/channel-icon';
+import MarginBar from '../components/margin-bar';
 import { DEFAULT_DATE_RANGE, fmtAmount, fmtPct } from '../constants';
 
 // ----------------------------------------------------------------------
-
-function MarginBar({ value }) {
-  const clamped = Math.max(0, Math.min(100, value || 0));
-  const barColor = value >= 30 ? 'success' : value >= 15 ? 'warning' : 'error';
-
-  return (
-    <Stack direction="row" alignItems="center" spacing={1} sx={{ minWidth: 120 }}>
-      <LinearProgress
-        variant="determinate"
-        value={clamped}
-        color={barColor}
-        sx={{
-          flex: 1,
-          height: 6,
-          borderRadius: 3,
-          bgcolor: (theme) => alpha(theme.palette.grey[500], 0.12),
-        }}
-      />
-      <Typography variant="caption" fontWeight={600} sx={{ minWidth: 40, textAlign: 'right' }}>
-        {fmtPct(value)}
-      </Typography>
-    </Stack>
-  );
-}
 
 function ProfitValue({ value }) {
   const isPositive = typeof value === 'number' && value >= 0;
