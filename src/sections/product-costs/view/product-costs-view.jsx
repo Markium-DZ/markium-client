@@ -7,18 +7,11 @@ import {
   Card,
   Table,
   TableBody,
-  TableCell,
   TableContainer,
-  TableRow,
-  IconButton,
-  MenuItem,
-  Tooltip,
-  Typography,
 } from '@mui/material';
 
 import { paths } from 'src/routes/paths';
 
-import { fNumber } from 'src/utils/format-number';
 import { useGetProduct } from 'src/api/product';
 import { useGetProductCosts, deleteProductCost } from 'src/api/product-costs';
 
@@ -30,23 +23,11 @@ import CustomBreadcrumbs from 'src/components/custom-breadcrumbs';
 import Iconify from 'src/components/iconify';
 import EmptyContent from 'src/components/empty-content';
 import { ConfirmDialog } from 'src/components/custom-dialog';
-import CustomPopover, { usePopover } from 'src/components/custom-popover';
 import { useTable, TableHeadCustom, TablePaginationCustom } from 'src/components/table';
 import { LoadingScreen } from 'src/components/loading-screen';
-import Label from 'src/components/label';
 
 import CostFormDialog from '../cost-form-dialog';
-import CostTypeBadge from '../cost-type-badge';
-import { getChannelConfig } from '../constants';
-
-const TABLE_HEAD = [
-  { id: 'type', label: 'cost_type' },
-  { id: 'scope', label: 'scope' },
-  { id: 'amount', label: 'amount' },
-  { id: 'details', label: 'details' },
-  { id: 'notes', label: 'notes' },
-  { id: 'actions', label: '', width: 50 },
-];
+import CostRow, { COST_TABLE_HEAD } from '../cost-row';
 
 export default function ProductCostsView({ id }) {
   const { t } = useTranslate();
@@ -152,7 +133,7 @@ export default function ProductCostsView({ id }) {
           <TableContainer>
             <Table>
               <TableHeadCustom
-                headLabel={TABLE_HEAD.map((col) => ({
+                headLabel={COST_TABLE_HEAD.map((col) => ({
                   ...col,
                   label: col.label ? t(col.label) : '',
                 }))}
@@ -207,115 +188,4 @@ export default function ProductCostsView({ id }) {
 
 ProductCostsView.propTypes = {
   id: PropTypes.string.isRequired,
-};
-
-function CostRow({ cost, product, onEdit, onDelete }) {
-  const { t } = useTranslate();
-  const popover = usePopover();
-
-  const variant = cost.variant_id
-    ? product?.variants?.find((v) => v.id === cost.variant_id)
-    : null;
-
-  const renderDetails = () => {
-    const parts = [];
-
-    if (cost.type === 'marketing') {
-      if (cost.campaign_name) parts.push(cost.campaign_name);
-      if (cost.channel) {
-        const ch = getChannelConfig(cost.channel);
-        parts.push(t(ch.labelKey));
-      }
-    }
-
-    if (cost.type === 'custom' && cost.custom_type_name) {
-      parts.push(cost.custom_type_name);
-    }
-
-    if (variant) {
-      parts.push(variant.name || variant.title || `#${variant.id}`);
-    }
-
-    return parts.join(' · ') || '—';
-  };
-
-  return (
-    <>
-      <TableRow hover>
-        <TableCell>
-          <CostTypeBadge type={cost.type} customTypeName={cost.custom_type_name} />
-        </TableCell>
-
-        <TableCell>
-          <Label variant="soft" color={cost.scope === 'per_unit' ? 'info' : 'warning'}>
-            {t(cost.scope === 'per_unit' ? 'scope_per_unit' : 'scope_global')}
-          </Label>
-        </TableCell>
-
-        <TableCell>
-          <Typography variant="body2" fontWeight={600}>
-            {fNumber(cost.amount)} DA
-          </Typography>
-        </TableCell>
-
-        <TableCell>
-          <Typography variant="body2" color="text.secondary" noWrap sx={{ maxWidth: 200 }}>
-            {renderDetails()}
-          </Typography>
-        </TableCell>
-
-        <TableCell>
-          {cost.notes ? (
-            <Tooltip title={cost.notes}>
-              <Typography variant="body2" color="text.secondary" noWrap sx={{ maxWidth: 150 }}>
-                {cost.notes}
-              </Typography>
-            </Tooltip>
-          ) : (
-            '—'
-          )}
-        </TableCell>
-
-        <TableCell align="right">
-          <IconButton onClick={popover.onOpen}>
-            <Iconify icon="eva:more-vertical-fill" />
-          </IconButton>
-        </TableCell>
-      </TableRow>
-
-      <CustomPopover
-        open={popover.open}
-        onClose={popover.onClose}
-        arrow="right-top"
-      >
-        <MenuItem
-          onClick={() => {
-            popover.onClose();
-            onEdit();
-          }}
-        >
-          <Iconify icon="solar:pen-bold" />
-          {t('edit')}
-        </MenuItem>
-
-        <MenuItem
-          onClick={() => {
-            popover.onClose();
-            onDelete();
-          }}
-          sx={{ color: 'error.main' }}
-        >
-          <Iconify icon="solar:trash-bin-trash-bold" />
-          {t('delete')}
-        </MenuItem>
-      </CustomPopover>
-    </>
-  );
-}
-
-CostRow.propTypes = {
-  cost: PropTypes.object.isRequired,
-  product: PropTypes.object,
-  onEdit: PropTypes.func.isRequired,
-  onDelete: PropTypes.func.isRequired,
 };
