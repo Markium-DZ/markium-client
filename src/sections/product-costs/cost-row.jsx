@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import PropTypes from 'prop-types';
 
 import {
@@ -31,6 +32,16 @@ export const COST_TABLE_HEAD = [
 export default function CostRow({ cost, product, onEdit, onDelete }) {
   const { t } = useTranslate();
   const popover = usePopover();
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    try {
+      await onDelete(cost.id);
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   const variant = cost.variant_id
     ? product?.variants?.find((v) => v.id === cost.variant_id)
@@ -120,12 +131,13 @@ export default function CostRow({ cost, product, onEdit, onDelete }) {
         <MenuItem
           onClick={() => {
             popover.onClose();
-            onDelete();
+            handleDelete();
           }}
           sx={{ color: 'error.main' }}
+          disabled={deleting}
         >
           <Iconify icon="solar:trash-bin-trash-bold" />
-          {t('delete')}
+          {deleting ? t('deleting', 'Deleting...') : t('delete')}
         </MenuItem>
       </CustomPopover>
     </>
