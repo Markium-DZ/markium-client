@@ -171,6 +171,7 @@ export default function NavVertical({ openNav, onCloseNav }) {
           PaperProps={{
             sx: {
               width: NAV.W_VERTICAL,
+              pt: 'env(safe-area-inset-top)',
             },
           }}
         >

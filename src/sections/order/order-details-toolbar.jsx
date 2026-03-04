@@ -9,6 +9,8 @@ import Typography from '@mui/material/Typography';
 import CircularProgress from '@mui/material/CircularProgress';
 import Collapse from '@mui/material/Collapse';
 import Divider from '@mui/material/Divider';
+import useMediaQuery from '@mui/material/useMediaQuery';
+import { useTheme } from '@mui/material/styles';
 
 import { RouterLink } from 'src/routes/components';
 
@@ -62,6 +64,8 @@ export default function OrderDetailsToolbar({
   labelUrl,
 }) {
   const morePopover = usePopover();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [statusExpanded, setStatusExpanded] = useState(false);
 
   const statuses = getOrderStatusOptions(t);
@@ -109,9 +113,11 @@ export default function OrderDetailsToolbar({
         }}
       >
         <Stack spacing={1} direction="row" alignItems="flex-start">
-          <IconButton component={RouterLink} href={backLink}>
-            <Iconify icon="eva:arrow-ios-back-fill" />
-          </IconButton>
+          {!isMobile && (
+            <IconButton component={RouterLink} href={backLink}>
+              <Iconify icon="eva:arrow-ios-back-fill" />
+            </IconButton>
+          )}
 
           <Stack spacing={0.5}>
             <Stack spacing={1} direction="row" alignItems="center">

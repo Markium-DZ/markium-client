@@ -7,7 +7,8 @@ import Tooltip from '@mui/material/Tooltip';
 import MenuItem from '@mui/material/MenuItem';
 import IconButton from '@mui/material/IconButton';
 import LoadingButton from '@mui/lab/LoadingButton';
-import { alpha } from '@mui/material/styles';
+import useMediaQuery from '@mui/material/useMediaQuery';
+import { alpha, useTheme } from '@mui/material/styles';
 
 import { RouterLink } from 'src/routes/components';
 
@@ -29,6 +30,8 @@ export default function ProductDetailsToolbar({
 }) {
   const popover = usePopover();
   const { t } = useTranslate();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   const isPublished = publish === 'published';
 
@@ -39,29 +42,31 @@ export default function ProductDetailsToolbar({
         direction="row"
         alignItems="center"
         sx={{
-          mb: { xs: 3, md: 4 },
+          mb: { xs: 2, md: 4 },
           ...sx,
         }}
         {...other}
       >
-        <Button
-          component={RouterLink}
-          href={backLink}
-          color="inherit"
-          startIcon={<Iconify icon="eva:arrow-ios-back-fill" width={18} />}
-          sx={{
-            px: 1.5,
-            py: 0.75,
-            borderRadius: 1,
-            typography: 'body2',
-            fontWeight: 500,
-            '&:hover': {
-              bgcolor: (theme) => alpha(theme.palette.grey[500], 0.08),
-            },
-          }}
-        >
-          {t('back')}
-        </Button>
+        {!isMobile && (
+          <Button
+            component={RouterLink}
+            href={backLink}
+            color="inherit"
+            startIcon={<Iconify icon="eva:arrow-ios-back-fill" width={18} />}
+            sx={{
+              px: 1.5,
+              py: 0.75,
+              borderRadius: 1,
+              typography: 'body2',
+              fontWeight: 500,
+              '&:hover': {
+                bgcolor: (theme) => alpha(theme.palette.grey[500], 0.08),
+              },
+            }}
+          >
+            {t('back')}
+          </Button>
+        )}
 
         <Box sx={{ flexGrow: 1 }} />
 

@@ -6,6 +6,8 @@ import MenuItem from '@mui/material/MenuItem';
 import TextField from '@mui/material/TextField';
 import IconButton from '@mui/material/IconButton';
 import InputAdornment from '@mui/material/InputAdornment';
+import useMediaQuery from '@mui/material/useMediaQuery';
+import { useTheme } from '@mui/material/styles';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { formHelperTextClasses } from '@mui/material/FormHelperText';
 
@@ -17,6 +19,8 @@ import { t } from 'i18next';
 
 export default function OrderTableToolbar({searchText, filters, onFilters, dateError }) {
   const popover = usePopover();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   const handleFilter = useCallback((event) => {
       Object.keys(filters).forEach(key => {
@@ -55,15 +59,15 @@ export default function OrderTableToolbar({searchText, filters, onFilters, dateE
           md: 'row',
         }}
         sx={{
-          p: 2.5,
-          pr: { xs: 2.5, md: 1 },
+          p: { xs: 1.5, md: 2.5 },
+          pr: { xs: 1.5, md: 1 },
         }}
       >
 
         <Stack direction="row" alignItems="center" spacing={2} flexGrow={1} sx={{ width: 1 }}>
           <TextField
             fullWidth
-            // value={filters.name}
+            size={isMobile ? 'small' : 'medium'}
             onChange={handleFilter}
             placeholder={searchText || t("search_by")+"..."}
             InputProps={{

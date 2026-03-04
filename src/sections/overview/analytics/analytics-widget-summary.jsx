@@ -51,7 +51,7 @@ export default function AnalyticsWidgetSummary({
             startColor: alpha(theme.palette[color].light, 0.2),
             endColor: alpha(theme.palette[color].main, 0.2),
           }),
-          py: 5,
+          py: { xs: 3, sm: 5 },
           borderRadius: 2,
           textAlign: 'center',
           color: `${color}.darker`,
@@ -62,7 +62,7 @@ export default function AnalyticsWidgetSummary({
         {...(locked && { onClick: handleOpenUpgrade })}
         {...other}
       >
-        {icon && <Box sx={{ width: 64, height: 64, mb: 1 }}>{icon}</Box>}
+        {icon && <Box sx={{ width: { xs: 48, sm: 64 }, height: { xs: 48, sm: 64 }, mb: 1 }}>{icon}</Box>}
 
         {locked ? (
           <Box sx={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
@@ -85,7 +85,7 @@ export default function AnalyticsWidgetSummary({
             />
           </Box>
         ) : (
-          <Typography variant="h3">{displayValue}</Typography>
+          <Typography variant="h3" sx={{ fontSize: { xs: '1.5rem', sm: undefined } }}>{displayValue}</Typography>
         )}
 
         <Typography variant="subtitle2" sx={{ opacity: 0.64 }}>
@@ -93,7 +93,7 @@ export default function AnalyticsWidgetSummary({
         </Typography>
 
         {description && (
-          <Typography variant="caption" sx={{ opacity: 0.48, mt: 0.5, px: 2 }}>
+          <Typography variant="caption" sx={{ opacity: 0.48, mt: 0.5, px: { xs: 1, sm: 2 }, fontSize: { xs: '0.65rem', sm: undefined } }}>
             {description}
           </Typography>
         )}

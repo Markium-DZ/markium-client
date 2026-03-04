@@ -6,6 +6,8 @@ import Button from '@mui/material/Button';
 import Tooltip from '@mui/material/Tooltip';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
+import useMediaQuery from '@mui/material/useMediaQuery';
+import { useTheme } from '@mui/material/styles';
 
 import { RouterLink } from 'src/routes/components';
 import { useRouter } from 'src/routes/hooks';
@@ -22,19 +24,23 @@ export default function InventoryDetailsToolbar({
 }) {
   const { t } = useTranslate();
   const router = useRouter();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   return (
     <Stack
       spacing={3}
       direction={{ xs: 'column', md: 'row' }}
       sx={{
-        mb: { xs: 3, md: 5 },
+        mb: { xs: 2, md: 5 },
       }}
     >
       <Stack spacing={1} direction="row" alignItems="flex-start" sx={{ flexGrow: 1 }}>
-        <IconButton component={RouterLink} href={backLink}>
-          <Iconify icon="eva:arrow-ios-back-fill" />
-        </IconButton>
+        {!isMobile && (
+          <IconButton component={RouterLink} href={backLink}>
+            <Iconify icon="eva:arrow-ios-back-fill" />
+          </IconButton>
+        )}
 
         <Stack spacing={0.5}>
           <Typography variant="h4">{inventoryItem?.product?.name}</Typography>

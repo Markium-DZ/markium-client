@@ -19,6 +19,7 @@ import { useRouter } from 'src/routes/hooks';
 import { paths } from 'src/routes/paths';
 import ZaityListView from 'src/sections/ZaityTables/zaity-list-view';
 import ZaityHeadContainer from 'src/sections/ZaityTables/ZaityHeadContainer';
+import Fab from '@mui/material/Fab';
 import ZaityTableFilters from 'src/sections/ZaityTables/ZaityTableFilters';
 import ZaityTableTabs from 'src/sections/ZaityTables/ZaityTableTabs'; // [keep for later use]
 import { fDate } from 'src/utils/format-time';
@@ -148,6 +149,16 @@ export default function ProductsListView({ }) {
                     >
                         {t("addNewProduct")}
                     </Button>
+                }
+                mobileAction={
+                    <Fab
+                        component={RouterLink}
+                        href={paths.dashboard.product.new}
+                        color="primary"
+                        size="small"
+                    >
+                        <Iconify icon="mingcute:add-line" width={22} />
+                    </Fab>
                 }
                 links={[
                     { name: t('dashboard'), href: paths.dashboard.root },

@@ -34,7 +34,7 @@ export default function AnalyticsTabOverview({ dateFrom }) {
   return (
     <Grid container spacing={3}>
       {/* ── Row 1: KPI cards ── */}
-      <Grid xs={12} sm={6} md={3}>
+      <Grid xs={6} md={3}>
         <AnalyticsWidgetSummary
           title={t('analytics_total_orders')}
           description={t('analytics_total_orders_desc')}
@@ -44,7 +44,7 @@ export default function AnalyticsTabOverview({ dateFrom }) {
         />
       </Grid>
 
-      <Grid xs={12} sm={6} md={3}>
+      <Grid xs={6} md={3}>
         <AnalyticsWidgetSummary
           title={t('analytics_revenue')}
           description={t('analytics_revenue_desc')}
@@ -55,7 +55,7 @@ export default function AnalyticsTabOverview({ dateFrom }) {
         />
       </Grid>
 
-      <Grid xs={12} sm={6} md={3}>
+      <Grid xs={6} md={3}>
         <AnalyticsWidgetSummary
           title={t('analytics_unique_visitors')}
           description={t('analytics_unique_visitors_desc')}
@@ -66,7 +66,7 @@ export default function AnalyticsTabOverview({ dateFrom }) {
         />
       </Grid>
 
-      <Grid xs={12} sm={6} md={3}>
+      <Grid xs={6} md={3}>
         <AnalyticsWidgetSummary
           title={t('analytics_product_views')}
           description={t('analytics_product_views_desc')}

@@ -4,6 +4,9 @@ const config: CapacitorConfig = {
   appId: 'com.markium.app',
   appName: 'Markium',
   webDir: 'dist',
+  ios: {
+    allowsBackForwardNavigationGestures: true,
+  },
   server: {
     androidScheme: 'https',
     iosScheme: 'https',

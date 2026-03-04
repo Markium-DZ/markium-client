@@ -4,6 +4,8 @@ import Box from '@mui/material/Box';
 import Switch from '@mui/material/Switch';
 import TablePagination from '@mui/material/TablePagination';
 import FormControlLabel from '@mui/material/FormControlLabel';
+import useMediaQuery from '@mui/material/useMediaQuery';
+import { useTheme } from '@mui/material/styles';
 
 // ----------------------------------------------------------------------
 
@@ -14,32 +16,29 @@ export default function TablePaginationCustom({
   sx,
   ...other
 }) {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+
   return (
     <Box sx={{ position: 'relative', ...sx }}>
       <TablePagination
-        rowsPerPageOptions={rowsPerPageOptions}
+        rowsPerPageOptions={isMobile ? [] : rowsPerPageOptions}
         component="nav"
         aria-label="pagination"
         {...other}
         sx={{
           borderTopColor: 'transparent',
+          ...(isMobile && {
+            '& .MuiTablePagination-toolbar': {
+              minHeight: 40,
+              px: 1,
+            },
+            '& .MuiTablePagination-displayedRows': {
+              fontSize: '0.75rem',
+            },
+          }),
         }}
       />
-
-      {/* {onChangeDense && (
-        <FormControlLabel
-          label="Dense"
-          control={<Switch checked={dense} onChange={onChangeDense} />}
-          sx={{
-            pl: 2,
-            py: 1.5,
-            top: 0,
-            position: {
-              sm: 'absolute',
-            },
-          }}
-        />
-      )} */}
     </Box>
   );
 }

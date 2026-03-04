@@ -1,5 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
+import { useTheme } from '@mui/material/styles';
+import useMediaQuery from '@mui/material/useMediaQuery';
 import { useSettingsContext } from 'src/components/settings';
 
 const variants = {
@@ -23,6 +25,13 @@ export default function PageTransition({ children }) {
   const { pathname } = useLocation();
   const settings = useSettingsContext();
   const direction = settings?.themeDirection || 'rtl';
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+
+  // Skip page transition on mobile — bottom nav tabs should feel instant
+  if (isMobile) {
+    return <div style={{ flex: 1 }}>{children}</div>;
+  }
 
   return (
     <AnimatePresence mode="wait" custom={direction}>

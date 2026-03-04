@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Tab, Tabs } from '@mui/material';
-import { alpha } from '@mui/material/styles';
+import { Box, Chip, Stack, Tab, Tabs } from '@mui/material';
+import { alpha, useTheme } from '@mui/material/styles';
+import useMediaQuery from '@mui/material/useMediaQuery';
 import Label from 'src/components/label';
 import { getComparator, useTable } from 'src/components/table';
 
@@ -17,6 +18,8 @@ const ZaityTableTabs = ({
   t = (text) => text,
 }) => {
   const table = useTable({ defaultOrderBy });
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [filters, setFilters] = useState({ ...defaultFilters, [filterKey]: defaultFilters[filterKey] || 'all' });
 
   const handleFilters = useCallback((name, value) => {
@@ -31,6 +34,13 @@ const ZaityTableTabs = ({
   const handleFilterStatus = useCallback(
     (event, newValue) => {
       handleFilters(filterKey, newValue);
+    },
+    [handleFilters, filterKey]
+  );
+
+  const handleChipClick = useCallback(
+    (key) => {
+      handleFilters(filterKey, key);
     },
     [handleFilters, filterKey]
   );
@@ -51,40 +61,73 @@ const ZaityTableTabs = ({
 
   return (
     <>
-      <Tabs
-        value={filters?.[filterKey]}
-        onChange={handleFilterStatus}
-        variant="scrollable"
-        scrollButtons="auto"
-        allowScrollButtonsMobile
-        sx={{
-          px: 2.5,
-          boxShadow: (theme) => `inset 0 -2px 0 0 ${alpha(theme.palette.grey[500], 0.08)}`,
-        }}
-      >
-
-
-        {items?.map((tab, index) => {
-          const count = tab.count ?? data.filter((item) => tab.match?.(item)).length;
-
-          return (
-            <Tab
-              key={index}
-              value={tab.key}
-              iconPosition="end"
-              label={tab.label}
-              icon={
-                <Label
-                  variant={tab.key === filters[filterKey] ? 'filled' : 'soft'}
-                  color={tab.color || 'default'}
-                >
-                  {count}
-                </Label>
-              }
-            />
-          );
-        })}
-      </Tabs>
+      {isMobile ? (
+        <Stack
+          direction="row"
+          spacing={0.75}
+          sx={{
+            px: 1.5,
+            py: 1,
+            overflowX: 'auto',
+            WebkitOverflowScrolling: 'touch',
+            scrollbarWidth: 'none',
+            '&::-webkit-scrollbar': { display: 'none' },
+          }}
+        >
+          {items?.map((tab, index) => {
+            const isActive = tab.key === filters[filterKey];
+            const count = tab.count ?? data.filter((item) => tab.match?.(item)).length;
+            return (
+              <Chip
+                key={index}
+                label={`${tab.label} ${count}`}
+                size="small"
+                color={isActive ? (tab.color || 'primary') : 'default'}
+                variant={isActive ? 'filled' : 'outlined'}
+                onClick={() => handleChipClick(tab.key)}
+                sx={{
+                  flexShrink: 0,
+                  fontWeight: isActive ? 600 : 400,
+                  height: 30,
+                  borderRadius: '8px',
+                }}
+              />
+            );
+          })}
+        </Stack>
+      ) : (
+        <Tabs
+          value={filters?.[filterKey]}
+          onChange={handleFilterStatus}
+          variant="scrollable"
+          scrollButtons="auto"
+          allowScrollButtonsMobile
+          sx={{
+            px: 2.5,
+            boxShadow: (theme) => `inset 0 -2px 0 0 ${alpha(theme.palette.grey[500], 0.08)}`,
+          }}
+        >
+          {items?.map((tab, index) => {
+            const count = tab.count ?? data.filter((item) => tab.match?.(item)).length;
+            return (
+              <Tab
+                key={index}
+                value={tab.key}
+                iconPosition="end"
+                label={tab.label}
+                icon={
+                  <Label
+                    variant={tab.key === filters[filterKey] ? 'filled' : 'soft'}
+                    color={tab.color || 'default'}
+                  >
+                    {count}
+                  </Label>
+                }
+              />
+            );
+          })}
+        </Tabs>
+      )}
 
       {children}
     </>

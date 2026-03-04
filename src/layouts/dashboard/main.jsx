@@ -31,13 +31,11 @@ export default function Main({ children, sx, ...other }) {
           minHeight: 1,
           display: 'flex',
           flexDirection: 'column',
-          pt: `${HEADER.H_MOBILE + 24}px`,
-          pb: 10,
+          pt: lgUp
+            ? `${HEADER.H_MOBILE * 2 + 40}px`
+            : `calc(${HEADER.H_MOBILE + 24}px + env(safe-area-inset-top))`,
+          pb: lgUp ? 15 : 10,
           outline: 'none',
-          ...(lgUp && {
-            pt: `${HEADER.H_MOBILE * 2 + 40}px`,
-            pb: 15,
-          }),
         }}
       >
         {children}
@@ -56,7 +54,10 @@ export default function Main({ children, sx, ...other }) {
         outline: 'none',
         display: 'flex',
         flexDirection: 'column',
-        py: `${HEADER.H_MOBILE + SPACING}px`,
+        pt: lgUp
+          ? `${HEADER.H_DESKTOP + SPACING}px`
+          : `calc(${HEADER.H_MOBILE + SPACING}px + env(safe-area-inset-top))`,
+        pb: `${HEADER.H_MOBILE + SPACING}px`,
         ...(lgUp && {
           px: 2,
           py: `${HEADER.H_DESKTOP + SPACING}px`,

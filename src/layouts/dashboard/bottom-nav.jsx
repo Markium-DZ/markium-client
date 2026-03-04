@@ -1,18 +1,13 @@
-import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Box from '@mui/material/Box';
-import BottomNavigation from '@mui/material/BottomNavigation';
-import BottomNavigationAction from '@mui/material/BottomNavigationAction';
-import Drawer from '@mui/material/Drawer';
-import List from '@mui/material/List';
-import ListItemButton from '@mui/material/ListItemButton';
-import ListItemIcon from '@mui/material/ListItemIcon';
-import ListItemText from '@mui/material/ListItemText';
+import ButtonBase from '@mui/material/ButtonBase';
+import { alpha, useTheme } from '@mui/material/styles';
+import Typography from '@mui/material/Typography';
 import Iconify from 'src/components/iconify';
 import { paths } from 'src/routes/paths';
 
-const NAV_HEIGHT = 56;
+const NAV_HEIGHT = 50;
 
 const PRIMARY_TABS = [
   { label: 'nav.dashboard', icon: 'solar:widget-5-bold-duotone', path: paths.dashboard.root },
@@ -21,108 +16,106 @@ const PRIMARY_TABS = [
   { label: 'nav.analytics', icon: 'solar:chart-bold-duotone', path: paths.dashboard.general.analytics },
 ];
 
-const MORE_ITEMS = [
-  { label: 'nav.inventory', icon: 'solar:archive-bold-duotone', path: paths.dashboard.inventory.root },
-  { label: 'nav.settings', icon: 'solar:settings-bold-duotone', path: paths.dashboard.settings.root },
-];
-
 function getActiveTab(pathname) {
-  const idx = PRIMARY_TABS.findIndex((tab) => pathname.startsWith(tab.path));
-  return idx >= 0 ? idx : -1;
+  // Match most specific path first (longest match wins) to avoid
+  // dashboard root matching all sub-paths like /dashboard/order
+  let bestIdx = -1;
+  let bestLen = 0;
+  PRIMARY_TABS.forEach((tab, index) => {
+    if (tab.path && pathname.startsWith(tab.path) && tab.path.length > bestLen) {
+      bestIdx = index;
+      bestLen = tab.path.length;
+    }
+  });
+  return bestIdx;
 }
 
 export default function BottomNav() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const [moreOpen, setMoreOpen] = useState(false);
+  const theme = useTheme();
 
   const activeTab = getActiveTab(pathname);
 
-  const handleChange = (_event, newValue) => {
-    if (newValue === 4) {
-      setMoreOpen(true);
-      return;
-    }
-    const tab = PRIMARY_TABS[newValue];
-    if (tab) {
+  const handleTabPress = (index) => {
+    const tab = PRIMARY_TABS[index];
+    if (tab?.path) {
       navigate(tab.path);
       if (navigator.vibrate) navigator.vibrate(10);
     }
   };
 
-  const handleMoreNav = (path) => {
-    setMoreOpen(false);
-    navigate(path);
-  };
-
   return (
     <>
+      {/* Tab bar */}
       <Box
         sx={{
           position: 'fixed',
           bottom: 0,
           left: 0,
           right: 0,
-          zIndex: (theme) => theme.zIndex.appBar,
-          pb: 'env(safe-area-inset-bottom)',
-          bgcolor: 'background.paper',
-          borderTop: (theme) => `1px solid ${theme.palette.divider}`,
+          zIndex: theme.zIndex.appBar + 1,
+          bgcolor: alpha(theme.palette.background.paper, 0.85),
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          borderTop: `0.5px solid ${alpha(theme.palette.divider, 0.3)}`,
         }}
       >
-        <BottomNavigation
-          value={activeTab >= 0 ? activeTab : false}
-          onChange={handleChange}
-          showLabels
-          sx={{ height: NAV_HEIGHT }}
+        <Box
+          sx={{
+            display: 'flex',
+            height: NAV_HEIGHT,
+            alignItems: 'stretch',
+          }}
         >
-          {PRIMARY_TABS.map((tab) => (
-            <BottomNavigationAction
-              key={tab.path}
-              label={t(tab.label)}
-              icon={<Iconify icon={tab.icon} width={24} />}
-              sx={{
-                '&.Mui-selected': { color: 'primary.main' },
-                minWidth: 0,
-                py: 1,
-              }}
-            />
-          ))}
-          <BottomNavigationAction
-            label={t('nav.more', 'More')}
-            icon={<Iconify icon="solar:hamburger-menu-bold-duotone" width={24} />}
-            sx={{ '&.Mui-selected': { color: 'primary.main' }, minWidth: 0, py: 1 }}
-          />
-        </BottomNavigation>
-      </Box>
-
-      {/* More drawer */}
-      <Drawer
-        anchor="bottom"
-        open={moreOpen}
-        onClose={() => setMoreOpen(false)}
-        PaperProps={{
-          sx: {
-            borderTopLeftRadius: 16,
-            borderTopRightRadius: 16,
-            pb: 'env(safe-area-inset-bottom)',
-          },
-        }}
-      >
-        <Box sx={{ p: 1, textAlign: 'center' }}>
-          <Box sx={{ width: 40, height: 4, bgcolor: 'grey.300', borderRadius: 2, mx: 'auto', mb: 1 }} />
+          {PRIMARY_TABS.map((tab, index) => {
+            const isActive = index === activeTab;
+            return (
+              <ButtonBase
+                key={tab.label}
+                onClick={() => handleTabPress(index)}
+                sx={{
+                  flex: 1,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '2px',
+                  pt: '6px',
+                  pb: '2px',
+                  transition: 'none',
+                  WebkitTapHighlightColor: 'transparent',
+                  color: isActive
+                    ? theme.palette.primary.main
+                    : theme.palette.text.disabled,
+                }}
+              >
+                <Iconify
+                  icon={tab.icon}
+                  width={isActive ? 25 : 23}
+                  sx={{
+                    transition: 'none',
+                  }}
+                />
+                <Typography
+                  variant="caption"
+                  sx={{
+                    fontSize: '10px',
+                    fontWeight: isActive ? 600 : 400,
+                    lineHeight: 1.2,
+                    letterSpacing: 0,
+                  }}
+                >
+                  {t(tab.label)}
+                </Typography>
+              </ButtonBase>
+            );
+          })}
         </Box>
-        <List>
-          {MORE_ITEMS.map((item) => (
-            <ListItemButton key={item.path} onClick={() => handleMoreNav(item.path)}>
-              <ListItemIcon>
-                <Iconify icon={item.icon} width={24} />
-              </ListItemIcon>
-              <ListItemText primary={t(item.label)} />
-            </ListItemButton>
-          ))}
-        </List>
-      </Drawer>
+        {/* Safe area spacer */}
+        <Box sx={{ height: 'env(safe-area-inset-bottom)', bgcolor: 'transparent' }} />
+      </Box>
 
       {/* Spacer to prevent content from being hidden behind bottom nav */}
       <Box sx={{ height: `calc(${NAV_HEIGHT}px + env(safe-area-inset-bottom))` }} />

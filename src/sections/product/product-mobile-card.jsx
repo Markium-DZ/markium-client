@@ -36,7 +36,7 @@ export default function ProductMobileCard({ product, onViewRow, onEditRow, onDel
 
   return (
     <>
-      <Card sx={{ p: 2, mb: 1.5 }}>
+      <Card sx={{ p: 1.5, mb: 1 }}>
         <Stack direction="row" spacing={2}>
           {/* Product image */}
           <Avatar

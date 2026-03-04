@@ -9,6 +9,7 @@ import Tooltip from '@mui/material/Tooltip';
 import { alpha, useTheme } from '@mui/material/styles';
 import { DateCalendar } from '@mui/x-date-pickers/DateCalendar';
 import { PickersDay } from '@mui/x-date-pickers/PickersDay';
+import { useResponsive } from 'src/hooks/use-responsive';
 
 import { useTranslation } from 'react-i18next';
 
@@ -133,6 +134,7 @@ function EventDay(props) {
 export default function EcommerceEventsCalendar() {
   const theme = useTheme();
   const { t, i18n } = useTranslation();
+  const lgUp = useResponsive('up', 'lg');
 
   const [currentDate, setCurrentDate] = useState(new Date());
 
@@ -165,26 +167,27 @@ export default function EcommerceEventsCalendar() {
   return (
     <Card
       sx={{
-        height: '100%',
+        ...( lgUp ? { height: '100%' } : {}),
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
-        px: 3,
-        py: 2,
+        px: lgUp ? 3 : 2,
+        py: lgUp ? 2 : 1.5,
       }}
     >
       {/* MUI DateCalendar */}
-      <Box sx={{ flexGrow: 1, overflow: 'hidden' }}>
+      <Box sx={{ overflow: 'hidden' }}>
         <DateCalendar
           value={currentDate}
           onChange={(newDate) => setCurrentDate(newDate)}
           showDaysOutsideCurrentMonth
-          fixedWeekNumber={6}
+          {...(lgUp && { fixedWeekNumber: 6 })}
           slots={{ day: EventDay }}
           sx={{
             maxHeight: 'none',
             maxWidth: 'none',
             width: '100%',
+            height: lgUp ? undefined : 280,
             '& .MuiDayCalendar-header, & .MuiDayCalendar-weekContainer': {
               justifyContent: 'space-evenly',
             },
@@ -192,26 +195,26 @@ export default function EcommerceEventsCalendar() {
               px: 0,
               mt: 0,
               mb: 0,
-              minHeight: 32,
+              minHeight: lgUp ? 32 : 28,
             },
             '& .MuiPickersCalendarHeader-label': {
-              fontSize: '0.85rem',
+              fontSize: lgUp ? '0.85rem' : '0.8rem',
             },
             '& .MuiDayCalendar-weekDayLabel': {
-              width: 28,
-              height: 28,
+              width: lgUp ? 28 : 32,
+              height: lgUp ? 28 : 28,
               fontSize: '0.7rem',
             },
             '& .MuiPickersDay-root': {
-              width: 28,
-              height: 28,
+              width: lgUp ? 28 : 32,
+              height: lgUp ? 28 : 32,
               fontSize: '0.75rem',
             },
             '& .MuiPickersDay-root.Mui-selected': {
               bgcolor: theme.palette.primary.main,
             },
             '& .MuiDayCalendar-slideTransition': {
-              minHeight: 180,
+              minHeight: lgUp ? 180 : 160,
             },
           }}
         />
