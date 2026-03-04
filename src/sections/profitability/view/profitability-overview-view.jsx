@@ -22,6 +22,7 @@ import { alpha } from '@mui/material/styles';
 import { paths } from 'src/routes/paths';
 import { useRouter } from 'src/routes/hooks';
 
+import { fNumber } from 'src/utils/format-number';
 import { useGetStorePnL } from 'src/api/profitability';
 import { useTranslate } from 'src/locales';
 import { useSettingsContext } from 'src/components/settings';
@@ -116,7 +117,7 @@ export default function ProfitabilityOverviewView() {
               </Typography>
             </Stack>
             <Typography variant="h3" sx={{ fontWeight: 700, letterSpacing: '-0.02em' }}>
-              {unitsSold.toLocaleString('fr-DZ')}
+              {fNumber(unitsSold)}
             </Typography>
           </Card>
 

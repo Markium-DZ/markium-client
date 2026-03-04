@@ -1,3 +1,5 @@
+import { fNumber } from 'src/utils/format-number';
+
 export const DATE_RANGE_OPTIONS = [
   { value: '-1d', labelKey: 'last_24h' },
   { value: '-7d', labelKey: 'last_7_days' },
@@ -30,7 +32,7 @@ export const COST_TYPE_COLORS = {
 
 // Format helpers
 export const fmtAmount = (val) =>
-  typeof val === 'number' ? `${val.toLocaleString('fr-DZ', { minimumFractionDigits: 0 })} DA` : '\u2014';
+  typeof val === 'number' ? `${fNumber(val)} DA` : '\u2014';
 
 export const fmtPct = (val) =>
   typeof val === 'number' ? `${val.toFixed(1)}%` : '\u2014';

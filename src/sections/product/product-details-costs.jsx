@@ -18,6 +18,7 @@ import {
 
 import { useGetProductCosts, deleteProductCost } from 'src/api/product-costs';
 
+import { fNumber } from 'src/utils/format-number';
 import { useTranslate } from 'src/locales';
 import { useBoolean } from 'src/hooks/use-boolean';
 import { useSnackbar } from 'src/components/snackbar';
@@ -243,7 +244,7 @@ function CostRow({ cost, product, onEdit, onDelete }) {
 
         <TableCell>
           <Typography variant="body2" fontWeight={600}>
-            {Number(cost.amount).toLocaleString('fr-DZ', { minimumFractionDigits: 2 })} DA
+            {fNumber(cost.amount)} DA
           </Typography>
         </TableCell>
 

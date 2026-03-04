@@ -2,6 +2,7 @@ import PropTypes from 'prop-types';
 import { Card, CardHeader, Box, Stack, Typography } from '@mui/material';
 import { PieChart } from '@mui/x-charts/PieChart';
 import { useTranslate } from 'src/locales';
+import { fNumber } from 'src/utils/format-number';
 import { COST_TYPE_LABELS, COST_TYPE_COLORS } from '../constants';
 
 // ----------------------------------------------------------------------
@@ -65,7 +66,7 @@ export default function CostBreakdownChart({ costsBreakdown, title }) {
                 {t('total_costs')}
               </Typography>
               <Typography variant="subtitle1" fontWeight={700}>
-                {total.toLocaleString('fr-DZ')} DA
+                {fNumber(total)} DA
               </Typography>
             </Box>
           </Box>
@@ -91,7 +92,7 @@ export default function CostBreakdownChart({ costsBreakdown, title }) {
                     </Typography>
                     <Stack direction="row" alignItems="baseline" spacing={0.5}>
                       <Typography variant="subtitle2" fontWeight={600}>
-                        {val.toLocaleString('fr-DZ')} DA
+                        {fNumber(val)} DA
                       </Typography>
                       <Typography variant="caption" color="text.disabled">
                         ({pct}%)

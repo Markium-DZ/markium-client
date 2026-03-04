@@ -18,6 +18,7 @@ import {
 
 import { paths } from 'src/routes/paths';
 
+import { fNumber } from 'src/utils/format-number';
 import { useGetProduct } from 'src/api/product';
 import { useGetProductCosts, deleteProductCost } from 'src/api/product-costs';
 
@@ -253,7 +254,7 @@ function CostRow({ cost, product, onEdit, onDelete }) {
 
         <TableCell>
           <Typography variant="body2" fontWeight={600}>
-            {Number(cost.amount).toLocaleString('fr-DZ', { minimumFractionDigits: 2 })} DA
+            {fNumber(cost.amount)} DA
           </Typography>
         </TableCell>
 

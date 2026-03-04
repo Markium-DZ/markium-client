@@ -2,6 +2,7 @@ import PropTypes from 'prop-types';
 import { Card, Stack, Typography, Box } from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
 import Iconify from 'src/components/iconify';
+import { fNumber } from 'src/utils/format-number';
 
 // ----------------------------------------------------------------------
 
@@ -92,7 +93,7 @@ function SummaryCard({ title, value, suffix, icon, color = 'primary' }) {
             }}
           >
             {typeof value === 'number'
-              ? value.toLocaleString('fr-DZ', { minimumFractionDigits: value % 1 !== 0 ? 1 : 0 })
+              ? fNumber(value)
               : value}
             {suffix && (
               <Typography
