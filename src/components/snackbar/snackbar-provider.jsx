@@ -29,6 +29,7 @@ export default function SnackbarProvider({ children }) {
       TransitionComponent={isRTL ? Collapse : undefined}
       variant="success" // Set default variant
       anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+      style={{ top: 'env(safe-area-inset-top, 0px)' }}
       iconVariant={{
         info: (
           <StyledIcon color="info">

@@ -217,13 +217,12 @@ export default function AuthClassicLayout({ children, image, title }) {
       direction="row"
       sx={{
         position: 'fixed',
-        top: 0,
+        top: 'env(safe-area-inset-top)',
         left: 0,
         right: 0,
         bottom: 0,
         outline: 'none',
         bgcolor: 'background.default',
-        pt: 'env(safe-area-inset-top)',
       }}
     >
       <SkipToContent />
