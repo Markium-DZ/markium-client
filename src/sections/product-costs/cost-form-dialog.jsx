@@ -40,37 +40,38 @@ export default function CostFormDialog({
   const { enqueueSnackbar } = useSnackbar();
   const isEdit = !!currentCost;
 
-  const CostSchema = Yup.object().shape({
-    type: Yup.string().required(t('cost_type') + ' ' + t('name_is_required')).oneOf(COST_TYPES.map((ct) => ct.value)),
-    scope: Yup.string().required().oneOf(['per_unit', 'global']),
-    amount: Yup.number()
-      .required(t('amount') + ' ' + t('name_is_required'))
-      .min(0)
-      .max(99999999.99),
-    custom_type_name: Yup.string().when('type', {
-      is: 'custom',
-      then: (schema) => schema.required(t('custom_type_name') + ' ' + t('name_is_required')),
-      otherwise: (schema) => schema.nullable(),
-    }),
-    campaign_name: Yup.string().when('type', {
-      is: 'marketing',
-      then: (schema) => schema.required(t('campaign_name') + ' ' + t('name_is_required')),
-      otherwise: (schema) => schema.nullable(),
-    }),
-    channel: Yup.string().when('type', {
-      is: 'marketing',
-      then: (schema) => schema.required(t('channel') + ' ' + t('name_is_required')).oneOf(MARKETING_CHANNELS.map((ch) => ch.value)),
-      otherwise: (schema) => schema.nullable(),
-    }),
-    variant_id: Yup.number()
-      .transform((value, originalValue) => (originalValue === '' ? null : value))
-      .when('type', {
-        is: 'buy_price',
-        then: (schema) => schema.required(t('variant') + ' ' + t('name_is_required')),
-        otherwise: (schema) => schema.nullable(),
+  const CostSchema = useMemo(
+    () =>
+      Yup.object().shape({
+        type: Yup.string().required(t('cost_type') + ' ' + t('name_is_required')).oneOf(COST_TYPES.map((ct) => ct.value)),
+        scope: Yup.string().required().oneOf(['per_unit', 'global']),
+        amount: Yup.number()
+          .typeError(t('amount') + ' ' + t('name_is_required'))
+          .required(t('amount') + ' ' + t('name_is_required'))
+          .min(0)
+          .max(99999999.99),
+        custom_type_name: Yup.string().when('type', {
+          is: 'custom',
+          then: (schema) => schema.required(t('custom_type_name') + ' ' + t('name_is_required')),
+          otherwise: (schema) => schema.nullable(),
+        }),
+        campaign_name: Yup.string().when('type', {
+          is: 'marketing',
+          then: (schema) => schema.required(t('campaign_name') + ' ' + t('name_is_required')),
+          otherwise: (schema) => schema.nullable(),
+        }),
+        channel: Yup.string().when('type', {
+          is: 'marketing',
+          then: (schema) => schema.required(t('channel') + ' ' + t('name_is_required')).oneOf(MARKETING_CHANNELS.map((ch) => ch.value)),
+          otherwise: (schema) => schema.nullable(),
+        }),
+        variant_id: Yup.number()
+          .transform((value, originalValue) => (originalValue === '' ? null : value))
+          .nullable(),
+        notes: Yup.string().max(1000).nullable(),
       }),
-    notes: Yup.string().max(1000).nullable(),
-  });
+    [t]
+  );
 
   const defaultValues = useMemo(
     () => ({
