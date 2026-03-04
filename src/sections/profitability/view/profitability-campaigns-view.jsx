@@ -53,7 +53,7 @@ export default function ProfitabilityCampaignsView() {
 
   const summaryCards = [
     { title: t('total_marketing_spend'), value: totalMarketingSpend, suffix: 'DA', icon: 'solar:bill-list-bold-duotone', color: 'warning' },
-    { title: t('total_revenue'), value: totalRevenue, suffix: 'DA', icon: 'solar:wallet-money-bold-duotone', color: 'primary' },
+    { title: t('total_revenue_full'), value: totalRevenue, suffix: 'DA', icon: 'solar:wallet-money-bold-duotone', color: 'primary' },
     { title: t('overall_marketing_roi'), value: fmtPct(overallMarketingROI), icon: 'solar:graph-up-bold-duotone', color: 'success' },
   ];
 
