@@ -14,7 +14,6 @@ import {
   Stack,
   Box,
   CircularProgress,
-  LinearProgress,
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 
@@ -28,36 +27,12 @@ import CustomBreadcrumbs from 'src/components/custom-breadcrumbs';
 import EmptyContent from 'src/components/empty-content';
 import Label from 'src/components/label';
 import Iconify from 'src/components/iconify';
+import { useTable, TablePaginationCustom } from 'src/components/table';
 
 import ProfitabilityDateFilter from '../components/profitability-date-filter';
 import ProfitabilityGate from '../components/profitability-gate';
+import MarginBar from '../components/margin-bar';
 import { DEFAULT_DATE_RANGE, fmtAmount, fmtPct } from '../constants';
-
-// ----------------------------------------------------------------------
-
-function MarginBar({ value }) {
-  const clamped = Math.max(0, Math.min(100, value || 0));
-  const barColor = value >= 30 ? 'success' : value >= 15 ? 'warning' : 'error';
-
-  return (
-    <Stack direction="row" alignItems="center" spacing={1} sx={{ minWidth: 120 }}>
-      <LinearProgress
-        variant="determinate"
-        value={clamped}
-        color={barColor}
-        sx={{
-          flex: 1,
-          height: 6,
-          borderRadius: 3,
-          bgcolor: (theme) => alpha(theme.palette.grey[500], 0.12),
-        }}
-      />
-      <Typography variant="caption" fontWeight={600} sx={{ minWidth: 40, textAlign: 'right' }}>
-        {fmtPct(value)}
-      </Typography>
-    </Stack>
-  );
-}
 
 // ----------------------------------------------------------------------
 
@@ -65,6 +40,8 @@ export default function ProfitabilityProductsView() {
   const settings = useSettingsContext();
   const { t } = useTranslate();
   const router = useRouter();
+
+  const table = useTable({ defaultRowsPerPage: 10 });
 
   const [dateFrom, setDateFrom] = useState(DEFAULT_DATE_RANGE);
 
@@ -74,6 +51,11 @@ export default function ProfitabilityProductsView() {
     productsPnLError,
     productsPnLForbidden,
   } = useGetProductsPnL(dateFrom);
+
+  const paginatedProducts = products.slice(
+    table.page * table.rowsPerPage,
+    table.page * table.rowsPerPage + table.rowsPerPage
+  );
 
   const content = (
     <Stack spacing={3}>
@@ -103,7 +85,7 @@ export default function ProfitabilityProductsView() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {products.map((row) => {
+                {paginatedProducts.map((row) => {
                   const isPositive = typeof row.gross_profit === 'number' && row.gross_profit >= 0;
                   return (
                     <TableRow
@@ -151,6 +133,14 @@ export default function ProfitabilityProductsView() {
               </TableBody>
             </Table>
           </TableContainer>
+
+          <TablePaginationCustom
+            count={products.length}
+            page={table.page}
+            rowsPerPage={table.rowsPerPage}
+            onPageChange={table.onChangePage}
+            onRowsPerPageChange={table.onChangeRowsPerPage}
+          />
         </Card>
       )}
     </Stack>
