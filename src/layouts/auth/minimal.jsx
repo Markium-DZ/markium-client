@@ -23,6 +23,7 @@ export default function AuthMinimalLayout({ children, maxWidth = 480 }) {
       sx={{
         minHeight: '100vh',
         bgcolor: 'background.default',
+        pt: 'env(safe-area-inset-top)',
       }}
     >
       {/* Header */}

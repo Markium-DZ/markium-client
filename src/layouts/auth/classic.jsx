@@ -223,6 +223,7 @@ export default function AuthClassicLayout({ children, image, title }) {
         bottom: 0,
         outline: 'none',
         bgcolor: 'background.default',
+        pt: 'env(safe-area-inset-top)',
       }}
     >
       <SkipToContent />
