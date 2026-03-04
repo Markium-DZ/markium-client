@@ -1,7 +1,6 @@
 import PropTypes from 'prop-types';
 import { Card, CardHeader, Box, Stack, Typography } from '@mui/material';
-import { useTheme } from '@mui/material/styles';
-import Chart from 'react-apexcharts';
+import { PieChart } from '@mui/x-charts/PieChart';
 import { useTranslate } from 'src/locales';
 import { COST_TYPE_LABELS, COST_TYPE_COLORS } from '../constants';
 
@@ -9,7 +8,6 @@ import { COST_TYPE_LABELS, COST_TYPE_COLORS } from '../constants';
 
 export default function CostBreakdownChart({ costsBreakdown, title }) {
   const { t } = useTranslate();
-  const theme = useTheme();
 
   const entries = Object.entries(costsBreakdown || {}).filter(([, val]) => val > 0);
   const labels = entries.map(([key]) => t(COST_TYPE_LABELS[key] || key));
@@ -17,65 +15,12 @@ export default function CostBreakdownChart({ costsBreakdown, title }) {
   const colors = entries.map(([key]) => COST_TYPE_COLORS[key] || '#919EAB');
   const total = series.reduce((a, b) => a + b, 0);
 
-  const chartOptions = {
-    chart: {
-      type: 'donut',
-      fontFamily: theme.typography.fontFamily,
-    },
-    labels,
-    colors,
-    legend: { show: false },
-    stroke: { show: false },
-    dataLabels: {
-      enabled: true,
-      formatter: (val) => `${val.toFixed(0)}%`,
-      dropShadow: { enabled: false },
-      style: {
-        fontSize: '12px',
-        fontWeight: 600,
-        fontFamily: theme.typography.fontFamily,
-      },
-    },
-    tooltip: {
-      y: {
-        formatter: (val) => `${val.toLocaleString('fr-DZ')} DA`,
-      },
-    },
-    plotOptions: {
-      pie: {
-        donut: {
-          size: '72%',
-          labels: {
-            show: true,
-            name: {
-              show: true,
-              fontSize: '13px',
-              fontFamily: theme.typography.fontFamily,
-              color: theme.palette.text.secondary,
-              offsetY: -8,
-            },
-            value: {
-              show: true,
-              fontSize: '20px',
-              fontWeight: 700,
-              fontFamily: theme.typography.fontFamily,
-              color: theme.palette.text.primary,
-              offsetY: 4,
-              formatter: (val) => `${Number(val).toLocaleString('fr-DZ')} DA`,
-            },
-            total: {
-              show: true,
-              label: t('total_costs'),
-              fontSize: '13px',
-              fontFamily: theme.typography.fontFamily,
-              color: theme.palette.text.secondary,
-              formatter: () => `${total.toLocaleString('fr-DZ')} DA`,
-            },
-          },
-        },
-      },
-    },
-  };
+  const pieData = entries.map(([key, val], index) => ({
+    id: index,
+    value: val,
+    label: labels[index],
+    color: colors[index],
+  }));
 
   if (series.length === 0) return null;
 
@@ -85,8 +30,44 @@ export default function CostBreakdownChart({ costsBreakdown, title }) {
 
       <Box sx={{ px: 2, pb: 3 }}>
         <Stack direction={{ xs: 'column', sm: 'row' }} alignItems="center" spacing={2}>
-          <Box sx={{ flex: 1, minHeight: 280 }}>
-            <Chart type="donut" series={series} options={chartOptions} height={280} />
+          <Box sx={{ flex: 1, minHeight: 280, position: 'relative' }}>
+            <PieChart
+              height={280}
+              series={[
+                {
+                  data: pieData,
+                  innerRadius: 60,
+                  outerRadius: 110,
+                  paddingAngle: 1,
+                  cornerRadius: 3,
+                  arcLabel: (item) => {
+                    const pct = total > 0 ? ((item.value / total) * 100).toFixed(0) : 0;
+                    return `${pct}%`;
+                  },
+                  arcLabelMinAngle: 20,
+                },
+              ]}
+              slotProps={{ legend: { hidden: true } }}
+            />
+
+            {/* Center label showing total */}
+            <Box
+              sx={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                textAlign: 'center',
+                pointerEvents: 'none',
+              }}
+            >
+              <Typography variant="caption" color="text.secondary" display="block">
+                {t('total_costs')}
+              </Typography>
+              <Typography variant="subtitle1" fontWeight={700}>
+                {total.toLocaleString('fr-DZ')} DA
+              </Typography>
+            </Box>
           </Box>
 
           {/* Custom legend */}
