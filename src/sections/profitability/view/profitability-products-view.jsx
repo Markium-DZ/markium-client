@@ -15,7 +15,6 @@ import {
   Box,
   CircularProgress,
   LinearProgress,
-  Chip,
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 
@@ -27,6 +26,7 @@ import { useTranslate } from 'src/locales';
 import { useSettingsContext } from 'src/components/settings';
 import CustomBreadcrumbs from 'src/components/custom-breadcrumbs';
 import EmptyContent from 'src/components/empty-content';
+import Label from 'src/components/label';
 import Iconify from 'src/components/iconify';
 
 import ProfitabilityDateFilter from '../components/profitability-date-filter';
@@ -84,12 +84,9 @@ export default function ProfitabilityProductsView() {
           <CardHeader
             title={t('products_pnl')}
             action={
-              <Chip
-                label={`${products.length} ${t('products')}`}
-                size="small"
-                variant="soft"
-                color="primary"
-              />
+              <Label variant="soft" color="primary">
+                {`${products.length} ${t('products')}`}
+              </Label>
             }
           />
           <TableContainer>

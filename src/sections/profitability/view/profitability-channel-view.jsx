@@ -15,7 +15,6 @@ import {
   Stack,
   Box,
   CircularProgress,
-  Chip,
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 
@@ -102,12 +101,9 @@ export default function ProfitabilityChannelView({ channel }) {
           <CardHeader
             title={t('campaigns')}
             action={
-              <Chip
-                label={`${channelCampaigns.length} ${t('campaigns')}`}
-                size="small"
-                variant="soft"
-                color="warning"
-              />
+              <Label variant="soft" color="warning">
+                {`${channelCampaigns.length} ${t('campaigns')}`}
+              </Label>
             }
           />
           <TableContainer>

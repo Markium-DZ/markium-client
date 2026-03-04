@@ -15,7 +15,6 @@ import {
   Box,
   CircularProgress,
   LinearProgress,
-  Chip,
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 
@@ -29,6 +28,7 @@ import { useSettingsContext } from 'src/components/settings';
 import CustomBreadcrumbs from 'src/components/custom-breadcrumbs';
 import Iconify from 'src/components/iconify';
 import EmptyContent from 'src/components/empty-content';
+import Label from 'src/components/label';
 
 import ProfitabilityDateFilter from '../components/profitability-date-filter';
 import ProfitabilitySummaryCards from '../components/profitability-summary-cards';
@@ -165,12 +165,9 @@ export default function ProfitabilityOverviewView() {
           <CardHeader
             title={t('top_profitable_products')}
             action={
-              <Chip
-                label={`${topProducts.length} ${t('products')}`}
-                size="small"
-                variant="soft"
-                color="success"
-              />
+              <Label variant="soft" color="success">
+                {`${topProducts.length} ${t('products')}`}
+              </Label>
             }
           />
           <TableContainer>
@@ -248,12 +245,9 @@ export default function ProfitabilityOverviewView() {
           <CardHeader
             title={t('top_costly_campaigns')}
             action={
-              <Chip
-                label={`${topCampaigns.length} ${t('campaigns')}`}
-                size="small"
-                variant="soft"
-                color="warning"
-              />
+              <Label variant="soft" color="warning">
+                {`${topCampaigns.length} ${t('campaigns')}`}
+              </Label>
             }
           />
           <TableContainer>

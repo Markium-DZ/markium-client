@@ -16,7 +16,6 @@ import {
   Box,
   Button,
   CircularProgress,
-  Chip,
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 
@@ -179,12 +178,9 @@ export default function ProfitabilityProductView({ id }) {
           <CardHeader
             title={t('marketing_campaigns')}
             action={
-              <Chip
-                label={`${marketingCampaigns.length} ${t('campaigns')}`}
-                size="small"
-                variant="soft"
-                color="warning"
-              />
+              <Label variant="soft" color="warning">
+                {`${marketingCampaigns.length} ${t('campaigns')}`}
+              </Label>
             }
           />
           <TableContainer>
