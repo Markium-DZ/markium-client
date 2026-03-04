@@ -72,9 +72,11 @@ export default function InventoryListView() {
 
   const [page, setPage] = useState(1);
   const [allInventory, setAllInventory] = useState([]);
-  const [tableData, setTableData] = useState([]);
-  const [dataFiltered, setDataFiltered] = useState([]);
+  const [tableData, setTableData] = useState(null);
+  const [dataFiltered, setDataFiltered] = useState(null);
   const [adjustmentDialog, setAdjustmentDialog] = useState({ open: false, item: null });
+
+  const isReady = tableData !== null;
 
   const { inventory, inventoryLoading, inventoryError, totalPages, mutate } = useGetInventory(page, 20);
 
@@ -346,7 +348,7 @@ export default function InventoryListView() {
         </Alert>
       )}
 
-      {inventoryLoading ? (
+      {(inventoryLoading || !isReady) ? (
         <LoadingScreen sx={{ my: 8 }} color="primary" />
       ) : (
         <Card>

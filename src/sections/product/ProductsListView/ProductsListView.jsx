@@ -50,8 +50,10 @@ export default function ProductsListView({ }) {
 
     const { user } = useContext(AuthContext);
 
-    const [tableData, setTableData] = useState([]);
-    const [dataFiltered, setDataFiltered] = useState([]);
+    const [tableData, setTableData] = useState(null);
+    const [dataFiltered, setDataFiltered] = useState(null);
+
+    const isReady = tableData !== null;
 
     let TABLE_HEAD = [
         { id: 'name', label: t('name'), type: "render", render: (item) => <ProductNameCell item={item} />, width: 250 },
@@ -172,7 +174,7 @@ export default function ProductsListView({ }) {
                     </Alert>
                 )}
 
-                {productsLoading ? (
+                {(productsLoading || !isReady) ? (
                     <LoadingScreen sx={{ my: 8 }} color='primary' />
                 ) : (
                     <Card>

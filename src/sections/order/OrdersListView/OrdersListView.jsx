@@ -400,8 +400,10 @@ export default function OrdersListView({ product_id }) {
 
     const { currentLang } = useLocales()
 
-    const [tableData, setTableData] = useState([]);
-    const [dataFiltered, setDataFiltered] = useState([]);
+    const [tableData, setTableData] = useState(null);
+    const [dataFiltered, setDataFiltered] = useState(null);
+
+    const isReady = tableData !== null;
 
     let TABLE_HEAD = [
         // { id: 'ref', label: t('order_ref'), type: "text", width: 140 },
@@ -595,7 +597,7 @@ export default function OrdersListView({ product_id }) {
                     </Alert>
                 )}
 
-                {ordersLoading ? (
+                {(ordersLoading || !isReady) ? (
                     <LoadingScreen sx={{ my: 8 }} color='primary' />
                 ) : (
                     <Card>
