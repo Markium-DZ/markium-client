@@ -71,6 +71,7 @@ export default function ProfitabilityProductsView() {
   const {
     products,
     productsPnLLoading,
+    productsPnLError,
     productsPnLForbidden,
   } = useGetProductsPnL(dateFrom);
 
@@ -175,6 +176,8 @@ export default function ProfitabilityProductsView() {
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}>
           <CircularProgress />
         </Box>
+      ) : productsPnLError && !productsPnLForbidden ? (
+        <EmptyContent title={t('error')} description={t('error_loading_data', 'Could not load data. Please try again.')} />
       ) : (
         <ProfitabilityGate forbidden={productsPnLForbidden}>
           {content}

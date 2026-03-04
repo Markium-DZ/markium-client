@@ -47,6 +47,7 @@ export default function ProfitabilityCampaignsView() {
     totalRevenue,
     overallMarketingROI,
     campaignsLoading,
+    campaignsError,
     campaignsForbidden,
   } = useGetCampaignsROI(dateFrom);
 
@@ -146,6 +147,8 @@ export default function ProfitabilityCampaignsView() {
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}>
           <CircularProgress />
         </Box>
+      ) : campaignsError && !campaignsForbidden ? (
+        <EmptyContent title={t('error')} description={t('error_loading_data', 'Could not load data. Please try again.')} />
       ) : (
         <ProfitabilityGate forbidden={campaignsForbidden}>
           {content}

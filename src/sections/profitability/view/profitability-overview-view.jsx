@@ -28,6 +28,7 @@ import { useTranslate } from 'src/locales';
 import { useSettingsContext } from 'src/components/settings';
 import CustomBreadcrumbs from 'src/components/custom-breadcrumbs';
 import Iconify from 'src/components/iconify';
+import EmptyContent from 'src/components/empty-content';
 
 import ProfitabilityDateFilter from '../components/profitability-date-filter';
 import ProfitabilitySummaryCards from '../components/profitability-summary-cards';
@@ -88,6 +89,7 @@ export default function ProfitabilityOverviewView() {
     costPerUnit,
     profitPerUnit,
     storePnLLoading,
+    storePnLError,
     storePnLForbidden,
   } = useGetStorePnL(dateFrom);
 
@@ -304,6 +306,8 @@ export default function ProfitabilityOverviewView() {
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}>
           <CircularProgress />
         </Box>
+      ) : storePnLError && !storePnLForbidden ? (
+        <EmptyContent title={t('error')} description={t('error_loading_data', 'Could not load data. Please try again.')} />
       ) : (
         <ProfitabilityGate forbidden={storePnLForbidden}>
           {content}

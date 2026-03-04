@@ -52,6 +52,7 @@ export default function ProfitabilityChannelView({ channel }) {
     roi,
     channelCampaigns,
     channelDetailLoading,
+    channelDetailError,
     channelDetailForbidden,
   } = useGetChannelDetail(channel, dateFrom);
 
@@ -183,6 +184,8 @@ export default function ProfitabilityChannelView({ channel }) {
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}>
           <CircularProgress />
         </Box>
+      ) : channelDetailError && !channelDetailForbidden ? (
+        <EmptyContent title={t('error')} description={t('error_loading_data', 'Could not load data. Please try again.')} />
       ) : (
         <ProfitabilityGate forbidden={channelDetailForbidden}>
           {content}
