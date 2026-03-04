@@ -1,11 +1,11 @@
 export const COST_TYPES = [
-  { value: 'buy_price', labelKey: 'cost_type_buy_price', icon: 'solar:tag-price-bold-duotone', color: 'primary' },
-  { value: 'marketing', labelKey: 'cost_type_marketing', icon: 'solar:megaphone-bold-duotone', color: 'warning' },
-  { value: 'content', labelKey: 'cost_type_content', icon: 'solar:pen-new-round-bold-duotone', color: 'info' },
-  { value: 'packaging', labelKey: 'cost_type_packaging', icon: 'solar:box-bold-duotone', color: 'secondary' },
-  { value: 'shipping', labelKey: 'cost_type_shipping', icon: 'solar:delivery-bold-duotone', color: 'success' },
-  { value: 'confirmation_call', labelKey: 'cost_type_confirmation_call', icon: 'solar:phone-calling-bold-duotone', color: 'default' },
-  { value: 'custom', labelKey: 'cost_type_custom', icon: 'solar:settings-bold-duotone', color: 'error' },
+  { value: 'buy_price', labelKey: 'cost_type_buy_price', icon: 'solar:tag-price-bold-duotone', color: 'primary', hexColor: '#00A76F' },
+  { value: 'marketing', labelKey: 'cost_type_marketing', icon: 'solar:megaphone-bold-duotone', color: 'warning', hexColor: '#FFAB00' },
+  { value: 'content', labelKey: 'cost_type_content', icon: 'solar:pen-new-round-bold-duotone', color: 'info', hexColor: '#00B8D9' },
+  { value: 'packaging', labelKey: 'cost_type_packaging', icon: 'solar:box-bold-duotone', color: 'secondary', hexColor: '#8E33FF' },
+  { value: 'shipping', labelKey: 'cost_type_shipping', icon: 'solar:delivery-bold-duotone', color: 'success', hexColor: '#22C55E' },
+  { value: 'confirmation_call', labelKey: 'cost_type_confirmation_call', icon: 'solar:phone-calling-bold-duotone', color: 'default', hexColor: '#919EAB' },
+  { value: 'custom', labelKey: 'cost_type_custom', icon: 'solar:settings-bold-duotone', color: 'error', hexColor: '#FF5630' },
 ];
 
 export const MARKETING_CHANNELS = [
@@ -29,3 +29,16 @@ export function getCostTypeConfig(type) {
 export function getChannelConfig(channel) {
   return MARKETING_CHANNELS.find((ch) => ch.value === channel) || MARKETING_CHANNELS[MARKETING_CHANNELS.length - 1];
 }
+
+// Derived maps for profitability views
+export const COST_TYPE_LABELS = Object.fromEntries(
+  COST_TYPES.map((ct) => [ct.value, ct.labelKey])
+);
+
+export const COST_TYPE_COLORS = Object.fromEntries(
+  COST_TYPES.map((ct) => [ct.value, ct.hexColor])
+);
+
+export const CHANNEL_ICONS = Object.fromEntries(
+  MARKETING_CHANNELS.map((ch) => [ch.value, ch.icon])
+);
