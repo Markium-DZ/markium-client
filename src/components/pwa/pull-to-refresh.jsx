@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback } from 'react';
-import { motion, useMotionValue, useTransform } from 'framer-motion';
+import { m, useMotionValue, useTransform } from 'framer-motion';
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 
@@ -52,7 +52,7 @@ export default function PullToRefresh({ onRefresh, children }) {
       onTouchEnd={handleTouchEnd}
       sx={{ position: 'relative' }}
     >
-      <motion.div
+      <m.div
         style={{
           display: 'flex',
           justifyContent: 'center',
@@ -63,7 +63,7 @@ export default function PullToRefresh({ onRefresh, children }) {
         }}
       >
         <CircularProgress size={24} thickness={4} />
-      </motion.div>
+      </m.div>
       {children}
     </Box>
   );

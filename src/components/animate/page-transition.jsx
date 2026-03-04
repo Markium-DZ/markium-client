@@ -1,4 +1,4 @@
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
@@ -35,7 +35,7 @@ export default function PageTransition({ children }) {
 
   return (
     <AnimatePresence mode="wait" custom={direction}>
-      <motion.div
+      <m.div
         key={pathname}
         custom={direction}
         variants={variants}
@@ -45,7 +45,7 @@ export default function PageTransition({ children }) {
         style={{ flex: 1 }}
       >
         {children}
-      </motion.div>
+      </m.div>
     </AnimatePresence>
   );
 }

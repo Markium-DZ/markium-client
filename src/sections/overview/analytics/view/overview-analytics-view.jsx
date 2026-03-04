@@ -12,7 +12,7 @@ import Tabs from '@mui/material/Tabs';
 import CircularProgress from '@mui/material/CircularProgress';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useTheme } from '@mui/material/styles';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, m } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 
 import { useSettingsContext } from 'src/components/settings';
@@ -242,7 +242,7 @@ export default function OverviewAnalyticsView() {
       {/* Tab content with swipe support on mobile */}
       <Box sx={{ pt: isMobile ? 2 : 3, overflow: 'hidden' }}>
         <AnimatePresence mode="wait" custom={swipeDirection * (isRtl ? -1 : 1)} initial={false}>
-          <motion.div
+          <m.div
             key={currentTab}
             custom={swipeDirection * (isRtl ? -1 : 1)}
             variants={tabContentVariants}
@@ -259,7 +259,7 @@ export default function OverviewAnalyticsView() {
             style={{ touchAction: 'pan-y' }}
           >
             {renderTabContent()}
-          </motion.div>
+          </m.div>
         </AnimatePresence>
       </Box>
     </Container>
