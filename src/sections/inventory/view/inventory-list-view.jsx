@@ -346,27 +346,27 @@ export default function InventoryListView() {
         </Alert>
       )}
 
-      <Card>
-        <ZaityTableTabs
-          filterKey="stock_status"
-          data={tableData}
-          items={items}
-          defaultFilters={defaultFilters}
-          setTableDate={setDataFiltered}
-          filterFunction={filterFunction}
-        >
-          <ZaityTableFilters
-            data={dataFiltered}
-            tableData={tableData}
-            setTableDate={setDataFiltered}
-            items={filters}
+      {inventoryLoading ? (
+        <LoadingScreen sx={{ my: 8 }} color="primary" />
+      ) : (
+        <Card>
+          <ZaityTableTabs
+            filterKey="stock_status"
+            data={tableData}
+            items={items}
             defaultFilters={defaultFilters}
-            dataFiltered={tableData}
-            searchText={`${t('search_by')} ${t('product')} ${t('or_any_value')} ...`}
+            setTableDate={setDataFiltered}
+            filterFunction={filterFunction}
           >
-            {inventoryLoading ? (
-              <LoadingScreen sx={{ my: 8 }} color="primary" />
-            ) : (
+            <ZaityTableFilters
+              data={dataFiltered}
+              tableData={tableData}
+              setTableDate={setDataFiltered}
+              items={filters}
+              defaultFilters={defaultFilters}
+              dataFiltered={tableData}
+              searchText={`${t('search_by')} ${t('product')} ${t('or_any_value')} ...`}
+            >
               <ZaityListView
                 TABLE_HEAD={[...TABLE_HEAD]}
                 dense="medium"
@@ -378,10 +378,10 @@ export default function InventoryListView() {
                   />
                 )}
               />
-            )}
-          </ZaityTableFilters>
-        </ZaityTableTabs>
-      </Card>
+            </ZaityTableFilters>
+          </ZaityTableTabs>
+        </Card>
+      )}
 
       <InventoryAdjustmentDialog
         open={adjustmentDialog.open}

@@ -595,29 +595,29 @@ export default function OrdersListView({ product_id }) {
                     </Alert>
                 )}
 
-                <Card>
-                    <ZaityTableTabs filterKey='condition' data={tableData} items={items} defaultFilters={defaultFilters} setTableDate={setDataFiltered} filterFunction={filterFunction}>
-                        {/* <ZaityTableTabs filterKey='attachable_type' data={tableData} items={items2} defaultFilters={defaultFilters} setTableDate={setDataFiltered} filterFunction={filterFunction}> */}
-                        <ZaityTableFilters data={dataFiltered} tableData={tableData} setTableDate={setDataFiltered} items={filters} defaultFilters={defaultFilters} dataFiltered={tableData} searchText={t("search_by") + " " + t("name") + " " + t("or_any_value") + " ..."}  >
-                            {ordersLoading ? (
-                                <LoadingScreen sx={{ my: 8 }} color='primary' />
-                            ) : (!dataFiltered || dataFiltered.length === 0) ? (
-                                <Box sx={{ textAlign: 'center', py: 10 }}>
-                                    <Iconify icon="solar:bag-4-bold-duotone" width={64} sx={{ color: 'text.disabled', mb: 2 }} />
-                                    <Typography variant="h6" color="text.secondary" gutterBottom>
-                                        {t('no_orders_yet')}
-                                    </Typography>
-                                    <Typography variant="body2" color="text.disabled" sx={{ mb: 3 }}>
-                                        {t('no_orders_description')}
-                                    </Typography>
-                                </Box>
-                            ) : (
-                                <ZaityListView TABLE_HEAD={[...TABLE_HEAD]} dense="medium" zaityTableDate={dataFiltered || []} onSelectedRows={({ data, setTableData }) => { return <onSelectedRowsComponent configurable_type={"roles"} setTableData={setTableData} data={orders} /> }} mobileCardRender={(row) => <OrderMobileCard row={row} />} />
-                            )}
-                        </ZaityTableFilters>
-                        {/* </ZaityTableTabs> */}
-                    </ZaityTableTabs>
-                </Card>
+                {ordersLoading ? (
+                    <LoadingScreen sx={{ my: 8 }} color='primary' />
+                ) : (
+                    <Card>
+                        <ZaityTableTabs filterKey='condition' data={tableData} items={items} defaultFilters={defaultFilters} setTableDate={setDataFiltered} filterFunction={filterFunction}>
+                            <ZaityTableFilters data={dataFiltered} tableData={tableData} setTableDate={setDataFiltered} items={filters} defaultFilters={defaultFilters} dataFiltered={tableData} searchText={t("search_by") + " " + t("name") + " " + t("or_any_value") + " ..."}  >
+                                {(!dataFiltered || dataFiltered.length === 0) ? (
+                                    <Box sx={{ textAlign: 'center', py: 10 }}>
+                                        <Iconify icon="solar:bag-4-bold-duotone" width={64} sx={{ color: 'text.disabled', mb: 2 }} />
+                                        <Typography variant="h6" color="text.secondary" gutterBottom>
+                                            {t('no_orders_yet')}
+                                        </Typography>
+                                        <Typography variant="body2" color="text.disabled" sx={{ mb: 3 }}>
+                                            {t('no_orders_description')}
+                                        </Typography>
+                                    </Box>
+                                ) : (
+                                    <ZaityListView TABLE_HEAD={[...TABLE_HEAD]} dense="medium" zaityTableDate={dataFiltered || []} onSelectedRows={({ data, setTableData }) => { return <onSelectedRowsComponent configurable_type={"roles"} setTableData={setTableData} data={orders} /> }} mobileCardRender={(row) => <OrderMobileCard row={row} />} />
+                                )}
+                            </ZaityTableFilters>
+                        </ZaityTableTabs>
+                    </Card>
+                )}
             </ZaityHeadContainer>
         </>
     );

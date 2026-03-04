@@ -172,19 +172,17 @@ export default function ProductsListView({ }) {
                     </Alert>
                 )}
 
-                <Card>
-                    <ZaityTableTabs filterKey='condition' data={tableData} items={items} defaultFilters={defaultFilters} setTableDate={setDataFiltered} filterFunction={filterFunction}>
-                        {/* <ZaityTableTabs filterKey='attachable_type' data={tableData} items={items2} defaultFilters={defaultFilters} setTableDate={setDataFiltered} filterFunction={filterFunction}> */}
-                        <ZaityTableFilters data={dataFiltered} tableData={tableData} setTableDate={setDataFiltered} items={filters} defaultFilters={defaultFilters} dataFiltered={tableData} searchText={t("search_by") + " " + t("name") + " " + t("or_any_value") + " ..."}  >
-                            {productsLoading ? (
-                                <LoadingScreen sx={{ my: 8 }} color='primary' />
-                            ) : (
+                {productsLoading ? (
+                    <LoadingScreen sx={{ my: 8 }} color='primary' />
+                ) : (
+                    <Card>
+                        <ZaityTableTabs filterKey='condition' data={tableData} items={items} defaultFilters={defaultFilters} setTableDate={setDataFiltered} filterFunction={filterFunction}>
+                            <ZaityTableFilters data={dataFiltered} tableData={tableData} setTableDate={setDataFiltered} items={filters} defaultFilters={defaultFilters} dataFiltered={tableData} searchText={t("search_by") + " " + t("name") + " " + t("or_any_value") + " ..."}  >
                                 <ZaityListView TABLE_HEAD={[...TABLE_HEAD]} dense="medium" zaityTableDate={dataFiltered || []} onSelectedRows={({ data, setTableData }) => { return <onSelectedRowsComponent configurable_type={"roles"} setTableData={setTableData} data={products} /> }} />
-                            )}
-                        </ZaityTableFilters>
-                        {/* </ZaityTableTabs> */}
-                    </ZaityTableTabs>
-                </Card>
+                            </ZaityTableFilters>
+                        </ZaityTableTabs>
+                    </Card>
+                )}
             </ZaityHeadContainer>
         </>
     );
