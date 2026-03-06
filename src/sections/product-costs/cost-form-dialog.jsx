@@ -1,38 +1,40 @@
-import PropTypes from 'prop-types';
 import * as Yup from 'yup';
-import { useEffect, useMemo, useState } from 'react';
+import PropTypes from 'prop-types';
+import { useMemo, useState, useEffect } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  Stack,
-  Box,
-  Typography,
-  Autocomplete,
-  TextField,
-  InputAdornment,
-  Collapse,
-  Avatar,
-  Card,
-  Tooltip,
-} from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import LoadingButton from '@mui/lab/LoadingButton';
+import {
+  Box,
+  Card,
+  Stack,
+  Dialog,
+  Button,
+  Avatar,
+  Tooltip,
+  Collapse,
+  TextField,
+  Typography,
+  DialogTitle,
+  Autocomplete,
+  DialogContent,
+  DialogActions,
+  InputAdornment,
+} from '@mui/material';
+
+import showError from 'src/utils/show_error';
+import { fNumber } from 'src/utils/format-number';
 
 import { useTranslate } from 'src/locales';
+import { createProductCost, updateProductCost } from 'src/api/product-costs';
+
+import Iconify from 'src/components/iconify';
 import { useSnackbar } from 'src/components/snackbar';
 import FormProvider, { RHFTextField } from 'src/components/hook-form';
-import Iconify from 'src/components/iconify';
-import { fNumber } from 'src/utils/format-number';
-import { createProductCost, updateProductCost } from 'src/api/product-costs';
-import showError from 'src/utils/show_error';
 
-import { COST_TYPES, MARKETING_CHANNELS, SCOPE_OPTIONS } from './constants';
+import { COST_TYPES, SCOPE_OPTIONS, MARKETING_CHANNELS } from './constants';
 
 export default function CostFormDialog({
   open,

@@ -2,20 +2,21 @@ import { useState } from 'react';
 import PropTypes from 'prop-types';
 
 import {
-  TableCell,
-  TableRow,
-  IconButton,
-  MenuItem,
   Tooltip,
+  TableRow,
+  MenuItem,
+  TableCell,
+  IconButton,
   Typography,
 } from '@mui/material';
 
 import { fNumber } from 'src/utils/format-number';
 
 import { useTranslate } from 'src/locales';
+
+import Label from 'src/components/label';
 import Iconify from 'src/components/iconify';
 import CustomPopover, { usePopover } from 'src/components/custom-popover';
-import Label from 'src/components/label';
 
 import CostTypeBadge from './cost-type-badge';
 import { getChannelConfig } from './constants';
