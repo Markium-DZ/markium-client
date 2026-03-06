@@ -104,10 +104,25 @@ export default function CostFormDialog({
     watch,
     setValue,
     handleSubmit,
-    formState: { isSubmitting },
+    formState: { isSubmitting, isDirty },
   } = methods;
 
   const watchType = watch('type');
+
+  const [confirmClose, setConfirmClose] = useState(false);
+
+  const handleClose = () => {
+    if (isDirty) {
+      setConfirmClose(true);
+    } else {
+      onClose();
+    }
+  };
+
+  const handleConfirmDiscard = () => {
+    setConfirmClose(false);
+    onClose();
+  };
 
   const ALL_VARIANTS_OPTION = { id: 'all', _isAll: true };
   const variantOptions = [ALL_VARIANTS_OPTION, ...(variants || [])];
@@ -173,7 +188,7 @@ export default function CostFormDialog({
   };
 
   return (
-    <Dialog fullWidth maxWidth="sm" open={open} onClose={onClose}>
+    <Dialog fullWidth maxWidth="sm" open={open} onClose={handleClose}>
       <DialogTitle>{isEdit ? t('edit_cost') : t('add_cost')}</DialogTitle>
 
       <FormProvider methods={methods}>
@@ -497,18 +512,23 @@ export default function CostFormDialog({
         </DialogContent>
 
         <DialogActions>
-          <Button variant="outlined" color="inherit" onClick={onClose}>
+          <Button variant="outlined" color="inherit" onClick={handleClose} disabled={isSubmitting}>
             {t('cancel')}
           </Button>
 
+          <Box sx={{ flex: 1 }} />
+
           {!isEdit && (
-            <LoadingButton
-              variant="outlined"
-              loading={isSubmitting}
-              onClick={handleSubmit((data) => handleSave(data, true))}
-            >
-              {t('save_and_add_another')}
-            </LoadingButton>
+            <Tooltip title={t('save_and_add_another_tooltip')}>
+              <LoadingButton
+                variant="soft"
+                color="primary"
+                loading={isSubmitting}
+                onClick={handleSubmit((data) => handleSave(data, true))}
+              >
+                {t('save_and_add_another')}
+              </LoadingButton>
+            </Tooltip>
           )}
 
           <LoadingButton
