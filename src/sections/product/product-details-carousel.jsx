@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import PropTypes from 'prop-types';
 
 import Box from '@mui/material/Box';
+import Chip from '@mui/material/Chip';
 import Button from '@mui/material/Button';
 import Avatar from '@mui/material/Avatar';
 import Typography from '@mui/material/Typography';
@@ -97,6 +98,23 @@ export default function ProductDetailsCarousel({ product, editLink }) {
     src: typeof img === 'string' ? img : img?.full_url || img?.url || img?.src || '',
   }));
 
+  // Map each image src to the label of the first variant that owns it
+  const imageVariantMap = {};
+  (product?.variants || []).forEach((variant) => {
+    const media = Array.isArray(variant.media)
+      ? variant.media
+      : variant.media
+      ? [variant.media]
+      : [];
+    const label = variant.options?.map((o) => o.value).filter(Boolean).join(' · ') || '';
+    media.forEach((m) => {
+      const src = m?.full_url || m?.url || m?.src || '';
+      if (src && !imageVariantMap[src] && label) {
+        imageVariantMap[src] = label;
+      }
+    });
+  });
+
   const renderEmpty = slides.length === 0 && (
     <Box
       sx={{
@@ -173,14 +191,33 @@ export default function ProductDetailsCarousel({ product, editLink }) {
         ref={carouselLarge.carouselRef}
       >
         {slides.map((slide) => (
-          <Image
-            key={slide.src}
-            alt={slide.src}
-            src={slide.src}
-            ratio="1/1"
-            onClick={() => lightbox.onOpen(slide.src)}
-            sx={{ cursor: 'zoom-in' }}
-          />
+          <Box key={slide.src} sx={{ position: 'relative' }}>
+            <Image
+              alt={slide.src}
+              src={slide.src}
+              ratio="1/1"
+              onClick={() => lightbox.onOpen(slide.src)}
+              sx={{ cursor: 'zoom-in' }}
+            />
+            {imageVariantMap[slide.src] && (
+              <Chip
+                label={imageVariantMap[slide.src]}
+                size="small"
+                sx={{
+                  position: 'absolute',
+                  bottom: 10,
+                  left: 10,
+                  bgcolor: 'rgba(0,0,0,0.55)',
+                  color: 'common.white',
+                  fontWeight: 600,
+                  fontSize: '0.7rem',
+                  height: 22,
+                  pointerEvents: 'none',
+                  '& .MuiChip-label': { px: 1 },
+                }}
+              />
+            )}
+          </Box>
         ))}
       </Carousel>
 
