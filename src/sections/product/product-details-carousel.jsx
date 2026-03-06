@@ -2,12 +2,17 @@ import { useEffect } from 'react';
 import PropTypes from 'prop-types';
 
 import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
 import Avatar from '@mui/material/Avatar';
+import Typography from '@mui/material/Typography';
 import { alpha, styled, useTheme } from '@mui/material/styles';
 
 import { bgGradient } from 'src/theme/css';
 
+import { RouterLink } from 'src/routes/components';
+import { useTranslate } from 'src/locales';
 import Image from 'src/components/image';
+import Iconify from 'src/components/iconify';
 import Lightbox, { useLightBox } from 'src/components/lightbox';
 import Carousel, { useCarousel, CarouselArrowIndex } from 'src/components/carousel';
 
@@ -61,8 +66,9 @@ const StyledThumbnailsContainer = styled('div')(({ length, theme }) => ({
 
 // ----------------------------------------------------------------------
 
-export default function ProductDetailsCarousel({ product }) {
+export default function ProductDetailsCarousel({ product, editLink }) {
   const theme = useTheme();
+  const { t } = useTranslate();
 
   // Collect all variant media images
   let mediaSource = [];
@@ -90,6 +96,38 @@ export default function ProductDetailsCarousel({ product }) {
   const slides = mediaSource.map((img) => ({
     src: typeof img === 'string' ? img : img?.full_url || img?.url || img?.src || '',
   }));
+
+  const renderEmpty = slides.length === 0 && (
+    <Box
+      sx={{
+        height: 320,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        border: '2px dashed',
+        borderColor: 'divider',
+        borderRadius: 2,
+        color: 'text.disabled',
+        gap: 1.5,
+      }}
+    >
+      <Iconify icon="solar:camera-add-bold-duotone" width={48} />
+      <Typography variant="subtitle2">{t('no_images_yet')}</Typography>
+      {editLink && (
+        <Button
+          component={RouterLink}
+          href={editLink}
+          size="small"
+          variant="outlined"
+          color="inherit"
+          startIcon={<Iconify icon="solar:pen-bold" width={16} />}
+        >
+          {t('add_images')}
+        </Button>
+      )}
+    </Box>
+  );
 
   const lightbox = useLightBox(slides);
 
@@ -186,6 +224,10 @@ export default function ProductDetailsCarousel({ product }) {
     </StyledThumbnailsContainer>
   ) : null;
 
+  if (slides.length === 0) {
+    return renderEmpty;
+  }
+
   return (
     <Box
       sx={{
@@ -211,4 +253,5 @@ export default function ProductDetailsCarousel({ product }) {
 
 ProductDetailsCarousel.propTypes = {
   product: PropTypes.object,
+  editLink: PropTypes.string,
 };
