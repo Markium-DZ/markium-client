@@ -485,7 +485,14 @@ export default function CostFormDialog({
               />
             )}
 
-            <RHFTextField name="notes" label={t('notes')} multiline rows={2} />
+            <RHFTextField
+              name="notes"
+              label={t('notes')}
+              multiline
+              minRows={2}
+              maxRows={4}
+              inputProps={{ dir: 'auto', maxLength: 1000 }}
+            />
           </Stack>
         </DialogContent>
 
