@@ -41,7 +41,6 @@ import ProductDetailsVariants from '../product-details-variants';
 
 export default function ProductDetailsView({ id }) {
   const { product, productLoading, productError, productMutate } = useGetProduct(id);
-  console.log("product :" ,product)
 
   const settings = useSettingsContext();
   const { t } = useTranslate();
