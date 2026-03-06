@@ -44,37 +44,57 @@ ProductItemSkeleton.propTypes = {
 
 export function ProductDetailsSkeleton({ ...other }) {
   return (
-    <Grid container spacing={8} {...other}>
-      <Grid xs={12} md={6} lg={7}>
-        <Skeleton sx={{ paddingTop: '100%' }} />
+    <Grid container spacing={{ xs: 3, md: 4, lg: 5 }} {...other}>
+      {/* Hero left — image */}
+      <Grid xs={12} md={6} lg={6}>
+        <Skeleton sx={{ paddingTop: '100%', borderRadius: 2 }} />
       </Grid>
 
-      <Grid xs={12} md={6} lg={5}>
-        <Stack spacing={3}>
-          <Skeleton sx={{ height: 16, width: 48 }} />
-          <Skeleton sx={{ height: 16, width: 80 }} />
-          <Skeleton sx={{ height: 16, width: 0.5 }} />
-          <Skeleton sx={{ height: 16, width: 0.75 }} />
-          <Skeleton sx={{ height: 120 }} />
+      {/* Hero right — product info */}
+      <Grid xs={12} md={6} lg={6}>
+        <Stack spacing={2.5}>
+          <Skeleton sx={{ height: 14, width: 80, borderRadius: 1 }} />
+          <Skeleton sx={{ height: 28, width: '70%', borderRadius: 1 }} />
+          <Skeleton sx={{ height: 20, width: 100, borderRadius: 1 }} />
+          <Skeleton sx={{ height: 14, width: '90%', borderRadius: 1 }} />
+          <Skeleton sx={{ height: 14, width: '75%', borderRadius: 1 }} />
+          <Stack direction="row" spacing={1} sx={{ pt: 1 }}>
+            <Skeleton sx={{ height: 32, width: 80, borderRadius: 1 }} />
+            <Skeleton sx={{ height: 32, width: 80, borderRadius: 1 }} />
+          </Stack>
         </Stack>
       </Grid>
 
+      {/* Tab card */}
       <Grid xs={12}>
-        <Stack direction="row" alignItems="center">
-          {[...Array(3)].map((_, index) => (
-            <Stack
-              key={index}
-              spacing={2}
-              alignItems="center"
-              justifyContent="center"
-              sx={{ width: 1 }}
-            >
-              <Skeleton variant="circular" sx={{ width: 80, height: 80 }} />
-              <Skeleton sx={{ height: 16, width: 160 }} />
-              <Skeleton sx={{ height: 16, width: 80 }} />
-            </Stack>
-          ))}
-        </Stack>
+        <Paper variant="outlined" sx={{ borderRadius: 2 }}>
+          {/* Tab headers */}
+          <Stack direction="row" spacing={2} sx={{ px: 3, pt: 2, pb: 0 }}>
+            <Skeleton sx={{ height: 44, width: 120, borderRadius: 1 }} />
+            <Skeleton sx={{ height: 44, width: 100, borderRadius: 1 }} />
+            <Skeleton sx={{ height: 44, width: 130, borderRadius: 1 }} />
+          </Stack>
+          <Skeleton sx={{ height: 2, width: '100%' }} />
+          {/* Row skeletons */}
+          <Stack spacing={2} sx={{ p: 3 }}>
+            {[...Array(2)].map((_, i) => (
+              <Paper key={i} variant="outlined" sx={{ p: 2, borderRadius: 1.5 }}>
+                <Stack direction="row" spacing={2} alignItems="center">
+                  <Skeleton sx={{ width: 80, height: 80, borderRadius: 1.5, flexShrink: 0 }} />
+                  <Stack spacing={1} sx={{ flexGrow: 1 }}>
+                    <Skeleton sx={{ height: 16, width: '40%' }} />
+                    <Skeleton sx={{ height: 14, width: '60%' }} />
+                    <Stack direction="row" spacing={2}>
+                      <Skeleton sx={{ height: 14, width: 60 }} />
+                      <Skeleton sx={{ height: 14, width: 60 }} />
+                      <Skeleton sx={{ height: 14, width: 60 }} />
+                    </Stack>
+                  </Stack>
+                </Stack>
+              </Paper>
+            ))}
+          </Stack>
+        </Paper>
       </Grid>
     </Grid>
   );
