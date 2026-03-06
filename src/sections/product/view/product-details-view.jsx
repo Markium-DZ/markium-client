@@ -2,7 +2,6 @@ import PropTypes from 'prop-types';
 import { useState, useEffect, useCallback } from 'react';
 
 import Tab from '@mui/material/Tab';
-import Box from '@mui/material/Box';
 import Tabs from '@mui/material/Tabs';
 import Card from '@mui/material/Card';
 import Button from '@mui/material/Button';
