@@ -125,6 +125,17 @@ export default function CostFormDialog({
     onClose();
   };
 
+  const handleKeyDown = (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+      e.preventDefault();
+      if (e.shiftKey && !isEdit) {
+        handleSubmit((data) => handleSave(data, true))();
+      } else {
+        handleSubmit((data) => handleSave(data, false))();
+      }
+    }
+  };
+
   const ALL_VARIANTS_OPTION = { id: 'all', _isAll: true };
   const variantOptions = [ALL_VARIANTS_OPTION, ...(variants || [])];
 
@@ -193,7 +204,7 @@ export default function CostFormDialog({
       <DialogTitle>{isEdit ? t('edit_cost') : t('add_cost')}</DialogTitle>
 
       <FormProvider methods={methods}>
-        <DialogContent>
+        <DialogContent onKeyDown={handleKeyDown}>
           <Stack spacing={2.5} sx={{ mt: 1 }}>
             <Controller
               name="type"
