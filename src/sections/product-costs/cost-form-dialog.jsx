@@ -337,23 +337,47 @@ export default function CostFormDialog({
               </Stack>
             </Collapse>
 
-            <FormControl>
-              <FormLabel>{t('scope')}</FormLabel>
-              <RadioGroup
-                row
-                value={watch('scope')}
-                onChange={(e) => setValue('scope', e.target.value)}
-              >
-                {SCOPE_OPTIONS.map((opt) => (
-                  <FormControlLabel
-                    key={opt.value}
-                    value={opt.value}
-                    control={<Radio />}
-                    label={t(opt.labelKey)}
-                  />
-                ))}
-              </RadioGroup>
-            </FormControl>
+            <Box>
+              <Typography variant="subtitle2" sx={{ mb: 1.5 }}>{t('scope')}</Typography>
+              <Stack direction="row" spacing={1.5}>
+                {SCOPE_OPTIONS.map((opt) => {
+                  const isSelected = watch('scope') === opt.value;
+                  return (
+                    <Card
+                      key={opt.value}
+                      onClick={() => setValue('scope', opt.value)}
+                      sx={{
+                        flex: 1,
+                        p: 2,
+                        cursor: 'pointer',
+                        border: (theme) => `1.5px solid ${isSelected ? theme.palette.primary.main : alpha(theme.palette.grey[500], 0.16)}`,
+                        bgcolor: (theme) => isSelected ? alpha(theme.palette.primary.main, 0.04) : 'transparent',
+                        transition: 'all 0.15s ease',
+                        '&:hover': {
+                          borderColor: (theme) => isSelected ? theme.palette.primary.main : theme.palette.grey[400],
+                        },
+                      }}
+                    >
+                      <Stack spacing={0.75}>
+                        <Stack direction="row" alignItems="center" spacing={1}>
+                          <Iconify
+                            icon={opt.icon}
+                            width={20}
+                            sx={{ color: isSelected ? 'primary.main' : 'text.disabled' }}
+                          />
+                          <Typography variant="subtitle2" fontWeight={600}>
+                            {t(opt.labelKey)}
+                          </Typography>
+                        </Stack>
+                        <Typography variant="caption" color="text.secondary">
+                          {t(opt.descriptionKey)}
+                        </Typography>
+                      </Stack>
+                    </Card>
+                  );
+                })}
+              </Stack>
+            </Box>
 
             <RHFTextField name="amount" label={t('amount')} type="number" InputProps={{ endAdornment: 'DZD' }} />
 
