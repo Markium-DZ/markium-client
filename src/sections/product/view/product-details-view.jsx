@@ -196,7 +196,10 @@ export default function ProductDetailsView({ id }) {
 
       <Grid container spacing={{ xs: 3, md: 4, lg: 5 }}>
         <Grid xs={12} md={6} lg={6}>
-          <ProductDetailsCarousel product={product} />
+          <ProductDetailsCarousel
+            product={product}
+            editLink={paths.dashboard.product.edit(`${product?.id}`)}
+          />
         </Grid>
 
         <Grid xs={12} md={6} lg={6}>
@@ -225,6 +228,7 @@ export default function ProductDetailsView({ id }) {
             {
               value: 'variants',
               label: `${t('variants')} (${product?.variants?.length || 0})`,
+              icon: <Iconify icon="solar:layers-bold-duotone" width={18} />,
             },
             {
               value: 'costs',
@@ -234,6 +238,7 @@ export default function ProductDetailsView({ id }) {
             {
               value: 'description',
               label: t('product_description'),
+              icon: <Iconify icon="solar:document-text-bold-duotone" width={18} />,
             },
           ].map((tab) => (
             <Tab key={tab.value} value={tab.value} label={tab.label} icon={tab.icon} iconPosition="start" />
@@ -249,6 +254,7 @@ export default function ProductDetailsView({ id }) {
                 ? product.description
                 : ''
             }
+            editLink={paths.dashboard.product.edit(`${product?.id}`)}
           />
         )}
 
