@@ -3526,5 +3526,7 @@
   "save_and_add_another_tooltip": "Enregistre ce coût et ouvre un nouveau formulaire avec le même type",
   "no_images_yet": "Aucune image pour le moment",
   "no_description_yet": "Aucune description pour le moment",
-  "add_description": "Ajouter une description"
+  "add_description": "Ajouter une description",
+  "manage_variants": "Gérer les variantes",
+  "manage_variants_in_edit": "Gérez les variantes depuis la page de modification"
 }

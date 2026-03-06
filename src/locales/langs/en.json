@@ -3890,5 +3890,7 @@
   "save_and_add_another_tooltip": "Saves this cost and opens a fresh form with the same type",
   "no_images_yet": "No images yet",
   "no_description_yet": "No description yet",
-  "add_description": "Add Description"
+  "add_description": "Add Description",
+  "manage_variants": "Manage Variants",
+  "manage_variants_in_edit": "Manage variants from the edit page"
 }

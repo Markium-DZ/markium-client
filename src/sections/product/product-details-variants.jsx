@@ -13,6 +13,11 @@ import Typography from '@mui/material/Typography';
 import Chip from '@mui/material/Chip';
 
 
+import Tooltip from '@mui/material/Tooltip';
+
+import { RouterLink } from 'src/routes/components';
+import { paths } from 'src/routes/paths';
+
 import { useTranslate } from 'src/locales';
 import { fCurrency } from 'src/utils/format-number';
 import Iconify from 'src/components/iconify';
@@ -26,13 +31,10 @@ import ProductVariantEditDialog from './product-variant-edit-dialog';
 export default function ProductDetailsVariants({ product, optionDefinitions, onRefresh }) {
   const { t } = useTranslate();
   const variants = product?.variants || [];
+  const editLink = paths.dashboard.product.edit(`${product?.id}`);
 
   const [selectedVariant, setSelectedVariant] = useState(null);
   const [openEditDialog, setOpenEditDialog] = useState(false);
-  const handleAddVariant = () => {
-    console.log('Add new variant');
-    // TODO: Implement add variant functionality
-  };
 
   const handleEditVariant = (variant) => {
     setSelectedVariant(variant);
@@ -54,13 +56,16 @@ export default function ProductDetailsVariants({ product, optionDefinitions, onR
       {/* Header with Add button */}
       <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 3 }}>
         <Typography variant="h6">{t('product_variants')}</Typography>
-        <Button
-          variant="contained"
-          startIcon={<Iconify icon="mingcute:add-line" />}
-          onClick={handleAddVariant}
-        >
-          {t('add_variant')}
-        </Button>
+        <Tooltip title={t('manage_variants_in_edit')} arrow>
+          <Button
+            component={RouterLink}
+            href={editLink}
+            variant="contained"
+            startIcon={<Iconify icon="solar:pen-bold" width={16} />}
+          >
+            {t('manage_variants')}
+          </Button>
+        </Tooltip>
       </Stack>
 
       {/* Variants List */}
@@ -84,9 +89,10 @@ export default function ProductDetailsVariants({ product, optionDefinitions, onR
               {t('no_variants_description')}
             </Typography>
             <Button
+              component={RouterLink}
+              href={editLink}
               variant="contained"
-              startIcon={<Iconify icon="mingcute:add-line" />}
-              onClick={handleAddVariant}
+              startIcon={<Iconify icon="solar:pen-bold" width={16} />}
               sx={{ mt: 3 }}
             >
               {t('add_first_variant')}

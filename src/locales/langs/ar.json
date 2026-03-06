@@ -3930,5 +3930,7 @@
   "save_and_add_another_tooltip": "يحفظ هذه التكلفة ويفتح نموذجاً جديداً بنفس النوع",
   "no_images_yet": "لا توجد صور بعد",
   "no_description_yet": "لا يوجد وصف بعد",
-  "add_description": "إضافة وصف"
+  "add_description": "إضافة وصف",
+  "manage_variants": "إدارة المتغيرات",
+  "manage_variants_in_edit": "يمكنك إدارة المتغيرات من صفحة التعديل"
 }
