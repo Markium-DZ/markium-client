@@ -64,8 +64,6 @@ export default function ProductDetailsView({ id }) {
 
   const [publishLoading, setPublishLoading] = useState(false);
 
-  const [selectedVariant, setSelectedVariant] = useState(null);
-
   const publishConfirm = useBoolean();
 
   // Check if product is already deployed
@@ -76,9 +74,6 @@ export default function ProductDetailsView({ id }) {
       // Map 'deployed' status to 'published' for the toolbar display
       const status = product?.status === 'deployed' ? 'published' : (product?.status || product?.publish || '');
       setPublish(status);
-      // Set default variant
-      const defaultVar = product?.variants?.find((v) => v.is_default) || product?.variants?.[0];
-      setSelectedVariant(defaultVar);
     }
   }, [product]);
 
@@ -159,12 +154,7 @@ export default function ProductDetailsView({ id }) {
         </Grid>
 
         <Grid xs={12} md={6} lg={6}>
-          <ProductDetailsSummary
-            disabledActions
-            product={product}
-            selectedVariant={selectedVariant}
-            onVariantChange={setSelectedVariant}
-          />
+          <ProductDetailsSummary product={product} />
         </Grid>
       </Grid>
 
