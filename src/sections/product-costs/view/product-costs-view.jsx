@@ -168,6 +168,7 @@ export default function ProductCostsView({ id }) {
         productId={id}
         currentCost={editingCost}
         variants={product?.variants || []}
+        optionDefinitions={product?.option_definitions || []}
         onSuccess={handleFormSuccess}
       />
 

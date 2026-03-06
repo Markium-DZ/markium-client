@@ -34,6 +34,7 @@ export default function CostFormDialog({
   productId,
   currentCost,
   variants,
+  optionDefinitions,
   onSuccess,
 }) {
   const { t } = useTranslate();
@@ -65,8 +66,8 @@ export default function CostFormDialog({
           then: (schema) => schema.required(t('channel') + ' ' + t('name_is_required')).oneOf(MARKETING_CHANNELS.map((ch) => ch.value)),
           otherwise: (schema) => schema.nullable(),
         }),
-        variant_id: Yup.number()
-          .transform((value, originalValue) => (originalValue === '' ? null : value))
+        variant_id: Yup.mixed()
+          .transform((value) => (value === 'all' || value === '' ? null : Number(value)))
           .nullable(),
         notes: Yup.string().max(1000).nullable(),
       }),
@@ -81,7 +82,7 @@ export default function CostFormDialog({
       custom_type_name: currentCost?.custom_type_name || '',
       campaign_name: currentCost?.campaign_name || '',
       channel: currentCost?.channel || '',
-      variant_id: currentCost?.variant_id || '',
+      variant_id: currentCost?.variant_id || 'all',
       notes: currentCost?.notes || '',
     }),
     [currentCost]
@@ -141,7 +142,7 @@ export default function CostFormDialog({
           custom_type_name: '',
           campaign_name: '',
           channel: data.channel || '',
-          variant_id: '',
+          variant_id: 'all',
           notes: '',
         });
       } else {
@@ -206,7 +207,7 @@ export default function CostFormDialog({
 
             {watchType === 'buy_price' && variants?.length > 0 && (
               <RHFSelect name="variant_id" label={t('variant')}>
-                <MenuItem value="">{t('all_variants')}</MenuItem>
+                <MenuItem value="all">{t('all_variants')}</MenuItem>
                 {variants.map((v) => (
                   <MenuItem key={v.id} value={v.id}>
                     {v.name || v.title || `#${v.id}`}
@@ -253,5 +254,6 @@ CostFormDialog.propTypes = {
   productId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
   currentCost: PropTypes.object,
   variants: PropTypes.array,
+  optionDefinitions: PropTypes.array,
   onSuccess: PropTypes.func,
 };
