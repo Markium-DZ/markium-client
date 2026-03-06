@@ -5,10 +5,7 @@ import Tab from '@mui/material/Tab';
 import Box from '@mui/material/Box';
 import Tabs from '@mui/material/Tabs';
 import Card from '@mui/material/Card';
-import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
-import Tooltip from '@mui/material/Tooltip';
-import IconButton from '@mui/material/IconButton';
 import { alpha } from '@mui/material/styles';
 import Container from '@mui/material/Container';
 import Grid from '@mui/material/Unstable_Grid2';
@@ -148,51 +145,13 @@ export default function ProductDetailsView({ id }) {
         editLink={paths.dashboard.product.edit(`${product?.id}`)}
         costsLink={paths.dashboard.product.costs(`${product?.id}`)}
         liveLink={paths.product.details(`${product?.id}`)}
-        publish={publishLoading ? '' : (publish || '')}
+        publish={publish || ''}
+        loading={publishLoading}
         onChangePublish={handleChangePublish}
         publishOptions={PRODUCT_PUBLISH_OPTIONS}
+        publicProductUrl={publicProductUrl}
+        onCopyLink={handleCopyLink}
       />
-
-      {publicProductUrl && (
-        <Stack
-          direction="row"
-          alignItems="center"
-          spacing={0.5}
-          sx={{ mb: 2 }}
-        >
-          <Tooltip title={t('copy_link')}>
-            <Button
-              size="small"
-              variant="soft"
-              color="primary"
-              onClick={handleCopyLink}
-              startIcon={<Iconify icon="eva:link-2-fill" width={16} />}
-              endIcon={<Iconify icon="eva:copy-fill" width={14} />}
-              sx={{
-                px: 1.5,
-                py: 0.5,
-                fontSize: '0.75rem',
-                fontWeight: 500,
-              }}
-            >
-              {t('copy_product_link')}
-            </Button>
-          </Tooltip>
-          <Tooltip title={t('open_in_new_tab')}>
-            <IconButton
-              component="a"
-              href={publicProductUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              size="small"
-              color="primary"
-              sx={{ p: 0.5 }}
-            >
-              <Iconify icon="eva:external-link-fill" width={16} />
-            </IconButton>
-          </Tooltip>
-        </Stack>
-      )}
 
       <Grid container spacing={{ xs: 3, md: 4, lg: 5 }}>
         <Grid xs={12} md={6} lg={6}>

@@ -26,6 +26,9 @@ export default function ProductDetailsToolbar({
   liveLink,
   publishOptions,
   onChangePublish,
+  publicProductUrl,
+  onCopyLink,
+  loading,
   sx,
   ...other
 }) {
@@ -127,11 +130,46 @@ export default function ProductDetailsToolbar({
             </IconButton>
           </Tooltip>
 
+          {publicProductUrl && (
+            <>
+              <Tooltip title={t('copy_product_link')} arrow>
+                <IconButton
+                  size="small"
+                  onClick={onCopyLink}
+                  sx={{
+                    color: 'text.secondary',
+                    bgcolor: (theme) => alpha(theme.palette.grey[500], 0.08),
+                    '&:hover': { bgcolor: (theme) => alpha(theme.palette.grey[500], 0.16) },
+                  }}
+                >
+                  <Iconify icon="eva:copy-fill" width={18} />
+                </IconButton>
+              </Tooltip>
+
+              <Tooltip title={t('open_in_new_tab')} arrow>
+                <IconButton
+                  component="a"
+                  href={publicProductUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  size="small"
+                  sx={{
+                    color: 'text.secondary',
+                    bgcolor: (theme) => alpha(theme.palette.grey[500], 0.08),
+                    '&:hover': { bgcolor: (theme) => alpha(theme.palette.grey[500], 0.16) },
+                  }}
+                >
+                  <Iconify icon="eva:external-link-fill" width={18} />
+                </IconButton>
+              </Tooltip>
+            </>
+          )}
+
           <LoadingButton
             color={isPublished ? 'success' : 'warning'}
             variant="soft"
             size="small"
-            loading={!publish}
+            loading={loading}
             loadingIndicator={t('loading')}
             endIcon={<Iconify icon="eva:arrow-ios-downward-fill" width={16} />}
             onClick={popover.onOpen}
@@ -160,6 +198,7 @@ export default function ProductDetailsToolbar({
           <MenuItem
             key={option.value}
             selected={option.value === publish}
+            disabled={option.value === 'draft' && isPublished}
             onClick={() => {
               popover.onClose();
               onChangePublish(option.value);
@@ -192,8 +231,11 @@ ProductDetailsToolbar.propTypes = {
   costsLink: PropTypes.string,
   editLink: PropTypes.string,
   liveLink: PropTypes.string,
+  loading: PropTypes.bool,
   onChangePublish: PropTypes.func,
+  onCopyLink: PropTypes.func,
   publish: PropTypes.string,
+  publicProductUrl: PropTypes.string,
   publishOptions: PropTypes.array,
   sx: PropTypes.object,
 };
