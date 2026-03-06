@@ -5,7 +5,6 @@ import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
-import Avatar from '@mui/material/Avatar';
 import Divider from '@mui/material/Divider';
 import MenuItem from '@mui/material/MenuItem';
 import IconButton from '@mui/material/IconButton';
@@ -142,14 +141,36 @@ function VariantCard({ variant, optionDefinitions, onEdit }) {
         spacing={3}
       >
         {/* Variant Image */}
-        <Avatar
-          src={variant.media && variant.media.length > 0 ? (variant.media[0]?.full_url || '') : ''}
-          variant="rounded"
+        <Box
           sx={{
+            flexShrink: 0,
             width: { xs: '100%', sm: 120 },
-            height: { xs: 200, sm: 120 }
+            height: { xs: 200, sm: 120 },
+            borderRadius: 1.5,
+            overflow: 'hidden',
+            bgcolor: 'background.neutral',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            border: '1px solid',
+            borderColor: 'divider',
           }}
-        />
+        >
+          {variant.media && variant.media.length > 0 ? (
+            <Box
+              component="img"
+              src={variant.media[0]?.full_url || ''}
+              alt={variant.sku || ''}
+              sx={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'contain',
+              }}
+            />
+          ) : (
+            <Iconify icon="solar:camera-bold-duotone" width={32} sx={{ color: 'text.disabled' }} />
+          )}
+        </Box>
 
         {/* Variant Details */}
         <Box sx={{ flexGrow: 1 }}>
