@@ -379,7 +379,22 @@ export default function CostFormDialog({
               </Stack>
             </Box>
 
-            <RHFTextField name="amount" label={t('amount')} type="number" InputProps={{ endAdornment: 'DZD' }} />
+            <RHFTextField
+              name="amount"
+              label={t('amount')}
+              type="number"
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Typography variant="subtitle2" color="text.secondary">{t('currency_da')}</Typography>
+                  </InputAdornment>
+                ),
+              }}
+              sx={{
+                '& input[type=number]': { MozAppearance: 'textfield' },
+                '& input[type=number]::-webkit-outer-spin-button, & input[type=number]::-webkit-inner-spin-button': { WebkitAppearance: 'none', margin: 0 },
+              }}
+            />
 
             {watchType === 'buy_price' && variants?.length > 0 && (
               <Controller
