@@ -34,7 +34,6 @@ import ProductDetailsToolbar from '../product-details-toolbar';
 import ProductDetailsCarousel from '../product-details-carousel';
 import ProductDetailsDescription from '../product-details-description';
 import ProductDetailsVariants from '../product-details-variants';
-import ProductDetailsCosts from '../product-details-costs';
 
 // ----------------------------------------------------------------------
 
@@ -189,12 +188,7 @@ export default function ProductDetailsView({ id }) {
               label: `${t('variants')} (${product?.variants?.length || 0})`,
               icon: <Iconify icon="solar:layers-bold-duotone" width={18} />,
             },
-            {
-              value: 'costs',
-              label: t('costs'),
-              icon: <Iconify icon="solar:tag-price-bold-duotone" width={18} />,
-            },
-            {
+{
               value: 'description',
               label: t('product_description'),
               icon: <Iconify icon="solar:document-text-bold-duotone" width={18} />,
@@ -225,9 +219,6 @@ export default function ProductDetailsView({ id }) {
           />
         )}
 
-        {currentTab === 'costs' && (
-          <ProductDetailsCosts product={product} />
-        )}
       </Card>
     </>
   );
