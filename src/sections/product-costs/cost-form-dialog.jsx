@@ -264,22 +264,78 @@ export default function CostFormDialog({
               }}
             />
 
-            {watchType === 'marketing' && (
-              <>
-                <RHFTextField name="campaign_name" label={t('campaign_name')} />
-                <RHFSelect name="channel" label={t('channel')}>
-                  {MARKETING_CHANNELS.map((ch) => (
-                    <MenuItem key={ch.value} value={ch.value}>
-                      {t(ch.labelKey)}
-                    </MenuItem>
-                  ))}
-                </RHFSelect>
-              </>
-            )}
+            <Collapse in={watchType === 'marketing'} unmountOnExit>
+              <Stack
+                spacing={2}
+                sx={{
+                  p: 2,
+                  borderRadius: 1.5,
+                  bgcolor: (theme) => alpha(theme.palette.warning.main, 0.04),
+                  border: (theme) => `1px dashed ${alpha(theme.palette.warning.main, 0.2)}`,
+                }}
+              >
+                <RHFTextField name="campaign_name" label={t('campaign_name')} inputProps={{ dir: 'auto' }} />
 
-            {watchType === 'custom' && (
-              <RHFTextField name="custom_type_name" label={t('custom_type_name')} />
-            )}
+                <Controller
+                  name="channel"
+                  control={methods.control}
+                  render={({ field, fieldState: { error } }) => {
+                    const selectedChannel = MARKETING_CHANNELS.find((ch) => ch.value === field.value);
+                    return (
+                      <Autocomplete
+                        value={selectedChannel || null}
+                        onChange={(_, newVal) => field.onChange(newVal?.value || '')}
+                        options={MARKETING_CHANNELS}
+                        getOptionLabel={(opt) => t(opt.labelKey)}
+                        disableClearable
+                        isOptionEqualToValue={(opt, val) => opt.value === val?.value}
+                        renderInput={(params) => (
+                          <TextField
+                            {...params}
+                            label={t('channel')}
+                            error={!!error}
+                            helperText={error?.message}
+                            InputProps={{
+                              ...params.InputProps,
+                              startAdornment: selectedChannel ? (
+                                <>
+                                  <InputAdornment position="start">
+                                    <Iconify icon={selectedChannel.icon} width={20} />
+                                  </InputAdornment>
+                                  {params.InputProps.startAdornment}
+                                </>
+                              ) : params.InputProps.startAdornment,
+                            }}
+                          />
+                        )}
+                        renderOption={(props, opt) => (
+                          <li {...props} key={opt.value}>
+                            <Stack direction="row" spacing={1.5} alignItems="center">
+                              <Iconify icon={opt.icon} width={22} />
+                              <Typography variant="body2" fontWeight={500}>{t(opt.labelKey)}</Typography>
+                            </Stack>
+                          </li>
+                        )}
+                      />
+                    );
+                  }}
+                />
+              </Stack>
+            </Collapse>
+
+            <Collapse in={watchType === 'custom'} unmountOnExit>
+              <Stack
+                spacing={2}
+                sx={{
+                  p: 2,
+                  borderRadius: 1.5,
+                  bgcolor: (theme) => alpha(theme.palette.error.main, 0.04),
+                  border: (theme) => `1px dashed ${alpha(theme.palette.error.main, 0.2)}`,
+                }}
+              >
+                <RHFTextField name="custom_type_name" label={t('custom_type_name')} inputProps={{ dir: 'auto' }} />
+              </Stack>
+            </Collapse>
 
             <FormControl>
               <FormLabel>{t('scope')}</FormLabel>
