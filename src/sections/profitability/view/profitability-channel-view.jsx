@@ -56,10 +56,10 @@ export default function ProfitabilityChannelView({ channel }) {
   } = useGetChannelDetail(channel, dateFrom);
 
   const summaryCards = [
-    { title: t('total_spend'), value: totalSpend, suffix: 'DA', icon: 'solar:bill-list-bold-duotone', color: 'warning' },
+    { title: t('total_spend'), value: totalSpend, suffix: t('currency_da'), icon: 'solar:bill-list-bold-duotone', color: 'warning' },
     { title: t('campaigns_count'), value: campaignsCount, icon: 'solar:clipboard-list-bold-duotone', color: 'info' },
     { title: t('products_reached'), value: productsReached, icon: 'solar:box-bold-duotone', color: 'primary' },
-    { title: t('attributed_revenue'), value: attributedRevenue, suffix: 'DA', icon: 'solar:wallet-money-bold-duotone', color: 'success' },
+    { title: t('attributed_revenue'), value: attributedRevenue, suffix: t('currency_da'), icon: 'solar:wallet-money-bold-duotone', color: 'success' },
     { title: t('roi'), value: fmtPct(roi), icon: 'solar:graph-up-bold-duotone', color: 'success' },
   ];
 
@@ -95,7 +95,7 @@ export default function ProfitabilityChannelView({ channel }) {
       <ProfitabilitySummaryCards cards={summaryCards} />
 
       {channelCampaigns.length === 0 ? (
-        <EmptyContent title={t('no_data')} />
+        <EmptyContent title={t('no_cost_data')} />
       ) : (
         <Card>
           <CardHeader

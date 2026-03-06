@@ -50,9 +50,9 @@ export default function ProfitabilityChannelsView() {
 
   const summaryCards = [
     { title: t('active_channels'), value: channels.length, icon: 'solar:global-bold-duotone', color: 'info' },
-    { title: t('total_marketing_spend'), value: totalMarketingSpend, suffix: 'DA', icon: 'solar:bill-list-bold-duotone', color: 'warning' },
-    { title: t('total_attributed_revenue'), value: totalAttributedRevenue, suffix: 'DA', icon: 'solar:wallet-money-bold-duotone', color: 'primary' },
-    { title: t('avg_spend_per_channel'), value: avgSpendPerChannel, suffix: 'DA', icon: 'solar:chart-square-bold-duotone', color: 'secondary' },
+    { title: t('total_marketing_spend'), value: totalMarketingSpend, suffix: t('currency_da'), icon: 'solar:bill-list-bold-duotone', color: 'warning' },
+    { title: t('total_attributed_revenue'), value: totalAttributedRevenue, suffix: t('currency_da'), icon: 'solar:wallet-money-bold-duotone', color: 'primary' },
+    { title: t('avg_spend_per_channel'), value: avgSpendPerChannel, suffix: t('currency_da'), icon: 'solar:chart-square-bold-duotone', color: 'secondary' },
   ];
 
   const content = (
@@ -60,7 +60,7 @@ export default function ProfitabilityChannelsView() {
       <ProfitabilitySummaryCards cards={summaryCards} />
 
       {channels.length === 0 ? (
-        <EmptyContent title={t('no_data')} />
+        <EmptyContent title={t('no_cost_data')} />
       ) : (
         <Box
           display="grid"

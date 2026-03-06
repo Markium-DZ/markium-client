@@ -55,7 +55,7 @@ export default function OverviewEcommerceView() {
   const { products, productsLoading, productsError, productsMutate } = useGetProducts();
   const { orders, ordersLoading, ordersError, mutate: ordersMutate } = useGetOrders();
   const { media, total: mediaTotal, mutate: mediaMutate } = useGetMedia(1, 1);
-  const { store, storeLoading, mutate: storeMutate } = useGetMyStore(user?.store?.slug);
+  const { store, mutate: storeMutate } = useGetMyStore(user?.store?.slug);
 
   const settings = useSettingsContext();
 
@@ -67,8 +67,7 @@ export default function OverviewEcommerceView() {
   }, [productsMutate, mediaMutate, storeMutate]);
 
   // Show skeleton while core data is loading or on connection error (prevents grade misclassification)
-  // Include storeLoading — onboardingCompleted depends on store config being loaded
-  const isStillLoading = productsLoading || ordersLoading || storeLoading;
+  const isStillLoading = productsLoading || ordersLoading;
   const hasConnectionError = !isStillLoading && ((productsError && !products?.length) || (ordersError && !orders?.length));
   const gradeLoading = isStillLoading || hasConnectionError;
 
@@ -76,7 +75,7 @@ export default function OverviewEcommerceView() {
   const ordersCount = orders?.length || 0;
   const hasMedia = mediaTotal > 0 || (media && media.length > 0);
 
-  const hasDeployedProduct = (products || []).some((p) => p.status === 'deployed');
+  const hasDeployedProduct = products?.some((p) => p.status === 'deployed');
   const onboardingCompleted = !!store?.config?.onboarding_completed || hasDeployedProduct;
 
   // Determine if user is new (no products, or has products but hasn't completed onboarding step 3)

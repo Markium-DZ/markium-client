@@ -1,4 +1,5 @@
 import { fNumber } from 'src/utils/format-number';
+import i18n from 'src/locales/i18n';
 
 export { COST_TYPE_LABELS, COST_TYPE_COLORS, CHANNEL_ICONS } from 'src/sections/product-costs/constants';
 
@@ -14,7 +15,7 @@ export const DEFAULT_DATE_RANGE = '-30d';
 
 // Format helpers
 export const fmtAmount = (val) =>
-  typeof val === 'number' ? `${fNumber(val)} DA` : '\u2014';
+  typeof val === 'number' ? `${fNumber(val)} ${i18n.t('currency_da')}` : '\u2014';
 
 export const fmtPct = (val) =>
   typeof val === 'number' ? `${val.toFixed(1)}%` : '\u2014';

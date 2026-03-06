@@ -60,7 +60,7 @@ export default function ProfitabilityProductsView() {
   const content = (
     <Stack spacing={3}>
       {products.length === 0 ? (
-        <EmptyContent title={t('no_data')} />
+        <EmptyContent title={t('no_cost_data')} />
       ) : (
         <Card>
           <CardHeader

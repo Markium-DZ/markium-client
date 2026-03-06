@@ -60,10 +60,10 @@ export default function ProfitabilityProductView({ id }) {
   const productName = productInfo?.name || productInfo?.product_name || id;
 
   const summaryCards = [
-    { title: t('revenue'), value: revenue, suffix: 'DA', icon: 'solar:wallet-money-bold-duotone', color: 'primary' },
+    { title: t('revenue'), value: revenue, suffix: t('currency_da'), icon: 'solar:wallet-money-bold-duotone', color: 'primary' },
     { title: t('units_sold'), value: unitsSold, icon: 'solar:box-bold-duotone', color: 'info' },
-    { title: t('total_costs'), value: totalCosts, suffix: 'DA', icon: 'solar:bill-list-bold-duotone', color: 'warning' },
-    { title: t('gross_profit'), value: grossProfit, suffix: 'DA', icon: 'solar:graph-up-bold-duotone', color: 'success' },
+    { title: t('total_costs'), value: totalCosts, suffix: t('currency_da'), icon: 'solar:bill-list-bold-duotone', color: 'warning' },
+    { title: t('gross_profit'), value: grossProfit, suffix: t('currency_da'), icon: 'solar:graph-up-bold-duotone', color: 'success' },
     { title: t('profit_margin'), value: fmtPct(profitMargin), icon: 'solar:chart-square-bold-duotone', color: 'info' },
   ];
 

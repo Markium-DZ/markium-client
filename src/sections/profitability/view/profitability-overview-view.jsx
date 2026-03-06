@@ -70,9 +70,9 @@ export default function ProfitabilityOverviewView() {
   } = useGetStorePnL(dateFrom);
 
   const summaryCards = [
-    { title: t('total_revenue_full'), value: summary.total_revenue ?? 0, suffix: 'DA', icon: 'solar:wallet-money-bold-duotone', color: 'primary' },
-    { title: t('total_costs'), value: summary.total_costs ?? 0, suffix: 'DA', icon: 'solar:bill-list-bold-duotone', color: 'warning' },
-    { title: t('gross_profit'), value: summary.gross_profit ?? 0, suffix: 'DA', icon: 'solar:graph-up-bold-duotone', color: 'success' },
+    { title: t('total_revenue_full'), value: summary.total_revenue ?? 0, suffix: t('currency_da'), icon: 'solar:wallet-money-bold-duotone', color: 'primary' },
+    { title: t('total_costs'), value: summary.total_costs ?? 0, suffix: t('currency_da'), icon: 'solar:bill-list-bold-duotone', color: 'warning' },
+    { title: t('gross_profit'), value: summary.gross_profit ?? 0, suffix: t('currency_da'), icon: 'solar:graph-up-bold-duotone', color: 'success' },
     { title: t('profit_margin'), value: fmtPct(summary.profit_margin_pct), icon: 'solar:chart-square-bold-duotone', color: 'info' },
   ];
 
