@@ -64,24 +64,6 @@ export default function ProductDetailsView({ id }) {
     }
   }, [publicProductUrl, copy, enqueueSnackbar, t]);
 
-  const SUMMARY = [
-    {
-      title: t('product_original'),
-      description: t('product_original_desc'),
-      icon: 'solar:verified-check-bold',
-    },
-    {
-      title: t('product_replacement'),
-      description: t('product_replacement_desc'),
-      icon: 'solar:clock-circle-bold',
-    },
-    {
-      title: t('product_warranty'),
-      description: t('product_warranty_desc'),
-      icon: 'solar:shield-check-bold',
-    },
-  ];
-
   const [currentTab, setCurrentTab] = useState('variants');
 
   const [publish, setPublish] = useState('');
@@ -212,12 +194,12 @@ export default function ProductDetailsView({ id }) {
         </Stack>
       )}
 
-      <Grid container spacing={{ xs: 3, md: 5, lg: 8 }}>
-        <Grid xs={12} md={6} lg={7}>
+      <Grid container spacing={{ xs: 3, md: 4, lg: 5 }}>
+        <Grid xs={12} md={6} lg={6}>
           <ProductDetailsCarousel product={product} />
         </Grid>
 
-        <Grid xs={12} md={6} lg={5}>
+        <Grid xs={12} md={6} lg={6}>
           <ProductDetailsSummary
             disabledActions
             product={product}
@@ -226,30 +208,6 @@ export default function ProductDetailsView({ id }) {
           />
         </Grid>
       </Grid>
-
-      <Box
-        gap={5}
-        display="grid"
-        gridTemplateColumns={{
-          xs: 'repeat(1, 1fr)',
-          md: 'repeat(3, 1fr)',
-        }}
-        sx={{ my: 10 }}
-      >
-        {/* {SUMMARY.map((item) => (
-          <Box key={item.title} sx={{ textAlign: 'center', px: 5 }}>
-            <Iconify icon={item.icon} width={32} sx={{ color: 'primary.main' }} />
-
-            <Typography variant="subtitle1" sx={{ mb: 1, mt: 2 }}>
-              {item.title}
-            </Typography>
-
-            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-              {item.description}
-            </Typography>
-          </Box>
-        ))} */}
-      </Box>
 
       <Card>
         <Tabs
