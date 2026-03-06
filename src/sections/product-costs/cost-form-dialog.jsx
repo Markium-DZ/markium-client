@@ -541,6 +541,23 @@ export default function CostFormDialog({
           </LoadingButton>
         </DialogActions>
       </FormProvider>
+
+      <Dialog open={confirmClose} maxWidth="xs" onClose={() => setConfirmClose(false)}>
+        <DialogTitle>{t('discard_changes')}</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary">
+            {t('discard_changes_desc')}
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button variant="outlined" color="inherit" onClick={() => setConfirmClose(false)}>
+            {t('keep_editing')}
+          </Button>
+          <Button variant="contained" color="error" onClick={handleConfirmDiscard}>
+            {t('discard')}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Dialog>
   );
 }
