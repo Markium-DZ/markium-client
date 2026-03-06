@@ -1,11 +1,11 @@
 export const COST_TYPES = [
-  { value: 'buy_price', labelKey: 'cost_type_buy_price', icon: 'solar:tag-price-bold-duotone', color: 'primary', hexColor: '#00A76F' },
-  { value: 'marketing', labelKey: 'cost_type_marketing', icon: 'solar:megaphone-bold-duotone', color: 'warning', hexColor: '#FFAB00' },
-  { value: 'content', labelKey: 'cost_type_content', icon: 'solar:pen-new-round-bold-duotone', color: 'info', hexColor: '#00B8D9' },
-  { value: 'packaging', labelKey: 'cost_type_packaging', icon: 'solar:box-bold-duotone', color: 'secondary', hexColor: '#8E33FF' },
-  { value: 'shipping', labelKey: 'cost_type_shipping', icon: 'solar:delivery-bold-duotone', color: 'success', hexColor: '#22C55E' },
-  { value: 'confirmation_call', labelKey: 'cost_type_confirmation_call', icon: 'solar:phone-calling-bold-duotone', color: 'default', hexColor: '#919EAB' },
-  { value: 'custom', labelKey: 'cost_type_custom', icon: 'solar:settings-bold-duotone', color: 'error', hexColor: '#FF5630' },
+  { value: 'buy_price', labelKey: 'cost_type_buy_price', descriptionKey: 'cost_type_buy_price_desc', icon: 'solar:tag-price-bold-duotone', color: 'primary', hexColor: '#00A76F' },
+  { value: 'marketing', labelKey: 'cost_type_marketing', descriptionKey: 'cost_type_marketing_desc', icon: 'solar:megaphone-bold-duotone', color: 'warning', hexColor: '#FFAB00' },
+  { value: 'content', labelKey: 'cost_type_content', descriptionKey: 'cost_type_content_desc', icon: 'solar:pen-new-round-bold-duotone', color: 'info', hexColor: '#00B8D9' },
+  { value: 'packaging', labelKey: 'cost_type_packaging', descriptionKey: 'cost_type_packaging_desc', icon: 'solar:box-bold-duotone', color: 'secondary', hexColor: '#8E33FF' },
+  { value: 'shipping', labelKey: 'cost_type_shipping', descriptionKey: 'cost_type_shipping_desc', icon: 'solar:delivery-bold-duotone', color: 'success', hexColor: '#22C55E' },
+  { value: 'confirmation_call', labelKey: 'cost_type_confirmation_call', descriptionKey: 'cost_type_confirmation_call_desc', icon: 'solar:phone-calling-bold-duotone', color: 'default', hexColor: '#919EAB' },
+  { value: 'custom', labelKey: 'cost_type_custom', descriptionKey: 'cost_type_custom_desc', icon: 'solar:settings-bold-duotone', color: 'error', hexColor: '#FF5630' },
 ];
 
 export const MARKETING_CHANNELS = [
@@ -18,8 +18,8 @@ export const MARKETING_CHANNELS = [
 ];
 
 export const SCOPE_OPTIONS = [
-  { value: 'per_unit', labelKey: 'scope_per_unit' },
-  { value: 'global', labelKey: 'scope_global' },
+  { value: 'per_unit', labelKey: 'scope_per_unit', descriptionKey: 'scope_per_unit_desc', icon: 'solar:box-bold-duotone' },
+  { value: 'global', labelKey: 'scope_global', descriptionKey: 'scope_global_desc', icon: 'solar:planet-bold-duotone' },
 ];
 
 export function getCostTypeConfig(type) {
