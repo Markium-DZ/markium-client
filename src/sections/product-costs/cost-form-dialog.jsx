@@ -109,6 +109,19 @@ export default function CostFormDialog({
 
   const watchType = watch('type');
 
+  const ALL_VARIANTS_OPTION = { id: 'all', _isAll: true };
+  const variantOptions = [ALL_VARIANTS_OPTION, ...(variants || [])];
+
+  const getVariantLabel = (v) => {
+    if (!v) return '';
+    const optLabels = (v.options || []).map((opt) => {
+      const def = optionDefinitions?.find((d) => d.id === opt.option_definition_id);
+      const val = def?.values?.find((vl) => vl.id === opt.value_id);
+      return val?.value || '';
+    }).filter(Boolean);
+    return optLabels.length > 0 ? optLabels.join(' / ') : (v.sku || `#${v.id}`);
+  };
+
   useEffect(() => {
     reset(defaultValues);
   }, [currentCost, reset, defaultValues]);
@@ -289,14 +302,92 @@ export default function CostFormDialog({
             <RHFTextField name="amount" label={t('amount')} type="number" InputProps={{ endAdornment: 'DZD' }} />
 
             {watchType === 'buy_price' && variants?.length > 0 && (
-              <RHFSelect name="variant_id" label={t('variant')}>
-                <MenuItem value="all">{t('all_variants')}</MenuItem>
-                {variants.map((v) => (
-                  <MenuItem key={v.id} value={v.id}>
-                    {v.name || v.title || `#${v.id}`}
-                  </MenuItem>
-                ))}
-              </RHFSelect>
+              <Controller
+                name="variant_id"
+                control={methods.control}
+                render={({ field }) => {
+                  const selectedVariant = field.value === 'all'
+                    ? ALL_VARIANTS_OPTION
+                    : variants?.find((v) => v.id === field.value) || ALL_VARIANTS_OPTION;
+                  return (
+                    <Autocomplete
+                      value={selectedVariant}
+                      onChange={(_, newVal) => {
+                        field.onChange(newVal?._isAll ? 'all' : newVal?.id || 'all');
+                      }}
+                      options={variantOptions}
+                      getOptionLabel={(opt) => opt._isAll ? t('all_variants') : getVariantLabel(opt)}
+                      disableClearable
+                      isOptionEqualToValue={(opt, val) => {
+                        if (opt._isAll && val._isAll) return true;
+                        return opt.id === val?.id;
+                      }}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label={t('variant')}
+                          InputProps={{
+                            ...params.InputProps,
+                            startAdornment: (
+                              <>
+                                {!selectedVariant?._isAll && selectedVariant?.media?.[0]?.full_url && (
+                                  <InputAdornment position="start">
+                                    <Avatar
+                                      src={selectedVariant.media[0].full_url}
+                                      variant="rounded"
+                                      sx={{ width: 28, height: 28 }}
+                                    />
+                                  </InputAdornment>
+                                )}
+                                {params.InputProps.startAdornment}
+                              </>
+                            ),
+                          }}
+                        />
+                      )}
+                      renderOption={(props, opt) => (
+                        <li {...props} key={opt._isAll ? 'all' : opt.id}>
+                          {opt._isAll ? (
+                            <Stack direction="row" spacing={1.5} alignItems="center">
+                              <Box
+                                sx={{
+                                  width: 36,
+                                  height: 36,
+                                  borderRadius: 1,
+                                  bgcolor: (theme) => alpha(theme.palette.info.main, 0.08),
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                }}
+                              >
+                                <Iconify icon="solar:layers-bold-duotone" width={20} sx={{ color: 'info.main' }} />
+                              </Box>
+                              <Typography variant="body2" fontWeight={600}>{t('all_variants')}</Typography>
+                            </Stack>
+                          ) : (
+                            <Stack direction="row" spacing={1.5} alignItems="center" sx={{ width: '100%' }}>
+                              <Avatar
+                                src={opt.media?.[0]?.full_url || ''}
+                                variant="rounded"
+                                sx={{ width: 36, height: 36, bgcolor: 'background.neutral' }}
+                              />
+                              <Box sx={{ flex: 1, minWidth: 0 }}>
+                                <Typography variant="body2" fontWeight={600} noWrap>
+                                  {getVariantLabel(opt)}
+                                </Typography>
+                                <Typography variant="caption" color="text.disabled">
+                                  {opt.price ? `${fNumber(opt.price)} ${t('currency_da')}` : ''}
+                                  {opt.sku ? ` · ${opt.sku}` : ''}
+                                </Typography>
+                              </Box>
+                            </Stack>
+                          )}
+                        </li>
+                      )}
+                    />
+                  );
+                }}
+              />
             )}
 
             <RHFTextField name="notes" label={t('notes')} multiline rows={2} />
