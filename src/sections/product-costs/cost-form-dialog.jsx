@@ -50,26 +50,26 @@ export default function CostFormDialog({
   const CostSchema = useMemo(
     () =>
       Yup.object().shape({
-        type: Yup.string().required(t('cost_type') + ' ' + t('name_is_required')).oneOf(COST_TYPES.map((ct) => ct.value)),
+        type: Yup.string().required(t('cost_type_required')).oneOf(COST_TYPES.map((ct) => ct.value)),
         scope: Yup.string().required().oneOf(['per_unit', 'global']),
         amount: Yup.number()
-          .typeError(t('amount') + ' ' + t('name_is_required'))
-          .required(t('amount') + ' ' + t('name_is_required'))
+          .typeError(t('amount_required'))
+          .required(t('amount_required'))
           .min(0)
           .max(99999999.99),
         custom_type_name: Yup.string().when('type', {
           is: 'custom',
-          then: (schema) => schema.required(t('custom_type_name') + ' ' + t('name_is_required')),
+          then: (schema) => schema.required(t('custom_type_name_required')),
           otherwise: (schema) => schema.nullable(),
         }),
         campaign_name: Yup.string().when('type', {
           is: 'marketing',
-          then: (schema) => schema.required(t('campaign_name') + ' ' + t('name_is_required')),
+          then: (schema) => schema.required(t('campaign_name_required')),
           otherwise: (schema) => schema.nullable(),
         }),
         channel: Yup.string().when('type', {
           is: 'marketing',
-          then: (schema) => schema.required(t('channel') + ' ' + t('name_is_required')).oneOf(MARKETING_CHANNELS.map((ch) => ch.value)),
+          then: (schema) => schema.required(t('channel_required')).oneOf(MARKETING_CHANNELS.map((ch) => ch.value)),
           otherwise: (schema) => schema.nullable(),
         }),
         variant_id: Yup.mixed()
@@ -97,6 +97,7 @@ export default function CostFormDialog({
   const methods = useForm({
     resolver: yupResolver(CostSchema),
     defaultValues,
+    mode: 'onBlur',
   });
 
   const {
