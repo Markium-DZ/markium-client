@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types';
 import * as Yup from 'yup';
-import { useEffect, useMemo } from 'react';
-import { useForm } from 'react-hook-form';
+import { useEffect, useMemo, useState } from 'react';
+import { useForm, Controller } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 
 import {
@@ -11,18 +11,24 @@ import {
   DialogActions,
   Button,
   Stack,
-  MenuItem,
-  RadioGroup,
-  FormControlLabel,
-  Radio,
-  FormControl,
-  FormLabel,
+  Box,
+  Typography,
+  Autocomplete,
+  TextField,
+  InputAdornment,
+  Collapse,
+  Avatar,
+  Card,
+  Tooltip,
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import LoadingButton from '@mui/lab/LoadingButton';
 
 import { useTranslate } from 'src/locales';
 import { useSnackbar } from 'src/components/snackbar';
-import FormProvider, { RHFTextField, RHFSelect } from 'src/components/hook-form';
+import FormProvider, { RHFTextField } from 'src/components/hook-form';
+import Iconify from 'src/components/iconify';
+import { fNumber } from 'src/utils/format-number';
 import { createProductCost, updateProductCost } from 'src/api/product-costs';
 import showError from 'src/utils/show_error';
 
@@ -160,13 +166,90 @@ export default function CostFormDialog({
       <FormProvider methods={methods}>
         <DialogContent>
           <Stack spacing={2.5} sx={{ mt: 1 }}>
-            <RHFSelect name="type" label={t('cost_type')}>
-              {COST_TYPES.map((ct) => (
-                <MenuItem key={ct.value} value={ct.value}>
-                  {t(ct.labelKey)}
-                </MenuItem>
-              ))}
-            </RHFSelect>
+            <Controller
+              name="type"
+              control={methods.control}
+              render={({ field, fieldState: { error } }) => {
+                const selected = COST_TYPES.find((ct) => ct.value === field.value);
+                return (
+                  <Autocomplete
+                    value={selected || null}
+                    onChange={(_, newVal) => {
+                      field.onChange(newVal?.value || '');
+                    }}
+                    options={COST_TYPES}
+                    getOptionLabel={(opt) => t(opt.labelKey)}
+                    disableClearable
+                    blurOnSelect
+                    isOptionEqualToValue={(opt, val) => opt.value === val?.value}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label={t('cost_type')}
+                        placeholder={t('type_or_select_cost')}
+                        error={!!error}
+                        helperText={error?.message}
+                        InputProps={{
+                          ...params.InputProps,
+                          startAdornment: (
+                            <>
+                              <InputAdornment position="start">
+                                <Box
+                                  sx={{
+                                    width: 28,
+                                    height: 28,
+                                    borderRadius: 0.75,
+                                    bgcolor: (theme) => alpha(selected?.hexColor || theme.palette.grey[500], 0.12),
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                  }}
+                                >
+                                  <Iconify
+                                    icon={selected?.icon || 'solar:tag-price-bold-duotone'}
+                                    width={16}
+                                    sx={{ color: selected?.hexColor || 'text.disabled' }}
+                                  />
+                                </Box>
+                              </InputAdornment>
+                              {params.InputProps.startAdornment}
+                            </>
+                          ),
+                        }}
+                      />
+                    )}
+                    renderOption={(props, opt) => (
+                      <li {...props} key={opt.value}>
+                        <Stack direction="row" spacing={1.5} alignItems="center" sx={{ py: 0.5 }}>
+                          <Box
+                            sx={{
+                              width: 36,
+                              height: 36,
+                              borderRadius: 1,
+                              bgcolor: (theme) => alpha(opt.hexColor, 0.12),
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              flexShrink: 0,
+                            }}
+                          >
+                            <Iconify icon={opt.icon} width={20} sx={{ color: opt.hexColor }} />
+                          </Box>
+                          <Box sx={{ minWidth: 0 }}>
+                            <Typography variant="body2" fontWeight={600}>
+                              {t(opt.labelKey)}
+                            </Typography>
+                            <Typography variant="caption" color="text.disabled">
+                              {t(opt.descriptionKey)}
+                            </Typography>
+                          </Box>
+                        </Stack>
+                      </li>
+                    )}
+                  />
+                );
+              }}
+            />
 
             {watchType === 'marketing' && (
               <>
