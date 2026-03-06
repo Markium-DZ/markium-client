@@ -63,7 +63,12 @@ export default function CostRow({ cost, product, onEdit, onDelete }) {
     }
 
     if (variant) {
-      parts.push(variant.name || variant.title || `#${variant.id}`);
+      const optLabels = (variant.options || []).map((opt) => {
+        const def = product?.option_definitions?.find((d) => d.id === opt.option_definition_id);
+        const val = def?.values?.find((vl) => vl.id === opt.value_id);
+        return val?.value || '';
+      }).filter(Boolean);
+      parts.push(optLabels.length > 0 ? optLabels.join(' / ') : (variant.sku || `#${variant.id}`));
     }
 
     return parts.join(' \u00b7 ') || '\u2014';
@@ -84,7 +89,7 @@ export default function CostRow({ cost, product, onEdit, onDelete }) {
 
         <TableCell>
           <Typography variant="body2" fontWeight={600}>
-            {fNumber(cost.amount)} DA
+            {fNumber(cost.amount)} {t('currency_da')}
           </Typography>
         </TableCell>
 
