@@ -93,6 +93,19 @@ const TABS = [
       },
     ],
   },
+  {
+    value: 'cod',
+    labelKey: 'cod_settings',
+    icon: 'solar:cash-out-bold-duotone',
+    items: [
+      {
+        key: 'cod',
+        titleKey: 'cod_settings',
+        icon: 'solar:cash-out-bold-duotone',
+        href: paths?.dashboard.settings.cod,
+      },
+    ],
+  },
 ];
 
 // Build a flat map: href → { tabValue, titleKey }
