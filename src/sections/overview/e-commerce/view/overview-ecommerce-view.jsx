@@ -32,6 +32,7 @@ import {
   SetupChecklist,
   EmptyStateOrders,
   YouTubeEmbed,
+  PixelSetupPrompt,
 } from 'src/sections/dashboard/onboarding';
 
 import {
@@ -85,6 +86,13 @@ export default function OverviewEcommerceView() {
   const isBGradeMerchant = !gradeLoading && productsCount > 0 && onboardingCompleted && ordersCount === 0;
   // Third grade user: has products and orders (established merchant)
   const isThirdGradeUser = !gradeLoading && !isNewUser && !isBGradeMerchant;
+
+  // Check if any pixel is already configured — if so, hide the pixel setup prompt
+  const storePixels = store?.config?.pixels;
+  const showPixelSetup = !storePixels || !['facebook_pixel', 'tiktok_pixel', 'google_analytics'].some((key) => {
+    const cfg = storePixels?.[key];
+    return cfg?.enabled && (cfg?.pixel_id || cfg?.tracking_id);
+  });
 
   // HEADER.H_DESKTOP(80) + SPACING(8) = 88px  → Main py = 88px top + 88px bottom = 176px
   const MAIN_VERTICAL_PADDING = 176;
@@ -268,10 +276,16 @@ export default function OverviewEcommerceView() {
               <EcommerceEventsCalendar />
             </Grid>
 
-            {/* Row 2: EmptyStateOrders (compact) + YouTubeEmbed */}
-            <Grid xs={12} lg={9} sx={{ height: { lg: '50%' } }}>
+            {/* Row 2: EmptyStateOrders (compact) + Pixel Setup + YouTubeEmbed */}
+            <Grid xs={12} lg={showPixelSetup ? 6 : 9} sx={{ height: { lg: '50%' } }}>
               <EmptyStateOrders hasProducts compact sx={{ height: '100%' }} />
             </Grid>
+
+            {showPixelSetup && (
+              <Grid xs={12} lg={3} sx={{ height: { lg: '50%' } }}>
+                <PixelSetupPrompt store={store} onStoreRefresh={storeMutate} sx={{ height: '100%' }} />
+              </Grid>
+            )}
 
             <Grid xs={12} lg={3} sx={{ height: { lg: '50%' } }}>
               <YouTubeEmbed />
