@@ -9,6 +9,8 @@ import Chip from '@mui/material/Chip';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
 import Switch from '@mui/material/Switch';
+import Collapse from '@mui/material/Collapse';
+import ButtonBase from '@mui/material/ButtonBase';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
@@ -40,6 +42,7 @@ export default function MarketingPixelsForm() {
 
   const [loading, setLoading] = useState(false);
   const [configDialog, setConfigDialog] = useState(null);
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   const MarketingPixelsSchema = Yup.object().shape({
     facebook_pixel_enabled: Yup.boolean(),
@@ -162,9 +165,10 @@ export default function MarketingPixelsForm() {
       enabledKey: 'facebook_pixel_enabled',
       enabled: values.facebook_pixel_enabled,
       hasId: !!values.facebook_pixel_id,
+      instructions: t('facebook_pixel_instructions'),
       fields: [
         { name: 'facebook_pixel_id', label: t('facebook_pixel_id'), placeholder: '1234567890123456', required: true },
-        { name: 'facebook_access_token', label: t('facebook_access_token'), placeholder: t('optional'), required: false },
+        { name: 'facebook_access_token', label: t('facebook_access_token'), placeholder: t('optional'), required: false, advanced: true },
       ],
     },
     {
@@ -176,9 +180,10 @@ export default function MarketingPixelsForm() {
       enabledKey: 'tiktok_pixel_enabled',
       enabled: values.tiktok_pixel_enabled,
       hasId: !!values.tiktok_pixel_id,
+      instructions: t('tiktok_pixel_instructions'),
       fields: [
         { name: 'tiktok_pixel_id', label: t('tiktok_pixel_id'), placeholder: 'ABCDEFGHIJ1234567890', required: true },
-        { name: 'tiktok_access_token', label: t('tiktok_access_token'), placeholder: t('optional'), required: false },
+        { name: 'tiktok_access_token', label: t('tiktok_access_token'), placeholder: t('optional'), required: false, advanced: true },
       ],
     },
     {
@@ -190,6 +195,7 @@ export default function MarketingPixelsForm() {
       enabledKey: 'google_analytics_enabled',
       enabled: values.google_analytics_enabled,
       hasId: !!values.google_analytics_id,
+      instructions: t('google_analytics_instructions'),
       fields: [
         { name: 'google_analytics_id', label: t('google_analytics_id'), placeholder: 'UA-XXXXXXXXX-X or G-XXXXXXXXXX', required: true },
         { name: 'google_analytics_measurement_id', label: t('google_analytics_measurement_id'), placeholder: 'G-XXXXXXXXXX', required: false },
@@ -341,7 +347,12 @@ export default function MarketingPixelsForm() {
 
             <DialogContent>
               <Stack spacing={2} sx={{ pt: 1 }}>
-                {activeSection.fields.map((field) => (
+                {activeSection.instructions && (
+                  <Typography variant="body2" color="text.secondary" sx={{ pb: 0.5 }}>
+                    {activeSection.instructions}
+                  </Typography>
+                )}
+                {activeSection.fields.filter((f) => !f.advanced).map((field) => (
                   <RHFTextField
                     key={field.name}
                     name={field.name}
@@ -350,6 +361,42 @@ export default function MarketingPixelsForm() {
                     size="small"
                   />
                 ))}
+                {activeSection.fields.some((f) => f.advanced) && (
+                  <>
+                    <ButtonBase
+                      onClick={() => setShowAdvanced((prev) => !prev)}
+                      sx={{
+                        alignSelf: 'flex-start',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 0.5,
+                        color: 'text.secondary',
+                        typography: 'caption',
+                        fontWeight: 600,
+                        '&:hover': { color: 'text.primary' },
+                      }}
+                    >
+                      {t('advanced_settings')}
+                      <Iconify
+                        icon={showAdvanced ? 'eva:chevron-up-fill' : 'eva:chevron-down-fill'}
+                        width={16}
+                      />
+                    </ButtonBase>
+                    <Collapse in={showAdvanced}>
+                      <Stack spacing={2}>
+                        {activeSection.fields.filter((f) => f.advanced).map((field) => (
+                          <RHFTextField
+                            key={field.name}
+                            name={field.name}
+                            label={field.label}
+                            placeholder={field.placeholder}
+                            size="small"
+                          />
+                        ))}
+                      </Stack>
+                    </Collapse>
+                  </>
+                )}
               </Stack>
             </DialogContent>
 
