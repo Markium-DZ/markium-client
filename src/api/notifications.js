@@ -114,3 +114,44 @@ export async function deleteNotification(id) {
   const URL = endpoints.notifications.delete(id);
   return axios.delete(URL);
 }
+
+// ----------------------------------------------------------------------
+
+export function useGetNotificationPreferences() {
+  const URL = endpoints.notifications.preferences;
+
+  const { data, isLoading, error, isValidating, mutate } = useSWR(URL, fetcher, {
+    revalidateOnFocus: false,
+    revalidateOnReconnect: false,
+  });
+
+  const memoizedValue = useMemo(
+    () => ({
+      preferences: data?.data || [],
+      preferencesLoading: isLoading,
+      preferencesError: error,
+      preferencesValidating: isValidating,
+      preferencesMutate: mutate,
+    }),
+    [data, isLoading, error, isValidating, mutate]
+  );
+
+  return memoizedValue;
+}
+
+export async function updateNotificationPreferences(preferences) {
+  const URL = endpoints.notifications.preferences;
+  const res = await axios.put(URL, { preferences });
+  return res.data;
+}
+
+export async function registerPushToken(fcmToken, deviceType = 'web') {
+  const URL = endpoints.notifications.subscriptions;
+  const res = await axios.post(URL, { fcm_token: fcmToken, device_type: deviceType });
+  return res.data;
+}
+
+export async function unregisterPushToken(fcmToken) {
+  const URL = endpoints.notifications.unsubscribe(fcmToken);
+  return axios.delete(URL);
+}

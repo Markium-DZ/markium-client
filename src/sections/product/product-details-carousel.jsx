@@ -2,7 +2,6 @@ import { useEffect } from 'react';
 import PropTypes from 'prop-types';
 
 import Box from '@mui/material/Box';
-import Chip from '@mui/material/Chip';
 import Button from '@mui/material/Button';
 import Avatar from '@mui/material/Avatar';
 import Typography from '@mui/material/Typography';
@@ -12,6 +11,7 @@ import { bgGradient } from 'src/theme/css';
 
 import { RouterLink } from 'src/routes/components';
 import { useTranslate } from 'src/locales';
+import { fCurrency } from 'src/utils/format-number';
 import Image from 'src/components/image';
 import Iconify from 'src/components/iconify';
 import Lightbox, { useLightBox } from 'src/components/lightbox';
@@ -94,11 +94,7 @@ export default function ProductDetailsCarousel({ product, editLink }) {
       : [product.images];
   }
 
-  const slides = mediaSource.map((img) => ({
-    src: typeof img === 'string' ? img : img?.full_url || img?.url || img?.src || '',
-  }));
-
-  // Map each image src to the label of the first variant that owns it
+  // Map each image src to variant info (options label + price)
   const imageVariantMap = {};
   (product?.variants || []).forEach((variant) => {
     const media = Array.isArray(variant.media)
@@ -107,12 +103,23 @@ export default function ProductDetailsCarousel({ product, editLink }) {
       ? [variant.media]
       : [];
     const label = variant.options?.map((o) => o.value).filter(Boolean).join(' · ') || '';
+    const price = parseFloat(variant.price) || 0;
     media.forEach((m) => {
       const src = m?.full_url || m?.url || m?.src || '';
-      if (src && !imageVariantMap[src] && label) {
-        imageVariantMap[src] = label;
+      if (src && !imageVariantMap[src]) {
+        imageVariantMap[src] = { label, price };
       }
     });
+  });
+
+  const slides = mediaSource.map((img) => {
+    const src = typeof img === 'string' ? img : img?.full_url || img?.url || img?.src || '';
+    const info = imageVariantMap[src];
+    const parts = [info?.label, info?.price > 0 && fCurrency(info.price)].filter(Boolean);
+    return {
+      src,
+      ...(parts.length > 0 && { title: parts.join('  ·  ') }),
+    };
   });
 
   const renderEmpty = slides.length === 0 && (
@@ -199,23 +206,60 @@ export default function ProductDetailsCarousel({ product, editLink }) {
               onClick={() => lightbox.onOpen(slide.src)}
               sx={{ cursor: 'zoom-in' }}
             />
-            {imageVariantMap[slide.src] && (
-              <Chip
-                label={imageVariantMap[slide.src]}
-                size="small"
+            {imageVariantMap[slide.src]?.label && (
+              <Box
                 sx={{
                   position: 'absolute',
-                  bottom: 10,
-                  left: 10,
-                  bgcolor: 'rgba(0,0,0,0.55)',
-                  color: 'common.white',
-                  fontWeight: 600,
-                  fontSize: '0.7rem',
-                  height: 22,
+                  bottom: 12,
+                  left: 12,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1,
+                  px: 1.25,
+                  py: 0.625,
+                  borderRadius: 1,
                   pointerEvents: 'none',
-                  '& .MuiChip-label': { px: 1 },
+                  backdropFilter: 'blur(12px)',
+                  bgcolor: (t) => alpha(t.palette.grey[900], 0.6),
+                  border: '1px solid',
+                  borderColor: (t) => alpha(t.palette.common.white, 0.12),
                 }}
-              />
+              >
+                <Typography
+                  sx={{
+                    color: 'common.white',
+                    fontWeight: 600,
+                    fontSize: '0.72rem',
+                    lineHeight: 1.4,
+                    letterSpacing: 0.2,
+                  }}
+                >
+                  {imageVariantMap[slide.src].label}
+                </Typography>
+
+                {imageVariantMap[slide.src].price > 0 && (
+                  <>
+                    <Box
+                      sx={{
+                        width: '1px',
+                        height: 14,
+                        bgcolor: (t) => alpha(t.palette.common.white, 0.25),
+                        flexShrink: 0,
+                      }}
+                    />
+                    <Typography
+                      sx={{
+                        color: (t) => alpha(t.palette.common.white, 0.85),
+                        fontWeight: 700,
+                        fontSize: '0.72rem',
+                        lineHeight: 1.4,
+                      }}
+                    >
+                      {fCurrency(imageVariantMap[slide.src].price)}
+                    </Typography>
+                  </>
+                )}
+              </Box>
             )}
           </Box>
         ))}

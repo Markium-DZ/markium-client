@@ -160,6 +160,7 @@ export default function ProductVariantsManager({ options, variants, onChange, im
         extra_media_ids: [],
         extra_selected_media: [],
         is_default: index === 0,
+        excluded: false,
       };
     });
   }, [possibleVariants, variants, options]);
@@ -188,7 +189,7 @@ export default function ProductVariantsManager({ options, variants, onChange, im
 
   const handleBulkApply = () => {
     onChange(
-      syncedVariants.map((variant) => ({
+      syncedVariants.map((variant) => (variant.excluded ? variant : {
         ...variant,
         ...(bulkValues.price && { price: parseFloat(bulkValues.price) }),
         ...(bulkValues.compare_at_price && {
@@ -245,7 +246,12 @@ export default function ProductVariantsManager({ options, variants, onChange, im
             <Iconify icon="carbon:product" width={24} />
             {t('product_variants')}
             <Chip
-              label={`${syncedVariants.length} ${t('variants')}`}
+              label={(() => {
+                const activeCount = syncedVariants.filter((v) => !v.excluded).length;
+                return activeCount < syncedVariants.length
+                  ? `${activeCount}/${syncedVariants.length} ${t('variants')}`
+                  : `${syncedVariants.length} ${t('variants')}`;
+              })()}
               size="small"
               color="primary"
               variant="soft"
@@ -305,7 +311,7 @@ export default function ProductVariantsManager({ options, variants, onChange, im
               value={bulkValues.price}
               onChange={(e) => setBulkValues({ ...bulkValues, price: e.target.value })}
               InputProps={{
-                startAdornment: <InputAdornment position="start">DZD</InputAdornment>,
+                startAdornment: <InputAdornment position="start">{t('currency_symbol')}</InputAdornment>,
               }}
             />
             <TextField
@@ -379,7 +385,7 @@ export default function ProductVariantsManager({ options, variants, onChange, im
               value={bulkValues.compare_at_price}
               onChange={(e) => setBulkValues({ ...bulkValues, compare_at_price: e.target.value })}
               InputProps={{
-                startAdornment: <InputAdornment position="start">DZD</InputAdornment>,
+                startAdornment: <InputAdornment position="start">{t('currency_symbol')}</InputAdornment>,
               }}
               fullWidth
               sx={{ mb: 2 }}
@@ -438,7 +444,8 @@ export default function ProductVariantsManager({ options, variants, onChange, im
                     {t('image')}
                   </Typography>
                 </TableCell>
-                <TableCell scope="col" sx={{ width: 60 }} />
+                <TableCell scope="col" sx={{ width: 50 }} />
+                <TableCell scope="col" sx={{ width: 50 }} />
               </TableRow>
             </TableHead>
             <TableBody>
@@ -542,9 +549,16 @@ function VariantRow({ variant, index, expanded, onToggleExpand, onUpdate, produc
         hover
         sx={{
           cursor: 'pointer',
-          bgcolor: variant.is_default
-            ? (theme) => alpha(theme.palette.primary.main, 0.04)
-            : 'transparent',
+          bgcolor: variant.excluded
+            ? (theme) => alpha(theme.palette.grey[500], 0.04)
+            : variant.is_default
+              ? (theme) => alpha(theme.palette.primary.main, 0.04)
+              : 'transparent',
+          transition: 'all 0.25s ease',
+          '& .MuiTableCell-root': {
+            color: variant.excluded ? 'text.disabled' : 'inherit',
+            transition: 'color 0.25s ease',
+          },
         }}
       >
         {/* Default Radio */}
@@ -554,17 +568,39 @@ function VariantRow({ variant, index, expanded, onToggleExpand, onUpdate, produc
             checked={variant.is_default}
             onChange={() => onUpdate(variant.id, 'is_default', true)}
             color="primary"
+            disabled={variant.excluded}
           />
         </TableCell>
 
         {/* Variant Name */}
         <TableCell onClick={onToggleExpand}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Typography variant="body2" fontWeight={variant.is_default ? 600 : 400}>
+            <Typography
+              variant="body2"
+              fontWeight={variant.is_default && !variant.excluded ? 600 : 400}
+              sx={{
+                textDecoration: variant.excluded ? 'line-through' : 'none',
+                color: variant.excluded ? 'text.disabled' : 'text.primary',
+              }}
+            >
               {variantLabel}
             </Typography>
-            {variant.is_default && (
+            {variant.is_default && !variant.excluded && (
               <Chip label={t('default')} size="small" color="primary" sx={{ height: 20 }} />
+            )}
+            {variant.excluded && (
+              <Chip
+                label={t('excluded')}
+                size="small"
+                sx={{
+                  height: 20,
+                  fontSize: '0.65rem',
+                  fontWeight: 600,
+                  bgcolor: (theme) => alpha(theme.palette.error.main, 0.08),
+                  color: 'error.main',
+                  '& .MuiChip-label': { px: 0.75 },
+                }}
+              />
             )}
           </Box>
         </TableCell>
@@ -572,7 +608,7 @@ function VariantRow({ variant, index, expanded, onToggleExpand, onUpdate, produc
         {/* Price */}
         <TableCell>
           <Typography variant="body2" fontWeight={500}>
-            DZD {variant.price || '0.00'}
+            {t('currency_symbol')} {variant.price || '0.00'}
           </Typography>
         </TableCell>
 
@@ -580,7 +616,7 @@ function VariantRow({ variant, index, expanded, onToggleExpand, onUpdate, produc
         <TableCell>
           {variant.compare_at_price > 0 ? (
             <Typography variant="body2" color="text.secondary" sx={{ textDecoration: 'line-through' }}>
-              DZD {variant.compare_at_price}
+              {t('currency_symbol')} {variant.compare_at_price}
             </Typography>
           ) : (
             <Typography variant="body2" color="text.disabled">
@@ -647,19 +683,52 @@ function VariantRow({ variant, index, expanded, onToggleExpand, onUpdate, produc
         </TableCell>
 
         {/* Expand */}
-        <TableCell>
-          <IconButton size="small" onClick={onToggleExpand}>
+        <TableCell padding="none" align="center">
+          <IconButton size="small" onClick={onToggleExpand} disabled={variant.excluded}>
             <Iconify
               icon={expanded ? 'eva:arrow-ios-upward-fill' : 'eva:arrow-ios-downward-fill'}
             />
           </IconButton>
         </TableCell>
+
+        {/* Exclude Toggle */}
+        <TableCell padding="none" align="center">
+          <Tooltip title={variant.excluded ? t('include_variant') : t('exclude_variant')} arrow>
+            <IconButton
+              size="small"
+              onClick={(e) => {
+                e.stopPropagation();
+                onUpdate(variant.id, 'excluded', !variant.excluded);
+              }}
+              sx={{
+                width: 28,
+                height: 28,
+                color: variant.excluded ? 'error.main' : 'success.main',
+                bgcolor: (theme) => alpha(
+                  variant.excluded ? theme.palette.error.main : theme.palette.success.main,
+                  0.08
+                ),
+                '&:hover': {
+                  bgcolor: (theme) => alpha(
+                    variant.excluded ? theme.palette.error.main : theme.palette.success.main,
+                    0.16
+                  ),
+                },
+              }}
+            >
+              <Iconify
+                icon={variant.excluded ? 'solar:eye-closed-bold' : 'solar:eye-bold'}
+                width={16}
+              />
+            </IconButton>
+          </Tooltip>
+        </TableCell>
       </TableRow>
 
       {/* Expanded Details */}
       <TableRow>
-        <TableCell colSpan={7} sx={{ p: 0, border: 'none' }}>
-          <Collapse in={expanded} timeout="auto" unmountOnExit>
+        <TableCell colSpan={8} sx={{ p: 0, border: 'none' }}>
+          <Collapse in={expanded && !variant.excluded} timeout="auto" unmountOnExit>
             <Box sx={{ p: 3, bgcolor: (theme) => alpha(theme.palette.grey[500], 0.04) }}>
               <Stack spacing={2}>
                 {/* Price fields */}
@@ -683,7 +752,7 @@ function VariantRow({ variant, index, expanded, onToggleExpand, onUpdate, produc
                       )
                     }
                     InputProps={{
-                      startAdornment: <InputAdornment position="start">DZD</InputAdornment>,
+                      startAdornment: <InputAdornment position="start">{t('currency_symbol')}</InputAdornment>,
                     }}
                   />
                   <TextField
@@ -774,7 +843,7 @@ function VariantRow({ variant, index, expanded, onToggleExpand, onUpdate, produc
                         : t('compare_at_price_helper_text')
                     }
                     InputProps={{
-                      startAdornment: <InputAdornment position="start">DZD</InputAdornment>,
+                      startAdornment: <InputAdornment position="start">{t('currency_symbol')}</InputAdornment>,
                     }}
                     fullWidth
                   />
@@ -928,8 +997,13 @@ function VariantRow({ variant, index, expanded, onToggleExpand, onUpdate, produc
                             {availableForExtra.map((item) => (
                               <Tooltip
                                 key={item.id}
-                                placement="top"
+                                placement="bottom"
                                 arrow
+                                PopperProps={{
+                                  modifiers: [
+                                    { name: 'flip', enabled: false },
+                                  ],
+                                }}
                                 slotProps={{
                                   tooltip: {
                                     sx: {

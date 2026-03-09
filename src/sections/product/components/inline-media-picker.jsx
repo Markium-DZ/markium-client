@@ -358,7 +358,7 @@ export default function InlineMediaPicker({ selectedIds, onToggle, onAdd }) {
               <MediaThumbnail
                 key={item.id}
                 item={item}
-                isSelected={selectedIds.has(item.id)}
+                isSelected={selectedIds.has(String(item.id))}
                 onToggle={onToggle}
               />
             ))}
@@ -447,7 +447,7 @@ export default function InlineMediaPicker({ selectedIds, onToggle, onAdd }) {
                 <MediaThumbnail
                   key={item.id}
                   item={item}
-                  isSelected={selectedIds.has(item.id)}
+                  isSelected={selectedIds.has(String(item.id))}
                   onToggle={onToggle}
                   size="large"
                 />

@@ -1,7 +1,6 @@
 import PropTypes from 'prop-types';
 
 import Box from '@mui/material/Box';
-import Chip from '@mui/material/Chip';
 import Stack from '@mui/material/Stack';
 import Divider from '@mui/material/Divider';
 import Typography from '@mui/material/Typography';
@@ -19,10 +18,8 @@ export default function ProductDetailsSummary({ product, ...other }) {
   const {
     name,
     variants = [],
-    option_definitions = [],
     has_discount,
     discount_percentage,
-    is_in_stock,
     description,
   } = product || {};
 
@@ -36,111 +33,19 @@ export default function ProductDetailsSummary({ product, ...other }) {
   const maxPrice = activePrices.length > 0 ? Math.max(...activePrices) : 0;
   const hasPriceRange = minPrice !== maxPrice;
 
-  // Calculate total quantity across all variants
   const totalQuantity = variants?.reduce((sum, v) => sum + (v.available_quantity || 0), 0) || 0;
 
-  const inventoryType = is_in_stock
-    ? (totalQuantity > 10 ? 'in_stock' : 'low_stock')
-    : 'out_of_stock';
-
-  const newLabel = { enabled: false, content: '' };
   const saleLabel = has_discount
     ? { enabled: true, content: `${Math.round(discount_percentage || 0)}% OFF` }
     : { enabled: false, content: '' };
 
-  const renderPrice = (
-    <Stack spacing={0.5}>
-      <Box sx={{ typography: 'h5' }}>
-        {hasPriceRange ? (
-          <>
-            {fCurrency(minPrice)}
-            <Box component="span" sx={{ mx: 0.75, color: 'text.disabled' }}>–</Box>
-            {fCurrency(maxPrice)}
-          </>
-        ) : (
-          fCurrency(minPrice)
-        )}
-      </Box>
-      {variantCount > 0 && (
-        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-          {variantCount} {t('variants')}
-        </Typography>
-      )}
-    </Stack>
-  );
+  const inventoryType =
+    totalQuantity === 0 ? 'out_of_stock' : totalQuantity <= 10 ? 'low_stock' : 'in_stock';
 
-  const renderOptionsOverview = option_definitions?.length > 0 && (
-    <Stack spacing={2}>
-      {option_definitions.map((optDef) => {
-        // Collect all unique values for this option across all variants
-        const seen = new Set();
-        const uniqueValues = [];
-        variants.forEach((variant) => {
-          const opt = variant.options?.find((o) => o.option_definition_id === optDef.id);
-          if (opt && !seen.has(opt.value_id)) {
-            seen.add(opt.value_id);
-            uniqueValues.push(opt);
-          }
-        });
+  // ── Renders ──────────────────────────────────────────────────────────
 
-        return (
-          <Stack key={optDef.id} direction="row" spacing={1} alignItems="center" flexWrap="wrap">
-            <Typography variant="subtitle2" sx={{ color: 'text.secondary', minWidth: 80 }}>
-              {optDef.name}:
-            </Typography>
-            <Stack direction="row" spacing={0.75} flexWrap="wrap">
-              {uniqueValues.map((opt) => (
-                <Chip
-                  key={opt.value_id}
-                  size="small"
-                  label={opt.value}
-                  avatar={
-                    opt.color_hex ? (
-                      <Box
-                        sx={{
-                          width: 14,
-                          height: 14,
-                          borderRadius: '50%',
-                          bgcolor: opt.color_hex,
-                          border: '1px solid',
-                          borderColor: 'divider',
-                          ml: '4px !important',
-                        }}
-                      />
-                    ) : undefined
-                  }
-                  sx={{ height: 24, fontSize: '0.75rem' }}
-                />
-              ))}
-            </Stack>
-          </Stack>
-        );
-      })}
-    </Stack>
-  );
-
-  const renderQuantity = (
-    <Stack direction="row" spacing={2}>
-      <Typography variant="subtitle2" sx={{ color: 'text.secondary', minWidth: 100 }}>
-        {t('available')}:
-      </Typography>
-      <Typography variant="body2" sx={{ fontWeight: 600, color: totalQuantity > 0 ? 'success.main' : 'error.main' }}>
-        {totalQuantity} {t('units')}
-      </Typography>
-    </Stack>
-  );
-
-  const renderSubDescription = (
-    <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-      {description}
-    </Typography>
-  );
-
-  const renderLabels = (newLabel?.enabled || saleLabel?.enabled) && (
-    <Stack direction="row" alignItems="center" spacing={1}>
-      {newLabel.enabled && <Label color="info">{newLabel.content}</Label>}
-      {saleLabel.enabled && <Label color="error">{saleLabel.content}</Label>}
-    </Stack>
+  const renderLabels = saleLabel.enabled && (
+    <Label color="error">{saleLabel.content}</Label>
   );
 
   const renderInventoryType = (
@@ -158,6 +63,103 @@ export default function ProductDetailsSummary({ product, ...other }) {
     </Box>
   );
 
+  const renderPrice = (
+    <Stack spacing={0.5}>
+      <Box sx={{ typography: 'h5' }}>
+        {hasPriceRange ? (
+          <>
+            {fCurrency(minPrice)}
+            <Box component="span" sx={{ mx: 0.75, color: 'text.disabled' }}>
+              –
+            </Box>
+            {fCurrency(maxPrice)}
+          </>
+        ) : (
+          fCurrency(minPrice)
+        )}
+      </Box>
+      {variantCount > 0 && (
+        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+          {variantCount} {t('variants')}
+        </Typography>
+      )}
+    </Stack>
+  );
+
+  const renderSubDescription = description && (
+    <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+      {description}
+    </Typography>
+  );
+
+  // Group unique option values directly from variant.options[]
+  // (variant options carry definition_name, value, color_hex directly)
+  const optionGroups = {};
+  variants.forEach((variant) => {
+    (variant.options || []).forEach((opt) => {
+      const defName = opt.definition_name || opt.name || '';
+      if (!defName) return;
+      if (!optionGroups[defName]) optionGroups[defName] = { values: [], seen: new Set() };
+      const key = String(opt.value_id ?? opt.value);
+      if (!optionGroups[defName].seen.has(key)) {
+        optionGroups[defName].seen.add(key);
+        optionGroups[defName].values.push(opt);
+      }
+    });
+  });
+
+  const groupEntries = Object.entries(optionGroups);
+
+  const renderVariants = groupEntries.length > 0 && (
+    <Stack spacing={1.5}>
+      {groupEntries.map(([defName, { values }]) => (
+        <Stack key={defName} direction="row" alignItems="center" spacing={1.5} flexWrap="wrap">
+          <Typography variant="subtitle2" sx={{ color: 'text.secondary', flexShrink: 0 }}>
+            {defName}
+          </Typography>
+          <Stack direction="row" spacing={0.75} flexWrap="wrap" useFlexGap>
+            {values.map((opt) => (
+              <Box
+                key={opt.value_id ?? opt.value}
+                sx={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 0.5,
+                  px: 1,
+                  py: 0.375,
+                  borderRadius: 1,
+                  bgcolor: 'action.selected',
+                  border: '1px solid',
+                  borderColor: 'divider',
+                }}
+              >
+                {opt.color_hex && (
+                  <Box
+                    sx={{
+                      width: 10,
+                      height: 10,
+                      borderRadius: '50%',
+                      bgcolor: opt.color_hex,
+                      border: '1px solid',
+                      borderColor: 'divider',
+                      flexShrink: 0,
+                    }}
+                  />
+                )}
+                <Typography
+                  component="span"
+                  sx={{ fontSize: '0.75rem', fontWeight: 600, color: 'text.primary', lineHeight: '18px' }}
+                >
+                  {opt.value}
+                </Typography>
+              </Box>
+            ))}
+          </Stack>
+        </Stack>
+      ))}
+    </Stack>
+  );
+
   if (!product) {
     return null;
   }
@@ -166,21 +168,15 @@ export default function ProductDetailsSummary({ product, ...other }) {
     <Stack spacing={3} sx={{ pt: 3 }} {...other}>
       <Stack spacing={2} alignItems="flex-start">
         {renderLabels}
-
         {renderInventoryType}
-
         <Typography variant="h5">{name}</Typography>
-
         {renderPrice}
-
         {renderSubDescription}
       </Stack>
 
       <Divider sx={{ borderStyle: 'dashed' }} />
 
-      {renderOptionsOverview}
-
-      {renderQuantity}
+      {renderVariants}
     </Stack>
   );
 }

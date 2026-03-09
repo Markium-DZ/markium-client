@@ -5,17 +5,10 @@ import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
-import Divider from '@mui/material/Divider';
-import MenuItem from '@mui/material/MenuItem';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import Chip from '@mui/material/Chip';
-
-
-import Tooltip from '@mui/material/Tooltip';
-
-import { RouterLink } from 'src/routes/components';
-import { paths } from 'src/routes/paths';
+import MenuItem from '@mui/material/MenuItem';
 
 import { useTranslate } from 'src/locales';
 import { fCurrency } from 'src/utils/format-number';
@@ -24,16 +17,18 @@ import CustomPopover, { usePopover } from 'src/components/custom-popover';
 import Label from 'src/components/label';
 
 import ProductVariantEditDialog from './product-variant-edit-dialog';
+import AddOptionValueDialog from './product-add-option-value-dialog';
 
 // ----------------------------------------------------------------------
 
 export default function ProductDetailsVariants({ product, optionDefinitions, onRefresh }) {
   const { t } = useTranslate();
   const variants = product?.variants || [];
-  const editLink = paths.dashboard.product.edit(`${product?.id}`);
+  const hasOptionDefinitions = (product?.option_definitions || []).length > 0;
 
   const [selectedVariant, setSelectedVariant] = useState(null);
   const [openEditDialog, setOpenEditDialog] = useState(false);
+  const [openAddDialog, setOpenAddDialog] = useState(false);
 
   const handleEditVariant = (variant) => {
     setSelectedVariant(variant);
@@ -49,22 +44,20 @@ export default function ProductDetailsVariants({ product, optionDefinitions, onR
     onRefresh?.();
   };
 
-
   return (
     <Box sx={{ p: 3 }}>
       {/* Header with Add button */}
       <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 3 }}>
         <Typography variant="h6">{t('product_variants')}</Typography>
-        <Tooltip title={t('manage_variants_in_edit')} arrow>
+        {hasOptionDefinitions && (
           <Button
-            component={RouterLink}
-            href={editLink}
             variant="contained"
-            startIcon={<Iconify icon="solar:pen-bold" width={16} />}
+            startIcon={<Iconify icon="solar:add-circle-bold" width={16} />}
+            onClick={() => setOpenAddDialog(true)}
           >
-            {t('manage_variants')}
+            {t('add_option_value')}
           </Button>
-        </Tooltip>
+        )}
       </Stack>
 
       {/* Variants List */}
@@ -87,15 +80,6 @@ export default function ProductDetailsVariants({ product, optionDefinitions, onR
             <Typography variant="body2" color="text.disabled" sx={{ mt: 1 }}>
               {t('no_variants_description')}
             </Typography>
-            <Button
-              component={RouterLink}
-              href={editLink}
-              variant="contained"
-              startIcon={<Iconify icon="solar:pen-bold" width={16} />}
-              sx={{ mt: 3 }}
-            >
-              {t('add_first_variant')}
-            </Button>
           </Card>
         )}
       </Stack>
@@ -107,6 +91,14 @@ export default function ProductDetailsVariants({ product, optionDefinitions, onR
         variant={selectedVariant}
         productId={product?.id}
         onSuccess={handleEditSuccess}
+      />
+
+      {/* Add Option Value Dialog */}
+      <AddOptionValueDialog
+        open={openAddDialog}
+        onClose={() => setOpenAddDialog(false)}
+        product={product}
+        onRefresh={onRefresh}
       />
     </Box>
   );
@@ -124,15 +116,11 @@ function VariantCard({ variant, optionDefinitions, onEdit }) {
   const { t } = useTranslate();
   const popover = usePopover();
 
-  const getOptionLabel = (option) => {
-    const optDef = optionDefinitions?.find((def) => def.id === option.option_definition_id);
-    const optValue = optDef?.values?.find((val) => val.id === option.value_id);
-    return {
-      name: optDef?.name || '',
-      value: optValue?.value || '',
-      colorHex: optValue?.color_hex || null,
-    };
-  };
+  const getOptionLabel = (option) => ({
+    name: option.definition_name || option.name || '',
+    value: option.value || '',
+    colorHex: option.color_hex || null,
+  });
 
   return (
     <Card sx={{ p: 3 }}>
@@ -201,11 +189,12 @@ function VariantCard({ variant, optionDefinitions, onEdit }) {
               <Stack direction="row" spacing={1} sx={{ mb: 2, flexWrap: 'wrap' }}>
                 {variant.options?.map((option, idx) => {
                   const { name, value, colorHex } = getOptionLabel(option);
+                  if (!name && !value) return null;
                   return (
                     <Chip
                       key={idx}
                       size="small"
-                      label={`${name}: ${value}`}
+                      label={name && value ? `${name}: ${value}` : (name || value)}
                       icon={
                         colorHex ? (
                           <Box
@@ -286,7 +275,7 @@ function VariantCard({ variant, optionDefinitions, onEdit }) {
               </Stack>
             </Box>
 
-            {/* Actions Menu */}
+            {/* Actions Menu — edit only, no delete */}
             <Box>
               <IconButton onClick={popover.onOpen}>
                 <Iconify icon="eva:more-vertical-fill" />

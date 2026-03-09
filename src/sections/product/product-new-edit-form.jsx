@@ -1,5 +1,6 @@
 import * as Yup from 'yup';
 import PropTypes from 'prop-types';
+import { mutate as swrMutate } from 'swr';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useMemo, useState, useEffect, useCallback } from 'react';
@@ -111,6 +112,7 @@ export default function ProductNewEditForm({ currentProduct, drawerMode = false,
   ]);
 
   // Derived: form has product options → show options builder + variant table
+  const isEdit = !!currentProduct?.id;
   const hasOptions = optionDefinitions.length > 0;
 
   const { items: categories } = useGetSystemCategories();
@@ -143,37 +145,34 @@ export default function ProductNewEditForm({ currentProduct, drawerMode = false,
   // ── Default values ───────────────────────────────────────────────────
 
   const defaultValues = useMemo(() => {
-    const defaultVariant = currentProduct?.variants?.find((v) => v.is_default) || currentProduct?.variants?.[0];
+    const allVariants = currentProduct?.variants || [];
+    const defaultVariant = allVariants.find((v) => v.is_default) || allVariants[0];
 
-    let images = [];
-    if (defaultVariant?.media && Array.isArray(defaultVariant.media)) {
-      images = defaultVariant.media.map((m) => ({
-        id: m.id,
-        preview: m.full_url || m.url,
-        name: m.alt_text || `media-${m.id}`,
-        size: m.file_size,
-        full_url: m.full_url || m.url,
-        media_id: m.id,
-        isExisting: true,
-      }));
-    } else if (defaultVariant?.media && typeof defaultVariant.media === 'object') {
-      images = [
-        {
-          id: defaultVariant.media.id,
-          preview: defaultVariant.media.full_url || defaultVariant.media.url,
-          name: defaultVariant.media.alt_text || `media-${defaultVariant.media.id}`,
-          size: defaultVariant.media.file_size,
-          full_url: defaultVariant.media.full_url || defaultVariant.media.url,
-          media_id: defaultVariant.media.id,
-          isExisting: true,
-        },
-      ];
-    }
+    // Collect ALL unique media across all variants
+    const seenIds = new Set();
+    const images = [];
+    allVariants.forEach((v) => {
+      const media = Array.isArray(v.media) ? v.media : v.media ? [v.media] : [];
+      media.forEach((m) => {
+        if (m?.id && !seenIds.has(m.id)) {
+          seenIds.add(m.id);
+          images.push({
+            id: m.id,
+            preview: m.full_url || m.url,
+            name: m.alt_text || `media-${m.id}`,
+            size: m.file_size,
+            full_url: m.full_url || m.url,
+            media_id: m.id,
+            isExisting: true,
+          });
+        }
+      });
+    });
 
     return {
       name: currentProduct?.name || '',
       description: currentProduct?.description || '',
-      content: currentProduct?.content || '',
+      content: typeof currentProduct?.content === 'string' ? currentProduct.content : '',
       images,
       category_id: currentProduct?.category_id || '',
       tags: currentProduct?.tags || [],
@@ -216,7 +215,99 @@ export default function ProductNewEditForm({ currentProduct, drawerMode = false,
       setShowDiscount(defVariant?.compare_at_price > 0);
 
       if (currentProduct.option_definitions?.length > 0) {
-        setOptionDefinitions(currentProduct.option_definitions);
+        // Reconstruct values on each option definition from variant options
+        // because the API may not include the full values array
+        const allVariants = currentProduct.variants || [];
+
+        const reconstructed = currentProduct.option_definitions.map((optDef) => {
+          // If the API already provides values with content, use them
+          if (optDef.values?.length > 0 && optDef.values[0]?.value) {
+            return {
+              id: optDef.id,
+              name: optDef.name || '',
+              type: optDef.type || 'text',
+              style: optDef.style || 'dropdown',
+              values: optDef.values.map((val) => {
+                // Collect media from all variants that have this value
+                const matchingVariants = allVariants.filter((v) =>
+                  (v.options || []).some(
+                    (o) =>
+                      String(o.option_definition_id) === String(optDef.id) &&
+                      String(o.value_id) === String(val.id)
+                  )
+                );
+                const mediaPool = [];
+                const seenMedia = new Set();
+                matchingVariants.forEach((v) => {
+                  const media = Array.isArray(v.media) ? v.media : v.media ? [v.media] : [];
+                  media.forEach((m) => {
+                    if (m?.id && !seenMedia.has(m.id)) {
+                      seenMedia.add(m.id);
+                      mediaPool.push(m);
+                    }
+                  });
+                });
+                return {
+                  value: val.value,
+                  color_hex: val.color_hex || null,
+                  media_ids: mediaPool.map((m) => m.id),
+                  selected_media: mediaPool,
+                };
+              }),
+            };
+          }
+
+          // Fallback: reconstruct values from variant.options directly
+          const seen = new Set();
+          const values = [];
+          allVariants.forEach((variant) => {
+            const opt = (variant.options || []).find(
+              (o) => String(o.option_definition_id) === String(optDef.id)
+            );
+            if (!opt) return;
+            const key = String(opt.value_id ?? opt.value);
+            if (seen.has(key)) return;
+            seen.add(key);
+
+            // Collect media from all variants sharing this value
+            const matchingVariants = allVariants.filter((v) =>
+              (v.options || []).some(
+                (o) =>
+                  String(o.option_definition_id) === String(optDef.id) &&
+                  String(o.value_id ?? o.value) === key
+              )
+            );
+            const mediaPool = [];
+            const seenMedia = new Set();
+            matchingVariants.forEach((v) => {
+              const media = Array.isArray(v.media) ? v.media : v.media ? [v.media] : [];
+              media.forEach((m) => {
+                if (m?.id && !seenMedia.has(m.id)) {
+                  seenMedia.add(m.id);
+                  mediaPool.push(m);
+                }
+              });
+            });
+
+            values.push({
+              value: opt.value || opt.definition_name || '',
+              color_hex: opt.color_hex || null,
+              media_ids: mediaPool.map((m) => m.id),
+              selected_media: mediaPool,
+            });
+          });
+
+          const hasColors = values.some((v) => v.color_hex);
+          return {
+            id: optDef.id,
+            name: optDef.name || '',
+            type: optDef.type || (hasColors ? 'color' : 'text'),
+            style: optDef.style || (hasColors ? 'color' : 'dropdown'),
+            values,
+          };
+        });
+
+        setOptionDefinitions(reconstructed);
       } else {
         setOptionDefinitions([]);
       }
@@ -229,8 +320,10 @@ export default function ProductNewEditForm({ currentProduct, drawerMode = false,
             compare_at_price: v.compare_at_price || null,
             quantity: v.quantity || 0,
             sku: v.sku || '',
-            option_values: v.option_values?.map((ov) => ov.value) || v.options || [],
+            option_values: v.option_values?.map((ov) => ov.value) || v.options?.map((o) => o.value) || [],
             media_ids: Array.isArray(v.media) ? v.media.map((m) => m.id) : v.media?.id ? [v.media.id] : [],
+            extra_media_ids: Array.isArray(v.media) ? v.media.map((m) => m.id) : v.media?.id ? [v.media.id] : [],
+            extra_selected_media: Array.isArray(v.media) ? v.media : v.media ? [v.media] : [],
             selected_media: Array.isArray(v.media) ? v.media : v.media ? [v.media] : [],
             is_default: v.is_default || false,
           }))
@@ -242,7 +335,7 @@ export default function ProductNewEditForm({ currentProduct, drawerMode = false,
   // ── Selected media IDs (for InlineMediaPicker) ───────────────────────
 
   const selectedMediaIds = useMemo(
-    () => new Set((values.images || []).map((img) => img.media_id || img.id).filter(Boolean)),
+    () => new Set((values.images || []).map((img) => String(img.media_id || img.id)).filter(Boolean)),
     [values.images]
   );
 
@@ -265,12 +358,13 @@ export default function ProductNewEditForm({ currentProduct, drawerMode = false,
   const handleMediaToggle = useCallback(
     (mediaItem) => {
       const currentImages = values.images || [];
-      const isSelected = currentImages.some((img) => (img.media_id || img.id) === mediaItem.id);
+      const mediaId = String(mediaItem.id);
+      const isSelected = currentImages.some((img) => String(img.media_id || img.id) === mediaId);
 
       if (isSelected) {
         setValue(
           'images',
-          currentImages.filter((img) => (img.media_id || img.id) !== mediaItem.id),
+          currentImages.filter((img) => String(img.media_id || img.id) !== mediaId),
           { shouldValidate: true }
         );
       } else {
@@ -328,19 +422,20 @@ export default function ProductNewEditForm({ currentProduct, drawerMode = false,
       try {
         // Validate variants in options mode
         if (hasOptions) {
-          if (!variants || variants.length === 0) {
+          const activeVariants = variants.filter((v) => !v.excluded);
+          if (!activeVariants || activeVariants.length === 0) {
             enqueueSnackbar(t('at_least_one_variant_required'), { variant: 'error' });
             return;
           }
-          if (!variants.some((v) => v.is_default)) {
+          if (!activeVariants.some((v) => v.is_default)) {
             enqueueSnackbar(t('one_variant_must_be_default'), { variant: 'error' });
             return;
           }
-          if (!variants.every((v) => v.price > 0)) {
+          if (!activeVariants.every((v) => v.price > 0)) {
             enqueueSnackbar(t('all_variants_must_have_price'), { variant: 'error' });
             return;
           }
-          const invalidPriceVariant = variants.find(
+          const invalidPriceVariant = activeVariants.find(
             (v) => v.compare_at_price > 0 && v.compare_at_price < v.price
           );
           if (invalidPriceVariant) {
@@ -411,7 +506,9 @@ export default function ProductNewEditForm({ currentProduct, drawerMode = false,
           tags: data.tags || [],
         };
 
-        if (hasOptions) {
+        if (isEdit) {
+          // Edit mode: only send product-level fields, no variants/options
+        } else if (hasOptions) {
           payload.option_definitions = optionDefinitions
             .filter((opt) => opt.name && opt.values.length > 0)
             .map((opt) => ({
@@ -425,7 +522,7 @@ export default function ProductNewEditForm({ currentProduct, drawerMode = false,
               }),
             }));
 
-          payload.variants = variants.map((variant, index) => {
+          payload.variants = variants.filter((v) => !v.excluded).map((variant, index) => {
             const variantData = {
               price: parseFloat(variant.price) || 0,
               compare_at_price: variant.compare_at_price ? parseFloat(variant.compare_at_price) : null,
@@ -437,10 +534,6 @@ export default function ProductNewEditForm({ currentProduct, drawerMode = false,
               position: index,
               is_active: true,
             };
-
-            if (currentProduct?.id && variant.id && typeof variant.id === 'number') {
-              variantData.id = variant.id;
-            }
 
             return variantData;
           });
@@ -472,6 +565,7 @@ export default function ProductNewEditForm({ currentProduct, drawerMode = false,
         // Submit
         if (currentProduct?.id) {
           await updateProduct(currentProduct.id, payload);
+          await swrMutate('/products');
         } else {
           await createProduct(payload);
           captureEvent('product_created', {
@@ -661,7 +755,7 @@ export default function ProductNewEditForm({ currentProduct, drawerMode = false,
               startAdornment: (
                 <InputAdornment position="start">
                   <Box component="span" sx={{ color: 'text.disabled' }}>
-                    DZD
+                    {t('currency_symbol')}
                   </Box>
                 </InputAdornment>
               ),
@@ -748,7 +842,7 @@ export default function ProductNewEditForm({ currentProduct, drawerMode = false,
               startAdornment: (
                 <InputAdornment position="start">
                   <Box component="span" sx={{ color: 'text.disabled' }}>
-                    DZD
+                    {t('currency_symbol')}
                   </Box>
                 </InputAdornment>
               ),
@@ -945,23 +1039,23 @@ export default function ProductNewEditForm({ currentProduct, drawerMode = false,
         {/* 3. Category & Tags */}
         {renderProperties}
 
-        {/* 4. Pricing — visible only in simple mode (no options) */}
-        <Collapse in={!hasOptions} unmountOnExit>
+        {/* 4. Pricing — visible only in simple mode (no options) for new products */}
+        <Collapse in={!hasOptions && !isEdit} unmountOnExit>
           {renderSimplePricing}
         </Collapse>
 
         {/* 5. "Add options" trigger — visible only in simple mode for new products */}
-        <Collapse in={!hasOptions && !currentProduct} unmountOnExit>
+        <Collapse in={!hasOptions && !isEdit} unmountOnExit>
           {renderOptionsTrigger}
         </Collapse>
 
-        {/* 6. Options Builder — visible when options exist */}
-        <Collapse in={hasOptions} unmountOnExit>
+        {/* 6. Options Builder — visible when options exist, only for new products */}
+        <Collapse in={hasOptions && !isEdit} unmountOnExit>
           {renderOptionsCard}
         </Collapse>
 
-        {/* 7. Variants Table — visible when options exist */}
-        <Collapse in={hasOptions} unmountOnExit>
+        {/* 7. Variants Table — visible when options exist, only for new products */}
+        <Collapse in={hasOptions && !isEdit} unmountOnExit>
           {renderVariantsCard}
         </Collapse>
 

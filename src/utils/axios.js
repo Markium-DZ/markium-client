@@ -235,4 +235,13 @@ export const endpoints = {
     checkout: '/add-ons/checkout',
     cancel: (id) => `/add-ons/${id}/cancel`,
   },
+  notifications: {
+    root: '/notifications',
+    read: (id) => `/notifications/${id}/read`,
+    readAll: '/notifications/read-all',
+    delete: (id) => `/notifications/${id}`,
+    preferences: '/notifications/preferences',
+    subscriptions: '/notifications/subscriptions',
+    unsubscribe: (token) => `/notifications/subscriptions/${token}`,
+  },
 };

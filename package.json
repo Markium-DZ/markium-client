@@ -9,6 +9,7 @@
     "dev": "vite --mode env",
     "start": "vite preview",
     "build": "vite build",
+    "build:local": "vite build --mode env",
     "build:dev": "vite build --mode development",
     "build:prod": "vite build --mode production",
     "build:ssg": "vite build && node scripts/prerender.js",

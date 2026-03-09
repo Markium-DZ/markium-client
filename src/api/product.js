@@ -140,3 +140,8 @@ export async function deleteProductVariant(productId, variantId) {
   const URL = `/products/${productId}/variants/${variantId}`;
   return await axios.delete(URL);
 }
+
+export async function addOptionValue(productId, data) {
+  const res = await axios.post(`/products/${productId}/variants/add-option-value`, data);
+  return res.data;
+}

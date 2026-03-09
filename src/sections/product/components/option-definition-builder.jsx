@@ -223,21 +223,14 @@ function OptionCard({
   const [newColorHex, setNewColorHex] = useState('#000000');
   const [mediaOpen, setMediaOpen] = useState(false);
   const [activeMediaValue, setActiveMediaValue] = useState(null);
+  const [showCustomInput, setShowCustomInput] = useState(false);
+  const [customInputValue, setCustomInputValue] = useState('');
 
   // Find matched preset
   const matchedPreset = useMemo(() => {
     if (option.presetKey) return presets.find((p) => p.key === option.presetKey) || null;
     return null;
   }, [option.presetKey, presets]);
-
-  // Autocomplete options: current preset + unused presets
-  const autocompleteOptions = useMemo(() => {
-    const opts = [...availablePresets];
-    if (matchedPreset && !opts.find((p) => p.key === matchedPreset.key)) {
-      opts.unshift(matchedPreset);
-    }
-    return opts;
-  }, [availablePresets, matchedPreset]);
 
   const isValueEnabled = useCallback(
     (valueStr) => option.values.some((v) => v.value === valueStr),
@@ -398,73 +391,284 @@ function OptionCard({
       </Box>
 
       <Stack spacing={2.5}>
-        {/* Option Name — Combobox */}
-        <Autocomplete
-          freeSolo
-          value={null}
-          inputValue={option.name}
-          onInputChange={(_, val, reason) => {
-            if (reason === 'input') handleNameChange(val);
-            if (reason === 'clear') handleNameChange('');
-          }}
-          onChange={(_, val) => {
-            if (val && typeof val === 'object' && val.key) handlePresetSelect(val);
-          }}
-          options={autocompleteOptions}
-          getOptionLabel={(opt) => (typeof opt === 'string' ? opt : opt.name)}
-          filterOptions={(opts, { inputValue }) =>
-            opts.filter((opt) => opt.name.toLowerCase().includes(inputValue.toLowerCase()))
-          }
-          renderInput={(params) => (
-            <TextField
-              {...params}
-              label={t('option_name')}
-              placeholder={t('type_or_select_option')}
-              InputProps={{
-                ...params.InputProps,
-                startAdornment: (
-                  <>
-                    <InputAdornment position="start">
-                      <Iconify
-                        icon={matchedPreset?.icon || 'mdi:tag-outline'}
-                        width={20}
-                        sx={{ color: matchedPreset ? 'primary.main' : 'text.disabled' }}
-                      />
-                    </InputAdornment>
-                    {params.InputProps.startAdornment}
-                  </>
-                ),
-              }}
-            />
-          )}
-          renderOption={(props, opt) => (
-            <li {...props} key={opt.key}>
-              <Stack direction="row" spacing={1.5} alignItems="center" sx={{ py: 0.5 }}>
+        {/* Option Name — Preset Cards or Selected Header */}
+        {!option.name && !showCustomInput ? (
+          <Box
+            display="grid"
+            gridTemplateColumns={{ xs: '1fr 1fr', sm: `repeat(${Math.min(availablePresets.length + 1, 4)}, 1fr)` }}
+            gap={1}
+          >
+            {availablePresets.map((preset) => {
+              const colorMap = {
+                color: { bg: 'warning.main', icon: 'warning.dark' },
+                size: { bg: 'info.main', icon: 'info.dark' },
+                shoe_size: { bg: 'success.main', icon: 'success.dark' },
+              };
+              const colors = colorMap[preset.key] || { bg: 'primary.main', icon: 'primary.dark' };
+              return (
                 <Box
+                  key={preset.key}
+                  onClick={() => handlePresetSelect(preset)}
                   sx={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: 1,
-                    bgcolor: (theme) => alpha(theme.palette.primary.main, 0.08),
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
+                    p: 1.5,
+                    borderRadius: 1.5,
+                    cursor: 'pointer',
+                    border: (theme) => `1px solid ${alpha(theme.palette.grey[500], 0.12)}`,
+                    bgcolor: 'background.paper',
+                    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                    '&:hover': {
+                      borderColor: colors.bg,
+                      bgcolor: (theme) => alpha(theme.palette[colors.bg.split('.')[0]]?.main || theme.palette.primary.main, 0.04),
+                      transform: 'translateY(-2px)',
+                      boxShadow: (theme) => theme.shadows[4],
+                    },
+                    '&:active': { transform: 'translateY(0)' },
                   }}
                 >
-                  <Iconify icon={opt.icon} width={18} sx={{ color: 'primary.main' }} />
-                </Box>
-                <Box>
-                  <Typography variant="body2" fontWeight={600}>
-                    {opt.name}
+                  <Box
+                    sx={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: '10px',
+                      bgcolor: (theme) => alpha(theme.palette[colors.bg.split('.')[0]]?.main || theme.palette.primary.main, 0.1),
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      mb: 1,
+                    }}
+                  >
+                    <Iconify icon={preset.icon} width={20} sx={{ color: colors.bg }} />
+                  </Box>
+                  <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 0.5, lineHeight: 1.2 }}>
+                    {preset.name}
                   </Typography>
-                  <Typography variant="caption" color="text.disabled">
-                    {opt.presetValues.length} {t('values')}
+                  <Typography variant="caption" color="text.disabled" sx={{ display: 'block', mb: 1, lineHeight: 1.3 }}>
+                    {preset.presetValues.length} {t('values')}
                   </Typography>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.4 }}>
+                    {preset.presetValues.slice(0, 3).map((pv) => (
+                      <Chip
+                        key={pv.value}
+                        size="small"
+                        label={pv.value}
+                        icon={
+                          pv.color_hex ? (
+                            <Box
+                              sx={{
+                                width: 10,
+                                height: 10,
+                                borderRadius: '50%',
+                                bgcolor: pv.color_hex,
+                                border: (theme) =>
+                                  `1px solid ${alpha(theme.palette.common.black, pv.color_hex === '#FFFFFF' ? 0.15 : 0.04)}`,
+                                ml: '4px !important',
+                              }}
+                            />
+                          ) : undefined
+                        }
+                        sx={{
+                          height: 20,
+                          fontSize: '0.65rem',
+                          fontWeight: 500,
+                          bgcolor: (theme) => alpha(theme.palette.grey[500], 0.08),
+                          color: 'text.secondary',
+                          '& .MuiChip-label': { px: 0.5 },
+                          '& .MuiChip-icon': { mr: 0 },
+                        }}
+                      />
+                    ))}
+                    {preset.presetValues.length > 3 && (
+                      <Typography variant="caption" color="text.disabled" sx={{ alignSelf: 'center', fontSize: '0.6rem', fontWeight: 600 }}>
+                        +{preset.presetValues.length - 3}
+                      </Typography>
+                    )}
+                  </Box>
                 </Box>
-              </Stack>
-            </li>
-          )}
-        />
+              );
+            })}
+
+            {/* Custom option card */}
+            <Box
+              onClick={() => setShowCustomInput(true)}
+              sx={{
+                p: 1.5,
+                borderRadius: 1.5,
+                cursor: 'pointer',
+                border: (theme) => `1px dashed ${alpha(theme.palette.grey[500], 0.2)}`,
+                bgcolor: 'background.paper',
+                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                display: 'flex',
+                flexDirection: 'column',
+                '&:hover': {
+                  borderColor: 'text.secondary',
+                  bgcolor: (theme) => alpha(theme.palette.grey[500], 0.04),
+                  transform: 'translateY(-2px)',
+                  boxShadow: (theme) => theme.shadows[4],
+                },
+                '&:active': { transform: 'translateY(0)' },
+              }}
+            >
+              <Box
+                sx={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: '10px',
+                  bgcolor: (theme) => alpha(theme.palette.grey[500], 0.08),
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  mb: 1,
+                }}
+              >
+                <Iconify icon="solar:pen-new-square-bold-duotone" width={20} sx={{ color: 'text.secondary' }} />
+              </Box>
+              <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 0.5, lineHeight: 1.2 }}>
+                {t('custom_option')}
+              </Typography>
+              <Typography variant="caption" color="text.disabled" sx={{ lineHeight: 1.3 }}>
+                {t('custom_option_hint')}
+              </Typography>
+            </Box>
+          </Box>
+        ) : showCustomInput ? (
+          <Stack direction="row" spacing={1} alignItems="center">
+            <IconButton
+              size="small"
+              onClick={() => {
+                setShowCustomInput(false);
+                setCustomInputValue('');
+                if (!matchedPreset) onUpdate({ name: '', type: 'text', style: 'dropdown', values: [] });
+              }}
+              sx={{ color: 'text.secondary' }}
+            >
+              <Iconify icon="eva:arrow-back-fill" width={18} />
+            </IconButton>
+            <Autocomplete
+              freeSolo
+              fullWidth
+              value={null}
+              inputValue={customInputValue}
+              onInputChange={(_, val, reason) => {
+                const newVal = reason === 'clear' ? '' : val;
+                setCustomInputValue(newVal);
+                handleNameChange(newVal);
+              }}
+              onChange={(_, val) => {
+                if (val && typeof val === 'object' && val.key) {
+                  handlePresetSelect(val);
+                  setShowCustomInput(false);
+                  setCustomInputValue('');
+                }
+              }}
+              options={availablePresets}
+              getOptionLabel={(opt) => (typeof opt === 'string' ? opt : opt.name)}
+              filterOptions={(opts, { inputValue }) =>
+                opts.filter((opt) => opt.name.toLowerCase().includes(inputValue.toLowerCase()))
+              }
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  autoFocus
+                  size="small"
+                  label={t('option_name')}
+                  placeholder={t('type_option_name')}
+                  InputProps={{
+                    ...params.InputProps,
+                    startAdornment: (
+                      <>
+                        <InputAdornment position="start">
+                          <Iconify icon="solar:pen-bold-duotone" width={20} sx={{ color: 'text.disabled' }} />
+                        </InputAdornment>
+                        {params.InputProps.startAdornment}
+                      </>
+                    ),
+                  }}
+                />
+              )}
+              renderOption={(props, opt) => (
+                <li {...props} key={opt.key}>
+                  <Stack direction="row" spacing={1.5} alignItems="center" sx={{ py: 0.5 }}>
+                    <Box
+                      sx={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: 1,
+                        bgcolor: (theme) => alpha(theme.palette.primary.main, 0.08),
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <Iconify icon={opt.icon} width={18} sx={{ color: 'primary.main' }} />
+                    </Box>
+                    <Box>
+                      <Typography variant="body2" fontWeight={600}>
+                        {opt.name}
+                      </Typography>
+                      <Typography variant="caption" color="text.disabled">
+                        {opt.presetValues.length} {t('values')}
+                      </Typography>
+                    </Box>
+                  </Stack>
+                </li>
+              )}
+            />
+          </Stack>
+        ) : (
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1.5,
+              p: 1.5,
+              borderRadius: 1.5,
+              bgcolor: (theme) => alpha(theme.palette.primary.main, 0.04),
+              border: (theme) => `1px solid ${alpha(theme.palette.primary.main, 0.12)}`,
+            }}
+          >
+            <Box
+              sx={{
+                width: 36,
+                height: 36,
+                borderRadius: '10px',
+                bgcolor: (theme) => alpha(theme.palette.primary.main, 0.1),
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+              }}
+            >
+              <Iconify
+                icon={matchedPreset?.icon || 'solar:pen-new-square-bold-duotone'}
+                width={20}
+                sx={{ color: 'primary.main' }}
+              />
+            </Box>
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+              <Typography variant="subtitle2" fontWeight={700} noWrap>
+                {option.name}
+              </Typography>
+              {matchedPreset && (
+                <Typography variant="caption" color="text.disabled">
+                  {option.values.length}/{matchedPreset.presetValues.length} {t('values')}
+                </Typography>
+              )}
+            </Box>
+            <IconButton
+              size="small"
+              onClick={() => {
+                onUpdate({ name: '', presetKey: null, type: 'text', style: 'dropdown', values: [] });
+                setShowCustomInput(false);
+              }}
+              sx={{
+                color: 'text.disabled',
+                '&:hover': { color: 'error.main', bgcolor: (theme) => alpha(theme.palette.error.main, 0.08) },
+              }}
+            >
+              <Iconify icon="solar:restart-bold" width={16} />
+            </IconButton>
+          </Box>
+        )}
 
         {/* ── Preset Values: Toggleable Chips ──────────────────────────── */}
         {matchedPreset && (
@@ -612,7 +816,7 @@ function OptionCard({
         )}
 
         {/* ── Custom Values: Text Input + Chips ────────────────────────── */}
-        {!matchedPreset && option.name && (
+        {!matchedPreset && (option.name || showCustomInput) && (
           <Box>
             <Typography
               variant="subtitle2"
@@ -824,14 +1028,17 @@ function ValueMediaGrid({ productMedia, assignedIds, onToggle }) {
 
   return (
     <Box sx={{ maxHeight: 220, overflow: 'auto', borderRadius: 1 }}>
-      <Box display="grid" gridTemplateColumns="repeat(auto-fill, minmax(72px, 1fr))" gap={0.75}>
+      <Box display="grid" gridTemplateColumns="repeat(auto-fill, minmax(88px, 1fr))" gap={0.75}>
         {productMedia.map((item) => {
           const isAssigned = assignedIds.includes(item.id);
           return (
             <Tooltip
               key={item.id}
-              placement="top"
+              placement="bottom"
               arrow
+              PopperProps={{
+                modifiers: [{ name: 'flip', enabled: false }],
+              }}
               slotProps={{
                 tooltip: {
                   sx: {
@@ -854,8 +1061,8 @@ function ValueMediaGrid({ productMedia, assignedIds, onToggle }) {
                   src={item.full_url}
                   alt={item.alt_text || ''}
                   sx={{
-                    width: 200,
-                    height: 200,
+                    width: 260,
+                    height: 260,
                     objectFit: 'cover',
                     borderRadius: 0.75,
                     display: 'block',

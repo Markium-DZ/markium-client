@@ -7,7 +7,6 @@ import {
   Table,
   TableBody,
   TableContainer,
-  Typography,
   Stack,
 } from '@mui/material';
 
@@ -81,10 +80,33 @@ export default function ProductDetailsCosts({ product }) {
 
   if (costsLoading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', py: 5 }}>
-        <Typography variant="body2" color="text.secondary">
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          py: 5,
+          '@keyframes shimmer': {
+            '0%': { backgroundPosition: '-200% 0' },
+            '100%': { backgroundPosition: '200% 0' },
+          },
+        }}
+      >
+        <Box
+          component="span"
+          sx={{
+            typography: 'body2',
+            fontWeight: 600,
+            color: 'transparent',
+            backgroundImage: (theme) =>
+              `linear-gradient(90deg, ${theme.palette.text.disabled} 25%, ${theme.palette.text.secondary} 50%, ${theme.palette.text.disabled} 75%)`,
+            backgroundSize: '200% 100%',
+            backgroundClip: 'text',
+            WebkitBackgroundClip: 'text',
+            animation: 'shimmer 1.5s ease-in-out infinite',
+          }}
+        >
           {t('loading')}...
-        </Typography>
+        </Box>
       </Box>
     );
   }
