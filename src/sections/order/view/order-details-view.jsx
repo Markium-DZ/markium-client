@@ -43,6 +43,7 @@ import OrderDetailsInfo from '../order-details-info';
 import OrderDetailsItems from '../order-details-item';
 import OrderDetailsToolbar from '../order-details-toolbar';
 import OrderDetailsHistory from '../order-details-history';
+import OrderTrackingAnalytics from '../order-tracking-analytics';
 import OrderShipping from '../order-shipping';
 import OrderTracking from '../order-tracking';
 import OrderDetailsSkeleton from '../order-details-skeleton';
@@ -398,6 +399,7 @@ export default function OrderDetailsView({ id }) {
                 />
               </div>
             )}
+
           </Stack>
         </Grid>
 
@@ -407,6 +409,8 @@ export default function OrderDetailsView({ id }) {
               customer={currentOrder?.customer}
               shippingAddress={currentOrder?.address}
             />
+
+            <OrderTrackingAnalytics trackingAnalytics={currentOrder?.tracking_analytics} />
 
             <OrderDetailsHistory currentOrder={currentOrder} />
           </Stack>
