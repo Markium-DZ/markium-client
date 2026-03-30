@@ -6,3 +6,4 @@ export { default as EmptyStateOrders } from './empty-state-orders';
 export { default as WaitingForOrders } from './waiting-for-orders';
 export { default as GradeBMetrics } from './grade-b-metrics';
 export { default as YouTubeEmbed } from './youtube-embed';
+export { default as PixelSetupPrompt } from './pixel-setup-prompt';
