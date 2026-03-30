@@ -19,6 +19,7 @@ import { fCurrency } from 'src/utils/format-number';
 import Label from 'src/components/label';
 import Iconify from 'src/components/iconify';
 import { useSnackbar } from 'src/components/snackbar';
+import VerificationGate from 'src/components/verification-gate/verification-gate';
 
 import {
   useGetAvailableAddOns,
@@ -106,13 +107,15 @@ export default function SubscriptionAddons() {
                         </Typography>
                       )}
                     </Stack>
-                    <Button
-                      size="small"
-                      color="error"
-                      onClick={() => setCancelTarget(addon)}
-                    >
-                      {t('addons_cancel')}
-                    </Button>
+                    <VerificationGate>
+                      <Button
+                        size="small"
+                        color="error"
+                        onClick={() => setCancelTarget(addon)}
+                      >
+                        {t('addons_cancel')}
+                      </Button>
+                    </VerificationGate>
                   </Stack>
                 ))}
               </Stack>
@@ -159,18 +162,20 @@ export default function SubscriptionAddons() {
                         {addon.currency || 'DZD'}
                       </Typography>
                     </Stack>
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      onClick={() => handlePurchase(addon)}
-                      disabled={purchaseLoading === addon.slug}
-                    >
-                      {purchaseLoading === addon.slug ? (
-                        <CircularProgress size={18} />
-                      ) : (
-                        t('addons_purchase')
-                      )}
-                    </Button>
+                    <VerificationGate>
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        onClick={() => handlePurchase(addon)}
+                        disabled={purchaseLoading === addon.slug}
+                      >
+                        {purchaseLoading === addon.slug ? (
+                          <CircularProgress size={18} />
+                        ) : (
+                          t('addons_purchase')
+                        )}
+                      </Button>
+                    </VerificationGate>
                   </Stack>
                 ))}
               </Box>

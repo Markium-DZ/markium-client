@@ -34,6 +34,7 @@ import showError from 'src/utils/show_error';
 import { LoadingScreen } from 'src/components/loading-screen';
 import Lightbox, { useLightBox } from 'src/components/lightbox';
 import { useCopyToClipboard } from 'src/hooks/use-copy-to-clipboard';
+import VerificationGate from 'src/components/verification-gate/verification-gate';
 
 // ----------------------------------------------------------------------
 
@@ -170,14 +171,16 @@ export default function MediaListView() {
       <Stack direction="row" alignItems="center" justifyContent="space-between" mb={5}>
         <Typography variant="h4">{t('media')}</Typography>
 
-        <Button
-          variant="contained"
-          startIcon={uploading ? <CircularProgress size={20} /> : <Iconify icon="eva:plus-fill" />}
-          onClick={handleUploadClick}
-          disabled={uploading}
-        >
-          {uploading ? t('uploading') : t('upload_media')}
-        </Button>
+        <VerificationGate>
+          <Button
+            variant="contained"
+            startIcon={uploading ? <CircularProgress size={20} /> : <Iconify icon="eva:plus-fill" />}
+            onClick={handleUploadClick}
+            disabled={uploading}
+          >
+            {uploading ? t('uploading') : t('upload_media')}
+          </Button>
+        </VerificationGate>
 
         <input
           ref={fileInputRef}

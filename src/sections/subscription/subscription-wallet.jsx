@@ -22,6 +22,7 @@ import { fDateTime } from 'src/utils/format-time';
 import Iconify from 'src/components/iconify';
 import Label from 'src/components/label';
 import { useSnackbar } from 'src/components/snackbar';
+import VerificationGate from 'src/components/verification-gate/verification-gate';
 
 import { useGetWalletBalance, useGetWalletTransactions, walletTopup } from 'src/api/wallet';
 
@@ -112,16 +113,18 @@ export default function SubscriptionWallet() {
                 )}
               </Stack>
 
-              <Button
-                variant="contained"
-                size="small"
-                color="warning"
-                startIcon={<Iconify icon="solar:add-circle-bold" />}
-                onClick={handleOpenTopup}
-                sx={{ flexShrink: 0 }}
-              >
-                {t('wallet_topup')}
-              </Button>
+              <VerificationGate>
+                <Button
+                  variant="contained"
+                  size="small"
+                  color="warning"
+                  startIcon={<Iconify icon="solar:add-circle-bold" />}
+                  onClick={handleOpenTopup}
+                  sx={{ flexShrink: 0 }}
+                >
+                  {t('wallet_topup')}
+                </Button>
+              </VerificationGate>
             </Stack>
 
             {/* Recent transactions */}

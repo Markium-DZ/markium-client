@@ -36,6 +36,7 @@ import ConnectionError from 'src/components/connection-error';
 import { ConfirmDialog } from 'src/components/custom-dialog';
 import { useSettingsContext } from 'src/components/settings';
 import CustomBreadcrumbs from 'src/components/custom-breadcrumbs';
+import VerificationGate from 'src/components/verification-gate/verification-gate';
 
 import ProductTableToolbar from '../product-table-toolbar';
 import ProductTableFiltersResult from '../product-table-filters-result';
@@ -276,14 +277,16 @@ export default function ProductListView() {
             { name: t('list') },
           ]}
           action={
-            <Button
-              component={RouterLink}
-              href={paths.dashboard.product.new}
-              variant="contained"
-              startIcon={<Iconify icon="mingcute:add-line" />}
-            >
-              {t('new_product')}
-            </Button>
+            <VerificationGate>
+              <Button
+                component={RouterLink}
+                href={paths.dashboard.product.new}
+                variant="contained"
+                startIcon={<Iconify icon="mingcute:add-line" />}
+              >
+                {t('new_product')}
+              </Button>
+            </VerificationGate>
           }
           sx={{
             mb: {

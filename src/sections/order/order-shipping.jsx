@@ -21,6 +21,7 @@ import { fCurrency } from 'src/utils/format-number';
 
 import Iconify from 'src/components/iconify';
 import { LoadingScreen } from 'src/components/loading-screen';
+import VerificationGate from 'src/components/verification-gate/verification-gate';
 
 // ----------------------------------------------------------------------
 
@@ -226,9 +227,11 @@ export default function OrderShipping({ quotesGroupedByProvider, loading, error,
 
         {selectedQuoteId && onShip && (
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
-            <Button variant="contained" onClick={onShip} startIcon={<Iconify icon="solar:delivery-bold" />}>
-              {t('create_shipment')}
-            </Button>
+            <VerificationGate>
+              <Button variant="contained" onClick={onShip} startIcon={<Iconify icon="solar:delivery-bold" />}>
+                {t('create_shipment')}
+              </Button>
+            </VerificationGate>
           </Box>
         )}
       </Box>

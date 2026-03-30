@@ -29,6 +29,7 @@ import FormProvider, {
 } from 'src/components/hook-form';
 import showError from 'src/utils/show_error';
 import { AuthContext } from 'src/auth/context/jwt';
+import VerificationGate from 'src/components/verification-gate/verification-gate';
 import {
   useGetPaymentProviders,
   useGetPaymentConnections,
@@ -323,14 +324,16 @@ export default function PaymentMethodsForm() {
       <Grid container spacing={3}>
         <Grid xs={12}>
           <Stack direction="row" justifyContent="flex-end" spacing={2}>
-            <LoadingButton
-              type="submit"
-              variant="contained"
-              size="large"
-              loading={isSubmitting || loading}
-            >
-              {t('save_changes')}
-            </LoadingButton>
+            <VerificationGate>
+              <LoadingButton
+                type="submit"
+                variant="contained"
+                size="large"
+                loading={isSubmitting || loading}
+              >
+                {t('save_changes')}
+              </LoadingButton>
+            </VerificationGate>
           </Stack>
         </Grid>
 

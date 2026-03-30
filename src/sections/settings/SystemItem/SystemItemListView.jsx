@@ -12,6 +12,7 @@ import Iconify from 'src/components/iconify';
 import { LoadingScreen } from 'src/components/loading-screen';
 import { RouterLink } from 'src/routes/components';
 import { paths } from 'src/routes/paths';
+import VerificationGate from 'src/components/verification-gate/verification-gate';
 import ZaityListView from 'src/sections/ZaityTables/zaity-list-view';
 import ZaityHeadContainer from 'src/sections/ZaityTables/ZaityHeadContainer';
 import ZaityTableFilters from 'src/sections/ZaityTables/ZaityTableFilters';
@@ -132,14 +133,16 @@ export default function SystemItemListView({ collection }) {
                 heading={t(currentSystemItem?.item_settings_lable)}
                 action={
                     <PermissionsContext action={"create." + collection?.type} >
-                        <Button
-                            component={RouterLink}
-                            href={currentSystemItem?.href}
-                            variant="contained"
-                            startIcon={<Iconify icon="mingcute:add-line" />}
-                        >
-                            {t(currentSystemItem?.add_new_item_lable)}
-                        </Button>
+                        <VerificationGate>
+                            <Button
+                                component={RouterLink}
+                                href={currentSystemItem?.href}
+                                variant="contained"
+                                startIcon={<Iconify icon="mingcute:add-line" />}
+                            >
+                                {t(currentSystemItem?.add_new_item_lable)}
+                            </Button>
+                        </VerificationGate>
                     </PermissionsContext>
                 }
                 links={[

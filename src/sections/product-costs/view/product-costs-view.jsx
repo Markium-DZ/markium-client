@@ -25,6 +25,7 @@ import EmptyContent from 'src/components/empty-content';
 import { ConfirmDialog } from 'src/components/custom-dialog';
 import { useTable, TableHeadCustom, TablePaginationCustom } from 'src/components/table';
 import { LoadingScreen } from 'src/components/loading-screen';
+import VerificationGate from 'src/components/verification-gate/verification-gate';
 
 import CostFormDialog from '../cost-form-dialog';
 import CostRow, { COST_TABLE_HEAD } from '../cost-row';
@@ -100,13 +101,15 @@ export default function ProductCostsView({ id }) {
           { name: t('costs') },
         ]}
         action={
-          <Button
-            variant="contained"
-            startIcon={<Iconify icon="mingcute:add-line" />}
-            onClick={handleAdd}
-          >
-            {t('add_cost')}
-          </Button>
+          <VerificationGate>
+            <Button
+              variant="contained"
+              startIcon={<Iconify icon="mingcute:add-line" />}
+              onClick={handleAdd}
+            >
+              {t('add_cost')}
+            </Button>
+          </VerificationGate>
         }
         sx={{ mb: { xs: 3, md: 5 } }}
       />
@@ -117,14 +120,16 @@ export default function ProductCostsView({ id }) {
           title={t('no_costs_yet')}
           description={t('no_costs_description')}
           action={
-            <Button
-              variant="contained"
-              startIcon={<Iconify icon="mingcute:add-line" />}
-              onClick={handleAdd}
-              sx={{ mt: 2 }}
-            >
-              {t('add_cost')}
-            </Button>
+            <VerificationGate>
+              <Button
+                variant="contained"
+                startIcon={<Iconify icon="mingcute:add-line" />}
+                onClick={handleAdd}
+                sx={{ mt: 2 }}
+              >
+                {t('add_cost')}
+              </Button>
+            </VerificationGate>
           }
           sx={{ py: 10 }}
         />

@@ -5,6 +5,7 @@ import { t } from 'i18next';
 import { enqueueSnackbar } from 'notistack';
 import CustomPopover, { usePopover } from 'src/components/custom-popover';
 import Iconify from 'src/components/iconify';
+import VerificationGate from 'src/components/verification-gate/verification-gate';
 import showError from 'src/utils/show_error';
 
 // ----------------------------------------------------------------------
@@ -140,15 +141,17 @@ export default function ExportOrdersButton({ orders }) {
 
     return (
         <>
-            <LoadingButton
-                variant="contained"
-                loading={exporting}
-                onClick={exportPopover.onOpen}
-                startIcon={<Iconify icon="solar:download-bold" />}
-                endIcon={<Iconify icon="eva:arrow-ios-downward-fill" />}
-            >
-                {t("export_orders")}
-            </LoadingButton>
+            <VerificationGate>
+                <LoadingButton
+                    variant="contained"
+                    loading={exporting}
+                    onClick={exportPopover.onOpen}
+                    startIcon={<Iconify icon="solar:download-bold" />}
+                    endIcon={<Iconify icon="eva:arrow-ios-downward-fill" />}
+                >
+                    {t("export_orders")}
+                </LoadingButton>
+            </VerificationGate>
 
             <CustomPopover
                 open={exportPopover.open}

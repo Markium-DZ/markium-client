@@ -25,6 +25,7 @@ import { fCurrency } from 'src/utils/format-number';
 import { fDateTime } from 'src/utils/format-time';
 import { RouterLink } from 'src/routes/components';
 import { useRouter } from 'src/routes/hooks';
+import VerificationGate from 'src/components/verification-gate/verification-gate';
 
 // ----------------------------------------------------------------------
 
@@ -307,13 +308,15 @@ export default function InventoryDetailsView() {
                       {t('adjust_inventory_description')}
                     </Typography>
                   </Box>
-                  <Button
-                    variant="contained"
-                    startIcon={<Iconify icon="solar:slider-vertical-bold" />}
-                    onClick={() => setAdjustmentDialogOpen(true)}
-                  >
-                    {t('adjust')}
-                  </Button>
+                  <VerificationGate>
+                    <Button
+                      variant="contained"
+                      startIcon={<Iconify icon="solar:slider-vertical-bold" />}
+                      onClick={() => setAdjustmentDialogOpen(true)}
+                    >
+                      {t('adjust')}
+                    </Button>
+                  </VerificationGate>
                 </Stack>
               </Box>
             </Card>

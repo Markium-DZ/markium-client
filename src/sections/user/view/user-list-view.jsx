@@ -28,6 +28,7 @@ import { useSnackbar } from 'src/components/snackbar';
 import { ConfirmDialog } from 'src/components/custom-dialog';
 import { useSettingsContext } from 'src/components/settings';
 import CustomBreadcrumbs from 'src/components/custom-breadcrumbs';
+import VerificationGate from 'src/components/verification-gate/verification-gate';
 import {
   useTable,
   emptyRows,
@@ -155,14 +156,16 @@ export default function UserListView() {
           heading={t('userList')}
           links={[{ name: t('dashboard'), href: paths.dashboard.root }, { name: t('userList') }]}
           action={
-            <Button
-              component={RouterLink}
-              href={paths.dashboard.user.new}
-              variant="contained"
-              startIcon={<Iconify icon="mingcute:add-line" />}
-            >
-              {t('addNewUser')}
-            </Button>
+            <VerificationGate>
+              <Button
+                component={RouterLink}
+                href={paths.dashboard.user.new}
+                variant="contained"
+                startIcon={<Iconify icon="mingcute:add-line" />}
+              >
+                {t('addNewUser')}
+              </Button>
+            </VerificationGate>
           }
           sx={{
             mb: { xs: 3, md: 5 },
