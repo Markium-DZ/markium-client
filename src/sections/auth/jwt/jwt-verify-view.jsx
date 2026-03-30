@@ -25,7 +25,7 @@ const COUNTDOWN_DURATION = 60000; // 60 seconds
 
 // ----------------------------------------------------------------------
 
-export default function OtpVerifyModal({ open, onClose }) {
+export default function OtpVerifyModal({ open, onClose, showValueProp = false }) {
   const { user, refreshUser } = useAuthContext();
   const { t } = useTranslation();
 
@@ -35,7 +35,6 @@ export default function OtpVerifyModal({ open, onClose }) {
   const [errorMsg, setErrorMsg] = useState('');
   const [countdown, setCountdown] = useState(0);
   const [initialSendDone, setInitialSendDone] = useState(false);
-  const [confirmingClose, setConfirmingClose] = useState(false);
 
   // Restore countdown from localStorage on mount
   useEffect(() => {
@@ -76,13 +75,6 @@ export default function OtpVerifyModal({ open, onClose }) {
 
     return () => clearInterval(timer);
   }, [countdown]);
-
-  // Auto-revert close confirmation after 3 seconds
-  useEffect(() => {
-    if (!confirmingClose) return undefined;
-    const timer = setTimeout(() => setConfirmingClose(false), 3000);
-    return () => clearTimeout(timer);
-  }, [confirmingClose]);
 
   const sendOtp = useCallback(async () => {
     setSendingOtp(true);
@@ -134,22 +126,6 @@ export default function OtpVerifyModal({ open, onClose }) {
     sendOtp();
   }, [sendOtp]);
 
-  const handleClose = useCallback(() => {
-    // If OTP field is empty, close immediately
-    if (!otpValue || otpValue.length === 0) {
-      onClose?.();
-      return;
-    }
-    // If digits are partially entered, require two-tap confirmation
-    if (!confirmingClose) {
-      setConfirmingClose(true);
-      return;
-    }
-    // Second tap — actually close
-    setConfirmingClose(false);
-    onClose?.();
-  }, [otpValue, confirmingClose, onClose]);
-
   return (
     <Dialog
       open={open}
@@ -168,39 +144,20 @@ export default function OtpVerifyModal({ open, onClose }) {
         {/* Close button — hidden during loading to prevent interrupting verification */}
         {onClose && !loading && (
           <Box sx={{ position: 'absolute', top: 10, left: 10, zIndex: 1 }}>
-            {confirmingClose ? (
-              <Stack direction="row" alignItems="center" spacing={0.5}>
-                <Typography
-                  variant="caption"
-                  sx={{ color: 'warning.main', fontWeight: 600, whiteSpace: 'nowrap' }}
-                >
-                  {t('otp_discard_code')}
-                </Typography>
-                <Link
-                  component="button"
-                  variant="caption"
-                  onClick={() => { setConfirmingClose(false); onClose?.(); }}
-                  sx={{ color: 'error.main', fontWeight: 700 }}
-                >
-                  {t('yes')}
-                </Link>
-              </Stack>
-            ) : (
-              <IconButton
-                onClick={handleClose}
-                aria-label={t('go_back')}
-                size="small"
-                sx={{
-                  color: 'text.disabled',
-                  '&:hover': {
-                    color: 'text.secondary',
-                    bgcolor: 'action.hover',
-                  },
-                }}
-              >
-                <Iconify icon="eva:arrow-back-fill" width={20} />
-              </IconButton>
-            )}
+            <IconButton
+              onClick={() => onClose()}
+              aria-label={t('go_back')}
+              size="small"
+              sx={{
+                color: 'text.disabled',
+                '&:hover': {
+                  color: 'text.secondary',
+                  bgcolor: 'action.hover',
+                },
+              }}
+            >
+              <Iconify icon="eva:arrow-back-fill" width={20} />
+            </IconButton>
           </Box>
         )}
 
@@ -232,6 +189,14 @@ export default function OtpVerifyModal({ open, onClose }) {
               <Typography variant="subtitle2" sx={{ direction: 'ltr' }}>
                 {user.phone}
               </Typography>
+            )}
+
+            {showValueProp && (
+              <Stack spacing={0.5} sx={{ px: 1 }}>
+                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                  {t('verification_gate_description')}
+                </Typography>
+              </Stack>
             )}
           </Stack>
 
@@ -298,6 +263,18 @@ export default function OtpVerifyModal({ open, onClose }) {
               </Link>
             )}
           </Box>
+
+          {onClose && (
+            <Link
+              component="button"
+              type="button"
+              variant="body2"
+              onClick={() => onClose()}
+              sx={{ color: 'text.secondary', cursor: 'pointer' }}
+            >
+              {t('verify_later')}
+            </Link>
+          )}
         </Stack>
       </DialogContent>
     </Dialog>
@@ -307,4 +284,5 @@ export default function OtpVerifyModal({ open, onClose }) {
 OtpVerifyModal.propTypes = {
   open: PropTypes.bool.isRequired,
   onClose: PropTypes.func,
+  showValueProp: PropTypes.bool,
 };
