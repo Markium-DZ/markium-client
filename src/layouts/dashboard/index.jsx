@@ -17,6 +17,7 @@ import NavMini from './nav-mini';
 import NavVertical from './nav-vertical';
 import NavHorizontal from './nav-horizontal';
 import BottomNav from './bottom-nav';
+import VerificationBanner from 'src/components/verification-banner/verification-banner';
 
 // ----------------------------------------------------------------------
 
@@ -45,6 +46,7 @@ export default function DashboardLayout({ children }) {
 
         {lgUp ? renderHorizontal : renderNavVertical}
 
+        <VerificationBanner />
         <Main>{children}</Main>
         <PushPermissionPrompt />
         <InstallPrompt />
@@ -68,7 +70,10 @@ export default function DashboardLayout({ children }) {
         >
           {lgUp ? renderNavMini : renderNavVertical}
 
-          <Main>{children}</Main>
+          <Main>
+            <VerificationBanner />
+            {children}
+          </Main>
         </Box>
         <PushPermissionPrompt />
         <InstallPrompt />
@@ -91,7 +96,10 @@ export default function DashboardLayout({ children }) {
       >
         {renderNavVertical}
 
-        <Main>{children}</Main>
+        <Main>
+          <VerificationBanner />
+          {children}
+        </Main>
       </Box>
       <PushPermissionPrompt />
       <InstallPrompt />
