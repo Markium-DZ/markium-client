@@ -106,8 +106,7 @@ export default function OtpVerifyModal({ open, onClose, showValueProp = false })
       // Refresh user so guards re-evaluate and redirect
       await refreshUser();
     } catch (error) {
-      const message = error.error?.message || error.message || t('otp_verify_failed');
-      setErrorMsg(message);
+      setErrorMsg(t('otp_verify_failed'));
       setOtpValue('');
     } finally {
       setLoading(false);
