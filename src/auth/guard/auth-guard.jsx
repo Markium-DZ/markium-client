@@ -5,7 +5,6 @@ import { paths } from 'src/routes/paths';
 import { useRouter } from 'src/routes/hooks';
 
 import { SplashScreen } from 'src/components/loading-screen';
-import { OtpVerifyModal } from 'src/sections/auth/jwt';
 
 import { useAuthContext } from '../hooks';
 
@@ -36,7 +35,7 @@ AuthGuard.propTypes = {
 function Container({ children }) {
   const router = useRouter();
 
-  const { authenticated, method, user, logout } = useAuthContext();
+  const { authenticated, method, user } = useAuthContext();
 
   const [checked, setChecked] = useState(false);
 
@@ -50,13 +49,7 @@ function Container({ children }) {
       return;
     }
 
-    // Phone not verified -> show OTP modal (handled in render)
-    if (!user?.is_phone_verified) {
-      setChecked(true);
-      return;
-    }
-
-    // Store not set up -> onboarding wizard
+    // Store not set up -> onboarding wizard (works for both verified and unverified users)
     if (!user?.has_store || !user?.store_setup_complete) {
       router.replace(paths.onboarding.storeSetup);
       return;
@@ -65,22 +58,12 @@ function Container({ children }) {
     setChecked(true);
   }, [authenticated, method, user, router]);
 
-  const handleOtpClose = useCallback(async () => {
-    await logout();
-    router.replace(loginPaths[method]);
-  }, [logout, router, method]);
-
   useEffect(() => {
     check();
   }, [check]);
 
   if (!checked) {
     return null;
-  }
-
-  // Show OTP modal if phone not verified
-  if (authenticated && !user?.is_phone_verified) {
-    return <OtpVerifyModal open onClose={handleOtpClose} />;
   }
 
   return <>{children}</>;

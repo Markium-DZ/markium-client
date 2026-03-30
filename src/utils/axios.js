@@ -30,6 +30,12 @@ axiosInstance.interceptors.response.use(
       window.location.href = '/auth/jwt/login';
     }
 
+    // Handle 403 PHONE_NOT_VERIFIED — emit event for UI to show OTP modal
+    if (error.response?.status === 403 && error.response?.data?.error?.code === 'PHONE_NOT_VERIFIED') {
+      window.dispatchEvent(new CustomEvent('phone-not-verified'));
+      return Promise.reject(error.response.data);
+    }
+
     // Handle 422 validation errors explicitly
     if (error.response?.status === 422) {
       const errorData = error.response?.data || {

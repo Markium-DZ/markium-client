@@ -7,7 +7,6 @@ import { useRouter, useSearchParams } from 'src/routes/hooks';
 import { PATH_AFTER_LOGIN } from 'src/config-global';
 
 import { SplashScreen } from 'src/components/loading-screen';
-import { OtpVerifyModal } from 'src/sections/auth/jwt';
 
 import { useAuthContext } from '../hooks';
 
@@ -32,16 +31,11 @@ function Container({ children }) {
 
   const returnTo = searchParams.get('returnTo');
 
-  const { authenticated, user, logout } = useAuthContext();
+  const { authenticated, user } = useAuthContext();
 
   const check = useCallback(() => {
     if (authenticated) {
-      // Phone not verified -> stay on current page, OTP modal will overlay
-      if (!user?.is_phone_verified) {
-        return;
-      }
-
-      // Phone verified but no store -> onboarding wizard
+      // No store -> onboarding wizard (works for both verified and unverified users)
       if (!user?.has_store || !user?.store_setup_complete) {
         router.replace(paths.onboarding.storeSetup);
         return;
@@ -54,21 +48,6 @@ function Container({ children }) {
   useEffect(() => {
     check();
   }, [check]);
-
-  const handleOtpClose = useCallback(async () => {
-    await logout();
-    router.replace(paths.auth.jwt.login);
-  }, [logout, router]);
-
-  // Show OTP modal over the current page if authenticated but phone not verified
-  if (authenticated && !user?.is_phone_verified) {
-    return (
-      <>
-        {children}
-        <OtpVerifyModal open onClose={handleOtpClose} />
-      </>
-    );
-  }
 
   return <>{children}</>;
 }

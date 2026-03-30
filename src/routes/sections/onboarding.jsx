@@ -1,6 +1,6 @@
 import { lazy, Suspense } from 'react';
 
-import { PhoneVerifiedGuard } from 'src/auth/guard';
+import { AuthGuard } from 'src/auth/guard';
 import AuthMinimalLayout from 'src/layouts/auth/minimal';
 
 import { SplashScreen } from 'src/components/loading-screen';
@@ -19,11 +19,11 @@ export const onboardingRoutes = [
         path: 'store-setup',
         element: (
           <Suspense fallback={<SplashScreen />}>
-            <PhoneVerifiedGuard>
+            <AuthGuard>
               <AuthMinimalLayout maxWidth={960}>
                 <StoreSetupPage />
               </AuthMinimalLayout>
-            </PhoneVerifiedGuard>
+            </AuthGuard>
           </Suspense>
         ),
       },
