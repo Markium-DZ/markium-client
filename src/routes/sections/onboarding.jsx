@@ -5,6 +5,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { paths } from 'src/routes/paths';
 import { useRouter } from 'src/routes/hooks';
 
+import { PATH_AFTER_LOGIN } from 'src/config-global';
 import { useAuthContext } from 'src/auth/hooks';
 import { SplashScreen } from 'src/components/loading-screen';
 
@@ -35,7 +36,7 @@ OnboardingGuard.propTypes = {
 
 function OnboardingGuardContainer({ children }) {
   const router = useRouter();
-  const { authenticated } = useAuthContext();
+  const { authenticated, user } = useAuthContext();
   const [checked, setChecked] = useState(false);
 
   const check = useCallback(() => {
@@ -45,8 +46,15 @@ function OnboardingGuardContainer({ children }) {
       router.replace(`${paths.auth.jwt.login}?${searchParams}`);
       return;
     }
+
+    // Store setup already complete -> redirect to dashboard
+    if (user?.has_store && user?.store_setup_complete) {
+      router.replace(PATH_AFTER_LOGIN);
+      return;
+    }
+
     setChecked(true);
-  }, [authenticated, router]);
+  }, [authenticated, user, router]);
 
   useEffect(() => {
     check();
