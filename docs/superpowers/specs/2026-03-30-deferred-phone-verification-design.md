@@ -118,17 +118,32 @@ The existing checks remain:
 - No store / store setup incomplete → redirect to `/onboarding/store-setup`
 - Phone not verified → proceed to dashboard (NEW)
 
-### 2. Onboarding Route (`src/routes/sections/onboarding.jsx`)
+### 2. Guest Guard Changes (`src/auth/guard/guest-guard.jsx`)
+
+The guest guard (used on login/register pages) also checks `is_phone_verified` and renders an `OtpVerifyModal` overlay for authenticated-but-unverified users.
+
+**Current behavior (lines 38-71):**
+- If authenticated and phone not verified → stays on login page, renders OTP modal overlay
+- If authenticated and phone verified but no store → redirects to onboarding
+- If authenticated and fully set up → redirects to dashboard
+
+**New behavior:**
+- If authenticated and phone not verified → redirect to onboarding (store setup) or dashboard, same as a verified user. No OTP modal.
+- Remove the `OtpVerifyModal` import and rendering logic (lines 64-71)
+- Remove the `handleOtpClose` callback (lines 58-61)
+- In `check()`, remove the early return for unverified users (lines 40-42) — let them fall through to the store/dashboard redirect logic
+
+### 3. Onboarding Route (`src/routes/sections/onboarding.jsx`)
 
 Remove `PhoneVerifiedGuard` wrapper from the store setup route. Users can complete store setup without verifying their phone first.
 
-### 3. PhoneVerifiedGuard Removal (`src/auth/guard/phone-verified-guard.jsx`)
+### 4. PhoneVerifiedGuard Removal (`src/auth/guard/phone-verified-guard.jsx`)
 
 Delete this guard. It is no longer used anywhere after the onboarding route change.
 
 Remove its export from `src/auth/guard/index.js`.
 
-### 4. VerificationBanner (New Component)
+### 5. VerificationBanner (New Component)
 
 **Location:** `src/components/verification-banner/verification-banner.jsx`
 
@@ -148,7 +163,7 @@ Remove its export from `src/auth/guard/index.js`.
 
 **Styling:** MUI `Alert` component with `severity="info"` or a custom styled `Box` with the primary color palette. Includes a close (dismiss) icon button on the right.
 
-### 5. VerificationGate (New Component)
+### 6. VerificationGate (New Component)
 
 **Location:** `src/components/verification-gate/verification-gate.jsx`
 
@@ -172,7 +187,7 @@ Remove its export from `src/auth/guard/index.js`.
 - "Later" button to dismiss without verifying
 - On successful verification: closes modal, then executes the original click action
 
-### 6. OtpVerifyModal Updates (`src/sections/auth/jwt/jwt-verify-view.jsx`)
+### 7. OtpVerifyModal Updates (`src/sections/auth/jwt/jwt-verify-view.jsx`)
 
 Minimal changes to the existing modal:
 
@@ -182,7 +197,7 @@ Minimal changes to the existing modal:
   - The forced-logout-on-close behavior is removed entirely (no longer needed since verification doesn't block app entry)
 - Add optional `showValueProp` prop — when true, displays the value proposition text above the OTP input (used by `VerificationGate`)
 
-### 7. Write-Action Entry Points to Gate
+### 8. Write-Action Entry Points to Gate
 
 All write-action entry point buttons must be wrapped with `VerificationGate`:
 
@@ -195,7 +210,7 @@ All write-action entry point buttons must be wrapped with `VerificationGate`:
 
 The gate wraps the button that **starts** the flow (e.g., "Add Product"), NOT the save button inside a form.
 
-### 8. Translation Keys
+### 9. Translation Keys
 
 New keys in `ar.json`, `en.json`, `fr.json`:
 
@@ -269,6 +284,31 @@ All entry points that must be wrapped with `VerificationGate` on the frontend (b
 - Subscribe free, checkout, wallet topup
 
 **Total: ~35-40 entry points across the dashboard.**
+
+## Deployment Sequence
+
+Backend and frontend changes have a strict ordering dependency. Deploying frontend changes before backend changes will break the registration flow — unverified users will be let through by the frontend but hit 403 errors from the backend on store setup and read endpoints.
+
+### Order
+
+1. **Backend: Remove `phone-verified` from Tier 2** (store setup + categories routes)
+   - Deploy to staging, test that unverified users can complete store setup
+2. **Backend: Split Tier 3 into read/write groups**
+   - Move all GET routes to `auth:api` + `store-setup` (no `phone-verified`)
+   - Keep all POST/PUT/PATCH/DELETE routes with `phone-verified`
+   - Deploy to staging, test that unverified users can browse dashboard data
+3. **Frontend: Deploy all changes together**
+   - Auth guard, guest guard, PhoneVerifiedGuard removal
+   - VerificationBanner, VerificationGate, OtpVerifyModal updates
+   - Axios interceptor for 403 PHONE_NOT_VERIFIED fallback
+4. **End-to-end test on staging**
+   - Register new user → complete store setup → browse dashboard (read-only) → attempt write action → verify phone → full access
+
+### Rollback
+
+- Frontend rollback is safe — reverting to the old guards will re-enable OTP blocking, which works with both old and new backend
+- Backend rollback (re-adding `phone-verified` to reads) is also safe if frontend is still on old version
+- If only backend is rolled back while frontend is on new version: the axios interceptor catches 403 PHONE_NOT_VERIFIED and shows OTP modal, so users won't see raw errors
 
 ## Out of Scope (Phase 2)
 
