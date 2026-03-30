@@ -7,10 +7,9 @@ import { OtpVerifyModal } from 'src/sections/auth/jwt';
 // ----------------------------------------------------------------------
 
 export default function VerificationGate({ children }) {
-  const { user, refreshUser } = useAuthContext();
+  const { user } = useAuthContext();
 
   const [otpOpen, setOtpOpen] = useState(false);
-  const [pendingAction, setPendingAction] = useState(null);
 
   const handleClick = useCallback(
     (originalOnClick) => (event) => {
@@ -19,8 +18,8 @@ export default function VerificationGate({ children }) {
         return;
       }
 
-      // Store the original action to execute after verification
-      setPendingAction(() => () => originalOnClick?.(event));
+      event.preventDefault();
+      event.stopPropagation();
       setOtpOpen(true);
     },
     [user?.is_phone_verified]
@@ -28,7 +27,6 @@ export default function VerificationGate({ children }) {
 
   const handleOtpClose = useCallback(() => {
     setOtpOpen(false);
-    setPendingAction(null);
   }, []);
 
   // If user is verified, render children as-is

@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 
 import Box from '@mui/material/Box';
 import Alert from '@mui/material/Alert';
@@ -26,6 +26,13 @@ export default function VerificationBanner() {
   );
   const [otpOpen, setOtpOpen] = useState(false);
 
+  // Listen for backend 403 PHONE_NOT_VERIFIED events (defense in depth)
+  useEffect(() => {
+    const handler = () => setOtpOpen(true);
+    window.addEventListener('phone-not-verified', handler);
+    return () => window.removeEventListener('phone-not-verified', handler);
+  }, []);
+
   const handleDismiss = useCallback(() => {
     setDismissed(true);
     sessionStorage.setItem(DISMISSED_KEY, 'true');
@@ -40,6 +47,7 @@ export default function VerificationBanner() {
   }, []);
 
   // Don't render if user is verified or banner was dismissed this session
+  // (placed after all hooks to avoid conditional hook calls)
   if (user?.is_phone_verified || dismissed) {
     return null;
   }

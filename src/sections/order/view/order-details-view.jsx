@@ -39,6 +39,8 @@ import EmptyContent from 'src/components/empty-content';
 import { getOrderStatus, getOrderStatusColor } from 'src/constants/order-status';
 import { fToNow } from 'src/utils/format-time';
 
+import VerificationGate from 'src/components/verification-gate/verification-gate';
+
 import OrderDetailsInfo from '../order-details-info';
 import OrderDetailsItems from '../order-details-item';
 import OrderDetailsToolbar from '../order-details-toolbar';
@@ -453,13 +455,15 @@ export default function OrderDetailsView({ id }) {
           <Button onClick={handleCancelStatusChange} color="inherit">
             {t('cancel')}
           </Button>
-          <Button
-            onClick={handleConfirmStatusChange}
-            variant="contained"
-            color={confirmDialog.newStatus === 'cancelled' ? 'error' : 'primary'}
-          >
-            {t('confirm')}
-          </Button>
+          <VerificationGate>
+            <Button
+              onClick={handleConfirmStatusChange}
+              variant="contained"
+              color={confirmDialog.newStatus === 'cancelled' ? 'error' : 'primary'}
+            >
+              {t('confirm')}
+            </Button>
+          </VerificationGate>
         </DialogActions>
       </Dialog>
 
@@ -535,14 +539,16 @@ export default function OrderDetailsView({ id }) {
           <Button onClick={handleCancelStopdesk} color="inherit">
             {t('cancel')}
           </Button>
-          <Button
-            onClick={handleConfirmStopdesk}
-            variant="contained"
-            disabled={!stopdeskDialog.selectedCenterId}
-            startIcon={<Iconify icon="solar:delivery-bold" />}
-          >
-            {t('ship_order')}
-          </Button>
+          <VerificationGate>
+            <Button
+              onClick={handleConfirmStopdesk}
+              variant="contained"
+              disabled={!stopdeskDialog.selectedCenterId}
+              startIcon={<Iconify icon="solar:delivery-bold" />}
+            >
+              {t('ship_order')}
+            </Button>
+          </VerificationGate>
         </DialogActions>
       </Dialog>
     </Container>

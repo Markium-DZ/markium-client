@@ -27,6 +27,8 @@ import { useBoolean } from 'src/hooks/use-boolean';
 import { ConfirmDialog } from 'src/components/custom-dialog';
 import LoadingButton from '@mui/lab/LoadingButton';
 
+import VerificationGate from 'src/components/verification-gate/verification-gate';
+
 import { ProductDetailsSkeleton } from '../product-skeleton';
 import ProductDetailsSummary from '../product-details-summary';
 import ProductDetailsToolbar from '../product-details-toolbar';
@@ -236,14 +238,16 @@ export default function ProductDetailsView({ id }) {
         title={t('publish_product')}
         content={t('are_you_sure_you_want_to_publish_this_product')}
         action={
-          <LoadingButton
-            variant="contained"
-            color="success"
-            loading={publishLoading}
-            onClick={handleConfirmPublish}
-          >
-            {t('publish')}
-          </LoadingButton>
+          <VerificationGate>
+            <LoadingButton
+              variant="contained"
+              color="success"
+              loading={publishLoading}
+              onClick={handleConfirmPublish}
+            >
+              {t('publish')}
+            </LoadingButton>
+          </VerificationGate>
         }
       />
     </>
