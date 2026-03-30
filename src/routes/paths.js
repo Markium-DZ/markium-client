@@ -162,6 +162,7 @@ export const paths = {
       marketing_pixels: `${ROOTS.DASHBOARD}/settings/marketing-pixels`,
       session_replay: `${ROOTS.DASHBOARD}/settings/session-replay`,
       delivery_companies: `${ROOTS.DASHBOARD}/settings/delivery-companies`,
+      cod: `${ROOTS.DASHBOARD}/settings/cod`,
       contacts_social: `${ROOTS.DASHBOARD}/settings/contacts-social`,
       color_palette: `${ROOTS.DASHBOARD}/settings/color-palette`,
       store_language: `${ROOTS.DASHBOARD}/settings/store-language`,
