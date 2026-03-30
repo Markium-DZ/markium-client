@@ -12,13 +12,99 @@ Move phone verification from a registration blocker to a post-registration gate 
 
 ## Design Decisions
 
-- **Approach:** Guard-based (frontend-driven, leveraging existing `is_phone_verified` flag)
-- **Access model:** Unverified = read-only; Verified = full free tier (read/write)
-- **Onboarding:** Store setup remains open to unverified users (part of exploration)
+- **Approach:** Guard-based (frontend + backend, leveraging existing `is_phone_verified` flag)
+- **Access model:** Unverified = read-only + store setup; Verified = full free tier (read/write)
+- **Onboarding:** Store setup is the only write action open to unverified users (intentional exception — users must not get stuck immediately after registration)
 - **Interception point:** Entry-point level (before the user sees a form, not after they fill one out)
 - **Phasing:** SMS only for now; WhatsApp/Telegram fallback channels deferred to Phase 2
+- **Defense in depth:** Both frontend (VerificationGate) and backend (`phone-verified` middleware) enforce write restrictions
 
-## Components
+## Backend Changes (`markium-be/routes/api.php`)
+
+The current backend has 3 tiers of middleware. All Tier 2 and Tier 3 routes require `phone-verified`, which blocks unverified users from even reading data. This must change.
+
+### Current Structure
+
+| Tier | Middleware | Routes |
+|------|-----------|--------|
+| 1 | `auth:api` | OTP, logout, `/auth/me` |
+| 2 | `auth:api` + `phone-verified` | Store setup, categories |
+| 3 | `auth:api` + `phone-verified` + `store-setup` | Everything else (products, orders, analytics, etc.) |
+
+### New Structure
+
+| Tier | Middleware | Routes |
+|------|-----------|--------|
+| 1 | `auth:api` | OTP, logout, `/auth/me` (unchanged) |
+| 2 | `auth:api` | Store setup wizard + categories (remove `phone-verified`) |
+| 3-read | `auth:api` + `store-setup` | All GET endpoints (remove `phone-verified`) |
+| 3-write | `auth:api` + `phone-verified` + `store-setup` | All POST/PUT/PATCH/DELETE endpoints (unchanged) |
+
+### Specific Route Changes
+
+**Tier 2 — Remove `phone-verified`:**
+- `POST /store/setup/basics` — intentional exception (onboarding)
+- `PATCH /store/setup/branding` — intentional exception (onboarding)
+- `PATCH /store/setup/categories` — intentional exception (onboarding)
+- `GET /store/setup/status` — read, should be open
+- `GET /categories` — read, needed for onboarding wizard
+
+**Tier 3 — Split by HTTP method:**
+
+Read routes (remove `phone-verified`, keep `store-setup`):
+- `GET /orders`, `GET /orders/{order}`
+- `GET /products`
+- `GET /inventory`, `GET /inventory/low-stock`, `GET /inventory/{id}`, `GET /inventory/{id}/transactions`
+- `GET /categories/list`, `GET /categories/{category}`
+- `GET /media`, `GET /media/{media}`
+- `GET /analytics/*` (all analytics GET routes)
+- `GET /conversion-tracking`
+- `GET /shipping/providers`, `GET /shipping/connections`, `GET /shipping/connections/{connection}`
+- `GET /shipping/orders/{order}/rates/*`, `GET /shipments/*`
+- `GET /subscriptions/*` (packages, current, usage, etc.)
+- `GET /wallet/balance`, `GET /wallet/transactions`
+- `GET /add-ons`, `GET /add-ons/active`
+- `GET /notifications/preferences`
+- `GET /products/{product}/costs`
+
+Write routes (keep `phone-verified` + `store-setup`):
+- All `POST`, `PUT`, `PATCH`, `DELETE` routes in Tier 3
+
+### Implementation Approach
+
+Rather than moving individual routes, restructure the Tier 3 group into two sub-groups:
+
+```php
+// Tier 3a: Read-only (no phone verification required)
+Route::middleware(['auth:api', 'store-setup'])->group(function () {
+    Route::get('orders', [OrderController::class, 'listAll']);
+    Route::get('orders/{order}', [OrderController::class, 'show']);
+    Route::get('products', [ProductController::class, 'index']);
+    // ... all other GET routes
+});
+
+// Tier 3b: Write operations (phone verification required)
+Route::middleware(['auth:api', 'phone-verified', 'store-setup'])->group(function () {
+    Route::patch('orders/{order}', [OrderController::class, 'update']);
+    Route::post('products', [ProductController::class, 'store']);
+    // ... all other POST/PUT/PATCH/DELETE routes
+});
+```
+
+### Frontend Axios Interceptor (`src/utils/axios.js`)
+
+Add a response interceptor to handle `403 PHONE_NOT_VERIFIED` errors gracefully. If an unverified user somehow reaches a write endpoint (e.g., bypassing the frontend gate), the interceptor should catch the 403 and trigger the OTP modal rather than showing a generic error.
+
+```js
+// In response error interceptor, add:
+if (error.response?.status === 403 && error.response?.data?.error?.code === 'PHONE_NOT_VERIFIED') {
+  // Emit event or call callback to show OTP modal
+}
+```
+
+This provides defense in depth — the frontend gate prevents most cases, the backend enforces as a safety net, and the interceptor handles edge cases gracefully.
+
+## Frontend Components
 
 ### 1. Auth Guard Changes (`src/auth/guard/auth-guard.jsx`)
 
@@ -142,6 +228,47 @@ Login → Dashboard (read-only, banner visible)
   → Attempt write action → VerificationGate → OTP modal
   → Verify → full free tier unlocked
 ```
+
+## Write-Action Entry Points (Enumerated)
+
+All entry points that must be wrapped with `VerificationGate` on the frontend (backend also enforces via `phone-verified` middleware):
+
+### Products (~8 actions)
+- Create Product button (navigates to `/dashboard/product/new`)
+- Edit Product button (navigates to `/dashboard/product/edit`)
+- Deploy/Publish product action
+- Delete product action
+- Upload assets action
+- Add/Update variant actions
+- Add/Update product costs
+- Restore deleted product
+
+### Orders (~2 actions)
+- Update order status
+- Delete orders (batch)
+
+### Settings (~14+ actions)
+- Store update (name, logo, template, language, etc.)
+- COD automation settings save
+- Marketing pixels (CAPI) configuration save
+- Conversion tracking update
+- Shipping provider connections (create, update, delete, set-default)
+- Notification preferences update
+
+### Categories (~4 actions)
+- Create, update, delete category
+- Select/deselect category
+
+### Media (~3 actions)
+- Upload, update, delete media
+
+### Inventory (~1 action)
+- Adjust inventory
+
+### Subscriptions & Wallet (~3 actions)
+- Subscribe free, checkout, wallet topup
+
+**Total: ~35-40 entry points across the dashboard.**
 
 ## Out of Scope (Phase 2)
 
