@@ -21,14 +21,12 @@ import { useRouter, useSearchParams } from 'src/routes/hooks';
 import { useBoolean } from 'src/hooks/use-boolean';
 
 import { useAuthContext } from 'src/auth/hooks';
-import { HOST_API, PATH_AFTER_LOGIN } from 'src/config-global';
+import { PATH_AFTER_LOGIN } from 'src/config-global';
 
 import Iconify from 'src/components/iconify';
 import FormProvider from 'src/components/hook-form/form-provider';
 import RHFTextField from 'src/components/hook-form/rhf-text-field';
 import { TurnstileWidget } from 'src/components/turnstile';
-import axios from 'axios';
-import { endpoints } from 'src/utils/axios';
 
 // ----------------------------------------------------------------------
 
@@ -114,15 +112,11 @@ export default function JwtLoginView() {
 
   const onSubmit = handleSubmit(async (data) => {
     try {
-      const response = await axios.post(HOST_API + endpoints.auth.login, {
-        ...data,
-        phone: formatPhoneWithPrefix(data.phone),
-        'cf-turnstile-response': turnstileToken,
-      });
+      const result = await login(formatPhoneWithPrefix(data.phone), data.password, turnstileToken);
 
-      if (response?.data?.success) {
-        await login(formatPhoneWithPrefix(data.phone), data.password);
-      } else {
+      if (!result?.success) {
+        turnstileRef.current?.reset();
+        setTurnstileToken(null);
         setErrorMsg(t('please_check_your_phone_and_password'));
       }
     } catch (error) {
