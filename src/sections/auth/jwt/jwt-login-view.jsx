@@ -115,6 +115,8 @@ export default function JwtLoginView() {
       const result = await login(formatPhoneWithPrefix(data.phone), data.password, turnstileToken);
 
       if (!result?.success) {
+        turnstileRef.current?.reset();
+        setTurnstileToken(null);
         setErrorMsg(t('please_check_your_phone_and_password'));
       }
     } catch (error) {

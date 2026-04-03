@@ -18,16 +18,21 @@ axiosInstance.interceptors.response.use(
       });
     }
 
-    // Check for 401 status and redirect to login
+    // Check for 401 status and redirect to login (skip for auth endpoints)
     if (error.response?.status === 401) {
-      // Clear session data
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('zaity-user-info');
-      // Clear SWR cache so next user doesn't see stale data
-      swrMutate(() => true, undefined, { revalidate: false });
+      const url = error.config?.url || '';
+      const isAuthEndpoint = url.includes('/auth/login') || url.includes('/auth/signup');
 
-      // Redirect to login
-      window.location.href = '/auth/jwt/login';
+      if (!isAuthEndpoint) {
+        // Clear session data
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('zaity-user-info');
+        // Clear SWR cache so next user doesn't see stale data
+        swrMutate(() => true, undefined, { revalidate: false });
+
+        // Redirect to login
+        window.location.href = '/auth/jwt/login';
+      }
     }
 
     // Handle 403 PHONE_NOT_VERIFIED — emit event for UI to show OTP modal
