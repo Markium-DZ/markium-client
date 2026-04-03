@@ -111,11 +111,14 @@ export function AuthProvider({ children }) {
   }, [initialize]);
 
   // LOGIN
-  const login = useCallback(async (phone, password) => {
+  const login = useCallback(async (phone, password, turnstileToken) => {
     const body = {
       phone,
       password,
     };
+    if (turnstileToken) {
+      body['cf-turnstile-response'] = turnstileToken;
+    }
     try {
       const response = await axios.post(endpoints.auth.login, body);
       const { token, client } = response.data.data;
