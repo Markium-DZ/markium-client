@@ -9,6 +9,8 @@ const options = {
   revalidateOnFocus: false,
   revalidateOnReconnect: false,
   onErrorRetry: (err, key, config, revalidate, { retryCount }) => {
+    // Don't retry on auth/subscription errors (401, 403)
+    if (err?.status === 401 || err?.status === 403) return;
     const delays = [5000, 10000, 20000, 30000];
     if (retryCount >= delays.length) return;
     setTimeout(() => revalidate({ retryCount }), delays[retryCount]);

@@ -1,6 +1,6 @@
 import { precacheAndRoute, cleanupOutdatedCaches } from 'workbox-precaching';
 import { registerRoute } from 'workbox-routing';
-import { NetworkFirst, CacheFirst, StaleWhileRevalidate } from 'workbox-strategies';
+import { NetworkFirst, NetworkOnly, CacheFirst, StaleWhileRevalidate } from 'workbox-strategies';
 import { ExpirationPlugin } from 'workbox-expiration';
 import { CacheableResponsePlugin } from 'workbox-cacheable-response';
 import { BackgroundSyncPlugin } from 'workbox-background-sync';
@@ -59,14 +59,14 @@ const bgSyncPlugin = new BackgroundSyncPlugin('offline-mutations', {
 
 registerRoute(
   ({ url }) => /^https:\/\/be(-test)?\.markium\.online\/api\/v1\//.test(url.href),
-  new NetworkFirst({ plugins: [bgSyncPlugin] }),
+  new NetworkOnly({ plugins: [bgSyncPlugin] }),
   'POST'
 );
 
 ['PUT', 'PATCH', 'DELETE'].forEach((method) => {
   registerRoute(
     ({ url }) => /^https:\/\/be(-test)?\.markium\.online\/api\/v1\//.test(url.href),
-    new NetworkFirst({ plugins: [bgSyncPlugin] }),
+    new NetworkOnly({ plugins: [bgSyncPlugin] }),
     method
   );
 });
