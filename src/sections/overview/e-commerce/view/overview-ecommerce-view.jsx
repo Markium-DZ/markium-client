@@ -20,6 +20,7 @@ import {
   useGetAnalyticsTraffic,
   useGetAnalyticsTopProducts,
   useGetAnalyticsFunnel,
+  useGetAnalyticsCapabilities,
 } from 'src/api/analytics';
 
 import { AuthContext } from 'src/auth/context/jwt';
@@ -99,6 +100,12 @@ export default function OverviewEcommerceView() {
   // Analytics state
   const [dateRange, setDateRange] = useState('-7d');
 
+  // Fetch analytics capabilities to gate data fetching by subscription
+  const { sections: analyticsSections } = useGetAnalyticsCapabilities();
+  const canAccessTraffic = analyticsSections?.traffic?.accessible ?? false;
+  const canAccessFunnel = analyticsSections?.funnel?.accessible ?? false;
+  const canAccessOverview = analyticsSections?.overview?.accessible ?? false;
+
   // Fetch analytics data for Grade B and Grade C merchants
   const shouldFetchAnalytics = isThirdGradeUser || isBGradeMerchant;
   const {
@@ -109,7 +116,7 @@ export default function OverviewEcommerceView() {
     totalVisitors,
     totalVisitorsData,
     overviewLoading,
-  } = useGetAnalyticsOverview(shouldFetchAnalytics ? dateRange : null);
+  } = useGetAnalyticsOverview(shouldFetchAnalytics && canAccessOverview ? dateRange : null);
 
   // Fetch traffic time-series (hourly for 1-day, daily otherwise)
   const trafficInterval = dateRange === '-1d' ? 'hour' : 'day';
@@ -118,14 +125,14 @@ export default function OverviewEcommerceView() {
     productViews: trafficProductViews,
     orderCompleted: trafficOrders,
     trafficLoading,
-  } = useGetAnalyticsTraffic(shouldFetchAnalytics ? dateRange : null, trafficInterval);
+  } = useGetAnalyticsTraffic(shouldFetchAnalytics && canAccessTraffic ? dateRange : null, trafficInterval);
 
-  const { topProducts, topProductsLoading } = useGetAnalyticsTopProducts(isThirdGradeUser ? dateRange : null);
+  const { topProducts, topProductsLoading } = useGetAnalyticsTopProducts(isThirdGradeUser && canAccessOverview ? dateRange : null);
 
   const {
     funnel: funnelData,
     funnelLoading,
-  } = useGetAnalyticsFunnel(isThirdGradeUser ? dateRange : null);
+  } = useGetAnalyticsFunnel(isThirdGradeUser && canAccessFunnel ? dateRange : null);
 
   // Low stock data (fetches 10 items for dashboard table + total count)
   const {
@@ -165,7 +172,7 @@ export default function OverviewEcommerceView() {
       tooltip: t('metric_tooltip_visitors'),
       value: totalVisitors || 0,
       data: totalVisitorsData?.length ? totalVisitorsData : trafficVisitors.data,
-      color: theme.palette.success.main,
+      color: theme.palette.info.main,
       icon: 'solar:users-group-rounded-bold-duotone',
     },
     {
@@ -173,7 +180,7 @@ export default function OverviewEcommerceView() {
       tooltip: t('metric_tooltip_revenue'),
       value: totalRevenue || 0,
       data: totalRevenueData,
-      color: theme.palette.info.main,
+      color: theme.palette.secondary.main,
       icon: 'solar:wallet-money-bold-duotone',
       suffix: t('currency_da'),
       span: 2,
@@ -250,7 +257,7 @@ export default function OverviewEcommerceView() {
                       component={RouterLink}
                       to={paths.dashboard.general.analytics}
                       size="small"
-                      endIcon={<Iconify icon="eva:arrow-ios-forward-fill" />}
+                      endIcon={<Iconify icon="eva:arrow-ios-forward-fill" sx={{ transform: theme.direction === 'rtl' ? 'scaleX(-1)' : 'none' }} />}
                     >
                       {t('analytics_overview')}
                     </Button>
@@ -338,7 +345,7 @@ export default function OverviewEcommerceView() {
                       component={RouterLink}
                       to={paths.dashboard.general.analytics}
                       size="small"
-                      endIcon={<Iconify icon="eva:arrow-ios-forward-fill" />}
+                      endIcon={<Iconify icon="eva:arrow-ios-forward-fill" sx={{ transform: theme.direction === 'rtl' ? 'scaleX(-1)' : 'none' }} />}
                     >
                       {t('analytics_overview')}
                     </Button>
