@@ -22,6 +22,7 @@ import RHFTextField from 'src/components/hook-form/rhf-text-field';
 import { RHFSelect } from 'src/components/hook-form';
 import { RHFUploadAvatar } from 'src/components/hook-form/rhf-upload';
 import Iconify from 'src/components/iconify';
+import { STOREFRONT_BASE_URL } from 'src/config-global';
 
 // ----------------------------------------------------------------------
 
@@ -53,7 +54,7 @@ function HintPanel({ activeField, t, storeSlugValue }) {
       title: t('hint_store_slug_title'),
       description: t('hint_store_slug_description'),
       preview: storeSlugValue
-        ? `${storeSlugValue}.markium.online`
+        ? STOREFRONT_BASE_URL.replace('{slug}', storeSlugValue).replace(/^https?:\/\//, '')
         : t('hint_store_slug_preview'),
       tip: t('hint_store_slug_tip'),
     },
@@ -251,7 +252,7 @@ export default function StoreSetupBasics({ onNext }) {
 
   const storeNameValue = watch('store_name');
   const storeSlugValue = watch('store_slug');
-  const isReservedSlug = storeSlugValue && RESERVED_SUBDOMAINS.includes(storeSlugValue.toLowerCase());
+  const isReservedSlug = !!(storeSlugValue && RESERVED_SUBDOMAINS.includes(storeSlugValue.toLowerCase()));
 
   // Auto-generate slug from store name (stops if user manually edits the slug)
   useEffect(() => {
@@ -367,7 +368,7 @@ export default function StoreSetupBasics({ onNext }) {
                       color="primary.main"
                       sx={{ display: 'block', mt: 0.5, fontWeight: 600 }}
                     >
-                      {t('your_store_url')}: {storeSlugValue}.markium.online
+                      {t('your_store_url')}: {STOREFRONT_BASE_URL.replace('{slug}', storeSlugValue).replace(/^https?:\/\//, '')}
                     </Typography>
                   )}
                 </Box>

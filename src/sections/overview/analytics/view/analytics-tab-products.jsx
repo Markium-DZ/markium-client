@@ -26,16 +26,16 @@ import AnalyticsCurrentVisits from '../analytics-current-visits';
 export default function AnalyticsTabProducts({ dateFrom, sections }) {
   const { t } = useTranslate();
 
-  const { topProducts } = useGetAnalyticsTopProducts(
+  const { topProducts, topProductsLoading } = useGetAnalyticsTopProducts(
     sections?.top_products?.accessible ? dateFrom : null
   );
-  const { uniqueVisitors, uniqueBuyers } = useGetAnalyticsConversion(
+  const { uniqueVisitors, uniqueBuyers, conversionLoading } = useGetAnalyticsConversion(
     sections?.conversion?.accessible ? dateFrom : null
   );
   const { aov } = useGetAnalyticsAov(
     sections?.aov?.accessible ? dateFrom : null
   );
-  const { pageviews, productViewed, addToCart, checkoutStarted, orderCompleted } = useGetAnalyticsFunnel(
+  const { pageviews, productViewed, addToCart, checkoutStarted, orderCompleted, funnelLoading } = useGetAnalyticsFunnel(
     sections?.funnel?.accessible ? dateFrom : null
   );
   const { cartAbandonment } = useGetAnalyticsCartAbandonment(
@@ -100,6 +100,7 @@ export default function AnalyticsTabProducts({ dateFrom, sections }) {
           <CardHeader title={t('analytics_top_products')} subheader={t('analytics_top_products_desc')} />
           <AnalyticsGate sectionKey="top_products">
             <AnalyticsConversionRates
+              loading={topProductsLoading}
               chart={{
                 series: (topProducts || []).slice(0, 10).map((p) => ({
                   label: p.name || p.product_name || '',
@@ -116,6 +117,7 @@ export default function AnalyticsTabProducts({ dateFrom, sections }) {
           <CardHeader title={t('analytics_conversion')} subheader={t('analytics_conversion_desc')} />
           <AnalyticsGate sectionKey="conversion">
             <AnalyticsCurrentVisits
+              loading={conversionLoading}
               chart={{
                 series: [
                   { label: t('analytics_unique_visitors'), value: uniqueVisitors },
@@ -133,6 +135,7 @@ export default function AnalyticsTabProducts({ dateFrom, sections }) {
           <CardHeader title={t('analytics_funnel')} subheader={t('analytics_funnel_desc')} />
           <AnalyticsGate sectionKey="funnel">
             <AnalyticsConversionRates
+              loading={funnelLoading}
               chart={{
                 series: [
                   { label: t('analytics_unique_visitors'), value: pageviews },

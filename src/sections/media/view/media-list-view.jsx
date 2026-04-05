@@ -47,6 +47,15 @@ export default function MediaListView() {
   const [allMedia, setAllMedia] = useState([]);
   const [uploading, setUploading] = useState(false);
 
+  // Local blob previews keyed by server media ID — used while S3 upload job runs
+  // Shape: Map<serverId, { blobUrl, createdAt }>
+  const [localPreviewMap, setLocalPreviewMap] = useState(new Map());
+
+  // Revoke all blob URLs on unmount (navigation away from page)
+  useEffect(() => () => {
+    localPreviewMap.forEach(({ blobUrl }) => URL.revokeObjectURL(blobUrl));
+  }, []);
+
   const fileInputRef = useRef(null);
   const scrollContainerRef = useRef(null);
 
@@ -82,8 +91,80 @@ export default function MediaListView() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [handleScroll]);
 
+  // Merge server items with local blob overrides while S3 upload is pending
+  const displayMedia = useMemo(() => {
+    if (localPreviewMap.size === 0) return allMedia;
+    return allMedia.map((item) => {
+      const entry = localPreviewMap.get(item.id);
+      return entry ? { ...item, full_url: entry.blobUrl } : item;
+    });
+  }, [allMedia, localPreviewMap]);
+
+  // Background: verify server images are ready on S3, then clear local blobs
+  // Also force-flush any entries older than 60s to prevent memory leaks
+  useEffect(() => {
+    if (localPreviewMap.size === 0) return undefined;
+
+    let active = true;
+    let timer;
+
+    const MAX_AGE_MS = 60000;
+
+    const checkImages = async () => {
+      const entries = Array.from(localPreviewMap.entries());
+      const now = Date.now();
+
+      const results = await Promise.all(
+        entries.map(async ([serverId, { blobUrl, createdAt }]) => {
+          // Force-expire entries older than MAX_AGE_MS
+          if (now - createdAt > MAX_AGE_MS) return { serverId, ready: true, blobUrl };
+
+          const serverItem = allMedia.find((m) => m.id === serverId);
+          if (!serverItem) return { serverId, ready: false, blobUrl };
+
+          const ready = await new Promise((resolve) => {
+            const img = new Image();
+            img.onload = () => resolve(true);
+            img.onerror = () => resolve(false);
+            img.src = serverItem.full_url;
+          });
+          return { serverId, ready, blobUrl };
+        })
+      );
+
+      if (!active) return;
+
+      const readyIds = results.filter((r) => r.ready).map((r) => r.serverId);
+      if (readyIds.length > 0) {
+        setLocalPreviewMap((prev) => {
+          const next = new Map(prev);
+          readyIds.forEach((id) => {
+            const entry = next.get(id);
+            if (entry) URL.revokeObjectURL(entry.blobUrl);
+            next.delete(id);
+          });
+          return next;
+        });
+      }
+
+      // Keep polling if some still pending
+      if (results.some((r) => !r.ready) && active) {
+        timer = setTimeout(() => {
+          if (active) mutate();
+        }, 3000);
+      }
+    };
+
+    checkImages();
+
+    return () => {
+      active = false;
+      clearTimeout(timer);
+    };
+  }, [localPreviewMap, allMedia, mutate]);
+
   // Group media by creation date
-  const groupedMedia = allMedia.reduce((groups, item) => {
+  const groupedMedia = displayMedia.reduce((groups, item) => {
     const date = fDate(item.created_at);
     if (!groups[date]) {
       groups[date] = [];
@@ -109,10 +190,25 @@ export default function MediaListView() {
     const files = event.target.files;
     if (!files || files.length === 0) return;
 
+    // Create blob URLs for instant local preview
+    const fileArray = Array.from(files);
+    const blobUrls = fileArray.map((file) => URL.createObjectURL(file));
+
     try {
       setUploading(true);
-      await uploadMedia(files);
-      captureEvent('media_uploaded', { count: files.length });
+      const response = await uploadMedia(files);
+      captureEvent('media_uploaded', { count: fileArray.length });
+
+      // Map server IDs to local blob URLs with timestamp for max-age cleanup
+      const uploadedItems = response?.data?.data || [];
+      const now = Date.now();
+      const newEntries = new Map();
+      uploadedItems.forEach((item, index) => {
+        if (blobUrls[index]) {
+          newEntries.set(item.id, { blobUrl: blobUrls[index], createdAt: now });
+        }
+      });
+      setLocalPreviewMap((prev) => new Map([...prev, ...newEntries]));
 
       // Reset page and media to refresh from beginning
       setPage(1);
@@ -126,6 +222,8 @@ export default function MediaListView() {
         fileInputRef.current.value = '';
       }
     } catch (error) {
+      // Revoke blob URLs on failure
+      blobUrls.forEach((url) => URL.revokeObjectURL(url));
       console.error('Failed to upload media:', error);
       enqueueSnackbar(error.message || t('failed_to_upload_media'), { variant: 'error' });
     } finally {

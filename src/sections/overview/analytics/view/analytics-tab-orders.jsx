@@ -19,7 +19,7 @@ import AnalyticsTableCard from '../analytics-table-card';
 export default function AnalyticsTabOrders({ dateFrom, sections }) {
   const { t } = useTranslate();
 
-  const { ordersGeography } = useGetAnalyticsOrdersGeography(
+  const { ordersGeography, ordersGeographyLoading } = useGetAnalyticsOrdersGeography(
     sections?.orders_geography?.accessible ? dateFrom : null
   );
   const { deliveryPerformance } = useGetAnalyticsDeliveryPerformance(
@@ -34,6 +34,7 @@ export default function AnalyticsTabOrders({ dateFrom, sections }) {
           <CardHeader title={t('analytics_orders_geography')} subheader={t('analytics_orders_geography_desc')} />
           <AnalyticsGate sectionKey="orders_geography">
             <AnalyticsConversionRates
+              loading={ordersGeographyLoading}
               chart={{
                 series: (ordersGeography || []).slice(0, 10).map((g) => ({
                   label: g.wilaya_name || g.name || '',

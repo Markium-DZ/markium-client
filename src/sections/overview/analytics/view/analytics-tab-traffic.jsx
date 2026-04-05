@@ -32,13 +32,13 @@ export default function AnalyticsTabTraffic({ dateFrom, sections }) {
   const { visitors, productViews } = useGetAnalyticsTraffic(
     sections?.traffic?.accessible ? dateFrom : null
   );
-  const { trafficSources } = useGetAnalyticsTrafficSources(
+  const { trafficSources, trafficSourcesLoading } = useGetAnalyticsTrafficSources(
     sections?.traffic_sources?.accessible ? dateFrom : null
   );
-  const { deviceBreakdown } = useGetAnalyticsDeviceBreakdown(
+  const { deviceBreakdown, deviceBreakdownLoading } = useGetAnalyticsDeviceBreakdown(
     sections?.device_breakdown?.accessible ? dateFrom : null
   );
-  const { visitorTypes } = useGetAnalyticsVisitorTypes(
+  const { visitorTypes, visitorTypesLoading } = useGetAnalyticsVisitorTypes(
     sections?.visitor_types?.accessible ? dateFrom : null
   );
   const { bounceRate } = useGetAnalyticsBounceRate(
@@ -134,6 +134,7 @@ export default function AnalyticsTabTraffic({ dateFrom, sections }) {
           <CardHeader title={t('analytics_device_breakdown')} subheader={t('analytics_device_breakdown_desc')} />
           <AnalyticsGate sectionKey="device_breakdown">
             <AnalyticsCurrentVisits
+              loading={deviceBreakdownLoading}
               chart={{
                 series: (deviceBreakdown || []).map((d) => ({
                   label: d.breakdown_value || 'Unknown',
@@ -150,6 +151,7 @@ export default function AnalyticsTabTraffic({ dateFrom, sections }) {
           <CardHeader title={t('analytics_visitor_types')} subheader={t('analytics_visitor_types_desc')} />
           <AnalyticsGate sectionKey="visitor_types">
             <AnalyticsCurrentVisits
+              loading={visitorTypesLoading}
               chart={{
                 series: [
                   { label: t('new_visitors'), value: visitorTypes?.new_visitors || 0 },
@@ -167,6 +169,7 @@ export default function AnalyticsTabTraffic({ dateFrom, sections }) {
           <CardHeader title={t('analytics_traffic_sources')} subheader={t('analytics_traffic_sources_desc')} />
           <AnalyticsGate sectionKey="traffic_sources">
             <AnalyticsConversionRates
+              loading={trafficSourcesLoading}
               chart={{
                 series: (trafficSources || []).slice(0, 10).map((s) => ({
                   label: s.referring_domain || s.source || s.name || 'Direct',

@@ -10,6 +10,7 @@ import { useTheme, alpha } from '@mui/material/styles';
 
 import Iconify from 'src/components/iconify';
 import { useTranslate } from 'src/locales';
+import ChartLoadingPlaceholder from 'src/components/chart/chart-loading-placeholder';
 
 // ----------------------------------------------------------------------
 
@@ -18,7 +19,7 @@ const DEFAULT_COLORS = [
   '#00B8D9', '#8E33FF', '#FF6C40', '#36B37E',
 ];
 
-export default function AnalyticsCurrentVisits({ title, subheader, chart, ...other }) {
+export default function AnalyticsCurrentVisits({ title, subheader, chart, loading, ...other }) {
   const theme = useTheme();
   const { t } = useTranslate();
   const { colors, series } = chart;
@@ -41,7 +42,9 @@ export default function AnalyticsCurrentVisits({ title, subheader, chart, ...oth
 
   const isEmpty = !series || series.length === 0 || pieData.every((d) => d.value === 0);
 
-  const chartContent = isEmpty ? (
+  const chartContent = loading ? (
+    <ChartLoadingPlaceholder variant="pie" height={280} />
+  ) : isEmpty ? (
     <Stack alignItems="center" justifyContent="center" spacing={1} sx={{ height: 280 }}>
       <Box sx={{ p: 1.5, borderRadius: '50%', bgcolor: alpha(theme.palette.grey[500], 0.08) }}>
         <Iconify icon="solar:chart-2-bold-duotone" width={28} sx={{ color: 'text.disabled' }} />
@@ -102,6 +105,7 @@ export default function AnalyticsCurrentVisits({ title, subheader, chart, ...oth
 
 AnalyticsCurrentVisits.propTypes = {
   chart: PropTypes.object,
+  loading: PropTypes.bool,
   subheader: PropTypes.string,
   title: PropTypes.string,
 };

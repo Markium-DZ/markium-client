@@ -10,6 +10,7 @@ import { alpha, useTheme } from '@mui/material/styles';
 
 import Iconify from 'src/components/iconify';
 import { useTranslate } from 'src/locales';
+import ChartLoadingPlaceholder from 'src/components/chart/chart-loading-placeholder';
 
 // ----------------------------------------------------------------------
 
@@ -37,7 +38,7 @@ function isHourlyData(labels) {
   return labels.some((l) => typeof l === 'string' && /\d{2}:\d{2}/.test(l));
 }
 
-export default function AnalyticsWebsiteVisits({ title, subheader, chart, ...other }) {
+export default function AnalyticsWebsiteVisits({ title, subheader, chart, loading, ...other }) {
   const theme = useTheme();
   const { t, i18n } = useTranslate();
   const lang = i18n.language || 'ar';
@@ -76,7 +77,9 @@ export default function AnalyticsWebsiteVisits({ title, subheader, chart, ...oth
 
   const isEmpty = !labels || labels.length === 0;
 
-  const chartContent = isEmpty ? (
+  const chartContent = loading ? (
+    <ChartLoadingPlaceholder variant="line" height={364} />
+  ) : isEmpty ? (
     <Stack alignItems="center" justifyContent="center" spacing={1} sx={{ height: 364 }}>
       <Box sx={{ p: 1.5, borderRadius: '50%', bgcolor: alpha(theme.palette.grey[500], 0.08) }}>
         <Iconify icon="solar:chart-bold-duotone" width={28} sx={{ color: 'text.disabled' }} />
@@ -149,6 +152,7 @@ export default function AnalyticsWebsiteVisits({ title, subheader, chart, ...oth
 
 AnalyticsWebsiteVisits.propTypes = {
   chart: PropTypes.object,
+  loading: PropTypes.bool,
   subheader: PropTypes.string,
   title: PropTypes.string,
 };

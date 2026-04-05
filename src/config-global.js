@@ -45,5 +45,17 @@ export const POSTHOG_API = {
   host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST || 'https://eu.i.posthog.com',
 };
 
+// STOREFRONT
+// ----------------------------------------------------------------------
+
+export const STOREFRONT_BASE_URL = import.meta.env.VITE_STOREFRONT_BASE_URL || 'https://{slug}.markium.online';
+
+export const getStorefrontUrl = (slug, params) => {
+  const base = STOREFRONT_BASE_URL.replace('{slug}', slug);
+  if (!params) return base;
+  const search = new URLSearchParams(params).toString();
+  return `${base}?${search}`;
+};
+
 // ROOT PATH AFTER LOGIN SUCCESSFUL
 export const PATH_AFTER_LOGIN = paths.dashboard.root; // as '/dashboard'

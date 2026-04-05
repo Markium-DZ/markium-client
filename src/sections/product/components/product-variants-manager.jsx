@@ -318,26 +318,12 @@ export default function ProductVariantsManager({ options, variants, onChange, im
               size="small"
               label={t('quantity')}
               type="number"
+              inputProps={{ min: 0, step: 1 }}
               value={bulkValues.quantity}
               onChange={(e) => setBulkValues({ ...bulkValues, quantity: e.target.value })}
               InputProps={{
-                endAdornment: (
-                  <InputAdornment
-                    position="end"
-                    sx={{ flexDirection: 'column', height: '100%', mr: -0.5 }}
-                  >
-                    <IconButton
-                      size="small"
-                      onClick={() =>
-                        setBulkValues({
-                          ...bulkValues,
-                          quantity: String((parseInt(bulkValues.quantity, 10) || 0) + 1),
-                        })
-                      }
-                      sx={{ p: 0, lineHeight: 1 }}
-                    >
-                      <Iconify icon="eva:arrow-ios-upward-fill" width={16} />
-                    </IconButton>
+                startAdornment: (
+                  <InputAdornment position="start" sx={{ mr: 0 }}>
                     <IconButton
                       size="small"
                       onClick={() =>
@@ -346,12 +332,53 @@ export default function ProductVariantsManager({ options, variants, onChange, im
                           quantity: String(Math.max(0, (parseInt(bulkValues.quantity, 10) || 0) - 1)),
                         })
                       }
-                      sx={{ p: 0, lineHeight: 1 }}
+                      disabled={!bulkValues.quantity || parseInt(bulkValues.quantity, 10) <= 0}
+                      sx={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: 1,
+                        color: 'text.secondary',
+                        '&:hover': { bgcolor: 'action.hover' },
+                      }}
                     >
-                      <Iconify icon="eva:arrow-ios-downward-fill" width={16} />
+                      <Iconify icon="eva:minus-fill" width={18} />
                     </IconButton>
                   </InputAdornment>
                 ),
+                endAdornment: (
+                  <InputAdornment position="end" sx={{ ml: 0 }}>
+                    <IconButton
+                      size="small"
+                      onClick={() =>
+                        setBulkValues({
+                          ...bulkValues,
+                          quantity: String((parseInt(bulkValues.quantity, 10) || 0) + 1),
+                        })
+                      }
+                      sx={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: 1,
+                        color: 'text.secondary',
+                        '&:hover': { bgcolor: 'action.hover' },
+                      }}
+                    >
+                      <Iconify icon="eva:plus-fill" width={18} />
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  pr: 0.5,
+                  pl: 0.5,
+                },
+                '& input': {
+                  textAlign: 'center',
+                  fontWeight: 600,
+                  fontSize: '0.95rem',
+                  MozAppearance: 'textfield',
+                },
               }}
             />
           </Box>
@@ -759,6 +786,7 @@ function VariantRow({ variant, index, expanded, onToggleExpand, onUpdate, produc
                     size="small"
                     label={t('quantity')}
                     type="number"
+                    inputProps={{ min: 0, step: 1 }}
                     value={variant.quantity || ''}
                     onChange={(e) =>
                       onUpdate(
@@ -768,20 +796,8 @@ function VariantRow({ variant, index, expanded, onToggleExpand, onUpdate, produc
                       )
                     }
                     InputProps={{
-                      endAdornment: (
-                        <InputAdornment
-                          position="end"
-                          sx={{ flexDirection: 'column', height: '100%', mr: -0.5 }}
-                        >
-                          <IconButton
-                            size="small"
-                            onClick={() =>
-                              onUpdate(variant.id, 'quantity', (variant.quantity || 0) + 1)
-                            }
-                            sx={{ p: 0, lineHeight: 1 }}
-                          >
-                            <Iconify icon="eva:arrow-ios-upward-fill" width={16} />
-                          </IconButton>
+                      startAdornment: (
+                        <InputAdornment position="start" sx={{ mr: 0 }}>
                           <IconButton
                             size="small"
                             onClick={() =>
@@ -791,12 +807,50 @@ function VariantRow({ variant, index, expanded, onToggleExpand, onUpdate, produc
                                 Math.max(0, (variant.quantity || 0) - 1)
                               )
                             }
-                            sx={{ p: 0, lineHeight: 1 }}
+                            disabled={!variant.quantity || variant.quantity <= 0}
+                            sx={{
+                              width: 32,
+                              height: 32,
+                              borderRadius: 1,
+                              color: 'text.secondary',
+                              '&:hover': { bgcolor: 'action.hover' },
+                            }}
                           >
-                            <Iconify icon="eva:arrow-ios-downward-fill" width={16} />
+                            <Iconify icon="eva:minus-fill" width={18} />
                           </IconButton>
                         </InputAdornment>
                       ),
+                      endAdornment: (
+                        <InputAdornment position="end" sx={{ ml: 0 }}>
+                          <IconButton
+                            size="small"
+                            onClick={() =>
+                              onUpdate(variant.id, 'quantity', (variant.quantity || 0) + 1)
+                            }
+                            sx={{
+                              width: 32,
+                              height: 32,
+                              borderRadius: 1,
+                              color: 'text.secondary',
+                              '&:hover': { bgcolor: 'action.hover' },
+                            }}
+                          >
+                            <Iconify icon="eva:plus-fill" width={18} />
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    }}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        pr: 0.5,
+                        pl: 0.5,
+                      },
+                      '& input': {
+                        textAlign: 'center',
+                        fontWeight: 600,
+                        fontSize: '0.95rem',
+                        MozAppearance: 'textfield',
+                      },
                     }}
                   />
                 </Box>

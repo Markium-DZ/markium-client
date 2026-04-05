@@ -29,6 +29,7 @@ export default function AnalyticsTabOverview({ dateFrom }) {
     totalProductViews,
     totalProductViewsData,
     totalProductViewsLabels,
+    overviewLoading,
   } = useGetAnalyticsOverview(dateFrom);
 
   return (
@@ -83,6 +84,7 @@ export default function AnalyticsTabOverview({ dateFrom }) {
           <CardHeader title={t('analytics_total_orders')} subheader={t('analytics_orders_trend_desc')} />
           <AnalyticsGate sectionKey="overview">
             <AnalyticsWebsiteVisits
+              loading={overviewLoading}
               chart={{
                 labels: totalOrdersLabels,
                 series: [
@@ -104,6 +106,7 @@ export default function AnalyticsTabOverview({ dateFrom }) {
           <CardHeader title={t('analytics_revenue')} subheader={t('analytics_revenue_trend_desc')} />
           <AnalyticsGate sectionKey="overview">
             <AnalyticsWebsiteVisits
+              loading={overviewLoading}
               chart={{
                 labels: totalRevenueLabels,
                 series: [
@@ -126,6 +129,7 @@ export default function AnalyticsTabOverview({ dateFrom }) {
           <CardHeader title={t('analytics_unique_visitors')} subheader={t('analytics_visitors_trend_desc')} />
           <AnalyticsGate sectionKey="overview">
             <AnalyticsWebsiteVisits
+              loading={overviewLoading}
               chart={{
                 labels: totalVisitorsLabels,
                 series: [
@@ -147,6 +151,7 @@ export default function AnalyticsTabOverview({ dateFrom }) {
           <CardHeader title={t('analytics_product_views')} subheader={t('analytics_views_trend_desc')} />
           <AnalyticsGate sectionKey="overview">
             <AnalyticsWebsiteVisits
+              loading={overviewLoading}
               chart={{
                 labels: totalProductViewsLabels,
                 series: [

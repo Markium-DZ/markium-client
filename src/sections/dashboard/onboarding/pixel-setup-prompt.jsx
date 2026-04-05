@@ -95,16 +95,14 @@ export default function PixelSetupPrompt({ store, onStoreRefresh, sx, ...other }
   return (
     <Card
       sx={{
-        p: 2,
         display: 'flex',
         flexDirection: 'column',
-        justifyContent: 'center',
         ...sx,
       }}
       {...other}
     >
-      {/* Title row */}
-      <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1.5 }}>
+      {/* Header */}
+      <Stack direction="row" alignItems="center" spacing={1} sx={{ px: 2, pt: 2, pb: 1 }}>
         <Iconify icon="solar:target-bold" width={18} sx={{ color: 'warning.main' }} />
         <Typography variant="subtitle2" sx={{ fontWeight: 700, fontSize: '0.8rem' }}>
           {t('pixel_setup_title')}
@@ -112,7 +110,7 @@ export default function PixelSetupPrompt({ store, onStoreRefresh, sx, ...other }
       </Stack>
 
       {/* Pixel quick-action buttons — vertical */}
-      <Stack spacing={1}>
+      <Stack spacing={1} sx={{ px: 2, pb: 2, flexGrow: 1, justifyContent: 'center' }}>
         {pixelStatuses.map((pixel) => (
           <ButtonBase
             key={pixel.key}
@@ -154,7 +152,7 @@ export default function PixelSetupPrompt({ store, onStoreRefresh, sx, ...other }
             <Iconify
               icon="eva:arrow-ios-forward-fill"
               width={16}
-              sx={{ color: 'text.disabled', ml: 'auto' }}
+              sx={{ color: 'text.disabled', ml: 'auto', transform: theme.direction === 'rtl' ? 'scaleX(-1)' : 'none' }}
             />
           </ButtonBase>
         ))}

@@ -11,6 +11,7 @@ import IconButton from '@mui/material/IconButton';
 import Link from '@mui/material/Link';
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
+import { useTheme } from '@mui/material/styles';
 
 import { useAuthContext } from 'src/auth/hooks';
 import axios, { endpoints } from 'src/utils/axios';
@@ -28,6 +29,7 @@ const COUNTDOWN_DURATION = 60000; // 60 seconds
 export default function OtpVerifyModal({ open, onClose, showValueProp = false }) {
   const { user, refreshUser } = useAuthContext();
   const { t } = useTranslation();
+  const theme = useTheme();
 
   const [otpValue, setOtpValue] = useState('');
   const [loading, setLoading] = useState(false);
@@ -142,7 +144,7 @@ export default function OtpVerifyModal({ open, onClose, showValueProp = false })
       <DialogContent sx={{ py: 4, px: 3 }}>
         {/* Close button — hidden during loading to prevent interrupting verification */}
         {onClose && !loading && (
-          <Box sx={{ position: 'absolute', top: 10, left: 10, zIndex: 1 }}>
+          <Box sx={{ position: 'absolute', top: 10, insetInlineStart: 10, zIndex: 1 }}>
             <IconButton
               onClick={() => onClose()}
               aria-label={t('go_back')}
@@ -155,7 +157,7 @@ export default function OtpVerifyModal({ open, onClose, showValueProp = false })
                 },
               }}
             >
-              <Iconify icon="eva:arrow-back-fill" width={20} />
+              <Iconify icon="eva:arrow-back-fill" width={20} sx={{ transform: theme.direction === 'rtl' ? 'scaleX(-1)' : 'none' }} />
             </IconButton>
           </Box>
         )}
@@ -185,7 +187,7 @@ export default function OtpVerifyModal({ open, onClose, showValueProp = false })
             </Typography>
 
             {user?.phone && (
-              <Typography variant="subtitle2" sx={{ direction: 'ltr' }}>
+              <Typography variant="subtitle2" dir="ltr">
                 {user.phone}
               </Typography>
             )}

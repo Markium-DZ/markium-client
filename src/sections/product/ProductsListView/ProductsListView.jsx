@@ -23,6 +23,7 @@ import Fab from '@mui/material/Fab';
 import ZaityTableFilters from 'src/sections/ZaityTables/ZaityTableFilters';
 import ZaityTableTabs from 'src/sections/ZaityTables/ZaityTableTabs'; // [keep for later use]
 import { fDate } from 'src/utils/format-time';
+import { getStorefrontUrl } from 'src/config-global';
 import showError from 'src/utils/show_error';
 import * as Yup from 'yup';
 import { useMemo } from 'react';
@@ -238,7 +239,7 @@ const ElementActions = ({ item, setTableData , user }) => {
 
 
     const copyToClipboard = () => {
-        navigator.clipboard.writeText(`https://${user?.store?.slug}.markium.online/?product=${item?.id}`)
+        navigator.clipboard.writeText(getStorefrontUrl(user?.store?.slug, { product: item?.id }))
             .then(() => {
                 enqueueSnackbar(t("operation_success"));
             })

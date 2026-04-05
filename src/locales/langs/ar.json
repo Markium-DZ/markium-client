@@ -196,6 +196,7 @@
   "back": "رجوع",
   "go_live": "انتقل للنشر",
   "loading": "جاري التحميل...",
+  "loading_data": "جاري تحميل البيانات...",
   "discount": "الخصم",
   "status": "الحالة",
   "created_at": "تاريخ الإنشاء",
@@ -239,7 +240,7 @@
   "item_external_link": "رابط خارجي للعنصر",
   "only_admin_can_see_this_item": "يمكن للمسؤول فقط رؤية هذا العنصر",
   "upgrade_to_pro": "الترقية إلى Pro",
-  "upgrade_to_pro_description": "تقارير متقدمة، مساحة تخزين غير محدودة وميزات احترافية",
+  "upgrade_to_pro_description": "تتبّع الأرباح، تحليلات متقدمة وأدوات لتنمية مبيعاتك",
   "upgrade_now": "ترقية الآن",
   "demo": {
     "title": "Arabic"
@@ -2191,7 +2192,7 @@
     "item_external_link": "رابط خارجي للعنصر",
     "only_admin_can_see_this_item": "يمكن للمسؤول فقط رؤية هذا العنصر",
     "upgrade_to_pro": "الترقية إلى Pro",
-    "upgrade_to_pro_description": "تقارير متقدمة، مساحة تخزين غير محدودة وميزات احترافية",
+    "upgrade_to_pro_description": "تتبّع الأرباح، تحليلات متقدمة وأدوات لتنمية مبيعاتك",
     "upgrade_now": "ترقية الآن",
     "demo": {
       "title": "Arabic"
