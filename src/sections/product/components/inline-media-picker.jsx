@@ -17,6 +17,7 @@ import { useTranslate } from 'src/locales';
 import { useGetMedia, uploadMedia } from 'src/api/media';
 import { useSnackbar } from 'src/components/snackbar';
 import Iconify from 'src/components/iconify';
+import { useMediaPreview } from 'src/context/media-preview/media-preview-context';
 
 // ── Animations ──────────────────────────────────────────────────────────
 
@@ -128,73 +129,26 @@ export default function InlineMediaPicker({ selectedIds, onToggle, onAdd }) {
 
   const [uploading, setUploading] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
-  const [localPreviewMap, setLocalPreviewMap] = useState(new Map());
+
+  const { previewMap, addPreviews, checkS3Readiness } = useMediaPreview();
 
   const { media, mediaLoading, mutate } = useGetMedia(1, 100);
 
-  // Merge server items with local blob URL overrides
+  // Merge server items with shared blob URL overrides
   const displayMedia = useMemo(() => {
     const serverItems = media || [];
-    if (localPreviewMap.size === 0) return serverItems;
+    if (previewMap.size === 0) return serverItems;
     return serverItems.map((item) => {
-      const blobUrl = localPreviewMap.get(item.id);
-      return blobUrl ? { ...item, full_url: blobUrl } : item;
+      const entry = previewMap.get(item.id);
+      return entry ? { ...item, full_url: entry.blobUrl } : item;
     });
-  }, [localPreviewMap, media]);
+  }, [previewMap, media]);
 
-  // Background: verify server images ready → clear blob overrides
+  // Check S3 readiness via shared context when media data changes
   useEffect(() => {
-    if (localPreviewMap.size === 0) return;
-
-    let active = true;
-    let timer;
-
-    const check = async () => {
-      const entries = Array.from(localPreviewMap.entries());
-      const serverItems = media || [];
-
-      const results = await Promise.all(
-        entries.map(async ([serverId]) => {
-          const serverItem = serverItems.find((m) => m.id === serverId);
-          if (!serverItem) return { serverId, ready: false };
-          const ready = await new Promise((resolve) => {
-            const img = new Image();
-            img.onload = () => resolve(true);
-            img.onerror = () => resolve(false);
-            img.src = serverItem.full_url;
-          });
-          return { serverId, ready };
-        })
-      );
-
-      if (!active) return;
-
-      const readyIds = results.filter((r) => r.ready).map((r) => r.serverId);
-      if (readyIds.length > 0) {
-        setLocalPreviewMap((prev) => {
-          const next = new Map(prev);
-          readyIds.forEach((id) => {
-            const blobUrl = next.get(id);
-            if (blobUrl) URL.revokeObjectURL(blobUrl);
-            next.delete(id);
-          });
-          return next;
-        });
-      }
-
-      if (results.some((r) => !r.ready) && active) {
-        timer = setTimeout(() => {
-          if (active) mutate();
-        }, 3000);
-      }
-    };
-
-    check();
-    return () => {
-      active = false;
-      clearTimeout(timer);
-    };
-  }, [localPreviewMap, media, mutate]);
+    if (previewMap.size === 0 || !media) return;
+    checkS3Readiness(media);
+  }, [media, previewMap, checkS3Readiness]);
 
   // ── Handlers ──────────────────────────────────────────────────────────
 
@@ -207,12 +161,11 @@ export default function InlineMediaPicker({ selectedIds, onToggle, onAdd }) {
         const response = await uploadMedia(files);
         const uploadedItems = response?.data?.data || [];
 
-        // Map server IDs → blob URLs
-        const newEntries = new Map();
-        uploadedItems.forEach((item, i) => {
-          if (blobUrls[i]) newEntries.set(item.id, blobUrls[i]);
-        });
-        setLocalPreviewMap((prev) => new Map([...prev, ...newEntries]));
+        // Store blob URLs in shared context
+        const entries = uploadedItems
+          .map((item, i) => (blobUrls[i] ? { id: item.id, blobUrl: blobUrls[i] } : null))
+          .filter(Boolean);
+        if (entries.length > 0) addPreviews(entries);
 
         mutate();
 
@@ -227,7 +180,7 @@ export default function InlineMediaPicker({ selectedIds, onToggle, onAdd }) {
         setUploading(false);
       }
     },
-    [mutate, onAdd, enqueueSnackbar, t]
+    [mutate, addPreviews, onAdd, enqueueSnackbar, t]
   );
 
   const handleFileChange = useCallback(

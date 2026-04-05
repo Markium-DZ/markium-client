@@ -19,6 +19,7 @@ import { useGetMedia, uploadMedia, deleteMedia } from 'src/api/media';
 import { useSnackbar } from 'src/components/snackbar';
 import Iconify from 'src/components/iconify';
 import { ConfirmDialog } from 'src/components/custom-dialog';
+import { useMediaPreview } from 'src/context/media-preview/media-preview-context';
 
 // ── Animations ──────────────────────────────────────────────────────────
 
@@ -50,95 +51,30 @@ export default function MediaPickerDialog({ open, onClose, onSelect, multiple = 
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
 
-  // Local previews keyed by real server ID (assigned after upload response)
-  // Shape: Map<serverId, blobUrl>
-  const [localPreviewMap, setLocalPreviewMap] = useState(new Map());
+  const { previewMap, addPreviews, checkS3Readiness } = useMediaPreview();
 
   const { media, mediaLoading, mediaValidating, mutate } = useGetMedia(1, 100);
 
   const serverMediaCount = (media || []).length;
 
-  // ── Display: merge server items with local blob overrides ──
+  // ── Display: merge server items with shared blob URL overrides ──
   const displayMedia = useMemo(() => {
     const serverItems = media || [];
+    if (previewMap.size === 0) return serverItems;
 
-    if (localPreviewMap.size === 0) return serverItems;
-
-    // For items that have a local blob preview, use the blob URL instead of server URL
-    const merged = serverItems.map((item) => {
-      const blobUrl = localPreviewMap.get(item.id);
-      if (blobUrl) {
-        return { ...item, full_url: blobUrl, _hasLocalPreview: true };
-      }
-      return item;
+    return serverItems.map((item) => {
+      const entry = previewMap.get(item.id);
+      return entry ? { ...item, full_url: entry.blobUrl, _hasLocalPreview: true } : item;
     });
-
-    return merged;
-  }, [localPreviewMap, media]);
+  }, [previewMap, media]);
 
   const isEmpty = displayMedia.length === 0;
 
-  // ── Background: verify server images ready, then clear local blobs ──
+  // ── Background: check S3 readiness via shared context ──
   useEffect(() => {
-    if (localPreviewMap.size === 0) return;
-
-    let active = true;
-    let timer;
-
-    const checkImages = async () => {
-      const entries = Array.from(localPreviewMap.entries());
-      const serverItems = media || [];
-
-      // Check each local preview's server counterpart
-      const results = await Promise.all(
-        entries.map(async ([serverId]) => {
-          const serverItem = serverItems.find((m) => m.id === serverId);
-          if (!serverItem) return { serverId, ready: false };
-
-          // Test if the server image is actually loadable
-          const ready = await new Promise((resolve) => {
-            const img = new Image();
-            img.onload = () => resolve(true);
-            img.onerror = () => resolve(false);
-            img.src = serverItem.full_url;
-          });
-
-          return { serverId, ready };
-        })
-      );
-
-      if (!active) return;
-
-      const readyIds = results.filter((r) => r.ready).map((r) => r.serverId);
-
-      if (readyIds.length > 0) {
-        setLocalPreviewMap((prev) => {
-          const next = new Map(prev);
-          readyIds.forEach((id) => {
-            const blobUrl = next.get(id);
-            if (blobUrl) URL.revokeObjectURL(blobUrl);
-            next.delete(id);
-          });
-          return next;
-        });
-      }
-
-      // If some still pending, keep polling
-      const stillPending = results.filter((r) => !r.ready);
-      if (stillPending.length > 0 && active) {
-        timer = setTimeout(() => {
-          if (active) mutate();
-        }, 3000);
-      }
-    };
-
-    checkImages();
-
-    return () => {
-      active = false;
-      clearTimeout(timer);
-    };
-  }, [localPreviewMap, media, mutate]);
+    if (previewMap.size === 0 || !media) return;
+    checkS3Readiness(media);
+  }, [media, previewMap, checkS3Readiness]);
 
   // ── Handlers ──────────────────────────────────────────────────────────
 
@@ -168,23 +104,15 @@ export default function MediaPickerDialog({ open, onClose, onSelect, multiple = 
         const blobUrls = files.map((file) => URL.createObjectURL(file));
 
         const response = await uploadMedia(files);
-
-        // Extract server IDs from response
         const uploadedItems = response?.data?.data || [];
 
-        // Map each server ID to its local blob URL
-        const newEntries = new Map();
-        uploadedItems.forEach((item, index) => {
-          if (blobUrls[index]) {
-            newEntries.set(item.id, blobUrls[index]);
-          }
-        });
+        // Store blob URLs in shared context (persists across components)
+        const entries = uploadedItems
+          .map((item, index) => (blobUrls[index] ? { id: item.id, blobUrl: blobUrls[index] } : null))
+          .filter(Boolean);
+        if (entries.length > 0) addPreviews(entries);
 
-        setLocalPreviewMap((prev) => new Map([...prev, ...newEntries]));
-
-        // Refresh server list so new items appear in the grid
         mutate();
-
         enqueueSnackbar(t('media_uploaded_successfully'), { variant: 'success' });
       } catch (error) {
         console.error('Failed to upload media:', error);
@@ -193,7 +121,7 @@ export default function MediaPickerDialog({ open, onClose, onSelect, multiple = 
         setUploading(false);
       }
     },
-    [mutate, enqueueSnackbar, t]
+    [mutate, addPreviews, enqueueSnackbar, t]
   );
 
   const handleFileInputChange = useCallback(
@@ -212,18 +140,13 @@ export default function MediaPickerDialog({ open, onClose, onSelect, multiple = 
   const handleSelect = useCallback(() => {
     onSelect(multiple ? selectedMedia : selectedMedia[0]);
     setSelectedMedia([]);
-    // Revoke remaining blob URLs
-    localPreviewMap.forEach((blobUrl) => URL.revokeObjectURL(blobUrl));
-    setLocalPreviewMap(new Map());
     onClose();
-  }, [selectedMedia, multiple, onSelect, onClose, localPreviewMap]);
+  }, [selectedMedia, multiple, onSelect, onClose]);
 
   const handleCancel = useCallback(() => {
     setSelectedMedia([]);
-    localPreviewMap.forEach((blobUrl) => URL.revokeObjectURL(blobUrl));
-    setLocalPreviewMap(new Map());
     onClose();
-  }, [onClose, localPreviewMap]);
+  }, [onClose]);
 
   const handleDeleteMedia = useCallback(async () => {
     if (!deleteTarget) return;
