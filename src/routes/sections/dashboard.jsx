@@ -68,12 +68,14 @@ const AccountSettingsView = lazy(() => import('src/pages/dashboard/settings/acco
 const StoreLogoView = lazy(() => import('src/pages/dashboard/settings/store-logo-view'));
 const StoreDataView = lazy(() => import('src/pages/dashboard/settings/store-data-view'));
 const StoreTemplateView = lazy(() => import('src/pages/dashboard/settings/store-template-view'));
+const AppearanceView = lazy(() => import('src/pages/dashboard/settings/appearance-view'));
 const YearlyPaymentView = lazy(() => import('src/pages/dashboard/settings/yearly-payment-view'));
 const SystemPointsView = lazy(() => import('src/pages/dashboard/settings/system-points-view'));
 const MarketingPixelsView = lazy(() => import('src/pages/dashboard/settings/marketing-pixels-view'));
 const SessionReplayView = lazy(() => import('src/pages/dashboard/settings/session-replay-view'));
 const DeliveryCompaniesView = lazy(() => import('src/pages/dashboard/settings/delivery-companies-view'));
 const CodSettingsView = lazy(() => import('src/pages/dashboard/settings/cod-settings-view'));
+const NotificationSettingsView = lazy(() => import('src/pages/dashboard/settings/notification-settings-view'));
 const ContactsSocialView = lazy(() => import('src/pages/dashboard/settings/contacts-social-view'));
 const ColorPaletteView = lazy(() => import('src/pages/dashboard/settings/color-palette-view'));
 const StoreLanguageView = lazy(() => import('src/pages/dashboard/settings/store-language-view'));
@@ -220,8 +222,10 @@ export const dashboardRoutes = [
           { path: 'session-replay', element: <SessionReplayView /> },
           { path: 'delivery-companies', element: <DeliveryCompaniesView /> },
           { path: 'cod', element: <CodSettingsView /> },
+          { path: 'notifications', element: <NotificationSettingsView /> },
           { path: 'contacts-social', element: <ContactsSocialView /> },
           { path: 'color-palette', element: <ColorPaletteView /> },
+          { path: 'appearance', element: <AppearanceView /> },
           { path: 'store-language', element: <StoreLanguageView /> },
           { path: ":model/admin", element: <AdminSystemItemListPage /> },
           { path: "payment_methods", element: <SystemItemListPage collection={{metadata:"Payment Method",type:"payment_method"}} /> },

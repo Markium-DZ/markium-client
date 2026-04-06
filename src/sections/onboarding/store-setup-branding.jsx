@@ -11,6 +11,7 @@ import TextField from '@mui/material/TextField';
 
 import axios, { endpoints } from 'src/utils/axios';
 import { useTranslation } from 'react-i18next';
+import generatePalette from 'src/utils/generate-palette';
 
 // ----------------------------------------------------------------------
 
@@ -38,7 +39,7 @@ export default function StoreSetupBranding({ onNext }) {
 
     try {
       const body = selectedColor
-        ? { colors: { primary: selectedColor } }
+        ? { colorPalette: generatePalette(selectedColor) }
         : {};
 
       await axios.patch(endpoints.storeSetup.branding, body);

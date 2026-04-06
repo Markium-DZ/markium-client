@@ -795,7 +795,13 @@ export default function ProductNewEditForm({ currentProduct, drawerMode = false,
               ),
             }}
             sx={{
-              '& input[type=number]': {
+              '& .MuiOutlinedInput-root': {
+                pr: 0.5,
+              },
+              '& input': {
+                textAlign: 'center',
+                fontWeight: 600,
+                fontSize: '0.95rem',
                 MozAppearance: 'textfield',
               },
               '& input[type=number]::-webkit-outer-spin-button, & input[type=number]::-webkit-inner-spin-button': {

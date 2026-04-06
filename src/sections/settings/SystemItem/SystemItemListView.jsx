@@ -4,7 +4,7 @@ import { t } from 'i18next';
 import { set } from 'lodash'; // [keep for later use]
 import { enqueueSnackbar } from 'notistack';
 import { useEffect, useState, useCallback } from 'react';
-import { changeCategoryVisibility, changeItemVisibilityInSettings, useGetMainSpecs, useGetSystemCategories, useGetSystemVisibleItem } from 'src/api/settings'; // [keep for later use]
+import { changeCategoryVisibility, changeItemVisibilityInSettings, useGetMainSpecs, useGetCategorySettings, useGetSystemVisibleItem } from 'src/api/settings'; // [keep for later use]
 import { useValues } from 'src/api/utils';
 import PermissionsContext from 'src/auth/context/permissions/permissions-context';
 import { fileData } from 'src/components/file-thumbnail'; // [keep for later use]
@@ -56,7 +56,7 @@ export default function SystemItemListView({ collection }) {
 
 
 
-    const { items: gVisibleItems, itemsLoading } = useGetSystemCategories();
+    const { items: gVisibleItems, itemsLoading } = useGetCategorySettings();
     const [visibleItems, setVisibleItems] = useState(gVisibleItems);
     useEffect(() => {
         setVisibleItems(gVisibleItems)
@@ -158,7 +158,7 @@ export default function SystemItemListView({ collection }) {
                                 itemsLoading ?
                                     <LoadingScreen sx={{ my: 8 }} color='primary' />
                                     :
-                                    <ZaityListView TABLE_HEAD={[...currentSystemItem?.TABLE_HEAD, { id: 'visibilitys', label: t('selected'), type: "label", width: 350 }, { id: 'enable', label: t('enable'), type: "component", width: 40, align: "center" }]} dense="small" zaityTableDate={dataFiltered || []} onSelectedRows={({ data, setTableData }) => { return <onSelectedRowsComponent configurable_type={collection?.type} setTableData={setTableData} data={data} /> }} />
+                                    <ZaityListView TABLE_HEAD={[...currentSystemItem?.TABLE_HEAD, { id: 'visibilitys', label: t('selected'), type: "label", width: 350 }, { id: 'enable', label: t('enable'), type: "component", width: 40, align: "center" }]} dense="small" zaityTableDate={dataFiltered || []} onSelectedRows={({ data, setTableData }) => { return <onSelectedRowsComponent configurable_type={collection?.type} setTableData={setTableData} data={data} /> }} hidePagination rowsPerPage={999} />
                             }
                         </ZaityTableFilters>
                     </ZaityTableTabs>
@@ -210,15 +210,7 @@ const EnableDisableItem = ({ item, configurable_type, setTableData }) => {
         // }
     };
     return (
-        <FormGroup sx={{ display: "flex", flexDirection: "row", alignItems: "center", rowGap: "10px" }}>
-            {
-                loading ?
-                    <Box sx={{ display: "flex", justifyContent: "center" }}  >
-                        <Iconify icon="line-md:uploading-loop" color="primary" />
-                    </Box>
-                    :
-                    null
-            }
+        <FormGroup sx={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
             <FormControlLabel
                 control={
                     <Switch

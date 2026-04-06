@@ -16,7 +16,6 @@ import { AuthContext } from 'src/auth/context/jwt';
 
 import Label from 'src/components/label';
 import Iconify from 'src/components/iconify';
-import { useSnackbar } from 'src/components/snackbar';
 import { useTranslate } from 'src/locales';
 
 import { useGetCurrentSubscription } from 'src/api/subscriptions';
@@ -37,7 +36,6 @@ export default function NavUserProfile() {
   const router = useRouter();
   const { user } = useContext(AuthContext);
   const { t } = useTranslate();
-  const { enqueueSnackbar } = useSnackbar();
   const { subscription } = useGetCurrentSubscription();
 
   const packageSlug = subscription?.package?.slug;
@@ -60,11 +58,10 @@ export default function NavUserProfile() {
   const storeInitials = storeName?.substring(0, 2).toUpperCase();
   const storeUrl = storeSlug ? getStorefrontUrl(storeSlug) : '';
 
-  const handleCopyUrl = () => {
-    navigator.clipboard
-      .writeText(storeUrl)
-      .then(() => enqueueSnackbar(t('store_url_copied'), { variant: 'success' }))
-      .catch(() => enqueueSnackbar(t('failed_to_copy'), { variant: 'error' }));
+  const handleOpenStore = () => {
+    if (storeUrl) {
+      window.open(storeUrl, '_blank', 'noopener,noreferrer');
+    }
   };
 
 
@@ -217,9 +214,9 @@ export default function NavUserProfile() {
           )}
         </Box>
 
-        <Tooltip title={t('copy_store_url')}>
-          <IconButton size="small" onClick={handleCopyUrl} sx={{ color: 'text.secondary' }}>
-            <Iconify icon="solar:copy-bold-duotone" width={18} />
+        <Tooltip title={t('visit_store')}>
+          <IconButton size="small" onClick={handleOpenStore} sx={{ color: 'text.secondary' }}>
+            <Iconify icon="solar:square-top-down-bold-duotone" width={18} />
           </IconButton>
         </Tooltip>
       </Stack>

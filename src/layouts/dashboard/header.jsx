@@ -22,7 +22,6 @@ import { useSettingsContext } from 'src/components/settings';
 
 import Searchbar from '../common/searchbar';
 import { NAV, HEADER } from '../config-layout';
-import LanguagePopover from '../common/language-popover';
 import SettingsLink from '../common/settings-link';
 import AccountPopover from '../common/account-popover';
 import SubscriptionWalletWidget from 'src/sections/subscription/subscription-wallet-widget';
@@ -135,8 +134,6 @@ export default function Header({ onOpenNav }) {
         spacing={{ xs: 0.5, sm: 1 }}
       >
         <SubscriptionWalletWidget />
-
-        <LanguagePopover />
 
         <SettingsLink />
 

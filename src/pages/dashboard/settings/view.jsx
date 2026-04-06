@@ -42,16 +42,10 @@ const TABS = [
         href: paths?.dashboard.settings.contacts_social,
       },
       {
-        key: 'template',
-        titleKey: 'store_template',
+        key: 'appearance',
+        titleKey: 'appearance',
         icon: 'solar:palette-round-bold-duotone',
-        href: paths?.dashboard.settings.store_template,
-      },
-      {
-        key: 'colors',
-        titleKey: 'color_palette',
-        icon: 'solar:tuning-2-bold-duotone',
-        href: paths?.dashboard.settings.color_palette,
+        href: paths?.dashboard.settings.appearance,
       },
       {
         key: 'categories',
@@ -103,6 +97,19 @@ const TABS = [
         titleKey: 'cod_settings',
         icon: 'solar:cash-out-bold-duotone',
         href: paths?.dashboard.settings.cod,
+      },
+    ],
+  },
+  {
+    value: 'notifications',
+    labelKey: 'notification_settings',
+    icon: 'solar:bell-bold-duotone',
+    items: [
+      {
+        key: 'notifications',
+        titleKey: 'notification_preferences',
+        icon: 'solar:bell-bold-duotone',
+        href: paths?.dashboard.settings.notifications,
       },
     ],
   },
@@ -284,7 +291,7 @@ export default function SettingsView() {
           </Box>
 
           {/* Content Area */}
-          <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+          <Box sx={{ flexGrow: 1, minWidth: 0, maxWidth: 1100 }}>
             <Outlet />
           </Box>
         </Box>

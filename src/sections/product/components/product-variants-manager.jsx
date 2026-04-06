@@ -312,6 +312,47 @@ export default function ProductVariantsManager({ options, variants, onChange, im
               onChange={(e) => setBulkValues({ ...bulkValues, price: e.target.value })}
               InputProps={{
                 startAdornment: <InputAdornment position="start">{t('currency_symbol')}</InputAdornment>,
+                endAdornment: (
+                  <InputAdornment position="end" sx={{ ml: 0, gap: 0.5 }}>
+                    <IconButton
+                      size="small"
+                      onClick={() =>
+                        setBulkValues({
+                          ...bulkValues,
+                          price: String(Math.max(0, (parseFloat(bulkValues.price) || 0) - 10)),
+                        })
+                      }
+                      disabled={!bulkValues.price || parseFloat(bulkValues.price) <= 0}
+                      sx={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: 1,
+                        color: 'text.secondary',
+                        '&:hover': { bgcolor: 'action.hover' },
+                      }}
+                    >
+                      <Iconify icon="eva:minus-fill" width={18} />
+                    </IconButton>
+                    <IconButton
+                      size="small"
+                      onClick={() =>
+                        setBulkValues({
+                          ...bulkValues,
+                          price: String((parseFloat(bulkValues.price) || 0) + 10),
+                        })
+                      }
+                      sx={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: 1,
+                        color: 'text.secondary',
+                        '&:hover': { bgcolor: 'action.hover' },
+                      }}
+                    >
+                      <Iconify icon="eva:plus-fill" width={18} />
+                    </IconButton>
+                  </InputAdornment>
+                ),
               }}
             />
             <TextField
@@ -322,8 +363,8 @@ export default function ProductVariantsManager({ options, variants, onChange, im
               value={bulkValues.quantity}
               onChange={(e) => setBulkValues({ ...bulkValues, quantity: e.target.value })}
               InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start" sx={{ mr: 0 }}>
+                endAdornment: (
+                  <InputAdornment position="end" sx={{ ml: 0, gap: 0.5 }}>
                     <IconButton
                       size="small"
                       onClick={() =>
@@ -343,10 +384,6 @@ export default function ProductVariantsManager({ options, variants, onChange, im
                     >
                       <Iconify icon="eva:minus-fill" width={18} />
                     </IconButton>
-                  </InputAdornment>
-                ),
-                endAdornment: (
-                  <InputAdornment position="end" sx={{ ml: 0 }}>
                     <IconButton
                       size="small"
                       onClick={() =>
@@ -780,6 +817,45 @@ function VariantRow({ variant, index, expanded, onToggleExpand, onUpdate, produc
                     }
                     InputProps={{
                       startAdornment: <InputAdornment position="start">{t('currency_symbol')}</InputAdornment>,
+                      endAdornment: (
+                        <InputAdornment position="end" sx={{ ml: 0, gap: 0.5 }}>
+                          <IconButton
+                            size="small"
+                            onClick={() =>
+                              onUpdate(
+                                variant.id,
+                                'price',
+                                Math.max(0, (variant.price || 0) - 10)
+                              )
+                            }
+                            disabled={!variant.price || variant.price <= 0}
+                            sx={{
+                              width: 32,
+                              height: 32,
+                              borderRadius: 1,
+                              color: 'text.secondary',
+                              '&:hover': { bgcolor: 'action.hover' },
+                            }}
+                          >
+                            <Iconify icon="eva:minus-fill" width={18} />
+                          </IconButton>
+                          <IconButton
+                            size="small"
+                            onClick={() =>
+                              onUpdate(variant.id, 'price', (variant.price || 0) + 10)
+                            }
+                            sx={{
+                              width: 32,
+                              height: 32,
+                              borderRadius: 1,
+                              color: 'text.secondary',
+                              '&:hover': { bgcolor: 'action.hover' },
+                            }}
+                          >
+                            <Iconify icon="eva:plus-fill" width={18} />
+                          </IconButton>
+                        </InputAdornment>
+                      ),
                     }}
                   />
                   <TextField
@@ -796,8 +872,8 @@ function VariantRow({ variant, index, expanded, onToggleExpand, onUpdate, produc
                       )
                     }
                     InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start" sx={{ mr: 0 }}>
+                      endAdornment: (
+                        <InputAdornment position="end" sx={{ ml: 0, gap: 0.5 }}>
                           <IconButton
                             size="small"
                             onClick={() =>
@@ -818,10 +894,6 @@ function VariantRow({ variant, index, expanded, onToggleExpand, onUpdate, produc
                           >
                             <Iconify icon="eva:minus-fill" width={18} />
                           </IconButton>
-                        </InputAdornment>
-                      ),
-                      endAdornment: (
-                        <InputAdornment position="end" sx={{ ml: 0 }}>
                           <IconButton
                             size="small"
                             onClick={() =>

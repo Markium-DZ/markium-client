@@ -18,6 +18,7 @@ import Tooltip from '@mui/material/Tooltip';
 
 import Iconify from 'src/components/iconify';
 import { useTranslate } from 'src/locales';
+import { useMediaPreview } from 'src/context/media-preview/media-preview-context';
 
 // ── Animations ──────────────────────────────────────────────────────────
 
@@ -1003,6 +1004,7 @@ OptionCard.propTypes = {
 
 function ValueMediaGrid({ productMedia, assignedIds, onToggle }) {
   const { t } = useTranslate();
+  const { getPreviewUrl } = useMediaPreview();
 
   if (!productMedia || productMedia.length === 0) {
     return (
@@ -1058,7 +1060,7 @@ function ValueMediaGrid({ productMedia, assignedIds, onToggle }) {
               title={
                 <Box
                   component="img"
-                  src={item.full_url}
+                  src={getPreviewUrl(item.id, item.full_url)}
                   alt={item.alt_text || ''}
                   sx={{
                     width: 260,
@@ -1094,7 +1096,7 @@ function ValueMediaGrid({ productMedia, assignedIds, onToggle }) {
               >
                 <Box
                   component="img"
-                  src={item.full_url}
+                  src={getPreviewUrl(item.id, item.full_url)}
                   alt={item.alt_text || ''}
                   loading="lazy"
                   sx={{
