@@ -194,6 +194,7 @@
   "back": "Back",
   "go_live": "Go Live",
   "loading": "Loading…",
+  "loading_data": "Loading data...",
   "discount": "Discount",
   "status": "Status",
   "created_at": "Created At",
@@ -236,7 +237,7 @@
   "item_external_link": "Item External Link",
   "only_admin_can_see_this_item": "Only admin can see this item",
   "upgrade_to_pro": "Upgrade to Pro",
-  "upgrade_to_pro_description": "Advanced reports, unlimited storage and pro features",
+  "upgrade_to_pro_description": "Revenue tracking, advanced analytics and tools to grow your sales",
   "upgrade_now": "Upgrade Now",
   "demo": {
     "title": "English"
@@ -1072,6 +1073,7 @@
   "enterprise_plan": "Enterprise Plan",
   "monthly": "Monthly",
   "yearly": "Yearly",
+  "2_months_free": "2 months free",
   "save": "Save",
   "plan": "Plan",
   "billed_annually": "Billed annually",
@@ -2168,7 +2170,7 @@
     "item_external_link": "Item External Link",
     "only_admin_can_see_this_item": "Only admin can see this item",
     "upgrade_to_pro": "Upgrade to Pro",
-    "upgrade_to_pro_description": "Advanced reports, unlimited storage and pro features",
+    "upgrade_to_pro_description": "Revenue tracking, advanced analytics and tools to grow your sales",
     "upgrade_now": "Upgrade Now",
     "demo": {
       "title": "English"

@@ -23,6 +23,7 @@ import { useTranslate } from 'src/locales';
 import { useAuthContext } from 'src/auth/hooks';
 import { useSnackbar } from 'src/components/snackbar';
 import { useCopyToClipboard } from 'src/hooks/use-copy-to-clipboard';
+import { getStorefrontUrl } from 'src/config-global';
 import { useBoolean } from 'src/hooks/use-boolean';
 import { ConfirmDialog } from 'src/components/custom-dialog';
 import LoadingButton from '@mui/lab/LoadingButton';
@@ -51,7 +52,7 @@ export default function ProductDetailsView({ id }) {
   const { copy } = useCopyToClipboard();
 
   const publicProductUrl = user?.store?.slug
-    ? `https://${user.store.slug}.markium.online/?product_slug=${product?.slug}`
+    ? getStorefrontUrl(user.store.slug, { product_slug: product?.slug })
     : '';
 
   const handleCopyLink = useCallback(() => {

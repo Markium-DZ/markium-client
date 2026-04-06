@@ -21,7 +21,7 @@ import AnalyticsCurrentVisits from '../analytics-current-visits';
 export default function AnalyticsTabCustomers({ dateFrom, sections }) {
   const { t } = useTranslate();
 
-  const { customerInsights } = useGetAnalyticsCustomerInsights(
+  const { customerInsights, customerInsightsLoading } = useGetAnalyticsCustomerInsights(
     sections?.customer_insights?.accessible ? dateFrom : null
   );
   const { dailyTrend } = useGetAnalyticsRevenueBreakdown(
@@ -61,6 +61,7 @@ export default function AnalyticsTabCustomers({ dateFrom, sections }) {
           <CardHeader title={t('analytics_customer_insights')} subheader={t('analytics_customer_insights_desc')} />
           <AnalyticsGate sectionKey="customer_insights">
             <AnalyticsCurrentVisits
+              loading={customerInsightsLoading}
               chart={{
                 series: [
                   {

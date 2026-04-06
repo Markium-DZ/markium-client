@@ -23,6 +23,11 @@ export default function RHFCode({ name, ...other }) {
             TextFieldsProps={{
               error: !!error,
               placeholder: '-',
+              inputProps: { dir: 'ltr' },
+            }}
+            sx={{
+              direction: 'ltr',
+              justifyContent: 'center',
             }}
             {...other}
           />

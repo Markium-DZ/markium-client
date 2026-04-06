@@ -10,10 +10,11 @@ import { alpha, useTheme } from '@mui/material/styles';
 
 import Iconify from 'src/components/iconify';
 import { useTranslate } from 'src/locales';
+import ChartLoadingPlaceholder from 'src/components/chart/chart-loading-placeholder';
 
 // ----------------------------------------------------------------------
 
-export default function AnalyticsConversionRates({ title, subheader, chart, ...other }) {
+export default function AnalyticsConversionRates({ title, subheader, chart, loading, ...other }) {
   const theme = useTheme();
   const { t, i18n } = useTranslate();
   const lang = i18n.language || 'ar';
@@ -30,7 +31,9 @@ export default function AnalyticsConversionRates({ title, subheader, chart, ...o
   const numFmt = new Intl.NumberFormat(lang, { maximumFractionDigits: 0 });
   const formatValue = (v) => numFmt.format(Math.round(v));
 
-  const chartContent = isEmpty ? (
+  const chartContent = loading ? (
+    <ChartLoadingPlaceholder variant="bar" height={364} />
+  ) : isEmpty ? (
     <Stack alignItems="center" justifyContent="center" spacing={1} sx={{ height: 364 }}>
       <Box sx={{ p: 1.5, borderRadius: '50%', bgcolor: alpha(theme.palette.grey[500], 0.08) }}>
         <Iconify icon="solar:chart-square-bold-duotone" width={28} sx={{ color: 'text.disabled' }} />
@@ -78,6 +81,7 @@ export default function AnalyticsConversionRates({ title, subheader, chart, ...o
 
 AnalyticsConversionRates.propTypes = {
   chart: PropTypes.object,
+  loading: PropTypes.bool,
   subheader: PropTypes.string,
   title: PropTypes.string,
 };

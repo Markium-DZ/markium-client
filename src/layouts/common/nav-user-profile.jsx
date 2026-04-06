@@ -20,6 +20,7 @@ import { useSnackbar } from 'src/components/snackbar';
 import { useTranslate } from 'src/locales';
 
 import { useGetCurrentSubscription } from 'src/api/subscriptions';
+import { getStorefrontUrl } from 'src/config-global';
 
 // ----------------------------------------------------------------------
 
@@ -57,7 +58,7 @@ export default function NavUserProfile() {
   const storeLogo = user?.store?.logo_url;
   const storeSlug = user?.store?.slug;
   const storeInitials = storeName?.substring(0, 2).toUpperCase();
-  const storeUrl = storeSlug ? `https://${storeSlug}.markium.online` : '';
+  const storeUrl = storeSlug ? getStorefrontUrl(storeSlug) : '';
 
   const handleCopyUrl = () => {
     navigator.clipboard

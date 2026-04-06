@@ -253,7 +253,7 @@ export default function SubscriptionCheckoutView() {
                 <span>{t('yearly')}</span>
                 {hasAnySavings && (
                   <Chip
-                    label={`-20%`}
+                    label={t('2_months_free')}
                     size="small"
                     sx={{
                       height: 22,
@@ -292,9 +292,6 @@ export default function SubscriptionCheckoutView() {
           const isPreselected = preselectedPackage && pkg.slug === preselectedPackage;
           const savings = getYearlySavings(tier);
           const isBusiness = tier.name === 'business';
-          const monthlyEquivalent = billingCycle === 'yearly' && tier.monthly
-            ? Math.round(pkg.price / 12)
-            : null;
           const isCurrentPlan = subscription?.package?.slug === pkg.slug;
 
           return (
@@ -353,32 +350,27 @@ export default function SubscriptionCheckoutView() {
                 {/* Price */}
                 <Stack direction="row" alignItems="baseline" sx={{ mb: 1 }}>
                   <Typography variant="h2" component="span">
-                    {fCurrency(billingCycle === 'yearly' && monthlyEquivalent ? monthlyEquivalent : pkg.price)}
+                    {fCurrency(pkg.price)}
                   </Typography>
                   <Typography
                     variant="body2"
                     component="span"
                     sx={{ color: 'text.secondary', ml: 0.5 }}
                   >
-                    / {billingCycle === 'yearly' && monthlyEquivalent ? t('mo') : (billingCycle === 'monthly' ? t('mo') : t('yr'))}
+                    / {billingCycle === 'yearly' ? t('yr') : t('mo')}
                   </Typography>
                 </Stack>
 
-                {/* Yearly total + savings */}
-                {billingCycle === 'yearly' && (
+                {/* Yearly: 2 months free badge */}
+                {billingCycle === 'yearly' && savings ? (
                   <Stack spacing={0.5} sx={{ mb: 2 }}>
-                    <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                      {t('pricing_billed_yearly', { amount: fCurrency(pkg.price) })}
+                    <Typography variant="caption" sx={{ color: 'success.main', fontWeight: 700 }}>
+                      {t('2_months_free')}
                     </Typography>
-                    {savings && (
-                      <Typography variant="caption" sx={{ color: 'success.main', fontWeight: 600 }}>
-                        {t('pricing_you_save', { amount: fCurrency(savings.amount), percent: savings.percent })}
-                      </Typography>
-                    )}
                   </Stack>
+                ) : (
+                  <Box sx={{ mb: 2 }} />
                 )}
-
-                {billingCycle === 'monthly' && <Box sx={{ mb: 2 }} />}
 
                 {/* CTA button */}
                 <Button

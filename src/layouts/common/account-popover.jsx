@@ -22,6 +22,7 @@ import { useSnackbar } from 'src/components/snackbar';
 import CustomPopover, { usePopover } from 'src/components/custom-popover';
 import { useSettingsContext } from 'src/components/settings';
 import { useTranslate } from 'src/locales';
+import { getStorefrontUrl } from 'src/config-global';
 
 // ----------------------------------------------------------------------
 
@@ -57,7 +58,7 @@ export default function AccountPopover() {
   };
 
   const handleCopyStoreUrl = () => {
-    const storeUrl = `https://${user?.store?.slug}.markium.online`;
+    const storeUrl = getStorefrontUrl(user?.store?.slug);
     navigator.clipboard
       .writeText(storeUrl)
       .then(() => {
@@ -70,7 +71,7 @@ export default function AccountPopover() {
       });
   };
 
-  const storeUrl = user?.store?.slug ? `${user.store.slug}.markium.online` : '';
+  const storeUrl = user?.store?.slug ? getStorefrontUrl(user.store.slug) : '';
 
   return (
     <>

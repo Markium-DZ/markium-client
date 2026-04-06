@@ -2,28 +2,19 @@ import PropTypes from 'prop-types';
 import { useTranslation } from 'react-i18next';
 
 import Box from '@mui/material/Box';
-import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
-import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
-import CardHeader from '@mui/material/CardHeader';
 import CircularProgress from '@mui/material/CircularProgress';
 import { alpha, useTheme } from '@mui/material/styles';
 import { LineChart } from '@mui/x-charts/LineChart';
 
-import { useRouter } from 'src/routes/hooks';
-import { paths } from 'src/routes/paths';
-
 import { fNumber } from 'src/utils/format-number';
-
-import Iconify from 'src/components/iconify';
 
 // ----------------------------------------------------------------------
 
 export default function DashboardChart({ visitorsData, visitorsLabels, ordersData, ordersLabels, loading, interval }) {
   const { t, i18n } = useTranslation();
   const theme = useTheme();
-  const router = useRouter();
   const currentLang = i18n.language;
 
   const isHourly = interval === 'hour';
@@ -112,31 +103,14 @@ export default function DashboardChart({ visitorsData, visitorsLabels, ordersDat
 
   if (loading) {
     return (
-      <Card sx={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <Box sx={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <CircularProgress size={32} />
-      </Card>
+      </Box>
     );
   }
 
   return (
-    <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <CardHeader
-        title={t('visitors_and_orders')}
-        titleTypographyProps={{ variant: 'subtitle1' }}
-        action={
-          <Button
-            size="small"
-            color="inherit"
-            endIcon={<Iconify icon="solar:alt-arrow-right-outline" width={16} sx={{ transform: theme.direction === 'rtl' ? 'scaleX(-1)' : 'none' }} />}
-            onClick={() => router.push(paths.dashboard.analytics)}
-            sx={{ fontSize: '0.75rem', fontWeight: 600 }}
-          >
-            {t('view_all_analytics')}
-          </Button>
-        }
-        sx={{ pb: 0 }}
-      />
-
+    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       {hasData ? (
         <Box dir="ltr" sx={{ flexGrow: 1, width: '100%', position: 'relative', minHeight: 220 }}>
           <svg width={0} height={0} style={{ position: 'absolute' }}>
@@ -213,7 +187,7 @@ export default function DashboardChart({ visitorsData, visitorsLabels, ordersDat
           </Typography>
         </Stack>
       )}
-    </Card>
+    </Box>
   );
 }
 

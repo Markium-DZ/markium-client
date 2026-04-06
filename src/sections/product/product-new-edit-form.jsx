@@ -750,6 +750,7 @@ export default function ProductNewEditForm({ currentProduct, drawerMode = false,
             placeholder="0.00"
             type="number"
             required
+            inputProps={{ min: 0, step: 'any' }}
             InputLabelProps={{ shrink: true }}
             InputProps={{
               startAdornment: (
@@ -760,25 +761,47 @@ export default function ProductNewEditForm({ currentProduct, drawerMode = false,
                 </InputAdornment>
               ),
               endAdornment: (
-                <InputAdornment position="end" sx={{ flexDirection: 'column', height: '100%', mr: -0.5 }}>
-                  <IconButton
-                    size="small"
-                    onClick={() => setValue('sale_price', (parseFloat(values.sale_price) || 0) + 1)}
-                    sx={{ p: 0, lineHeight: 1 }}
-                  >
-                    <Iconify icon="eva:arrow-ios-upward-fill" width={16} />
-                  </IconButton>
+                <InputAdornment position="end" sx={{ ml: 0, gap: 0.5 }}>
                   <IconButton
                     size="small"
                     onClick={() =>
-                      setValue('sale_price', Math.max(0, (parseFloat(values.sale_price) || 0) - 1))
+                      setValue('sale_price', Math.max(0, (parseFloat(values.sale_price) || 0) - 10))
                     }
-                    sx={{ p: 0, lineHeight: 1 }}
+                    disabled={!values.sale_price || values.sale_price <= 0}
+                    sx={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: 1,
+                      color: 'text.secondary',
+                      '&:hover': { bgcolor: 'action.hover' },
+                    }}
                   >
-                    <Iconify icon="eva:arrow-ios-downward-fill" width={16} />
+                    <Iconify icon="eva:minus-fill" width={18} />
+                  </IconButton>
+                  <IconButton
+                    size="small"
+                    onClick={() => setValue('sale_price', (parseFloat(values.sale_price) || 0) + 10)}
+                    sx={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: 1,
+                      color: 'text.secondary',
+                      '&:hover': { bgcolor: 'action.hover' },
+                    }}
+                  >
+                    <Iconify icon="eva:plus-fill" width={18} />
                   </IconButton>
                 </InputAdornment>
               ),
+            }}
+            sx={{
+              '& input[type=number]': {
+                MozAppearance: 'textfield',
+              },
+              '& input[type=number]::-webkit-outer-spin-button, & input[type=number]::-webkit-inner-spin-button': {
+                WebkitAppearance: 'none',
+                margin: 0,
+              },
             }}
           />
 
@@ -787,26 +810,56 @@ export default function ProductNewEditForm({ currentProduct, drawerMode = false,
             label={t('quantity')}
             placeholder="0"
             type="number"
+            inputProps={{ min: 0, step: 1 }}
             InputLabelProps={{ shrink: true }}
             InputProps={{
               endAdornment: (
-                <InputAdornment position="end" sx={{ flexDirection: 'column', height: '100%', mr: -0.5 }}>
-                  <IconButton
-                    size="small"
-                    onClick={() => setValue('quantity', (values.quantity || 0) + 1)}
-                    sx={{ p: 0, lineHeight: 1 }}
-                  >
-                    <Iconify icon="eva:arrow-ios-upward-fill" width={16} />
-                  </IconButton>
+                <InputAdornment position="end" sx={{ ml: 0, gap: 0.5 }}>
                   <IconButton
                     size="small"
                     onClick={() => setValue('quantity', Math.max(0, (values.quantity || 0) - 1))}
-                    sx={{ p: 0, lineHeight: 1 }}
+                    disabled={!values.quantity || values.quantity <= 0}
+                    sx={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: 1,
+                      color: 'text.secondary',
+                      '&:hover': { bgcolor: 'action.hover' },
+                    }}
                   >
-                    <Iconify icon="eva:arrow-ios-downward-fill" width={16} />
+                    <Iconify icon="eva:minus-fill" width={18} />
+                  </IconButton>
+                  <IconButton
+                    size="small"
+                    onClick={() => setValue('quantity', (values.quantity || 0) + 1)}
+                    sx={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: 1,
+                      color: 'text.secondary',
+                      '&:hover': { bgcolor: 'action.hover' },
+                    }}
+                  >
+                    <Iconify icon="eva:plus-fill" width={18} />
                   </IconButton>
                 </InputAdornment>
               ),
+            }}
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                pr: 0.5,
+                pl: 0.5,
+              },
+              '& input': {
+                textAlign: 'center',
+                fontWeight: 600,
+                fontSize: '0.95rem',
+                MozAppearance: 'textfield',
+              },
+              '& input[type=number]::-webkit-outer-spin-button, & input[type=number]::-webkit-inner-spin-button': {
+                WebkitAppearance: 'none',
+                margin: 0,
+              },
             }}
           />
         </Box>

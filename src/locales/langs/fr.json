@@ -181,6 +181,7 @@
   "back": "Retour",
   "go_live": "Publier",
   "loading": "Chargement en cours...",
+  "loading_data": "Chargement des données...",
   "discount": "Réduction",
   "status": "Statut",
   "created_at": "Date de création",
@@ -224,7 +225,7 @@
   "item_external_link": "Lien externe de l'élément",
   "only_admin_can_see_this_item": "Seul l'administrateur peut voir cet élément",
   "upgrade_to_pro": "Passer à Pro",
-  "upgrade_to_pro_description": "Rapports avancés, stockage illimité et fonctionnalités pro",
+  "upgrade_to_pro_description": "Suivi des revenus, analyses avancées et outils pour booster vos ventes",
   "upgrade_now": "Passer au Pro",
   "demo": {
     "title": "Français"
@@ -1006,6 +1007,7 @@
   "professional_plan": "Plan professionnel",
   "enterprise_plan": "Plan entreprise",
   "yearly": "Annuel",
+  "2_months_free": "2 mois gratuits",
   "save": "Économisez",
   "plan": "Plan",
   "billed_annually": "Facturé annuellement",
@@ -1975,7 +1977,7 @@
     "item_external_link": "Lien externe de l'élément",
     "only_admin_can_see_this_item": "Seul l'administrateur peut voir cet élément",
     "upgrade_to_pro": "Passer à Pro",
-    "upgrade_to_pro_description": "Rapports avancés, stockage illimité et fonctionnalités pro",
+    "upgrade_to_pro_description": "Suivi des revenus, analyses avancées et outils pour booster vos ventes",
     "upgrade_now": "Passer au Pro",
     "demo": {
       "title": "Français"

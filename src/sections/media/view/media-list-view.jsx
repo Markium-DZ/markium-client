@@ -25,6 +25,7 @@ import { useGetMedia, uploadMedia, deleteMedia, updateMediaAltText } from 'src/a
 import { useSettingsContext } from 'src/components/settings';
 import { useSnackbar } from 'src/components/snackbar';
 import Iconify from 'src/components/iconify';
+import { useMediaPreview } from 'src/context/media-preview/media-preview-context';
 import { fDate } from 'src/utils/format-time';
 import { fData } from 'src/utils/format-number';
 import CustomPopover, { usePopover } from 'src/components/custom-popover';
@@ -46,6 +47,8 @@ export default function MediaListView() {
   const [page, setPage] = useState(1);
   const [allMedia, setAllMedia] = useState([]);
   const [uploading, setUploading] = useState(false);
+
+  const { previewMap, addPreviews, checkS3Readiness } = useMediaPreview();
 
   const fileInputRef = useRef(null);
   const scrollContainerRef = useRef(null);
@@ -82,8 +85,23 @@ export default function MediaListView() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [handleScroll]);
 
+  // Merge server items with shared blob URL overrides while S3 upload is pending
+  const displayMedia = useMemo(() => {
+    if (previewMap.size === 0) return allMedia;
+    return allMedia.map((item) => {
+      const entry = previewMap.get(item.id);
+      return entry ? { ...item, full_url: entry.blobUrl } : item;
+    });
+  }, [allMedia, previewMap]);
+
+  // Check S3 readiness via shared context when media data changes
+  useEffect(() => {
+    if (previewMap.size === 0 || allMedia.length === 0) return;
+    checkS3Readiness(allMedia);
+  }, [allMedia, previewMap, checkS3Readiness]);
+
   // Group media by creation date
-  const groupedMedia = allMedia.reduce((groups, item) => {
+  const groupedMedia = displayMedia.reduce((groups, item) => {
     const date = fDate(item.created_at);
     if (!groups[date]) {
       groups[date] = [];
@@ -109,10 +127,21 @@ export default function MediaListView() {
     const files = event.target.files;
     if (!files || files.length === 0) return;
 
+    // Create blob URLs for instant local preview
+    const fileArray = Array.from(files);
+    const blobUrls = fileArray.map((file) => URL.createObjectURL(file));
+
     try {
       setUploading(true);
-      await uploadMedia(files);
-      captureEvent('media_uploaded', { count: files.length });
+      const response = await uploadMedia(files);
+      captureEvent('media_uploaded', { count: fileArray.length });
+
+      // Store blob URLs in shared context (persists across components)
+      const uploadedItems = response?.data?.data || [];
+      const entries = uploadedItems
+        .map((item, index) => (blobUrls[index] ? { id: item.id, blobUrl: blobUrls[index] } : null))
+        .filter(Boolean);
+      if (entries.length > 0) addPreviews(entries);
 
       // Reset page and media to refresh from beginning
       setPage(1);
@@ -126,6 +155,8 @@ export default function MediaListView() {
         fileInputRef.current.value = '';
       }
     } catch (error) {
+      // Revoke blob URLs on failure
+      blobUrls.forEach((url) => URL.revokeObjectURL(url));
       console.error('Failed to upload media:', error);
       enqueueSnackbar(error.message || t('failed_to_upload_media'), { variant: 'error' });
     } finally {

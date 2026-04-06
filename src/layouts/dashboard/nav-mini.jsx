@@ -23,6 +23,7 @@ import { useTranslate } from 'src/locales';
 import { NavSectionMini } from 'src/components/nav-section';
 
 import { AuthContext } from 'src/auth/context/jwt';
+import { getStorefrontUrl } from 'src/config-global';
 import { useGetCurrentSubscription } from 'src/api/subscriptions';
 
 import { NAV } from '../config-layout';
@@ -52,7 +53,7 @@ export default function NavMini() {
   const storeLogo = user?.store?.logo_url;
   const storeSlug = user?.store?.slug;
   const storeInitials = storeName?.substring(0, 2).toUpperCase();
-  const storeUrl = storeSlug ? `https://${storeSlug}.markium.online` : '';
+  const storeUrl = storeSlug ? getStorefrontUrl(storeSlug) : '';
 
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const upgradeRef = useRef(null);

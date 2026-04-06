@@ -26,25 +26,15 @@ export default function DashboardMetrics({ metrics, dateRange, onDateRangeChange
   const { t } = useTranslation();
 
   return (
-    <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      {/* Metrics grid: 2 top cells + 1 spanning bottom */}
+    <Stack spacing={2} sx={{ height: '100%' }}>
       <Box
-        sx={{
-          flexGrow: 1,
-          display: 'grid',
-          gridTemplateColumns: 'repeat(2, 1fr)',
-          gridTemplateRows: 'repeat(2, 1fr)',
-          '& > *:first-of-type': {
-            borderRight: (thm) => `1px dashed ${thm.palette.divider}`,
-            borderBottom: (thm) => `1px dashed ${thm.palette.divider}`,
-          },
-          '& > *:nth-of-type(2)': {
-            borderBottom: (thm) => `1px dashed ${thm.palette.divider}`,
-          },
-        }}
+        display="grid"
+        gridTemplateColumns="repeat(2, 1fr)"
+        gap={2}
+        sx={{ flexGrow: 1 }}
       >
         {metrics.map((metric) => (
-          <MetricCell key={metric.label} metric={metric} />
+          <MetricCard key={metric.label} metric={metric} sx={metric.span === 2 ? { gridColumn: '1 / -1' } : undefined} />
         ))}
       </Box>
 
@@ -54,7 +44,6 @@ export default function DashboardMetrics({ metrics, dateRange, onDateRangeChange
         justifyContent="center"
         alignItems="center"
         spacing={3}
-        sx={{ py: 1.25, borderTop: (thm) => `1px dashed ${thm.palette.divider}` }}
       >
         <Stack direction="row" alignItems="center" spacing={0.5}>
           <Iconify icon="solar:calendar-linear" width={15} sx={{ color: 'text.disabled' }} />
@@ -96,7 +85,7 @@ export default function DashboardMetrics({ metrics, dateRange, onDateRangeChange
           </Typography>
         </Stack>
       </Stack>
-    </Card>
+    </Stack>
   );
 }
 
@@ -108,98 +97,123 @@ DashboardMetrics.propTypes = {
 
 // ----------------------------------------------------------------------
 
-function MetricCell({ metric }) {
+function MetricCard({ metric, sx: sxProp }) {
   const theme = useTheme();
+  const mainColor = metric.color || theme.palette.primary.main;
   const hasData = metric.data?.length > 0;
   const data = hasData ? metric.data.slice(-10) : FLAT_LINE;
-  const color = hasData ? metric.color : theme.palette.grey[300];
-  const isWide = metric.span === 2;
+  const chartColor = hasData ? mainColor : theme.palette.grey[300];
 
   return (
-    <Box
+    <Card
       sx={{
+        p: 2.5,
         position: 'relative',
+        overflow: 'hidden',
         display: 'flex',
         flexDirection: 'column',
-        justifyContent: 'center',
-        p: 2,
-        overflow: 'hidden',
-        ...(isWide && { gridColumn: '1 / -1' }),
+        transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+        '&:hover': {
+          transform: 'translateY(-2px)',
+          boxShadow: `0 12px 24px -4px ${alpha(mainColor, 0.16)}`,
+        },
+        ...sxProp,
       }}
     >
-      {/* Colored icon badge — top-end corner */}
-      <Tooltip title={metric.tooltip || ''} placement="top" arrow>
-        <Box
-          sx={{
-            position: 'absolute',
-            top: 12,
-            right: 12,
-            width: 36,
-            height: 36,
-            borderRadius: '10px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            bgcolor: alpha(metric.color, 0.1),
-          }}
-        >
-          <Iconify icon={metric.icon || 'solar:chart-bold-duotone'} width={20} sx={{ color: metric.color }} />
-        </Box>
-      </Tooltip>
+      {/* Decorative background circles */}
+      <Box
+        sx={{
+          position: 'absolute',
+          top: -24,
+          right: -24,
+          width: 96,
+          height: 96,
+          borderRadius: '50%',
+          bgcolor: alpha(mainColor, 0.06),
+        }}
+      />
+      <Box
+        sx={{
+          position: 'absolute',
+          top: -8,
+          right: -8,
+          width: 56,
+          height: 56,
+          borderRadius: '50%',
+          bgcolor: alpha(mainColor, 0.1),
+        }}
+      />
 
-      {/* Value + Label */}
-      <Tooltip title={metric.tooltip || ''} placement="top" arrow>
-        <Box sx={{ alignSelf: 'flex-start' }}>
+      <Stack spacing={1.5} sx={{ position: 'relative', zIndex: 1, flexGrow: 1 }}>
+        {/* Icon badge */}
+        <Tooltip title={metric.tooltip || ''} placement="top" arrow>
+          <Box
+            sx={{
+              width: 40,
+              height: 40,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: 1.5,
+              background: `linear-gradient(135deg, ${alpha(mainColor, 0.16)} 0%, ${alpha(mainColor, 0.04)} 100%)`,
+              border: `1px solid ${alpha(mainColor, 0.12)}`,
+            }}
+          >
+            <Iconify icon={metric.icon || 'solar:chart-bold-duotone'} width={22} sx={{ color: mainColor }} />
+          </Box>
+        </Tooltip>
+
+        {/* Value + Label */}
+        <Box>
           <Typography
             variant="h4"
             sx={{
-              fontWeight: 800,
+              fontWeight: 700,
               letterSpacing: '-0.02em',
-              lineHeight: 1,
+              lineHeight: 1.2,
               mb: 0.5,
             }}
           >
             {metric.value ? fNumber(metric.value) : '0'}
             {metric.suffix && (
-              <Typography component="span" variant="body2" sx={{ fontWeight: 600, ml: 0.5 }}>
+              <Typography
+                component="span"
+                variant="subtitle2"
+                sx={{ ml: 0.5, fontWeight: 500, color: 'text.secondary' }}
+              >
                 {metric.suffix}
               </Typography>
             )}
           </Typography>
 
-          <Typography
-            variant="caption"
-            sx={{
-              color: 'text.secondary',
-              fontWeight: 500,
-            }}
-          >
+          <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 500 }}>
             {metric.label}
           </Typography>
         </Box>
-      </Tooltip>
 
-      {/* Sparkline */}
-      <Box sx={{ height: 36, mt: 1.5 }} dir="ltr">
-        <SparkLineChart
-          data={data}
-          height={36}
-          curve="natural"
-          showHighlight
-          showTooltip
-          colors={[color]}
-          valueFormatter={(v) => `${metric.label}: ${fNumber(v) || '0'}`}
-          sx={{
-            '& .MuiLineElement-root': {
-              strokeWidth: 1.5,
-            },
-          }}
-        />
-      </Box>
-    </Box>
+        {/* Sparkline */}
+        <Box sx={{ height: 32, mt: 'auto' }} dir="ltr">
+          <SparkLineChart
+            data={data}
+            height={32}
+            curve="natural"
+            showHighlight
+            showTooltip
+            colors={[chartColor]}
+            valueFormatter={(v) => `${metric.label}: ${fNumber(v) || '0'}`}
+            sx={{
+              '& .MuiLineElement-root': {
+                strokeWidth: 1.5,
+              },
+            }}
+          />
+        </Box>
+      </Stack>
+    </Card>
   );
 }
 
-MetricCell.propTypes = {
+MetricCard.propTypes = {
   metric: PropTypes.object.isRequired,
+  sx: PropTypes.object,
 };

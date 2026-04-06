@@ -15,6 +15,7 @@ import { paths } from 'src/routes/paths';
 import { useAuthContext } from 'src/auth/hooks';
 
 import Iconify from 'src/components/iconify';
+import { getStorefrontUrl } from 'src/config-global';
 
 // ── Tip config ────────────────────────────────────────────────────
 
@@ -39,7 +40,7 @@ export default function EmptyStateOrders({ hasProducts = false, compact = false,
       enqueueSnackbar(t('store_url_not_available'), { variant: 'warning' });
       return;
     }
-    const storeUrl = `https://${slug}.markium.online/?store=${slug}`;
+    const storeUrl = getStorefrontUrl(slug, { store: slug });
     try {
       await navigator.clipboard.writeText(storeUrl);
       enqueueSnackbar(t('store_url_copied'), { variant: 'success' });

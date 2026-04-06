@@ -25,6 +25,7 @@ import { AuthProvider } from 'src/auth/context/jwt';
 
 import SwUpdatePrompt from 'src/components/pwa/sw-update-prompt';
 import OfflineIndicator from 'src/components/pwa/offline-indicator';
+import { MediaPreviewProvider } from 'src/context/media-preview/media-preview-context';
 
 // Lazy-load components not needed for the initial login page render
 const LocalizationProvider = lazy(() => import('src/locales/localization-provider'));
@@ -65,11 +66,13 @@ export default function App() {
               <OfflineIndicator />
               <ProgressBar />
               <Suspense fallback={<ProgressBar />}>
-                <CheckoutProvider>
-                  <LocalizationProvider>
-                    <Router />
-                  </LocalizationProvider>
-                </CheckoutProvider>
+                <MediaPreviewProvider>
+                  <CheckoutProvider>
+                    <LocalizationProvider>
+                      <Router />
+                    </LocalizationProvider>
+                  </CheckoutProvider>
+                </MediaPreviewProvider>
               </Suspense>
             </SnackbarProvider>
           </MotionLazy>
