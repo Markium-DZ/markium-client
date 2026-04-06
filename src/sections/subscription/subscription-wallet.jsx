@@ -183,8 +183,8 @@ export default function SubscriptionWallet() {
             value={topupAmount}
             onChange={(e) => setTopupAmount(e.target.value)}
             sx={{ mt: 2 }}
-            inputProps={{ min: 100 }}
-            helperText={`${t('wallet_minimum_amount')}: 100 DZD`}
+            inputProps={{ min: 1000 }}
+            helperText={`${t('wallet_minimum_amount')}: 1,000 DZD`}
           />
         </DialogContent>
         <DialogActions>
