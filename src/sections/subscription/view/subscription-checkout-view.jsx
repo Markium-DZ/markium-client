@@ -253,7 +253,7 @@ export default function SubscriptionCheckoutView() {
                 <span>{t('yearly')}</span>
                 {hasAnySavings && (
                   <Chip
-                    label={`-20%`}
+                    label={t('2_months_free')}
                     size="small"
                     sx={{
                       height: 22,
