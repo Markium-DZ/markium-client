@@ -11,10 +11,13 @@ import { fCurrency } from 'src/utils/format-number';
 
 import Label from 'src/components/label';
 import Iconify from 'src/components/iconify';
+import { useRouter } from 'src/routes/hooks';
+import { paths } from 'src/routes/paths';
 
 // ----------------------------------------------------------------------
 
 export default function OrderMobileCard({ row, onActionsClick }) {
+  const router = useRouter();
   const items = row.items || [];
   const firstItem = items[0];
 
@@ -30,7 +33,10 @@ export default function OrderMobileCard({ row, onActionsClick }) {
   }
 
   return (
-    <Card sx={{ p: 1.5, mb: 1 }}>
+    <Card
+      sx={{ p: 1.5, mb: 1, cursor: 'pointer' }}
+      onClick={() => router.push(paths.dashboard.order.details(row.id))}
+    >
       <Stack direction="row" spacing={1.5}>
         {/* Product thumbnail */}
         {imageUrl ? (

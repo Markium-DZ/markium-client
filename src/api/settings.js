@@ -78,9 +78,31 @@ export function useGetSystemVisibleItem(type) {
 }
 
 export function useGetSystemCategories(page = 1, perPage = 100) {
-    const params = new URLSearchParams({ page, per_page: perPage });
-    // const url = `${endpoints.settings?.categoriesList}?${params.toString()}`;
     const url = endpoints.settings?.categoriesList;
+
+    const { data, isLoading, error, isValidating, mutate } = useSWR(
+        url,
+        fetcher,
+        options
+    );
+
+    const memoizedValue = useMemo(
+        () => ({
+            items: data?.data || [],
+            itemsLoading: isLoading,
+            itemsError: error,
+            itemsValidating: isValidating,
+            itemsEmpty: !isLoading && !data?.data?.length,
+            mutate,
+        }),
+        [data, error, isLoading, isValidating]
+    );
+
+    return memoizedValue;
+}
+
+export function useGetCategorySettings() {
+    const url = endpoints.settings?.categoriesSettings;
 
     const { data, isLoading, error, isValidating, mutate } = useSWR(
         url,
@@ -116,7 +138,8 @@ export async function changeItemVisibilityInSettings(body) {
 }
 
 
-export async function changeCategoryVisibility(id,body) {
-    const URL = endpoints.settings.categories+"/"+id;
-    return await axios.put(URL, body);
+export async function changeCategoryVisibility(id, body) {
+    const action = body?.is_active ? 'select' : 'deselect';
+    const URL = `${endpoints.settings.categories}/${id}/${action}`;
+    return await axios.post(URL);
 }

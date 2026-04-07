@@ -150,6 +150,7 @@ export const endpoints = {
     items: (slug)=>`/${slug}`,
     categories: '/categories',
     categoriesList: '/categories/list',
+    categoriesSettings: '/categories/settings',
     visibility: '/system-settings/visibility',
   },
   users: {

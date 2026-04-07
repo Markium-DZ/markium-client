@@ -21,7 +21,7 @@ import Iconify from 'src/components/iconify';
 import { useSnackbar } from 'src/components/snackbar';
 import CustomPopover, { usePopover } from 'src/components/custom-popover';
 import { useSettingsContext } from 'src/components/settings';
-import { useTranslate } from 'src/locales';
+import { useTranslate, useLocales } from 'src/locales';
 import { getStorefrontUrl } from 'src/config-global';
 
 // ----------------------------------------------------------------------
@@ -30,7 +30,8 @@ export default function AccountPopover() {
   const router = useRouter();
   const { user } = useContext(AuthContext);
   const { logout } = useAuthContext();
-  const { t } = useTranslate();
+  const { t, onChangeLang } = useTranslate();
+  const { allLangs, currentLang } = useLocales();
   const { enqueueSnackbar } = useSnackbar();
   const popover = usePopover();
   const settings = useSettingsContext();
@@ -50,25 +51,6 @@ export default function AccountPopover() {
       console.error(error);
       enqueueSnackbar(t('logout_failed'), { variant: 'error' });
     }
-  };
-
-  const handleHome = () => {
-    popover.onClose();
-    router.push('/dashboard');
-  };
-
-  const handleCopyStoreUrl = () => {
-    const storeUrl = getStorefrontUrl(user?.store?.slug);
-    navigator.clipboard
-      .writeText(storeUrl)
-      .then(() => {
-        enqueueSnackbar(t('store_url_copied'), { variant: 'success' });
-        popover.onClose();
-      })
-      .catch((err) => {
-        console.error('Failed to copy:', err);
-        enqueueSnackbar(t('failed_to_copy'), { variant: 'error' });
-      });
   };
 
   const storeUrl = user?.store?.slug ? getStorefrontUrl(user.store.slug) : '';
@@ -127,16 +109,28 @@ export default function AccountPopover() {
             </Box>
           </Stack>
 
-          {storeUrl && (
-            <Typography
-              variant="caption"
-              sx={{ color: 'text.secondary', mt: 1, display: 'block', direction: 'ltr', textAlign: 'end' }}
-              noWrap
-            >
-              {storeUrl}
-            </Typography>
-          )}
         </Box>
+
+        {/* Language switch */}
+        <Stack direction="row" spacing={1} sx={{ px: 2, py: 1.5, justifyContent: 'center' }}>
+          {allLangs.map((lang) => (
+            <IconButton
+              key={lang.value}
+              onClick={() => onChangeLang(lang.value)}
+              sx={{
+                width: 36,
+                height: 36,
+                borderRadius: 1,
+                ...(lang.value === currentLang.value && {
+                  bgcolor: (theme) => alpha(theme.palette.primary.main, 0.12),
+                  outline: (theme) => `2px solid ${theme.palette.primary.main}`,
+                }),
+              }}
+            >
+              <Iconify icon={lang.icon} sx={{ borderRadius: 0.65, width: 24 }} />
+            </IconButton>
+          ))}
+        </Stack>
 
         <Divider sx={{ borderStyle: 'dashed' }} />
 
@@ -165,15 +159,24 @@ export default function AccountPopover() {
 
         {/* Actions */}
         <Stack sx={{ p: 1 }}>
-          <MenuItem onClick={handleHome}>
-            <Iconify icon="solar:home-2-bold-duotone" width={20} sx={{ mr: 1.5 }} />
-            {t('home')}
-          </MenuItem>
+          {storeUrl && (
+            <MenuItem onClick={() => { window.open(storeUrl, '_blank', 'noopener,noreferrer'); popover.onClose(); }}>
+              <Iconify icon="solar:square-top-down-bold-duotone" width={20} sx={{ mr: 1.5 }} />
+              {t('visit_store')}
+            </MenuItem>
+          )}
 
-          <MenuItem onClick={handleCopyStoreUrl}>
-            <Iconify icon="solar:copy-bold-duotone" width={20} sx={{ mr: 1.5 }} />
-            {t('copy_store_url')}
-          </MenuItem>
+          {storeUrl && (
+            <MenuItem onClick={() => {
+              navigator.clipboard.writeText(storeUrl)
+                .then(() => enqueueSnackbar(t('store_url_copied'), { variant: 'success' }))
+                .catch(() => enqueueSnackbar(t('failed_to_copy'), { variant: 'error' }));
+              popover.onClose();
+            }}>
+              <Iconify icon="solar:copy-bold-duotone" width={20} sx={{ mr: 1.5 }} />
+              {t('copy_store_url')}
+            </MenuItem>
+          )}
         </Stack>
 
         <Divider sx={{ borderStyle: 'dashed' }} />
