@@ -13,7 +13,6 @@ not_found_handling = "single-page-application"
 name = "markium-clients-dev"
 
 # ============================================
-# Production Environment
+# Production uses the top-level config (no env)
+# so that dashboard.markium.online routes correctly
 # ============================================
-[env.production]
-name = "markium-clients"
