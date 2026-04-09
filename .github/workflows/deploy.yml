@@ -61,4 +61,7 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          environment: ${{ steps.env.outputs.name }}
+          # Only pass --env for non-production. Production uses the default
+          # wrangler config (no --env) so assets deploy to the environment
+          # that dashboard.markium.online routes to.
+          environment: ${{ steps.env.outputs.name != 'production' && steps.env.outputs.name || '' }}
