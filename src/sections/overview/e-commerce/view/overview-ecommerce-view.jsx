@@ -206,7 +206,8 @@ export default function OverviewEcommerceView() {
       maxWidth={settings.themeStretch ? false : 'xl'}
       sx={{
         ...((isThirdGradeUser || isBGradeMerchant) && {
-          height: { lg: `calc(100vh - ${MAIN_VERTICAL_PADDING}px)` },
+          height: { lg: `calc(100vh )` },
+          // - ${MAIN_VERTICAL_PADDING}px
           overflow: { lg: 'auto' },
         }),
       }}
@@ -240,7 +241,8 @@ export default function OverviewEcommerceView() {
         {isBGradeMerchant && (
           <>
             {/* Row 1: Metrics + Chart + Calendar (same as Grade C) */}
-            <Grid xs={12} md={6} lg={3} sx={{ height: { lg: '50%' } }}>
+            <Grid xs={12} md={6} lg={3} >
+            {/* sx={{ height: { lg: '50%' } }} */}
               <DashboardMetrics
                 metrics={metricCards}
                 dateRange={dateRange}
@@ -248,7 +250,7 @@ export default function OverviewEcommerceView() {
               />
             </Grid>
 
-            <Grid xs={12} md={6} lg={6} sx={{ height: { lg: '50%' } }}>
+            <Grid xs={12} md={6} lg={6} sx={{ height: { lg: '55%' } }}>
               <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                 <CardHeader
                   title={t('analytics_traffic')}
