@@ -167,6 +167,7 @@ export const paths = {
       contacts_social: `${ROOTS.DASHBOARD}/settings/contacts-social`,
       color_palette: `${ROOTS.DASHBOARD}/settings/color-palette`,
       appearance: `${ROOTS.DASHBOARD}/settings/appearance`,
+      store_theme: `${ROOTS.DASHBOARD}/settings/store-theme`,
       store_language: `${ROOTS.DASHBOARD}/settings/store-language`,
       contact_support: `${ROOTS.DASHBOARD}/contact-support`,
       states: `${ROOTS.DASHBOARD}/settings/states`,

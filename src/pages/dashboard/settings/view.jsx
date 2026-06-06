@@ -48,6 +48,12 @@ const TABS = [
         href: paths?.dashboard.settings.appearance,
       },
       {
+        key: 'store_theme',
+        titleKey: 'store_theme_setup',
+        icon: 'solar:layers-bold-duotone',
+        href: paths?.dashboard.settings.store_theme,
+      },
+      {
         key: 'categories',
         titleKey: 'categories',
         icon: 'solar:widget-5-bold-duotone',

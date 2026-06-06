@@ -3660,5 +3660,22 @@
   "updated_at": "Mis à jour le",
   "or": "ou",
   "quantity_must_be_positive": "La quantité doit être positive",
-  "email_is_required": "L'email est requis"
+  "email_is_required": "L'email est requis",
+  "store_theme_setup": "Thème de la boutique",
+  "store_theme_setup_description": "Personnalisez les sections qui composent la page d'accueil de votre boutique.",
+  "store_theme_home_page": "Thème de la boutique — Page d'accueil",
+  "view_storefront": "Voir la boutique",
+  "failed_to_load_store_theme": "Échec du chargement du thème de la boutique.",
+  "failed_to_update_section": "Échec de la mise à jour de la section.",
+  "section_saved": "Enregistré.",
+  "verify_phone_to_save_changes": "Vérifiez votre numéro de téléphone pour enregistrer les modifications.",
+  "verify_now": "Vérifier",
+  "hero_section": "Section bannière",
+  "hero_section_description": "La grande bannière en haut de votre boutique.",
+  "hero_desktop_background": "Arrière-plan bureau",
+  "hero_desktop_background_hint": "Recommandé 1800×1200 ou plus. Laissez vide pour utiliser l'image par défaut de Markium.",
+  "hero_mobile_background": "Arrière-plan mobile",
+  "hero_mobile_background_hint": "Utilisée sur mobile. Laissez vide pour réutiliser l'image bureau.",
+  "pick_from_library": "Choisir une image",
+  "replace": "Remplacer"
 }

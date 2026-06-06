@@ -4024,5 +4024,22 @@
   "updated_at": "Updated at",
   "or": "or",
   "quantity_must_be_positive": "Quantity must be positive",
-  "email_is_required": "Email is required"
+  "email_is_required": "Email is required",
+  "store_theme_setup": "Store Theme Setup",
+  "store_theme_setup_description": "Customize the sections that make up your storefront home page.",
+  "store_theme_home_page": "Store theme — Home page",
+  "view_storefront": "View storefront",
+  "failed_to_load_store_theme": "Failed to load store theme.",
+  "failed_to_update_section": "Failed to update section.",
+  "section_saved": "Saved.",
+  "verify_phone_to_save_changes": "Verify your phone number to save changes.",
+  "verify_now": "Verify now",
+  "hero_section": "Hero section",
+  "hero_section_description": "The big banner at the top of your storefront.",
+  "hero_desktop_background": "Desktop background",
+  "hero_desktop_background_hint": "Recommended 1800×1200 or larger. Leave empty to use the Markium default.",
+  "hero_mobile_background": "Mobile background",
+  "hero_mobile_background_hint": "Used on phones. Leave empty to use the desktop image.",
+  "pick_from_library": "Pick from library",
+  "replace": "Replace"
 }

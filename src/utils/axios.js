@@ -209,6 +209,10 @@ export const endpoints = {
     root: '/store',
     slug: (slug)=>`/stores/${slug}`,
   },
+  layouts: {
+    home: '/layouts/home',
+    homeSection: (id) => `/layouts/home/sections/${id}`,
+  },
   shipping: {
     providers: '/shipping/providers',
     connections: '/shipping/connections',
