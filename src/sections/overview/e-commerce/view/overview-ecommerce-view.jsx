@@ -46,6 +46,7 @@ import EcommerceEventsCalendar from '../ecommerce-events-calendar';
 import DashboardMetrics from '../dashboard-metrics';
 import DashboardChart from '../dashboard-chart';
 import DashboardFunnel from '../dashboard-funnel';
+import DashboardWilayasMap from '../dashboard-wilayas-map';
 import DashboardSkeleton from './dashboard-skeleton';
 
 // ----------------------------------------------------------------------
@@ -206,8 +207,8 @@ export default function OverviewEcommerceView() {
       maxWidth={settings.themeStretch ? false : 'xl'}
       sx={{
         ...((isThirdGradeUser || isBGradeMerchant) && {
-          height: { lg: `calc(100vh - ${MAIN_VERTICAL_PADDING}px)` },
-          overflow: { lg: 'auto' },
+          height: { lg: `calc(120vh - ${MAIN_VERTICAL_PADDING}px)` },
+          // overflow: { lg: 'auto' },
         }),
       }}
     >
@@ -296,6 +297,7 @@ export default function OverviewEcommerceView() {
             <Grid xs={12} lg={3} sx={{ height: { lg: '50%' } }}>
               <YouTubeEmbed />
             </Grid>
+
           </>
         )}
 
@@ -371,6 +373,11 @@ export default function OverviewEcommerceView() {
                 funnel={funnelData}
                 loading={funnelLoading}
               />
+            </Grid>
+
+            {/* Row 3: Algerian wilayas heatmap (full width) */}
+            <Grid xs={12}>
+              <DashboardWilayasMap orders={orders} loading={ordersLoading} />
             </Grid>
           </>
         )}

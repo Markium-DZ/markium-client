@@ -4024,5 +4024,22 @@
   "updated_at": "Updated at",
   "or": "or",
   "quantity_must_be_positive": "Quantity must be positive",
-  "email_is_required": "Email is required"
+  "email_is_required": "Email is required",
+  "wilayas_map_title": "Orders across Algeria",
+  "wilayas_map_subtitle": "Where your orders come from — and where they're being returned.",
+  "mode_orders": "Orders",
+  "mode_returns": "Returns",
+  "successful_orders": "Successful",
+  "returned_orders": "Returned",
+  "orders_label": "orders",
+  "returned_label": "returned",
+  "top_wilayas_by_orders": "Top wilayas by orders",
+  "watchlist_high_returns": "Watchlist · high return rate",
+  "no_orders_in_period": "No orders in this period yet.",
+  "no_returns_signal": "No return-rate signal yet.",
+  "legend_orders_low": "Few orders",
+  "legend_returns_low": "Few returns",
+  "legend_returns_high": "High return rate",
+  "wilayas_unmatched_names": "Your orders came back from the server, but their wilaya names couldn't be matched on the map.",
+  "wilayas_missing_address": "Your orders don't carry wilaya info, so we can't place them on the map yet."
 }

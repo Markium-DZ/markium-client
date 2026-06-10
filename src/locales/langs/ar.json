@@ -4064,5 +4064,22 @@
   "updated_at": "تاريخ التحديث",
   "or": "أو",
   "quantity_must_be_positive": "الكمية يجب أن تكون موجبة",
-  "email_is_required": "البريد الإلكتروني مطلوب"
+  "email_is_required": "البريد الإلكتروني مطلوب",
+  "wilayas_map_title": "الطلبات عبر ولايات الجزائر",
+  "wilayas_map_subtitle": "من أين تأتي طلباتك — وأين يتم إرجاعها.",
+  "mode_orders": "الطلبات",
+  "mode_returns": "المرتجعات",
+  "successful_orders": "ناجحة",
+  "returned_orders": "مرتجعة",
+  "orders_label": "طلب",
+  "returned_label": "مرتجع",
+  "top_wilayas_by_orders": "أعلى الولايات في الطلبات",
+  "watchlist_high_returns": "تنبيه · نسبة إرجاع مرتفعة",
+  "no_orders_in_period": "لا توجد طلبات في هذه الفترة بعد.",
+  "no_returns_signal": "لا يوجد مؤشر إرجاع بعد.",
+  "legend_orders_low": "طلبات قليلة",
+  "legend_returns_low": "مرتجعات قليلة",
+  "legend_returns_high": "نسبة إرجاع مرتفعة",
+  "wilayas_unmatched_names": "وصلت الطلبات من الخادم لكن لم نتمكن من مطابقة أسماء الولايات على الخريطة.",
+  "wilayas_missing_address": "طلباتك لا تحتوي على معلومات الولاية، لذلك لا يمكن إظهارها على الخريطة بعد."
 }
