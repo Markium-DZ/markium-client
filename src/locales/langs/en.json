@@ -1917,6 +1917,7 @@
   "notification_settings": "Notifications",
   "notification_preferences": "Notification Preferences",
   "notif_preferences_saved": "Notification preferences saved",
+  "notif_enable_all": "Enable all",
   "notif_group_orders": "Orders",
   "notif_group_orders_caption": "Notifications related to your store orders",
   "notif_order_placed": "New order placed",

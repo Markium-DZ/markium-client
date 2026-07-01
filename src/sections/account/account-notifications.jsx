@@ -266,9 +266,17 @@ export default function AccountNotifications() {
     reset,
     watch,
     control,
+    setValue,
     handleSubmit,
     formState: { isSubmitting, isDirty },
   } = methods;
+
+  const allKeys = useMemo(() => preferences.map((p) => p.event_key), [preferences]);
+  const allOn = allKeys.length > 0 && allKeys.every((k) => watch(k));
+
+  const handleToggleAll = (checked) => {
+    allKeys.forEach((k) => setValue(k, checked, { shouldDirty: true }));
+  };
 
   useEffect(() => {
     if (preferences.length) {
@@ -306,15 +314,14 @@ export default function AccountNotifications() {
         {/* Sticky save button at top */}
         <Stack
           direction="row"
-          justifyContent="flex-end"
-          sx={{
-            position: 'sticky',
-            top: 0,
-            py: 2,
-            bgcolor: 'background.default',
-            zIndex: 1,
-          }}
+          alignItems="center"
+          justifyContent="space-between"
+          sx={{ position: 'sticky', top: 0, py: 2, bgcolor: 'background.default', zIndex: 1 }}
         >
+          <Stack direction="row" alignItems="center" spacing={1}>
+            <Switch checked={allOn} onChange={(e) => handleToggleAll(e.target.checked)} />
+            <Typography variant="subtitle2">{t('notif_enable_all')}</Typography>
+          </Stack>
           <LoadingButton
             type="submit"
             variant="contained"

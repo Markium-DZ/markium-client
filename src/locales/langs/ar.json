@@ -1937,6 +1937,7 @@
   "notification_settings": "الإشعارات",
   "notification_preferences": "تفضيلات الإشعارات",
   "notif_preferences_saved": "تم حفظ تفضيلات الإشعارات",
+  "notif_enable_all": "تفعيل الكل",
   "notif_group_orders": "الطلبات",
   "notif_group_orders_caption": "إشعارات متعلقة بطلبات متجرك",
   "notif_order_placed": "طلب جديد",
