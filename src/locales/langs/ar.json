@@ -2630,6 +2630,11 @@
     "install_body": "أضفه إلى شاشتك الرئيسية لتجربة أسرع.",
     "install_button": "تثبيت",
     "install_dismiss": "ليس الآن",
+    "ios_install_title": "ثبّت Markium لتصلك الإشعارات",
+    "ios_install_body": "باش توصلك تنبيهات الطلبات على الآيفون، زيد Markium للشاشة الرئيسية.",
+    "ios_install_step_share": "اضغط على زر المشاركة في Safari",
+    "ios_install_step_add": "اختر \"إضافة إلى الشاشة الرئيسية\"",
+    "ios_install_dismiss": "فهمت",
     "synced": "تم مزامنة التغييرات",
     "saved_offline": "تم الحفظ بدون اتصال — ستتم المزامنة عند الاتصال"
   },

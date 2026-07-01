@@ -2345,6 +2345,11 @@
     "install_body": "Ajoutez à votre écran d'accueil pour une expérience plus rapide.",
     "install_button": "Installer",
     "install_dismiss": "Pas maintenant",
+    "ios_install_title": "Installez Markium pour les notifications",
+    "ios_install_body": "Pour recevoir les alertes de commandes sur iPhone, ajoutez Markium à l'écran d'accueil.",
+    "ios_install_step_share": "Appuyez sur le bouton Partager dans Safari",
+    "ios_install_step_add": "Choisissez « Sur l'écran d'accueil »",
+    "ios_install_dismiss": "Compris",
     "synced": "Modifications synchronisées",
     "saved_offline": "Enregistré hors ligne — sera synchronisé une fois connecté"
   },

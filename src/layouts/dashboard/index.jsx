@@ -10,6 +10,7 @@ import { useTranslate } from 'src/locales';
 
 import SkipToContent from 'src/components/skip-to-content';
 import PushPermissionPrompt from 'src/components/pwa/push-permission-prompt';
+import IosInstallPrompt from 'src/components/pwa/ios-install-prompt';
 import InstallPrompt from 'src/components/pwa/install-prompt';
 import Main from './main';
 import Header from './header';
@@ -49,6 +50,7 @@ export default function DashboardLayout({ children }) {
         <VerificationBanner />
         <Main>{children}</Main>
         <PushPermissionPrompt />
+        <IosInstallPrompt />
         <InstallPrompt />
         {!lgUp && <BottomNav />}
       </>
@@ -76,6 +78,7 @@ export default function DashboardLayout({ children }) {
           </Main>
         </Box>
         <PushPermissionPrompt />
+        <IosInstallPrompt />
         <InstallPrompt />
         {!lgUp && <BottomNav />}
       </>
@@ -102,6 +105,7 @@ export default function DashboardLayout({ children }) {
         </Main>
       </Box>
       <PushPermissionPrompt />
+      <IosInstallPrompt />
       <InstallPrompt />
       {!lgUp && <BottomNav />}
     </>
