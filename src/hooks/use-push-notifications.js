@@ -1,10 +1,11 @@
-import { useState, useEffect, useCallback } from 'react';
 import { useSnackbar } from 'notistack';
 import { useTranslation } from 'react-i18next';
+import { useState, useEffect, useCallback } from 'react';
+
 import {
   subscribeToPush,
-  getSubscriptionStatus,
   ensureSubscribed,
+  getSubscriptionStatus,
 } from 'src/services/push-notifications';
 
 const PROMPT_DISMISSED_KEY = 'push-prompt-dismissed';
