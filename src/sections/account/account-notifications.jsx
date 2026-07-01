@@ -21,6 +21,8 @@ import {
   updateNotificationPreferences,
 } from 'src/api/notifications';
 
+import NotificationDevicePanel from './notification-device-panel';
+
 // ----------------------------------------------------------------------
 
 // Presentation metadata only. The authoritative list of which toggles exist
@@ -273,6 +275,7 @@ export default function AccountNotifications() {
 
   const allKeys = useMemo(() => preferences.map((p) => p.event_key), [preferences]);
   const allOn = allKeys.length > 0 && allKeys.every((k) => watch(k));
+  const anyEnabled = allKeys.some((k) => watch(k));
 
   const handleToggleAll = (checked) => {
     allKeys.forEach((k) => setValue(k, checked, { shouldDirty: true }));
@@ -311,6 +314,8 @@ export default function AccountNotifications() {
   return (
     <FormProvider methods={methods} onSubmit={onSubmit}>
       <Stack spacing={2} sx={{ maxWidth: 560 }}>
+        <NotificationDevicePanel anyEnabled={anyEnabled} />
+
         {/* Sticky save button at top */}
         <Stack
           direction="row"
