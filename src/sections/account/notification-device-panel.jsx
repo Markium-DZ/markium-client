@@ -21,9 +21,13 @@ export default function NotificationDevicePanel({ anyEnabled }) {
   const { t } = useTranslate();
   const [status, setStatus] = useState({ supported: false, subscribed: false, permission: 'default' });
   const [loading, setLoading] = useState(false);
+  const [ready, setReady] = useState(false);
 
   const refresh = useCallback(() => {
-    getSubscriptionStatus().then(setStatus);
+    getSubscriptionStatus().then((next) => {
+      setStatus(next);
+      setReady(true);
+    });
   }, []);
 
   useEffect(() => {
@@ -63,6 +67,8 @@ export default function NotificationDevicePanel({ anyEnabled }) {
     if (status.subscribed) return t('notif_device_on');
     return t('notif_device_off');
   };
+
+  if (!ready) return null;
 
   return (
     <Card variant="outlined" sx={{ p: 2.5, borderRadius: 2 }}>
