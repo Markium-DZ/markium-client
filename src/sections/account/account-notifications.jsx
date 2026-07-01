@@ -23,53 +23,51 @@ import {
 
 // ----------------------------------------------------------------------
 
-const PREFERENCE_GROUPS = [
-  {
-    subheaderKey: 'notif_group_orders',
-    captionKey: 'notif_group_orders_caption',
-    icon: 'solar:bag-check-bold',
-    color: 'primary',
-    keys: [
-      { key: 'order.placed', labelKey: 'notif_order_placed', icon: 'solar:add-circle-bold' },
-      { key: 'order.status.confirmed', labelKey: 'notif_order_confirmed', icon: 'solar:check-circle-bold' },
-      { key: 'order.status.shipped', labelKey: 'notif_order_shipped', icon: 'solar:box-bold' },
-      { key: 'order.status.delivered', labelKey: 'notif_order_delivered', icon: 'solar:verified-check-bold' },
-      { key: 'order.status.cancelled', labelKey: 'notif_order_cancelled', icon: 'solar:close-circle-bold' },
-      { key: 'order.status.returned', labelKey: 'notif_order_returned', icon: 'solar:undo-left-round-bold' },
-    ],
-  },
-  {
-    subheaderKey: 'notif_group_shipments',
-    captionKey: 'notif_group_shipments_caption',
-    icon: 'solar:delivery-bold',
-    color: 'info',
-    keys: [
-      { key: 'shipment.status.created', labelKey: 'notif_shipment_created', icon: 'solar:document-add-bold' },
-      { key: 'shipment.status.in_transit', labelKey: 'notif_shipment_in_transit', icon: 'solar:route-bold' },
-      { key: 'shipment.status.out_for_delivery', labelKey: 'notif_shipment_out_for_delivery', icon: 'solar:scooter-bold' },
-      { key: 'shipment.status.delivered', labelKey: 'notif_shipment_delivered', icon: 'solar:verified-check-bold' },
-      { key: 'shipment.status.failed', labelKey: 'notif_shipment_failed', icon: 'solar:danger-triangle-bold' },
-      { key: 'shipment.status.returned', labelKey: 'notif_shipment_returned', icon: 'solar:undo-left-round-bold' },
-    ],
-  },
-  {
-    subheaderKey: 'notif_group_inventory',
-    captionKey: 'notif_group_inventory_caption',
-    icon: 'solar:box-minimalistic-bold',
-    color: 'warning',
-    keys: [{ key: 'inventory.low_stock', labelKey: 'notif_low_stock', icon: 'solar:danger-triangle-bold' }],
-  },
-  {
-    subheaderKey: 'notif_group_payments',
-    captionKey: 'notif_group_payments_caption',
-    icon: 'solar:card-bold',
-    color: 'success',
-    keys: [
-      { key: 'subscription.expiring_soon', labelKey: 'notif_subscription_expiring', icon: 'solar:clock-circle-bold' },
-      { key: 'subscription.expired', labelKey: 'notif_subscription_expired', icon: 'solar:close-circle-bold' },
-    ],
-  },
-];
+// Presentation metadata only. The authoritative list of which toggles exist
+// comes from the API (GET /notifications/preferences) — see buildGroups().
+const KEY_META = {
+  'order.placed': { labelKey: 'notif_order_placed', icon: 'solar:add-circle-bold', group: 'orders' },
+  'order.status.confirmed': { labelKey: 'notif_order_confirmed', icon: 'solar:check-circle-bold', group: 'orders' },
+  'order.status.shipped': { labelKey: 'notif_order_shipped', icon: 'solar:box-bold', group: 'orders' },
+  'order.status.delivered': { labelKey: 'notif_order_delivered', icon: 'solar:verified-check-bold', group: 'orders' },
+  'order.status.cancelled': { labelKey: 'notif_order_cancelled', icon: 'solar:close-circle-bold', group: 'orders' },
+  'order.status.returned': { labelKey: 'notif_order_returned', icon: 'solar:undo-left-round-bold', group: 'orders' },
+  'shipment.status.label_created': { labelKey: 'notif_shipment_created', icon: 'solar:document-add-bold', group: 'shipments' },
+  'shipment.status.in_transit': { labelKey: 'notif_shipment_in_transit', icon: 'solar:route-bold', group: 'shipments' },
+  'shipment.status.out_for_delivery': { labelKey: 'notif_shipment_out_for_delivery', icon: 'solar:scooter-bold', group: 'shipments' },
+  'shipment.status.delivered': { labelKey: 'notif_shipment_delivered', icon: 'solar:verified-check-bold', group: 'shipments' },
+  'shipment.status.failed': { labelKey: 'notif_shipment_failed', icon: 'solar:danger-triangle-bold', group: 'shipments' },
+  'shipment.status.returned': { labelKey: 'notif_shipment_returned', icon: 'solar:undo-left-round-bold', group: 'shipments' },
+  'shipment.status.cancelled': { labelKey: 'notif_shipment_cancelled', icon: 'solar:close-circle-bold', group: 'shipments' },
+  'inventory.low_stock': { labelKey: 'notif_low_stock', icon: 'solar:danger-triangle-bold', group: 'inventory' },
+};
+
+const GROUP_META = {
+  orders: { subheaderKey: 'notif_group_orders', captionKey: 'notif_group_orders_caption', icon: 'solar:bag-check-bold', color: 'primary' },
+  shipments: { subheaderKey: 'notif_group_shipments', captionKey: 'notif_group_shipments_caption', icon: 'solar:delivery-bold', color: 'info' },
+  inventory: { subheaderKey: 'notif_group_inventory', captionKey: 'notif_group_inventory_caption', icon: 'solar:box-minimalistic-bold', color: 'warning' },
+  other: { subheaderKey: 'notif_group_other', captionKey: 'notif_group_other_caption', icon: 'solar:bell-bold', color: 'primary' },
+};
+
+const GROUP_ORDER = ['orders', 'shipments', 'inventory', 'other'];
+
+const humanize = (key) => key.split('.').pop().replace(/_/g, ' ').replace(/^\w/, (c) => c.toUpperCase());
+
+// Build the rendered groups from the API-returned preference keys (the source of
+// truth), so the UI can never show a toggle for a key the backend doesn't have,
+// and a newly-added backend key automatically appears (under "Other" if unmapped).
+function buildGroups(preferences) {
+  const byGroup = {};
+  preferences.forEach(({ event_key: key }) => {
+    const meta = KEY_META[key] || { labelKey: null, icon: 'solar:bell-bold', group: 'other' };
+    (byGroup[meta.group] ||= []).push({ key, labelKey: meta.labelKey, icon: meta.icon });
+  });
+  return GROUP_ORDER.filter((g) => byGroup[g]?.length).map((g) => ({
+    ...GROUP_META[g],
+    groupId: g,
+    keys: byGroup[g],
+  }));
+}
 
 const buildDefaultValues = (preferences) => {
   const map = {};
@@ -228,7 +226,7 @@ function NotificationGroup({ group, control, t, watch }) {
                       transition: 'color 0.2s',
                     }}
                   >
-                    {t(labelKey)}
+                    {labelKey ? t(labelKey) : humanize(key)}
                   </Typography>
 
                   <Switch
@@ -260,6 +258,7 @@ export default function AccountNotifications() {
   const { preferences, preferencesLoading } = useGetNotificationPreferences();
 
   const defaultValues = useMemo(() => buildDefaultValues(preferences), [preferences]);
+  const groups = useMemo(() => buildGroups(preferences), [preferences]);
 
   const methods = useForm({ defaultValues });
 
@@ -328,9 +327,9 @@ export default function AccountNotifications() {
           </LoadingButton>
         </Stack>
 
-        {PREFERENCE_GROUPS.map((group) => (
+        {groups.map((group) => (
           <NotificationGroup
-            key={group.subheaderKey}
+            key={group.groupId}
             group={group}
             control={control}
             watch={watch}
