@@ -112,6 +112,13 @@ self.addEventListener('notificationclick', (event) => {
   );
 });
 
+// Take over immediately on install — without this a new deploy sits in the
+// "waiting" state until every tab is closed, so users keep running the old
+// bundle (and its old precached shell) indefinitely.
+self.addEventListener('install', () => {
+  self.skipWaiting();
+});
+
 // Handle SW activation — claim all clients
 self.addEventListener('activate', (event) => {
   event.waitUntil(self.clients.claim());
