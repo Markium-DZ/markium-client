@@ -34,6 +34,25 @@ export function useGetHomeLayout() {
 
 // ----------------------------------------------------------------------
 
+export function useGetSectionsCatalog() {
+  const { data, isLoading, error } = useSWR(endpoints.layouts.catalog, fetcher, layoutOptions);
+
+  return useMemo(
+    () => ({
+      // Map<type, settings[]> for quick lookup by the editor.
+      catalog: (data?.data?.types || []).reduce((acc, entry) => {
+        acc[entry.type] = entry.settings || [];
+        return acc;
+      }, {}),
+      catalogLoading: isLoading,
+      catalogError: error,
+    }),
+    [data, isLoading, error]
+  );
+}
+
+// ----------------------------------------------------------------------
+
 export async function patchHomeSection(sectionId, patch) {
   const res = await axios.patch(endpoints.layouts.homeSection(sectionId), patch);
   return res.data?.data;
