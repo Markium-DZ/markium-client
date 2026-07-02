@@ -4081,5 +4081,22 @@
   "legend_returns_low": "مرتجعات قليلة",
   "legend_returns_high": "نسبة إرجاع مرتفعة",
   "wilayas_unmatched_names": "وصلت الطلبات من الخادم لكن لم نتمكن من مطابقة أسماء الولايات على الخريطة.",
-  "wilayas_missing_address": "طلباتك لا تحتوي على معلومات الولاية، لذلك لا يمكن إظهارها على الخريطة بعد."
+  "wilayas_missing_address": "طلباتك لا تحتوي على معلومات الولاية، لذلك لا يمكن إظهارها على الخريطة بعد.",
+  "store_theme_setup": "إعداد ثيم المتجر",
+  "store_theme_setup_description": "خصّص الأقسام التي تتكون منها الصفحة الرئيسية لمتجرك.",
+  "store_theme_home_page": "ثيم المتجر — الصفحة الرئيسية",
+  "view_storefront": "عرض المتجر",
+  "failed_to_load_store_theme": "فشل تحميل ثيم المتجر.",
+  "failed_to_update_section": "فشل تحديث القسم.",
+  "section_saved": "تم الحفظ.",
+  "verify_phone_to_save_changes": "قم بتأكيد رقم هاتفك لحفظ التغييرات.",
+  "verify_now": "تأكيد الآن",
+  "hero_section": "قسم الواجهة",
+  "hero_section_description": "اللافتة الكبيرة في أعلى متجرك.",
+  "hero_desktop_background": "خلفية سطح المكتب",
+  "hero_desktop_background_hint": "يُوصى بحجم 1800×1200 أو أكبر. اتركه فارغًا لاستخدام الصورة الافتراضية من Markium.",
+  "hero_mobile_background": "خلفية الهاتف",
+  "hero_mobile_background_hint": "تُستخدم على الهواتف. اتركها فارغة لاستخدام صورة سطح المكتب.",
+  "pick_from_library": "اختر من المكتبة",
+  "replace": "استبدال"
 }

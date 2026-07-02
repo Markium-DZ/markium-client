@@ -69,6 +69,7 @@ const StoreLogoView = lazy(() => import('src/pages/dashboard/settings/store-logo
 const StoreDataView = lazy(() => import('src/pages/dashboard/settings/store-data-view'));
 const StoreTemplateView = lazy(() => import('src/pages/dashboard/settings/store-template-view'));
 const AppearanceView = lazy(() => import('src/pages/dashboard/settings/appearance-view'));
+const StoreThemeView = lazy(() => import('src/pages/dashboard/settings/store-theme-view'));
 const YearlyPaymentView = lazy(() => import('src/pages/dashboard/settings/yearly-payment-view'));
 const SystemPointsView = lazy(() => import('src/pages/dashboard/settings/system-points-view'));
 const MarketingPixelsView = lazy(() => import('src/pages/dashboard/settings/marketing-pixels-view'));
@@ -226,6 +227,7 @@ export const dashboardRoutes = [
           { path: 'contacts-social', element: <ContactsSocialView /> },
           { path: 'color-palette', element: <ColorPaletteView /> },
           { path: 'appearance', element: <AppearanceView /> },
+          { path: 'store-theme', element: <StoreThemeView /> },
           { path: 'store-language', element: <StoreLanguageView /> },
           { path: ":model/admin", element: <AdminSystemItemListPage /> },
           { path: "payment_methods", element: <SystemItemListPage collection={{metadata:"Payment Method",type:"payment_method"}} /> },
