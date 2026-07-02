@@ -331,6 +331,7 @@
   "upload_media": "Upload Media",
   "uploading": "Uploading",
   "media_uploaded_successfully": "Media uploaded successfully",
+  "media_still_processing": "Image is still processing — try again in a few seconds.",
   "failed_to_upload_media": "Failed to upload media",
   "failed_to_load_media": "Failed to load media",
   "no_media_found": "No media found",

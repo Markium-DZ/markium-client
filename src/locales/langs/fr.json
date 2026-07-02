@@ -319,6 +319,7 @@
   "upload_media": "Télécharger des médias",
   "uploading": "Téléchargement en cours",
   "media_uploaded_successfully": "Médias téléchargés avec succès",
+  "media_still_processing": "L'image est encore en cours de traitement — réessayez dans quelques secondes.",
   "failed_to_upload_media": "Échec du téléchargement des médias",
   "failed_to_load_media": "Échec du chargement des médias",
   "no_media_found": "Aucun média trouvé",

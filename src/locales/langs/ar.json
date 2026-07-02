@@ -332,6 +332,7 @@
   "upload_media": "رفع الوسائط",
   "uploading": "جارٍ الرفع",
   "media_uploaded_successfully": "تم رفع الوسائط بنجاح",
+  "media_still_processing": "الصورة قيد المعالجة — حاول مجددًا بعد بضع ثوانٍ.",
   "failed_to_upload_media": "فشل رفع الوسائط",
   "failed_to_load_media": "فشل تحميل الوسائط",
   "no_media_found": "لم يتم العثور على وسائط",
