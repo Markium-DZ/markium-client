@@ -236,6 +236,9 @@ function ImageFromLibraryField({ name, label, hint }) {
   const handleSelect = useCallback(
     (selected) => {
       const url = selected?.full_url || '';
+      // Never persist transient preview URLs (blob:/data:) — the storefront
+      // can only load absolute http(s) URLs.
+      if (url && !/^https?:\/\//i.test(url)) return;
       setValue(name, url, { shouldDirty: true });
       setPickerOpen(false);
     },

@@ -138,10 +138,22 @@ export default function MediaPickerDialog({ open, onClose, onSelect, multiple = 
   }, []);
 
   const handleSelect = useCallback(() => {
-    onSelect(multiple ? selectedMedia : selectedMedia[0]);
+    // Selected items come from displayMedia, whose full_url may be a local
+    // blob: preview — resolve back to the canonical server media so a blob
+    // URL never leaves this dialog (consumers persist full_url).
+    const canonical = selectedMedia.map(
+      (sel) => (media || []).find((item) => item.id === sel.id) || sel
+    );
+    const notReady = canonical.filter((item) => !item.url);
+    if (notReady.length > 0) {
+      mutate();
+      enqueueSnackbar(t('media_still_processing'), { variant: 'warning' });
+      return;
+    }
+    onSelect(multiple ? canonical : canonical[0]);
     setSelectedMedia([]);
     onClose();
-  }, [selectedMedia, multiple, onSelect, onClose]);
+  }, [selectedMedia, media, multiple, onSelect, onClose, mutate, enqueueSnackbar, t]);
 
   const handleCancel = useCallback(() => {
     setSelectedMedia([]);
