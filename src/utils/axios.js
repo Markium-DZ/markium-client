@@ -212,6 +212,7 @@ export const endpoints = {
   layouts: {
     home: '/layouts/home',
     homeSection: (id) => `/layouts/home/sections/${id}`,
+    catalog: '/sections-catalog',
   },
   shipping: {
     providers: '/shipping/providers',
