@@ -144,14 +144,3 @@ export async function updateNotificationPreferences(preferences) {
   const res = await axios.put(URL, { preferences });
   return res.data;
 }
-
-export async function registerPushToken(fcmToken, deviceType = 'web') {
-  const URL = endpoints.notifications.subscriptions;
-  const res = await axios.post(URL, { fcm_token: fcmToken, device_type: deviceType });
-  return res.data;
-}
-
-export async function unregisterPushToken(fcmToken) {
-  const URL = endpoints.notifications.unsubscribe(fcmToken);
-  return axios.delete(URL);
-}

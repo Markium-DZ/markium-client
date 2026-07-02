@@ -2608,6 +2608,11 @@
     "install_body": "Add to your home screen for a faster experience.",
     "install_button": "Install",
     "install_dismiss": "Not now",
+    "ios_install_title": "Install Markium for notifications",
+    "ios_install_body": "To get order alerts on iPhone, add Markium to your Home Screen.",
+    "ios_install_step_share": "Tap the Share button in Safari",
+    "ios_install_step_add": "Choose \"Add to Home Screen\"",
+    "ios_install_dismiss": "Got it",
     "synced": "Changes synced",
     "saved_offline": "Saved offline — will sync when connected"
   },

@@ -258,6 +258,5 @@ export const endpoints = {
     delete: (id) => `/notifications/${id}`,
     preferences: '/notifications/preferences',
     subscriptions: '/notifications/subscriptions',
-    unsubscribe: (token) => `/notifications/subscriptions/${token}`,
   },
 };

@@ -1,7 +1,12 @@
-import { useState, useEffect, useCallback } from 'react';
 import { useSnackbar } from 'notistack';
 import { useTranslation } from 'react-i18next';
-import { subscribeToPush, getSubscriptionStatus } from 'src/services/push-notifications';
+import { useState, useEffect, useCallback } from 'react';
+
+import {
+  subscribeToPush,
+  ensureSubscribed,
+  getSubscriptionStatus,
+} from 'src/services/push-notifications';
 
 const PROMPT_DISMISSED_KEY = 'push-prompt-dismissed';
 
@@ -13,6 +18,8 @@ export function usePushNotifications() {
 
   useEffect(() => {
     getSubscriptionStatus().then(setStatus);
+    // Re-register silently if permission was already granted (key rotation / new device).
+    ensureSubscribed();
   }, []);
 
   const subscribe = useCallback(async () => {
