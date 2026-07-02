@@ -1,26 +1,26 @@
-import { useState, useContext, useRef, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
 
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
-import Stack from '@mui/material/Stack';
-import Button from '@mui/material/Button';
-import Typography from '@mui/material/Typography';
-import LoadingButton from '@mui/lab/LoadingButton';
 import Grid from '@mui/material/Grid';
-import CardActionArea from '@mui/material/CardActionArea';
-import CardContent from '@mui/material/CardContent';
+import Stack from '@mui/material/Stack';
 import Radio from '@mui/material/Radio';
 import Tooltip from '@mui/material/Tooltip';
+import Typography from '@mui/material/Typography';
+import LoadingButton from '@mui/lab/LoadingButton';
+import CardContent from '@mui/material/CardContent';
 import { alpha, useTheme } from '@mui/material/styles';
+import CardActionArea from '@mui/material/CardActionArea';
+
+import showError from 'src/utils/show_error';
 
 import { useTranslate } from 'src/locales';
-import { useSnackbar } from 'src/components/snackbar';
-import showError from 'src/utils/show_error';
-import { AuthContext } from 'src/auth/context/jwt';
-import Iconify from 'src/components/iconify';
 import { updateTheme } from 'src/api/theme';
-import { updateStoreConfig, useGetMyStore } from 'src/api/store';
-import generatePalette from 'src/utils/generate-palette';
+import { AuthContext } from 'src/auth/context/jwt';
+import { useGetMyStore, updateStoreConfig } from 'src/api/store';
+
+import Iconify from 'src/components/iconify';
+import { useSnackbar } from 'src/components/snackbar';
 
 // ----------------------------------------------------------------------
 
@@ -42,18 +42,25 @@ const TEMPLATES = [
   { id: 'default', image: '/assets/templates/default.webp' },
 ];
 
-const PRESET_COLORS = [
-  { hex: '#E91E63', name: 'pink' },
-  { hex: '#9C27B0', name: 'purple' },
-  { hex: '#2196F3', name: 'blue' },
-  { hex: '#00BCD4', name: 'cyan' },
-  { hex: '#4CAF50', name: 'green' },
-  { hex: '#FF9800', name: 'orange' },
-  { hex: '#F44336', name: 'red' },
-  { hex: '#607D8B', name: 'slate' },
-  { hex: '#212121', name: 'black' },
-  { hex: '#009688', name: 'teal' },
+// Curated brand palettes — swatch colors mirror the storefront's
+// src/theme/palettes.ts primary (keep IDs in sync). Merchants pick one; the
+// whole storefront re-colors coherently. No free-form hex (always legible).
+const BRAND_PALETTES = [
+  { id: 'terracotta', hex: '#DB7150' },
+  { id: 'emerald', hex: '#24A578' },
+  { id: 'teal', hex: '#229FA7' },
+  { id: 'ocean', hex: '#3E8FDE' },
+  { id: 'indigo', hex: '#6969CF' },
+  { id: 'violet', hex: '#9A69CF' },
+  { id: 'rose', hex: '#DB5B8B' },
+  { id: 'crimson', hex: '#DE4A40' },
+  { id: 'amber', hex: '#F0A020' },
+  { id: 'gold', hex: '#CDA31F' },
+  { id: 'forest', hex: '#2F8052' },
+  { id: 'graphite', hex: '#454A53' },
 ];
+
+const DEFAULT_PALETTE_ID = 'terracotta';
 
 // ----------------------------------------------------------------------
 
@@ -64,33 +71,19 @@ export default function AppearanceForm() {
   const { user } = useContext(AuthContext);
   const { store, mutate } = useGetMyStore(user?.store?.slug);
 
-  const colorInputRef = useRef(null);
-
   const [loading, setLoading] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState(user?.store?.theme_name);
 
-  const storedPrimaryColor = store?.config?.colorPalette?.primary?.main || null;
-  const [selectedColor, setSelectedColor] = useState(storedPrimaryColor);
-  const [customColor, setCustomColor] = useState(
-    storedPrimaryColor && !PRESET_COLORS.some((p) => p.hex === storedPrimaryColor)
-      ? storedPrimaryColor
-      : null
-  );
+  const storedPalette = store?.config?.appearance?.palette || DEFAULT_PALETTE_ID;
+  const [selectedPalette, setSelectedPalette] = useState(storedPalette);
 
   // Sync state when store data loads or updates (after save + mutate)
   useEffect(() => {
-    if (storedPrimaryColor) {
-      setSelectedColor(storedPrimaryColor);
-      if (!PRESET_COLORS.some((p) => p.hex === storedPrimaryColor)) {
-        setCustomColor(storedPrimaryColor);
-      } else {
-        setCustomColor(null);
-      }
-    }
-  }, [storedPrimaryColor]);
+    setSelectedPalette(storedPalette);
+  }, [storedPalette]);
 
   const isDirty =
-    selectedTemplate !== user?.store?.theme_name || selectedColor !== storedPrimaryColor;
+    selectedTemplate !== user?.store?.theme_name || selectedPalette !== storedPalette;
 
   const handleSubmit = async () => {
     try {
@@ -98,15 +91,9 @@ export default function AppearanceForm() {
 
       await updateTheme({ theme_name: selectedTemplate });
 
-      const config = { theme_name: selectedTemplate };
-
-      if (selectedColor) {
-        config.colorPalette = generatePalette(selectedColor);
-      } else {
-        config.colorPalette = '';
-      }
-
-      await updateStoreConfig({ config });
+      await updateStoreConfig({
+        config: { theme_name: selectedTemplate, appearance: { palette: selectedPalette } },
+      });
 
       await mutate();
       enqueueSnackbar(t('appearance_saved'), { variant: 'success' });
@@ -116,25 +103,6 @@ export default function AppearanceForm() {
       setLoading(false);
     }
   };
-
-  const handleResetColor = () => {
-    setSelectedColor(null);
-    setCustomColor(null);
-  };
-
-  const handlePresetClick = (hex) => {
-    setSelectedColor(hex);
-    setCustomColor(null);
-  };
-
-  const handleCustomColorChange = (e) => {
-    const hex = e.target.value;
-    setCustomColor(hex);
-    setSelectedColor(hex);
-  };
-
-  const isPresetSelected = (hex) => selectedColor === hex && !customColor;
-  const isCustomSelected = customColor && selectedColor === customColor;
 
   return (
     <Stack spacing={3}>
@@ -162,170 +130,78 @@ export default function AppearanceForm() {
         </LoadingButton>
       </Stack>
 
-      {/* Section 1: Primary Color */}
+      {/* Section 1: Brand palette (curated) */}
       <Card sx={{ p: 3 }}>
         <Stack spacing={3}>
-          <Stack direction="row" alignItems="center" justifyContent="space-between">
-            <Stack direction="row" alignItems="center" spacing={1.5}>
-              <Box
-                sx={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: 1.5,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  bgcolor: alpha(theme.palette.warning.main, 0.1),
-                }}
-              >
-                <Iconify
-                  icon="solar:pallete-2-bold-duotone"
-                  width={22}
-                  sx={{ color: 'warning.dark' }}
-                />
-              </Box>
-              <Box>
-                <Stack direction="row" alignItems="center" spacing={1.5}>
-                  <Typography variant="h6">{t('primary_color')}</Typography>
-                  {storedPrimaryColor && (
-                    <Stack direction="row" alignItems="center" spacing={0.75} sx={{
-                      px: 1.5,
-                      py: 0.5,
-                      borderRadius: 1,
-                      bgcolor: alpha(storedPrimaryColor, 0.08),
-                      border: `1px solid ${alpha(storedPrimaryColor, 0.2)}`,
-                    }}>
-                      <Box
-                        sx={{
-                          width: 16,
-                          height: 16,
-                          borderRadius: '50%',
-                          bgcolor: storedPrimaryColor,
-                          border: `1px solid ${alpha(theme.palette.grey[500], 0.24)}`,
-                        }}
-                      />
-                      <Typography variant="caption" sx={{ fontFamily: 'monospace', fontWeight: 600, color: 'text.secondary' }}>
-                        {storedPrimaryColor.toUpperCase()}
-                      </Typography>
-                    </Stack>
-                  )}
-                </Stack>
-                <Typography variant="body2" color="text.secondary">
-                  {t('primary_color_description')}
-                </Typography>
-              </Box>
-            </Stack>
-
-            {selectedColor && (
-              <Button
-                size="small"
-                color="inherit"
-                startIcon={<Iconify icon="solar:restart-bold" width={18} />}
-                onClick={handleResetColor}
-              >
-                {t('reset_to_default')}
-              </Button>
-            )}
-          </Stack>
-
-          {/* Preset swatches */}
-          <Stack direction="row" flexWrap="wrap" gap={1.5}>
-            {PRESET_COLORS.map((preset) => (
-              <Tooltip key={preset.hex} title={preset.name} arrow>
-                <Box
-                  onClick={() => handlePresetClick(preset.hex)}
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: '50%',
-                    bgcolor: preset.hex,
-                    cursor: 'pointer',
-                    transition: 'all 0.2s',
-                    outline: isPresetSelected(preset.hex)
-                      ? `3px solid ${preset.hex}`
-                      : '3px solid transparent',
-                    outlineOffset: 2,
-                    '&:hover': {
-                      transform: 'scale(1.15)',
-                    },
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  {isPresetSelected(preset.hex) && (
-                    <Iconify icon="eva:checkmark-fill" width={18} sx={{ color: '#fff' }} />
-                  )}
-                </Box>
-              </Tooltip>
-            ))}
-
-            {/* Custom color swatch */}
-            <Tooltip title={t('custom_color')} arrow>
-              <Box
-                onClick={() => colorInputRef.current?.click()}
-                sx={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: '50%',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  border: isCustomSelected ? 'none' : `2px dashed ${theme.palette.grey[400]}`,
-                  bgcolor: isCustomSelected ? customColor : 'transparent',
-                  outline: isCustomSelected
-                    ? `3px solid ${customColor}`
-                    : '3px solid transparent',
-                  outlineOffset: 2,
-                  '&:hover': {
-                    transform: 'scale(1.15)',
-                    borderColor: theme.palette.grey[600],
-                  },
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  position: 'relative',
-                  overflow: 'hidden',
-                }}
-              >
-                {isCustomSelected ? (
-                  <Iconify icon="solar:pen-bold" width={16} sx={{ color: '#fff' }} />
-                ) : (
-                  <Iconify icon="eva:plus-fill" width={18} sx={{ color: 'text.secondary' }} />
-                )}
-                <input
-                  ref={colorInputRef}
-                  type="color"
-                  value={customColor || '#E91E63'}
-                  onChange={handleCustomColorChange}
-                  style={{
-                    position: 'absolute',
-                    width: 0,
-                    height: 0,
-                    opacity: 0,
-                    pointerEvents: 'none',
-                  }}
-                />
-              </Box>
-            </Tooltip>
-          </Stack>
-
-          {/* Color preview */}
-          {selectedColor && (
-            <Stack direction="row" alignItems="center" spacing={1.5}>
-              <Box
-                sx={{
-                  width: 24,
-                  height: 24,
-                  borderRadius: 0.75,
-                  bgcolor: selectedColor,
-                  border: `1px solid ${alpha(theme.palette.grey[500], 0.24)}`,
-                }}
-              />
-              <Typography variant="body2" sx={{ color: 'text.secondary', fontFamily: 'monospace' }}>
-                {selectedColor.toUpperCase()}
+          <Stack direction="row" alignItems="center" spacing={1.5}>
+            <Box
+              sx={{
+                width: 40,
+                height: 40,
+                borderRadius: 1.5,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                bgcolor: alpha(theme.palette.warning.main, 0.1),
+              }}
+            >
+              <Iconify icon="solar:pallete-2-bold-duotone" width={22} sx={{ color: 'warning.dark' }} />
+            </Box>
+            <Box>
+              <Typography variant="h6">{t('brand_palette')}</Typography>
+              <Typography variant="body2" color="text.secondary">
+                {t('brand_palette_description')}
               </Typography>
-            </Stack>
-          )}
+            </Box>
+          </Stack>
+
+          <Grid container spacing={1.5}>
+            {BRAND_PALETTES.map((palette) => {
+              const isSelected = selectedPalette === palette.id;
+              return (
+                <Grid item xs={4} sm={3} md={2} key={palette.id}>
+                  <Tooltip title={t(`palette_${palette.id}`)} arrow>
+                    <CardActionArea
+                      onClick={() => setSelectedPalette(palette.id)}
+                      sx={{
+                        borderRadius: 1.5,
+                        p: 1,
+                        border: isSelected
+                          ? `2px solid ${palette.hex}`
+                          : `1px solid ${theme.palette.divider}`,
+                        transition: 'all 0.15s',
+                      }}
+                    >
+                      <Stack spacing={0.75} alignItems="center">
+                        <Box
+                          sx={{
+                            width: '100%',
+                            height: 44,
+                            borderRadius: 1,
+                            bgcolor: palette.hex,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
+                        >
+                          {isSelected && (
+                            <Iconify icon="eva:checkmark-fill" width={20} sx={{ color: '#fff' }} />
+                          )}
+                        </Box>
+                        <Typography
+                          variant="caption"
+                          noWrap
+                          sx={{ fontWeight: isSelected ? 700 : 500, color: isSelected ? 'text.primary' : 'text.secondary' }}
+                        >
+                          {t(`palette_${palette.id}`)}
+                        </Typography>
+                      </Stack>
+                    </CardActionArea>
+                  </Tooltip>
+                </Grid>
+              );
+            })}
+          </Grid>
         </Stack>
       </Card>
 
