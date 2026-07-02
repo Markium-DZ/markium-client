@@ -13,6 +13,8 @@ import PushPermissionPrompt from 'src/components/pwa/push-permission-prompt';
 import VerificationBanner from 'src/components/verification-banner/verification-banner';
 import ImpersonationBanner from 'src/components/impersonation-banner/impersonation-banner';
 
+import ChatAssistantWidget from 'src/sections/assistant/chat-assistant-widget';
+
 import Main from './main';
 import Header from './header';
 import NavMini from './nav-mini';
@@ -53,6 +55,7 @@ export default function DashboardLayout({ children }) {
         <PushPermissionPrompt />
         <IosInstallPrompt />
         <InstallPrompt />
+        <ChatAssistantWidget />
         {!lgUp && <BottomNav />}
       </>
     );
@@ -82,6 +85,7 @@ export default function DashboardLayout({ children }) {
         <PushPermissionPrompt />
         <IosInstallPrompt />
         <InstallPrompt />
+        <ChatAssistantWidget />
         {!lgUp && <BottomNav />}
       </>
     );
@@ -110,6 +114,7 @@ export default function DashboardLayout({ children }) {
       <PushPermissionPrompt />
       <IosInstallPrompt />
       <InstallPrompt />
+      <ChatAssistantWidget />
       {!lgUp && <BottomNav />}
     </>
   );
