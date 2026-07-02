@@ -31,6 +31,9 @@ vite.config.ts.timestamp-*.mjs
 
 # environment variables
 .env*
+# ...except the committed public-config env files (see note at bottom)
+!.env.production
+!.env.dev
 
 # misc
 .DS_Store
