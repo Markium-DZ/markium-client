@@ -11,6 +11,7 @@ import InstallPrompt from 'src/components/pwa/install-prompt';
 import IosInstallPrompt from 'src/components/pwa/ios-install-prompt';
 import PushPermissionPrompt from 'src/components/pwa/push-permission-prompt';
 import VerificationBanner from 'src/components/verification-banner/verification-banner';
+import ImpersonationBanner from 'src/components/impersonation-banner/impersonation-banner';
 
 import Main from './main';
 import Header from './header';
@@ -42,6 +43,7 @@ export default function DashboardLayout({ children }) {
     return (
       <>
         <SkipToContent />
+        <ImpersonationBanner />
         <Header onOpenNav={nav.onTrue} />
 
         {lgUp ? renderHorizontal : renderNavVertical}
@@ -60,6 +62,7 @@ export default function DashboardLayout({ children }) {
     return (
       <>
         <SkipToContent />
+        <ImpersonationBanner />
         <Header onOpenNav={nav.onTrue} />
 
         <Box
@@ -87,6 +90,7 @@ export default function DashboardLayout({ children }) {
   return (
     <>
       <SkipToContent />
+      <ImpersonationBanner />
       <Header onOpenNav={nav.onTrue} />
 
       <Box
