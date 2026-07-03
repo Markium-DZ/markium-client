@@ -51,7 +51,7 @@ export default function ChatAssistantWidget() {
         >
           <Stack direction="row" alignItems="center" spacing={1}>
             <Iconify icon="solar:chat-round-dots-bold" width={22} sx={{ color: 'primary.main' }} />
-            <Typography variant="subtitle1">Store assistant</Typography>
+            <Typography variant="subtitle1">مساعد المتجر</Typography>
           </Stack>
           <IconButton onClick={() => setOpen(false)}>
             <Iconify icon="mingcute:close-line" />

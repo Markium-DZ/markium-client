@@ -9,7 +9,11 @@ import Stack from '@mui/material/Stack';
 import Paper from '@mui/material/Paper';
 import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
+import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
+import CircularProgress from '@mui/material/CircularProgress';
+
+import Iconify from 'src/components/iconify';
 
 // ----------------------------------------------------------------------
 
@@ -34,13 +38,112 @@ function inputPropsFor(type) {
   return {};
 }
 
+// Live progress labels (Arabic — Algerian market).
+const ACTIVITY = {
+  fetch_social_post: 'أفتح الرابط وأطّلع على الصورة',
+  list_skills: 'أُحضّر',
+  load_skill: 'أُحضّر',
+  get_me: 'أتحقق من متجرك',
+  upload_media: 'أرفع الصورة',
+  create_product: 'أنشئ المنتج',
+  create_product_listing: 'أنشئ المنتج',
+  deploy_product: 'أنشر المنتج',
+  list_products: 'أبحث في منتجاتك',
+};
+
+function activityLabel(toolName) {
+  return ACTIVITY[toolName] ?? 'أعمل على طلبك';
+}
+
+// ----------------------------------------------------------------------
+
+export function ToolStatus({ toolName, done }) {
+  return (
+    <Stack direction="row" alignItems="center" spacing={1} sx={{ color: 'text.secondary', py: 0.25 }}>
+      {done ? (
+        <Iconify icon="eva:checkmark-fill" width={16} sx={{ color: 'success.main' }} />
+      ) : (
+        <CircularProgress size={12} />
+      )}
+      <Typography variant="caption">
+        {activityLabel(toolName)}
+        {done ? '' : '…'}
+      </Typography>
+    </Stack>
+  );
+}
+
+ToolStatus.propTypes = {
+  toolName: PropTypes.string,
+  done: PropTypes.bool,
+};
+
+// ----------------------------------------------------------------------
+
+function ImageCarousel({ images }) {
+  const [index, setIndex] = useState(0);
+  const count = images.length;
+  const go = (delta) => setIndex((p) => (p + delta + count) % count);
+
+  const arrowSx = (side) => ({
+    position: 'absolute',
+    top: '50%',
+    [side]: 8,
+    transform: 'translateY(-50%)',
+    bgcolor: 'rgba(0,0,0,0.45)',
+    color: 'common.white',
+    '&:hover': { bgcolor: 'rgba(0,0,0,0.65)' },
+  });
+
+  return (
+    <Box sx={{ position: 'relative', mb: 1 }}>
+      <Box
+        component="img"
+        src={images[index]}
+        alt=""
+        sx={{ width: 1, maxHeight: 220, objectFit: 'cover', borderRadius: 1, display: 'block' }}
+      />
+      {count > 1 && (
+        <>
+          <IconButton size="small" onClick={() => go(-1)} sx={arrowSx('left')}>
+            <Iconify icon="eva:arrow-ios-back-fill" />
+          </IconButton>
+          <IconButton size="small" onClick={() => go(1)} sx={arrowSx('right')}>
+            <Iconify icon="eva:arrow-ios-forward-fill" />
+          </IconButton>
+          <Stack
+            direction="row"
+            spacing={0.5}
+            justifyContent="center"
+            sx={{ position: 'absolute', bottom: 8, left: 0, right: 0 }}
+          >
+            {images.map((img, i) => (
+              <Box
+                key={`${img}-${i}`}
+                onClick={() => setIndex(i)}
+                sx={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: '50%',
+                  cursor: 'pointer',
+                  bgcolor: i === index ? 'common.white' : 'rgba(255,255,255,0.5)',
+                }}
+              />
+            ))}
+          </Stack>
+        </>
+      )}
+    </Box>
+  );
+}
+
+ImageCarousel.propTypes = { images: PropTypes.arrayOf(PropTypes.string) };
+
 // ----------------------------------------------------------------------
 
 export function ToolFieldForm({ input, disabled, submitted, onSubmit }) {
   const fields = input?.fields ?? [];
-  const [values, setValues] = useState(() =>
-    Object.fromEntries(fields.map((f) => [f.key, '']))
-  );
+  const [values, setValues] = useState(() => Object.fromEntries(fields.map((f) => [f.key, ''])));
 
   if (submitted) {
     return (
@@ -88,7 +191,7 @@ export function ToolFieldForm({ input, disabled, submitted, onSubmit }) {
           />
         ))}
         <Button type="submit" variant="contained" size="small" disabled={disabled || !canSubmit}>
-          Send
+          إرسال
         </Button>
       </Stack>
     </Paper>
@@ -105,19 +208,16 @@ ToolFieldForm.propTypes = {
 // ----------------------------------------------------------------------
 
 export function ToolApproval({ input, disabled, decision, onApprove, onRequestChanges }) {
+  const images = input?.images ?? (input?.image_url ? [input.image_url] : []);
+
   return (
     <Paper elevation={0} sx={cardSx}>
       {input?.title && (
         <Typography variant="subtitle2" sx={{ mb: 1 }}>{input.title}</Typography>
       )}
-      {input?.image_url && (
-        <Box
-          component="img"
-          src={input.image_url}
-          alt=""
-          sx={{ width: 1, maxHeight: 200, objectFit: 'cover', borderRadius: 1, mb: 1 }}
-        />
-      )}
+
+      {images.length > 0 && <ImageCarousel images={images} />}
+
       <Box
         sx={{
           typography: 'body2',
@@ -134,15 +234,15 @@ export function ToolApproval({ input, disabled, decision, onApprove, onRequestCh
           size="small"
           sx={{ mt: 1 }}
           color={decision === 'approved' ? 'success' : 'default'}
-          label={decision === 'approved' ? 'Approved' : 'Changes requested'}
+          label={decision === 'approved' ? 'تمت الموافقة' : 'طلب تعديل'}
         />
       ) : (
         <Stack direction="row" spacing={1} sx={{ mt: 1.5 }}>
           <Button variant="contained" size="small" color="success" disabled={disabled} onClick={onApprove}>
-            Approve &amp; publish
+            موافقة ونشر
           </Button>
           <Button variant="outlined" size="small" disabled={disabled} onClick={onRequestChanges}>
-            Request changes
+            طلب تعديل
           </Button>
         </Stack>
       )}

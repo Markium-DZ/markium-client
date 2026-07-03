@@ -17,7 +17,7 @@ import { CHAT_HOST_API } from 'src/config-global';
 
 import Iconify from 'src/components/iconify';
 
-import { ToolChoice, ToolApproval, ToolFieldForm } from './assistant-tools';
+import { ToolStatus, ToolChoice, ToolApproval, ToolFieldForm } from './assistant-tools';
 
 // ----------------------------------------------------------------------
 
@@ -93,21 +93,29 @@ export default function ChatAssistant() {
   };
 
   const renderPart = (message, part, key) => {
-    const isUser = message.role === 'user';
-
     if (part.type === 'text') {
-      return part.text ? <TextBubble key={key} isUser={isUser} text={part.text} /> : null;
+      return part.text ? (
+        <TextBubble key={key} isUser={message.role === 'user'} text={part.text} />
+      ) : null;
     }
 
-    // Interactive UI tools rendered inline (only once their input is ready).
-    if (part.state !== 'input-available' && part.state !== 'output-available') {
+    // Resolve the tool name for both `tool-<name>` and `dynamic-tool` parts.
+    let toolName = null;
+    if (part.type === 'dynamic-tool') {
+      toolName = part.toolName;
+    } else if (typeof part.type === 'string' && part.type.startsWith('tool-')) {
+      toolName = part.type.slice('tool-'.length);
+    }
+    if (!toolName) {
       return null;
     }
-    const done = part.state === 'output-available';
-    const id = part.toolCallId;
 
-    if (part.type === 'tool-request_fields') {
-      return (
+    const id = part.toolCallId ?? key;
+    const done = part.state === 'output-available';
+    const uiReady = part.state === 'input-available' || done;
+
+    if (toolName === 'request_fields') {
+      return uiReady ? (
         <ToolFieldForm
           key={id}
           input={part.input}
@@ -115,10 +123,10 @@ export default function ChatAssistant() {
           submitted={done ? part.output : null}
           onSubmit={(output) => addToolOutput({ tool: 'request_fields', toolCallId: id, output })}
         />
-      );
+      ) : null;
     }
-    if (part.type === 'tool-request_approval') {
-      return (
+    if (toolName === 'request_approval') {
+      return uiReady ? (
         <ToolApproval
           key={id}
           input={part.input}
@@ -129,10 +137,10 @@ export default function ChatAssistant() {
             addToolOutput({ tool: 'request_approval', toolCallId: id, output: 'changes_requested' })
           }
         />
-      );
+      ) : null;
     }
-    if (part.type === 'tool-ask_choice') {
-      return (
+    if (toolName === 'ask_choice') {
+      return uiReady ? (
         <ToolChoice
           key={id}
           input={part.input}
@@ -140,9 +148,11 @@ export default function ChatAssistant() {
           chosen={done ? part.output : null}
           onChoose={(opt) => addToolOutput({ tool: 'ask_choice', toolCallId: id, output: opt })}
         />
-      );
+      ) : null;
     }
-    return null; // server-executed tools (store actions, skills, link reader) — not shown
+
+    // Server-executed tools (link reader, skills, store actions) -> live progress line.
+    return <ToolStatus key={id} toolName={toolName} done={done} />;
   };
 
   return (
@@ -163,7 +173,7 @@ export default function ChatAssistant() {
             variant="body2"
             sx={{ color: 'text.secondary', m: 'auto', textAlign: 'center', px: 2 }}
           >
-            Ask me to manage your store — add a product, check your orders, update your layout…
+            اطلب مني إدارة متجرك — أضِف منتجًا، تحقّق من طلباتك، حدّث تصميم متجرك…
           </Typography>
         )}
 
@@ -176,13 +186,13 @@ export default function ChatAssistant() {
         {status === 'submitted' && (
           <Stack direction="row" alignItems="center" spacing={1} sx={{ color: 'text.secondary' }}>
             <CircularProgress size={14} />
-            <Typography variant="caption">Thinking…</Typography>
+            <Typography variant="caption">أفكّر…</Typography>
           </Stack>
         )}
 
         {error && (
           <Typography variant="caption" sx={{ color: 'error.main' }}>
-            Something went wrong. Please try again.
+            حدث خطأ ما. حاول مرة أخرى.
           </Typography>
         )}
 
@@ -200,7 +210,7 @@ export default function ChatAssistant() {
             size="small"
             multiline
             maxRows={4}
-            placeholder="Type a message…"
+            placeholder="اكتب رسالة…"
             value={input}
             onChange={(event) => setInput(event.target.value)}
             onKeyDown={(event) => {
