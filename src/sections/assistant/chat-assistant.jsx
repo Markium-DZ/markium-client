@@ -1,8 +1,9 @@
 import remarkGfm from 'remark-gfm';
+import PropTypes from 'prop-types';
 import { useChat } from '@ai-sdk/react';
-import { DefaultChatTransport } from 'ai';
 import ReactMarkdown from 'react-markdown';
 import { useRef, useState, useEffect } from 'react';
+import { DefaultChatTransport, lastAssistantMessageIsCompleteWithToolCalls } from 'ai';
 
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
@@ -16,6 +17,8 @@ import { CHAT_HOST_API } from 'src/config-global';
 
 import Iconify from 'src/components/iconify';
 
+import { ToolChoice, ToolApproval, ToolFieldForm } from './assistant-tools';
+
 // ----------------------------------------------------------------------
 
 // The dashboard's own Sanctum token is forwarded to the Host, which verifies it
@@ -25,16 +28,51 @@ const transport = new DefaultChatTransport({
   headers: () => ({ Authorization: `Bearer ${localStorage.getItem('accessToken') ?? ''}` }),
 });
 
-const textOf = (message) =>
-  message.parts
-    .filter((part) => part.type === 'text')
-    .map((part) => part.text)
-    .join('');
+function TextBubble({ isUser, text }) {
+  return (
+    <Stack direction="row" justifyContent={isUser ? 'flex-end' : 'flex-start'}>
+      <Paper
+        elevation={0}
+        sx={{
+          px: 1.5,
+          py: 1,
+          maxWidth: 0.85,
+          borderRadius: 1.5,
+          whiteSpace: 'pre-wrap',
+          bgcolor: isUser ? 'primary.main' : 'background.neutral',
+          color: isUser ? 'primary.contrastText' : 'text.primary',
+        }}
+      >
+        {isUser ? (
+          <Typography variant="body2">{text}</Typography>
+        ) : (
+          <Box
+            sx={{
+              typography: 'body2',
+              '& p': { m: 0 },
+              '& p + p': { mt: 1 },
+              '& ul, & ol': { m: 0, pl: 2.5 },
+              '& strong': { fontWeight: 700 },
+            }}
+          >
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{text}</ReactMarkdown>
+          </Box>
+        )}
+      </Paper>
+    </Stack>
+  );
+}
 
-const isToolPart = (part) => typeof part.type === 'string' && part.type.startsWith('tool');
+TextBubble.propTypes = {
+  isUser: PropTypes.bool,
+  text: PropTypes.string,
+};
 
 export default function ChatAssistant() {
-  const { messages, sendMessage, status, error } = useChat({ transport });
+  const { messages, sendMessage, status, error, addToolOutput } = useChat({
+    transport,
+    sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithToolCalls,
+  });
   const [input, setInput] = useState('');
   const endRef = useRef(null);
 
@@ -52,6 +90,59 @@ export default function ChatAssistant() {
     }
     sendMessage({ text });
     setInput('');
+  };
+
+  const renderPart = (message, part, key) => {
+    const isUser = message.role === 'user';
+
+    if (part.type === 'text') {
+      return part.text ? <TextBubble key={key} isUser={isUser} text={part.text} /> : null;
+    }
+
+    // Interactive UI tools rendered inline (only once their input is ready).
+    if (part.state !== 'input-available' && part.state !== 'output-available') {
+      return null;
+    }
+    const done = part.state === 'output-available';
+    const id = part.toolCallId;
+
+    if (part.type === 'tool-request_fields') {
+      return (
+        <ToolFieldForm
+          key={id}
+          input={part.input}
+          disabled={done}
+          submitted={done ? part.output : null}
+          onSubmit={(output) => addToolOutput({ tool: 'request_fields', toolCallId: id, output })}
+        />
+      );
+    }
+    if (part.type === 'tool-request_approval') {
+      return (
+        <ToolApproval
+          key={id}
+          input={part.input}
+          disabled={done}
+          decision={done ? part.output : null}
+          onApprove={() => addToolOutput({ tool: 'request_approval', toolCallId: id, output: 'approved' })}
+          onRequestChanges={() =>
+            addToolOutput({ tool: 'request_approval', toolCallId: id, output: 'changes_requested' })
+          }
+        />
+      );
+    }
+    if (part.type === 'tool-ask_choice') {
+      return (
+        <ToolChoice
+          key={id}
+          input={part.input}
+          disabled={done}
+          chosen={done ? part.output : null}
+          onChoose={(opt) => addToolOutput({ tool: 'ask_choice', toolCallId: id, output: opt })}
+        />
+      );
+    }
+    return null; // server-executed tools (store actions, skills, link reader) — not shown
   };
 
   return (
@@ -76,71 +167,11 @@ export default function ChatAssistant() {
           </Typography>
         )}
 
-        {messages.map((message) => {
-          const isUser = message.role === 'user';
-          const text = textOf(message);
-          const working = !text && message.parts.some(isToolPart);
-
-          let body;
-          if (working) {
-            body = (
-              <Stack direction="row" alignItems="center" spacing={1}>
-                <CircularProgress size={14} />
-                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                  Working…
-                </Typography>
-              </Stack>
-            );
-          } else if (isUser) {
-            body = <Typography variant="body2">{text}</Typography>;
-          } else {
-            body = (
-              <Box
-                sx={{
-                  typography: 'body2',
-                  '& p': { m: 0 },
-                  '& p + p': { mt: 1 },
-                  '& ul, & ol': { m: 0, pl: 2.5 },
-                  '& li': { mb: 0.25 },
-                  '& h1, & h2, & h3, & h4': { m: 0, mb: 0.5, typography: 'subtitle2' },
-                  '& code': {
-                    px: 0.5,
-                    borderRadius: 0.5,
-                    bgcolor: 'action.hover',
-                    fontFamily: 'monospace',
-                    fontSize: '0.85em',
-                  },
-                  '& a': { color: 'primary.main' },
-                }}
-              >
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>{text}</ReactMarkdown>
-              </Box>
-            );
-          }
-
-          return (
-            <Stack
-              key={message.id}
-              direction="row"
-              justifyContent={isUser ? 'flex-end' : 'flex-start'}
-            >
-              <Paper
-                elevation={0}
-                sx={{
-                  px: 1.5,
-                  py: 1,
-                  maxWidth: 0.85,
-                  borderRadius: 1.5,
-                  whiteSpace: 'pre-wrap',
-                  bgcolor: isUser ? 'primary.main' : 'background.neutral',
-                  color: isUser ? 'primary.contrastText' : 'text.primary',
-                }}
-              >
-                {body}
-              </Paper>
-            </Stack>
-          );
-        })}
+        {messages.map((message) => (
+          <Box key={message.id} sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+            {message.parts.map((part, i) => renderPart(message, part, `${message.id}-${i}`))}
+          </Box>
+        ))}
 
         {status === 'submitted' && (
           <Stack direction="row" alignItems="center" spacing={1} sx={{ color: 'text.secondary' }}>
