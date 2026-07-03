@@ -13,6 +13,7 @@ import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
 import CircularProgress from '@mui/material/CircularProgress';
 
+import { useTranslate } from 'src/locales';
 import { CHAT_HOST_API } from 'src/config-global';
 
 import Iconify from 'src/components/iconify';
@@ -23,9 +24,13 @@ import { ToolStatus, ToolChoice, ToolApproval, ToolFieldForm } from './assistant
 
 // The dashboard's own Sanctum token is forwarded to the Host, which verifies it
 // and mints a scoped MCP token server-side. Same identity, no separate login.
+// X-Locale carries the dashboard language so the assistant replies in it.
 const transport = new DefaultChatTransport({
   api: `${CHAT_HOST_API}/chat`,
-  headers: () => ({ Authorization: `Bearer ${localStorage.getItem('accessToken') ?? ''}` }),
+  headers: () => ({
+    Authorization: `Bearer ${localStorage.getItem('accessToken') ?? ''}`,
+    'X-Locale': localStorage.getItem('i18nextLng') ?? 'ar',
+  }),
 });
 
 function TextBubble({ isUser, text }) {
@@ -69,6 +74,7 @@ TextBubble.propTypes = {
 };
 
 export default function ChatAssistant() {
+  const { t } = useTranslate();
   const { messages, sendMessage, status, error, addToolOutput } = useChat({
     transport,
     sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithToolCalls,
@@ -173,7 +179,7 @@ export default function ChatAssistant() {
             variant="body2"
             sx={{ color: 'text.secondary', m: 'auto', textAlign: 'center', px: 2 }}
           >
-            اطلب مني إدارة متجرك — أضِف منتجًا، تحقّق من طلباتك، حدّث تصميم متجرك…
+            {t('assistant.empty')}
           </Typography>
         )}
 
@@ -186,13 +192,13 @@ export default function ChatAssistant() {
         {status === 'submitted' && (
           <Stack direction="row" alignItems="center" spacing={1} sx={{ color: 'text.secondary' }}>
             <CircularProgress size={14} />
-            <Typography variant="caption">أفكّر…</Typography>
+            <Typography variant="caption">{t('assistant.thinking')}</Typography>
           </Stack>
         )}
 
         {error && (
           <Typography variant="caption" sx={{ color: 'error.main' }}>
-            حدث خطأ ما. حاول مرة أخرى.
+            {t('assistant.error')}
           </Typography>
         )}
 
@@ -210,7 +216,7 @@ export default function ChatAssistant() {
             size="small"
             multiline
             maxRows={4}
-            placeholder="اكتب رسالة…"
+            placeholder={t('assistant.placeholder')}
             value={input}
             onChange={(event) => setInput(event.target.value)}
             onKeyDown={(event) => {

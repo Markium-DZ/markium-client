@@ -13,6 +13,8 @@ import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import CircularProgress from '@mui/material/CircularProgress';
 
+import { useTranslate } from 'src/locales';
+
 import Iconify from 'src/components/iconify';
 
 // ----------------------------------------------------------------------
@@ -38,35 +40,30 @@ function inputPropsFor(type) {
   return {};
 }
 
-// Live progress labels (Arabic — Algerian market).
+// Live progress labels — translation keys under assistant.*.
 const ACTIVITY = {
-  fetch_social_post: 'أفتح الرابط وأطّلع على الصورة',
-  list_skills: 'أُحضّر',
-  load_skill: 'أُحضّر',
-  get_me: 'أتحقق من متجرك',
-  upload_media: 'أرفع الصورة',
-  create_product: 'أنشئ المنتج',
-  create_product_listing: 'أنشئ المنتج',
-  deploy_product: 'أنشر المنتج',
-  list_products: 'أبحث في منتجاتك',
+  list_skills: 'assistant.activity_preparing',
+  load_skill: 'assistant.activity_preparing',
+  get_me: 'assistant.activity_checking_store',
+  upload_media: 'assistant.activity_uploading_image',
+  create_product: 'assistant.activity_creating_product',
+  create_product_listing: 'assistant.activity_creating_product',
+  deploy_product: 'assistant.activity_publishing',
+  list_products: 'assistant.activity_searching_products',
 };
 
-function activityLabel(toolName) {
-  return ACTIVITY[toolName] ?? 'أعمل على طلبك';
-}
-
-// Known sources → a recognizable brand icon (favicon-like) + Arabic name, so the
-// progress line shows WHERE the assistant is reading from (Instagram, Facebook…).
+// Known sources → a recognizable brand icon (favicon-like), so the progress line
+// shows WHERE the assistant is reading from (Instagram, Facebook…).
 const SOURCES = [
-  { match: 'instagram', name: 'إنستغرام', icon: 'skill-icons:instagram' },
-  { match: 'facebook', name: 'فيسبوك', icon: 'logos:facebook' },
-  { match: 'fb.com', name: 'فيسبوك', icon: 'logos:facebook' },
-  { match: 'tiktok', name: 'تيك توك', icon: 'logos:tiktok-icon' },
-  { match: 'whatsapp', name: 'واتساب', icon: 'logos:whatsapp-icon' },
-  { match: 'wa.me', name: 'واتساب', icon: 'logos:whatsapp-icon' },
+  { match: 'instagram', name: 'Instagram', icon: 'skill-icons:instagram' },
+  { match: 'facebook', name: 'Facebook', icon: 'logos:facebook' },
+  { match: 'fb.com', name: 'Facebook', icon: 'logos:facebook' },
+  { match: 'tiktok', name: 'TikTok', icon: 'logos:tiktok-icon' },
+  { match: 'whatsapp', name: 'WhatsApp', icon: 'logos:whatsapp-icon' },
+  { match: 'wa.me', name: 'WhatsApp', icon: 'logos:whatsapp-icon' },
 ];
 
-function sourceFromUrl(url) {
+function sourceFromUrl(url, fallbackName) {
   if (typeof url !== 'string') return null;
   const lower = url.toLowerCase();
   const known = SOURCES.find((s) => lower.includes(s.match));
@@ -74,17 +71,19 @@ function sourceFromUrl(url) {
   try {
     return { name: new URL(url).hostname.replace(/^www\./, ''), icon: 'mdi:web' };
   } catch {
-    return { name: 'الموقع', icon: 'mdi:web' };
+    return { name: fallbackName, icon: 'mdi:web' };
   }
 }
 
 // ----------------------------------------------------------------------
 
 export function ToolStatus({ toolName, done, input }) {
-  const source = toolName === 'fetch_social_post' ? sourceFromUrl(input?.url) : null;
+  const { t } = useTranslate();
+  const source =
+    toolName === 'fetch_social_post' ? sourceFromUrl(input?.url, t('assistant.website')) : null;
   const label = source
-    ? `${done ? 'تم الاطلاع على' : 'جارٍ الاستخراج من'} ${source.name}`
-    : activityLabel(toolName);
+    ? t(done ? 'assistant.extracted_from' : 'assistant.extracting_from', { source: source.name })
+    : t(ACTIVITY[toolName] ?? 'assistant.working');
 
   return (
     <Stack direction="row" alignItems="center" spacing={1} sx={{ color: 'text.secondary', py: 0.25 }}>
@@ -172,6 +171,7 @@ ImageCarousel.propTypes = { images: PropTypes.arrayOf(PropTypes.string) };
 // ----------------------------------------------------------------------
 
 export function ToolFieldForm({ input, disabled, submitted, onSubmit }) {
+  const { t } = useTranslate();
   const fields = input?.fields ?? [];
   // Seed each field with any AI-suggested value so the merchant sees a proposal
   // (e.g. a generated product name) they can accept or tweak — never a blank ask.
@@ -191,7 +191,7 @@ export function ToolFieldForm({ input, disabled, submitted, onSubmit }) {
     );
   }
 
-  const numeric = (t) => t === 'number' || t === 'price' || t === 'integer';
+  const numeric = (kind) => kind === 'number' || kind === 'price' || kind === 'integer';
   const canSubmit = fields.every((f) => String(values[f.key] ?? '').trim() !== '');
 
   return (
@@ -225,7 +225,7 @@ export function ToolFieldForm({ input, disabled, submitted, onSubmit }) {
           />
         ))}
         <Button type="submit" variant="contained" size="small" disabled={disabled || !canSubmit}>
-          إرسال
+          {t('assistant.send')}
         </Button>
       </Stack>
     </Paper>
@@ -242,6 +242,7 @@ ToolFieldForm.propTypes = {
 // ----------------------------------------------------------------------
 
 export function ToolApproval({ input, disabled, decision, onApprove, onRequestChanges }) {
+  const { t } = useTranslate();
   const images = input?.images ?? (input?.image_url ? [input.image_url] : []);
 
   return (
@@ -268,15 +269,15 @@ export function ToolApproval({ input, disabled, decision, onApprove, onRequestCh
           size="small"
           sx={{ mt: 1 }}
           color={decision === 'approved' ? 'success' : 'default'}
-          label={decision === 'approved' ? 'تمت الموافقة' : 'طلب تعديل'}
+          label={decision === 'approved' ? t('assistant.approved') : t('assistant.changes_requested')}
         />
       ) : (
         <Stack direction="row" spacing={1} sx={{ mt: 1.5 }}>
           <Button variant="contained" size="small" color="success" disabled={disabled} onClick={onApprove}>
-            موافقة ونشر
+            {t('assistant.approve')}
           </Button>
           <Button variant="outlined" size="small" disabled={disabled} onClick={onRequestChanges}>
-            طلب تعديل
+            {t('assistant.request_changes')}
           </Button>
         </Stack>
       )}
