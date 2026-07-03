@@ -152,7 +152,7 @@ export default function ChatAssistant() {
     }
 
     // Server-executed tools (link reader, skills, store actions) -> live progress line.
-    return <ToolStatus key={id} toolName={toolName} done={done} />;
+    return <ToolStatus key={id} toolName={toolName} done={done} input={part.input} />;
   };
 
   return (

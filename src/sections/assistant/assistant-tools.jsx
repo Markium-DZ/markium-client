@@ -55,9 +55,37 @@ function activityLabel(toolName) {
   return ACTIVITY[toolName] ?? 'أعمل على طلبك';
 }
 
+// Known sources → a recognizable brand icon (favicon-like) + Arabic name, so the
+// progress line shows WHERE the assistant is reading from (Instagram, Facebook…).
+const SOURCES = [
+  { match: 'instagram', name: 'إنستغرام', icon: 'skill-icons:instagram' },
+  { match: 'facebook', name: 'فيسبوك', icon: 'logos:facebook' },
+  { match: 'fb.com', name: 'فيسبوك', icon: 'logos:facebook' },
+  { match: 'tiktok', name: 'تيك توك', icon: 'logos:tiktok-icon' },
+  { match: 'whatsapp', name: 'واتساب', icon: 'logos:whatsapp-icon' },
+  { match: 'wa.me', name: 'واتساب', icon: 'logos:whatsapp-icon' },
+];
+
+function sourceFromUrl(url) {
+  if (typeof url !== 'string') return null;
+  const lower = url.toLowerCase();
+  const known = SOURCES.find((s) => lower.includes(s.match));
+  if (known) return known;
+  try {
+    return { name: new URL(url).hostname.replace(/^www\./, ''), icon: 'mdi:web' };
+  } catch {
+    return { name: 'الموقع', icon: 'mdi:web' };
+  }
+}
+
 // ----------------------------------------------------------------------
 
-export function ToolStatus({ toolName, done }) {
+export function ToolStatus({ toolName, done, input }) {
+  const source = toolName === 'fetch_social_post' ? sourceFromUrl(input?.url) : null;
+  const label = source
+    ? `${done ? 'تم الاطلاع على' : 'جارٍ الاستخراج من'} ${source.name}`
+    : activityLabel(toolName);
+
   return (
     <Stack direction="row" alignItems="center" spacing={1} sx={{ color: 'text.secondary', py: 0.25 }}>
       {done ? (
@@ -65,8 +93,9 @@ export function ToolStatus({ toolName, done }) {
       ) : (
         <CircularProgress size={12} />
       )}
+      {source && <Iconify icon={source.icon} width={16} />}
       <Typography variant="caption">
-        {activityLabel(toolName)}
+        {label}
         {done ? '' : '…'}
       </Typography>
     </Stack>
@@ -76,6 +105,7 @@ export function ToolStatus({ toolName, done }) {
 ToolStatus.propTypes = {
   toolName: PropTypes.string,
   done: PropTypes.bool,
+  input: PropTypes.object,
 };
 
 // ----------------------------------------------------------------------
@@ -143,7 +173,11 @@ ImageCarousel.propTypes = { images: PropTypes.arrayOf(PropTypes.string) };
 
 export function ToolFieldForm({ input, disabled, submitted, onSubmit }) {
   const fields = input?.fields ?? [];
-  const [values, setValues] = useState(() => Object.fromEntries(fields.map((f) => [f.key, ''])));
+  // Seed each field with any AI-suggested value so the merchant sees a proposal
+  // (e.g. a generated product name) they can accept or tweak — never a blank ask.
+  const [values, setValues] = useState(() =>
+    Object.fromEntries(fields.map((f) => [f.key, f.value ?? '']))
+  );
 
   if (submitted) {
     return (
