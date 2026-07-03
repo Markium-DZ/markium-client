@@ -37,23 +37,35 @@ export function useGetHomeLayout() {
 export function useGetSectionsCatalog() {
   const { data, isLoading, error } = useSWR(endpoints.layouts.catalog, fetcher, layoutOptions);
 
-  return useMemo(
-    () => ({
+  return useMemo(() => {
+    const types = data?.data?.types || [];
+    return {
       // Map<type, settings[]> for quick lookup by the editor.
-      catalog: (data?.data?.types || []).reduce((acc, entry) => {
+      catalog: types.reduce((acc, entry) => {
         acc[entry.type] = entry.settings || [];
         return acc;
       }, {}),
+      // Ordered list of type strings (for the "add section" menu).
+      catalogTypes: types.map((entry) => entry.type),
       catalogLoading: isLoading,
       catalogError: error,
-    }),
-    [data, isLoading, error]
-  );
+    };
+  }, [data, isLoading, error]);
 }
 
 // ----------------------------------------------------------------------
 
 export async function patchHomeSection(sectionId, patch) {
   const res = await axios.patch(endpoints.layouts.homeSection(sectionId), patch);
+  return res.data?.data;
+}
+
+// Replace the whole home layout (add/remove/reorder). Sends expected_version so
+// a concurrent edit (another tab / MCP agent) returns 409 instead of clobbering.
+export async function replaceHomeLayout(sections, expectedVersion) {
+  const res = await axios.put(endpoints.layouts.home, {
+    expected_version: expectedVersion,
+    sections,
+  });
   return res.data?.data;
 }

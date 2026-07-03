@@ -1,20 +1,24 @@
 import PropTypes from 'prop-types';
 import { useMemo, useState, useEffect, useCallback } from 'react';
-import { useForm, Controller, useFormContext } from 'react-hook-form';
+import { useForm, Controller, useFieldArray, useFormContext } from 'react-hook-form';
 
 import Box from '@mui/material/Box';
 import Tab from '@mui/material/Tab';
 import Card from '@mui/material/Card';
+import Menu from '@mui/material/Menu';
 import Tabs from '@mui/material/Tabs';
 import Link from '@mui/material/Link';
 import Alert from '@mui/material/Alert';
 import Stack from '@mui/material/Stack';
+import Switch from '@mui/material/Switch';
 import Button from '@mui/material/Button';
 import Divider from '@mui/material/Divider';
 import { alpha } from '@mui/material/styles';
+import MenuItem from '@mui/material/MenuItem';
+import Collapse from '@mui/material/Collapse';
 import Skeleton from '@mui/material/Skeleton';
 import Grid from '@mui/material/Unstable_Grid2';
-import CardHeader from '@mui/material/CardHeader';
+import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import LoadingButton from '@mui/lab/LoadingButton';
 
@@ -22,7 +26,11 @@ import { paths } from 'src/routes/paths';
 
 import { useTranslate } from 'src/locales';
 import { useAuthContext } from 'src/auth/hooks';
-import { useGetHomeLayout, patchHomeSection, useGetSectionsCatalog } from 'src/api/store-theme';
+import {
+  useGetHomeLayout,
+  replaceHomeLayout,
+  useGetSectionsCatalog,
+} from 'src/api/store-theme';
 
 import Iconify from 'src/components/iconify';
 import { useSnackbar } from 'src/components/snackbar';
@@ -32,9 +40,6 @@ import VerificationGate from 'src/components/verification-gate/verification-gate
 
 // ----------------------------------------------------------------------
 
-const HERO_TYPE = 'hero-v1';
-
-// Languages the storefront serves; localized settings carry a value per language.
 const EDITOR_LANGS = [
   { value: 'ar', labelKey: 'lang_ar' },
   { value: 'en', labelKey: 'lang_en' },
@@ -43,40 +48,9 @@ const EDITOR_LANGS = [
 
 const isHttp = (v) => /^https?:\/\//i.test(v);
 
-// ----------------------------------------------------------------------
+const tempId = () => `sec_new_${Math.random().toString(36).slice(2, 10)}`;
 
-export default function StoreThemeForm() {
-  const { t } = useTranslate();
-  const { user } = useAuthContext();
-  const { enqueueSnackbar } = useSnackbar();
-
-  const { sections, layoutLoading, layoutError, mutate } = useGetHomeLayout();
-  const { catalog, catalogLoading } = useGetSectionsCatalog();
-
-  const heroSection = useMemo(() => sections.find((s) => s.type === HERO_TYPE) || null, [sections]);
-  const heroFields = catalog[HERO_TYPE] || [];
-
-  if (layoutLoading || catalogLoading) return <HeroSkeleton />;
-
-  if (layoutError || !heroSection) {
-    return <Alert severity="error">{layoutError?.message || t('failed_to_load_store_theme')}</Alert>;
-  }
-
-  return (
-    <HeroForm
-      heroSection={heroSection}
-      fields={heroFields}
-      storeSlug={user?.store?.slug}
-      isPhoneVerified={!!user?.is_phone_verified}
-      onSaved={mutate}
-      enqueueSnackbar={enqueueSnackbar}
-      t={t}
-    />
-  );
-}
-
-// ----------------------------------------------------------------------
-// Coerce stored settings <-> form values.
+// ---- settings <-> form-value coercion ---------------------------------------
 
 function toFormValue(field, stored) {
   if (field.localized) {
@@ -113,20 +87,85 @@ function toStoredValue(field, formValue) {
   return v || null;
 }
 
+const settingsToForm = (fields, stored) =>
+  (fields || []).reduce((acc, f) => {
+    acc[f.key] = toFormValue(f, stored?.[f.key]);
+    return acc;
+  }, {});
+
+const formToSettings = (fields, storedRaw, formValues) => {
+  // Round-trip: keep any keys the editor doesn't manage, overlay the ones it does.
+  const out = { ...(storedRaw || {}) };
+  (fields || []).forEach((f) => {
+    out[f.key] = toStoredValue(f, formValues?.[f.key]);
+  });
+  return out;
+};
+
 // ----------------------------------------------------------------------
 
-function HeroForm({ heroSection, fields, storeSlug, isPhoneVerified, onSaved, enqueueSnackbar, t }) {
-  const defaultValues = useMemo(() => {
-    const values = {};
-    fields.forEach((f) => {
-      values[f.key] = toFormValue(f, heroSection.settings?.[f.key]);
-    });
-    return values;
-  }, [fields, heroSection.settings]);
+export default function StoreThemeForm() {
+  const { t } = useTranslate();
+  const { user } = useAuthContext();
+  const { enqueueSnackbar } = useSnackbar();
+
+  const { sections, version, layoutLoading, layoutError, mutate } = useGetHomeLayout();
+  const { catalog, catalogTypes, catalogLoading } = useGetSectionsCatalog();
+
+  if (layoutLoading || catalogLoading) return <LayoutSkeleton />;
+
+  if (layoutError) {
+    return <Alert severity="error">{layoutError?.message || t('failed_to_load_store_theme')}</Alert>;
+  }
+
+  return (
+    <LayoutEditor
+      key={version}
+      sections={sections}
+      version={version}
+      catalog={catalog}
+      catalogTypes={catalogTypes}
+      storeSlug={user?.store?.slug}
+      isPhoneVerified={!!user?.is_phone_verified}
+      onSaved={mutate}
+      enqueueSnackbar={enqueueSnackbar}
+      t={t}
+    />
+  );
+}
+
+// ----------------------------------------------------------------------
+
+function LayoutEditor({
+  sections,
+  version,
+  catalog,
+  catalogTypes,
+  storeSlug,
+  isPhoneVerified,
+  onSaved,
+  enqueueSnackbar,
+  t,
+}) {
+  const defaultValues = useMemo(
+    () => ({
+      sections: (sections || []).map((s) => ({
+        rowId: s.id,
+        id: s.id,
+        type: s.type,
+        enabled: s.enabled !== false,
+        raw: s.settings || {},
+        settings: settingsToForm(catalog[s.type], s.settings),
+      })),
+    }),
+    [sections, catalog]
+  );
 
   const methods = useForm({ defaultValues });
   const {
+    control,
     handleSubmit,
+    watch,
     reset,
     formState: { isDirty, isSubmitting },
   } = methods;
@@ -135,27 +174,51 @@ function HeroForm({ heroSection, fields, storeSlug, isPhoneVerified, onSaved, en
     reset(defaultValues);
   }, [defaultValues, reset]);
 
-  const onSubmit = handleSubmit(async (data) => {
-    try {
-      // Whole-object round-trip: preserve any keys the editor doesn't know about,
-      // overlay only the fields it manages.
-      const settings = { ...(heroSection.settings || {}) };
-      fields.forEach((f) => {
-        settings[f.key] = toStoredValue(f, data[f.key]);
-      });
+  const { fields, append, remove, move } = useFieldArray({ control, name: 'sections', keyName: 'rowId' });
+  const watchedSections = watch('sections');
 
-      await patchHomeSection(heroSection.id, { settings });
+  const [addMenuEl, setAddMenuEl] = useState(null);
+
+  const onSubmit = handleSubmit(async (data) => {
+    const rows = data.sections || [];
+    if (!rows.some((r) => r.enabled)) {
+      enqueueSnackbar(t('layout_needs_one_section'), { variant: 'warning' });
+      return;
+    }
+    try {
+      const payload = rows.map((r) => ({
+        // Server generates ids for new sections; only send existing ones.
+        ...(String(r.id).startsWith('sec_new_') ? {} : { id: r.id }),
+        type: r.type,
+        enabled: !!r.enabled,
+        settings: formToSettings(catalog[r.type], r.raw, r.settings),
+      }));
+      await replaceHomeLayout(payload, version);
       enqueueSnackbar(t('section_saved'), { variant: 'success' });
-      reset(data);
       onSaved();
     } catch (error) {
-      if (error?.status === 403) {
+      if (error?.status === 409) {
+        enqueueSnackbar(t('layout_conflict_reload'), { variant: 'warning' });
+        onSaved();
+      } else if (error?.status === 403) {
         enqueueSnackbar(t('verify_phone_to_save_changes'), { variant: 'warning' });
       } else {
         enqueueSnackbar(error?.message || t('failed_to_update_section'), { variant: 'error' });
       }
     }
   });
+
+  const handleAdd = (type) => {
+    append({
+      rowId: tempId(),
+      id: tempId(),
+      type,
+      enabled: true,
+      raw: {},
+      settings: settingsToForm(catalog[type], {}),
+    });
+    setAddMenuEl(null);
+  };
 
   const storefrontUrl = storeSlug
     ? (import.meta.env.VITE_STOREFRONT_BASE_URL || 'https://{slug}.markium.online').replace('{slug}', storeSlug)
@@ -200,13 +263,7 @@ function HeroForm({ heroSection, fields, storeSlug, isPhoneVerified, onSaved, en
             <Alert
               severity="warning"
               action={
-                <Button
-                  component={Link}
-                  href={paths.dashboard.user.account}
-                  size="small"
-                  color="inherit"
-                  variant="text"
-                >
+                <Button component={Link} href={paths.dashboard.user.account} size="small" color="inherit" variant="text">
                   {t('verify_now')}
                 </Button>
               }
@@ -217,19 +274,40 @@ function HeroForm({ heroSection, fields, storeSlug, isPhoneVerified, onSaved, en
         )}
 
         <Grid xs={12}>
-          <Card>
-            <CardHeader
-              title={t('hero_section')}
-              subheader={t('hero_section_description')}
-              titleTypographyProps={{ variant: 'h6' }}
-            />
-            <Divider />
-            <Stack spacing={3} sx={{ p: { xs: 2, sm: 3 } }}>
-              {fields.map((field) => (
-                <SectionField key={field.key} field={field} t={t} />
-              ))}
-            </Stack>
-          </Card>
+          <Stack spacing={2}>
+            {fields.map((row, index) => (
+              <SectionCard
+                key={row.rowId}
+                index={index}
+                type={watchedSections?.[index]?.type || row.type}
+                enabled={watchedSections?.[index]?.enabled}
+                fields={catalog[watchedSections?.[index]?.type || row.type] || []}
+                isFirst={index === 0}
+                isLast={index === fields.length - 1}
+                onMoveUp={() => move(index, index - 1)}
+                onMoveDown={() => move(index, index + 1)}
+                onRemove={() => remove(index)}
+                t={t}
+              />
+            ))}
+
+            <Box>
+              <Button
+                variant="outlined"
+                startIcon={<Iconify icon="mingcute:add-line" width={18} />}
+                onClick={(e) => setAddMenuEl(e.currentTarget)}
+              >
+                {t('add_section')}
+              </Button>
+              <Menu anchorEl={addMenuEl} open={!!addMenuEl} onClose={() => setAddMenuEl(null)}>
+                {(catalogTypes || []).map((type) => (
+                  <MenuItem key={type} onClick={() => handleAdd(type)}>
+                    {t(`section_type_${type}`)}
+                  </MenuItem>
+                ))}
+              </Menu>
+            </Box>
+          </Stack>
         </Grid>
 
         <Grid xs={12}>
@@ -239,13 +317,7 @@ function HeroForm({ heroSection, fields, storeSlug, isPhoneVerified, onSaved, en
             spacing={2}
             sx={{ position: 'sticky', bottom: 0, py: 2, bgcolor: 'background.default', zIndex: 1 }}
           >
-            <Button
-              type="button"
-              color="inherit"
-              variant="text"
-              onClick={() => reset(defaultValues)}
-              disabled={!isDirty || isSubmitting}
-            >
+            <Button type="button" color="inherit" variant="text" onClick={() => reset(defaultValues)} disabled={!isDirty || isSubmitting}>
               {t('discard')}
             </Button>
             <VerificationGate>
@@ -260,9 +332,11 @@ function HeroForm({ heroSection, fields, storeSlug, isPhoneVerified, onSaved, en
   );
 }
 
-HeroForm.propTypes = {
-  heroSection: PropTypes.object.isRequired,
-  fields: PropTypes.array.isRequired,
+LayoutEditor.propTypes = {
+  sections: PropTypes.array.isRequired,
+  version: PropTypes.number.isRequired,
+  catalog: PropTypes.object.isRequired,
+  catalogTypes: PropTypes.array.isRequired,
   storeSlug: PropTypes.string,
   isPhoneVerified: PropTypes.bool.isRequired,
   onSaved: PropTypes.func.isRequired,
@@ -271,54 +345,121 @@ HeroForm.propTypes = {
 };
 
 // ----------------------------------------------------------------------
-// Renders one catalog setting by its `input` kind.
 
-function SectionField({ field, t }) {
+function SectionCard({ index, type, enabled, fields, isFirst, isLast, onMoveUp, onMoveDown, onRemove, t }) {
+  const [open, setOpen] = useState(true);
+
+  return (
+    <Card variant="outlined" sx={{ opacity: enabled ? 1 : 0.6 }}>
+      <Stack
+        direction="row"
+        alignItems="center"
+        spacing={1}
+        sx={{ p: 1.5, pl: 2 }}
+      >
+        <Iconify icon="solar:widget-bold-duotone" width={20} sx={{ color: 'text.secondary', flexShrink: 0 }} />
+        <Typography variant="subtitle2" sx={{ flexGrow: 1, minWidth: 0 }} noWrap>
+          {t(`section_type_${type}`)}
+        </Typography>
+
+        <Controller
+          name={`sections.${index}.enabled`}
+          render={({ field }) => (
+            <Switch size="small" checked={!!field.value} onChange={(e) => field.onChange(e.target.checked)} />
+          )}
+        />
+        <IconButton size="small" onClick={onMoveUp} disabled={isFirst} aria-label={t('move_up')}>
+          <Iconify icon="eva:arrow-ios-upward-fill" width={18} />
+        </IconButton>
+        <IconButton size="small" onClick={onMoveDown} disabled={isLast} aria-label={t('move_down')}>
+          <Iconify icon="eva:arrow-ios-downward-fill" width={18} />
+        </IconButton>
+        <IconButton size="small" color="error" onClick={onRemove} aria-label={t('remove')}>
+          <Iconify icon="solar:trash-bin-trash-bold" width={18} />
+        </IconButton>
+        {fields.length > 0 && (
+          <IconButton size="small" onClick={() => setOpen((v) => !v)} aria-label={t('edit')}>
+            <Iconify icon={open ? 'eva:chevron-up-fill' : 'eva:chevron-down-fill'} width={20} />
+          </IconButton>
+        )}
+      </Stack>
+
+      {fields.length > 0 && (
+        <Collapse in={open}>
+          <Divider />
+          <Stack spacing={3} sx={{ p: { xs: 2, sm: 3 } }}>
+            {fields.map((f) => (
+              <SectionField key={f.key} name={`sections.${index}.settings.${f.key}`} field={f} t={t} />
+            ))}
+          </Stack>
+        </Collapse>
+      )}
+    </Card>
+  );
+}
+
+SectionCard.propTypes = {
+  index: PropTypes.number.isRequired,
+  type: PropTypes.string.isRequired,
+  enabled: PropTypes.bool,
+  fields: PropTypes.array.isRequired,
+  isFirst: PropTypes.bool,
+  isLast: PropTypes.bool,
+  onMoveUp: PropTypes.func.isRequired,
+  onMoveDown: PropTypes.func.isRequired,
+  onRemove: PropTypes.func.isRequired,
+  t: PropTypes.func.isRequired,
+};
+
+// ----------------------------------------------------------------------
+// Renders one catalog setting by its `input` kind, at a full RHF `name` path.
+
+function SectionField({ name, field, t }) {
   const label = field.label_key ? t(field.label_key) : field.key;
   const hint = field.hint_key ? t(field.hint_key) : undefined;
 
   switch (field.input) {
     case 'image':
-      return <ImageFromLibraryField name={field.key} label={label} hint={hint} />;
+      return <ImageFromLibraryField name={name} label={label} hint={hint} />;
 
     case 'select':
       return (
-        <RHFSelect name={field.key} label={label} native>
+        <RHFSelect name={name} label={label} native>
           {(field.allowed_values || []).map((opt) => (
             <option key={opt} value={opt}>
-              {t(`hero_layout_${opt}`)}
+              {t(`${field.label_key}_${opt}`)}
             </option>
           ))}
         </RHFSelect>
       );
 
     case 'link':
-      return <RHFTextField name={field.key} label={label} helperText={hint} inputProps={{ dir: 'ltr' }} />;
+      return <RHFTextField name={name} label={label} helperText={hint} inputProps={{ dir: 'ltr' }} />;
 
     case 'textarea':
       return field.localized ? (
-        <LocalizedTextField name={field.key} label={label} helperText={hint} multiline rows={3} t={t} />
+        <LocalizedTextField name={name} label={label} helperText={hint} multiline rows={3} t={t} />
       ) : (
-        <RHFTextField name={field.key} label={label} helperText={hint} multiline rows={3} />
+        <RHFTextField name={name} label={label} helperText={hint} multiline rows={3} />
       );
 
     case 'text':
     default:
       return field.localized ? (
-        <LocalizedTextField name={field.key} label={label} helperText={hint} t={t} />
+        <LocalizedTextField name={name} label={label} helperText={hint} t={t} />
       ) : (
-        <RHFTextField name={field.key} label={label} helperText={hint} />
+        <RHFTextField name={name} label={label} helperText={hint} />
       );
   }
 }
 
 SectionField.propTypes = {
+  name: PropTypes.string.isRequired,
   field: PropTypes.object.isRequired,
   t: PropTypes.func.isRequired,
 };
 
 // ----------------------------------------------------------------------
-// A text field with a per-language tab strip (value is a { ar, en, fr } map).
 
 function LocalizedTextField({ name, label, helperText, multiline, rows, t }) {
   const [lang, setLang] = useState(EDITOR_LANGS[0].value);
@@ -368,8 +509,6 @@ function ImageFromLibraryField({ name, label, hint }) {
   const handleSelect = useCallback(
     (selected) => {
       const url = selected?.full_url || '';
-      // Never persist transient preview URLs (blob:/data:) — the storefront
-      // can only load absolute http(s) URLs.
       if (url && !isHttp(url)) return;
       setValue(name, url, { shouldDirty: true });
       setPickerOpen(false);
@@ -401,36 +540,17 @@ function ImageFromLibraryField({ name, label, hint }) {
                   bgcolor: (theme) => alpha(theme.palette.grey[500], 0.12),
                 }}
               >
-                <Box
-                  component="img"
-                  src={value}
-                  alt={label}
-                  sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                />
+                <Box component="img" src={value} alt={label} sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
               </Box>
               <Stack spacing={0.5} sx={{ minWidth: 0, flexGrow: 1 }}>
                 <Typography variant="caption" color="text.secondary">
                   {hint}
                 </Typography>
                 <Stack direction="row" spacing={2}>
-                  <Link
-                    component="button"
-                    type="button"
-                    underline="hover"
-                    variant="caption"
-                    onClick={() => setPickerOpen(true)}
-                    sx={{ color: 'primary.main', fontWeight: 600 }}
-                  >
+                  <Link component="button" type="button" underline="hover" variant="caption" onClick={() => setPickerOpen(true)} sx={{ color: 'primary.main', fontWeight: 600 }}>
                     {t('replace')}
                   </Link>
-                  <Link
-                    component="button"
-                    type="button"
-                    underline="hover"
-                    variant="caption"
-                    onClick={handleRemove}
-                    sx={{ color: 'text.secondary', fontWeight: 600 }}
-                  >
+                  <Link component="button" type="button" underline="hover" variant="caption" onClick={handleRemove} sx={{ color: 'text.secondary', fontWeight: 600 }}>
                     {t('remove')}
                   </Link>
                 </Stack>
@@ -454,7 +574,6 @@ function ImageFromLibraryField({ name, label, hint }) {
                 border: (theme) => `1px dashed ${alpha(theme.palette.grey[500], 0.32)}`,
                 bgcolor: (theme) => alpha(theme.palette.grey[500], 0.04),
                 cursor: 'pointer',
-                transition: 'background-color 0.15s, border-color 0.15s',
                 '&:hover': {
                   borderColor: (theme) => alpha(theme.palette.primary.main, 0.4),
                   bgcolor: (theme) => alpha(theme.palette.primary.main, 0.04),
@@ -495,13 +614,7 @@ function ImageFromLibraryField({ name, label, hint }) {
             </Box>
           )}
 
-          <MediaPickerDialog
-            open={pickerOpen}
-            onClose={() => setPickerOpen(false)}
-            onSelect={handleSelect}
-            multiple={false}
-            title={t('pick_from_library')}
-          />
+          <MediaPickerDialog open={pickerOpen} onClose={() => setPickerOpen(false)} onSelect={handleSelect} multiple={false} title={t('pick_from_library')} />
         </Stack>
       )}
     />
@@ -516,7 +629,7 @@ ImageFromLibraryField.propTypes = {
 
 // ----------------------------------------------------------------------
 
-function HeroSkeleton() {
+function LayoutSkeleton() {
   return (
     <Grid container spacing={3}>
       <Grid xs={12}>
@@ -526,19 +639,10 @@ function HeroSkeleton() {
         </Stack>
       </Grid>
       <Grid xs={12}>
-        <Card>
-          <CardHeader
-            title={<Skeleton variant="text" width={140} />}
-            subheader={<Skeleton variant="text" width={280} />}
-          />
-          <Divider />
-          <Stack spacing={3} sx={{ p: 3 }}>
-            <Skeleton variant="rounded" height={100} />
-            <Skeleton variant="rounded" height={100} />
-            <Skeleton variant="rounded" height={56} />
-            <Skeleton variant="rounded" height={56} />
-          </Stack>
-        </Card>
+        <Stack spacing={2}>
+          <Skeleton variant="rounded" height={120} />
+          <Skeleton variant="rounded" height={64} />
+        </Stack>
       </Grid>
     </Grid>
   );
