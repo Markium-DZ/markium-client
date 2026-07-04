@@ -520,9 +520,68 @@ LivePreview.propTypes = {
 // Theme gallery: pick a curated look. Applying loads it into the editor + live
 // preview (nothing is saved until the merchant hits Save).
 
+// A concrete mini-storefront mockup for a theme card: shows the real palette,
+// the hero headline/button, and a schematic of the sections below — so the
+// merchant sees the actual look, not an abstract colour swatch.
+function ThemeCardPreview({ theme }) {
+  const heroSection = theme.sections.find((s) => s.type === 'hero-v1');
+  const headline = heroSection?.settings?.headline?.en || '';
+  const eyebrow = heroSection?.settings?.eyebrow?.en || '';
+  const cta = heroSection?.settings?.cta_text?.en || 'Shop';
+  const rest = theme.sections.filter((s) => s !== heroSection);
+  const c = theme.swatch;
+
+  return (
+    <Box sx={{ borderRadius: 1, overflow: 'hidden', bgcolor: '#fff', border: (th) => `1px solid ${th.palette.divider}` }}>
+      {/* Storefront header */}
+      <Stack direction="row" alignItems="center" spacing={0.75} sx={{ px: 1, py: 0.75, borderBottom: (th) => `1px solid ${th.palette.divider}` }}>
+        <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: c }} />
+        <Box sx={{ width: 32, height: 4, borderRadius: 2, bgcolor: 'grey.300' }} />
+        <Box sx={{ flexGrow: 1 }} />
+        {[0, 1, 2].map((i) => (
+          <Box key={i} sx={{ width: 10, height: 3, borderRadius: 2, bgcolor: 'grey.200' }} />
+        ))}
+      </Stack>
+
+      {/* Hero */}
+      <Box sx={{ bgcolor: c, px: 1.5, py: 1.5, minHeight: 92, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 0.5 }}>
+        {eyebrow && (
+          <Typography noWrap sx={{ color: 'rgba(255,255,255,0.85)', fontSize: 7.5, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+            {eyebrow}
+          </Typography>
+        )}
+        <Typography noWrap sx={{ color: '#fff', fontFamily: 'Georgia, serif', fontWeight: 700, fontSize: 19, lineHeight: 1.1 }}>
+          {headline}
+        </Typography>
+        <Box sx={{ mt: 0.5, alignSelf: 'flex-start', bgcolor: '#fff', color: c, fontSize: 8, fontWeight: 700, px: 1, py: 0.4, borderRadius: 4 }}>
+          {cta}
+        </Box>
+      </Box>
+
+      {/* Sections below the hero */}
+      <Box sx={{ p: 1, display: 'flex', flexDirection: 'column', gap: 0.75 }}>
+        {rest.length === 0 && <Box sx={{ height: 22, borderRadius: 0.5, bgcolor: 'grey.100' }} />}
+        {rest.map((s, i) =>
+          s.type === 'products-grid-v1' ? (
+            <Stack key={i} direction="row" spacing={0.75}>
+              {[0, 1, 2].map((j) => (
+                <Box key={j} sx={{ flex: 1, height: 26, borderRadius: 0.5, bgcolor: 'grey.100' }} />
+              ))}
+            </Stack>
+          ) : (
+            <Box key={i} sx={{ height: 20, borderRadius: 0.5, bgcolor: alpha(c, 0.16) }} />
+          )
+        )}
+      </Box>
+    </Box>
+  );
+}
+
+ThemeCardPreview.propTypes = { theme: PropTypes.object.isRequired };
+
 function ThemeGalleryDialog({ open, onClose, onApply, t }) {
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle>
         <Stack spacing={0.25}>
           <Typography variant="h6">{t('theme_gallery_title')}</Typography>
@@ -534,29 +593,11 @@ function ThemeGalleryDialog({ open, onClose, onApply, t }) {
       <DialogContent dividers>
         <Grid container spacing={2}>
           {STORE_THEMES.map((theme) => (
-            <Grid xs={12} sm={6} key={theme.id}>
-              <Card variant="outlined" sx={{ overflow: 'hidden' }}>
-                <CardActionArea onClick={() => onApply(theme)} sx={{ p: 2 }}>
-                  <Stack spacing={1.5}>
-                    <Box
-                      sx={{
-                        height: 72,
-                        borderRadius: 1,
-                        bgcolor: theme.swatch,
-                        display: 'flex',
-                        alignItems: 'flex-end',
-                        p: 1,
-                      }}
-                    >
-                      <Box sx={{ display: 'flex', gap: 0.5 }}>
-                        {theme.sections.map((s, i) => (
-                          <Box
-                            key={i}
-                            sx={{ width: 18, height: 6, borderRadius: 0.5, bgcolor: 'rgba(255,255,255,0.8)' }}
-                          />
-                        ))}
-                      </Box>
-                    </Box>
+            <Grid xs={12} sm={6} md={4} key={theme.id}>
+              <Card variant="outlined" sx={{ overflow: 'hidden', transition: 'box-shadow .15s', '&:hover': { boxShadow: 6 } }}>
+                <CardActionArea onClick={() => onApply(theme)} sx={{ p: 1.5 }}>
+                  <Stack spacing={1.25}>
+                    <ThemeCardPreview theme={theme} />
                     <Stack spacing={0.25}>
                       <Typography variant="subtitle2">{t(`theme_${theme.id}`)}</Typography>
                       <Typography variant="caption" color="text.secondary">
