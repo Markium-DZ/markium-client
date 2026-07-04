@@ -32,6 +32,7 @@ const grid = () => ({ type: 'products-grid-v1', enabled: true, settings: {} });
 export const STORE_THEMES = [
   {
     id: 'minimal',
+    thumb: '/assets/themes/minimal.jpg',
     style: 'minimal',
     palette: 'graphite',
     swatch: '#454A53',
@@ -53,6 +54,7 @@ export const STORE_THEMES = [
   },
   {
     id: 'bold',
+    thumb: '/assets/themes/bold.jpg',
     style: 'bold',
     palette: 'crimson',
     swatch: '#DE4A40',
@@ -80,6 +82,7 @@ export const STORE_THEMES = [
   },
   {
     id: 'elegant',
+    thumb: '/assets/themes/elegant.jpg',
     style: 'editorial',
     palette: 'violet',
     swatch: '#9A69CF',
@@ -107,6 +110,7 @@ export const STORE_THEMES = [
   },
   {
     id: 'warm',
+    thumb: '/assets/themes/warm.jpg',
     style: 'soft',
     palette: 'terracotta',
     swatch: '#DB7150',
@@ -134,6 +138,7 @@ export const STORE_THEMES = [
   },
   {
     id: 'fresh',
+    thumb: '/assets/themes/fresh.jpg',
     style: 'minimal',
     palette: 'emerald',
     swatch: '#24A578',
@@ -161,6 +166,7 @@ export const STORE_THEMES = [
   },
   {
     id: 'ocean',
+    thumb: '/assets/themes/ocean.jpg',
     style: 'bold',
     palette: 'ocean',
     swatch: '#3E8FDE',
@@ -182,6 +188,7 @@ export const STORE_THEMES = [
   },
   {
     id: 'rose',
+    thumb: '/assets/themes/rose.jpg',
     style: 'soft',
     palette: 'rose',
     swatch: '#DB5B8B',

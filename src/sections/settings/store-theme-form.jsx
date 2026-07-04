@@ -612,7 +612,19 @@ function ThemeGalleryDialog({ open, onClose, onApply, t }) {
               <Card variant="outlined" sx={{ overflow: 'hidden', transition: 'box-shadow .15s', '&:hover': { boxShadow: 6 } }}>
                 <CardActionArea onClick={() => onApply(theme)} sx={{ p: 1.5 }}>
                   <Stack spacing={1.25}>
-                    <ThemeCardPreview theme={theme} />
+                    {theme.thumb ? (
+                      <Box sx={{ borderRadius: 1, overflow: 'hidden', border: (th) => `1px solid ${th.palette.divider}` }}>
+                        <Box
+                          component="img"
+                          src={theme.thumb}
+                          alt={t(`theme_${theme.id}`)}
+                          loading="lazy"
+                          sx={{ display: 'block', width: '100%', aspectRatio: '5 / 3', objectFit: 'cover', objectPosition: 'top' }}
+                        />
+                      </Box>
+                    ) : (
+                      <ThemeCardPreview theme={theme} />
+                    )}
                     <Stack spacing={0.25}>
                       <Typography variant="subtitle2">{t(`theme_${theme.id}`)}</Typography>
                       <Typography variant="caption" color="text.secondary">
