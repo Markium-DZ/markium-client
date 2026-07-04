@@ -3707,6 +3707,8 @@
   "store_theme_home_page": "Thème de la boutique — Page d'accueil",
   "view_storefront": "Voir la boutique",
   "live_preview": "Aperçu en direct",
+  "desktop_view": "Ordinateur",
+  "mobile_view": "Mobile",
   "open": "Ouvrir",
   "section_type_hero-v1": "Bannière principale",
   "section_type_products-grid-v1": "Produits",

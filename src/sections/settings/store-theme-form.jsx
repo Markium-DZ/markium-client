@@ -11,6 +11,8 @@ import Link from '@mui/material/Link';
 import Alert from '@mui/material/Alert';
 import Stack from '@mui/material/Stack';
 import Switch from '@mui/material/Switch';
+import ToggleButton from '@mui/material/ToggleButton';
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import Button from '@mui/material/Button';
 import Divider from '@mui/material/Divider';
 import { alpha } from '@mui/material/styles';
@@ -351,9 +353,18 @@ LayoutEditor.propTypes = {
 // Live preview: embeds the storefront in preview mode and pushes the unsaved
 // draft to it via postMessage as the merchant edits.
 
+const PREVIEW_DEVICES = {
+  desktop: { w: 1280, icon: 'solar:monitor-bold', labelKey: 'desktop_view' },
+  mobile: { w: 390, icon: 'solar:smartphone-bold', labelKey: 'mobile_view' },
+};
+const PREVIEW_PANE_H = 660;
+
 function LivePreview({ previewUrl, draftLayout, storefrontUrl, t }) {
   const iframeRef = useRef(null);
   const readyRef = useRef(false);
+  const paneRef = useRef(null);
+  const [device, setDevice] = useState('desktop');
+  const [scale, setScale] = useState(0.45);
 
   const post = useCallback(() => {
     const win = iframeRef.current?.contentWindow;
@@ -380,6 +391,20 @@ function LivePreview({ previewUrl, draftLayout, storefrontUrl, t }) {
     return () => clearTimeout(id);
   }, [post]);
 
+  // Render the storefront at a real device width and scale it to fit the pane,
+  // so "desktop" shows the actual desktop layout (not a squished narrow view).
+  useEffect(() => {
+    const el = paneRef.current;
+    if (!el) return undefined;
+    const measure = () => setScale(Math.min(1, el.clientWidth / PREVIEW_DEVICES[device].w));
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [device]);
+
+  const deviceW = PREVIEW_DEVICES[device].w;
+
   return (
     <Card variant="outlined" sx={{ position: { lg: 'sticky' }, top: { lg: 16 }, overflow: 'hidden' }}>
       <Stack direction="row" alignItems="center" spacing={1} sx={{ px: 2, py: 1.25, borderBottom: (theme) => `1px solid ${theme.palette.divider}` }}>
@@ -387,21 +412,47 @@ function LivePreview({ previewUrl, draftLayout, storefrontUrl, t }) {
         <Typography variant="subtitle2" sx={{ flexGrow: 1 }}>
           {t('live_preview')}
         </Typography>
+        <ToggleButtonGroup
+          size="small"
+          exclusive
+          value={device}
+          onChange={(_, v) => v && setDevice(v)}
+          sx={{ '& .MuiToggleButton-root': { px: 1, py: 0.25 } }}
+        >
+          {Object.entries(PREVIEW_DEVICES).map(([key, d]) => (
+            <ToggleButton key={key} value={key} aria-label={t(d.labelKey)}>
+              <Iconify icon={d.icon} width={18} />
+            </ToggleButton>
+          ))}
+        </ToggleButtonGroup>
         {storefrontUrl && (
           <Button component={Link} href={storefrontUrl} target="_blank" rel="noopener" size="small" color="inherit" endIcon={<Iconify icon="solar:arrow-right-up-linear" width={16} />}>
             {t('open')}
           </Button>
         )}
       </Stack>
-      <Box sx={{ bgcolor: 'grey.100' }}>
-        <Box
-          component="iframe"
-          ref={iframeRef}
-          title={t('live_preview')}
-          src={previewUrl}
-          onLoad={() => readyRef.current && post()}
-          sx={{ display: 'block', width: '100%', height: { xs: 460, lg: 'calc(100vh - 160px)' }, border: 0 }}
-        />
+      <Box
+        ref={paneRef}
+        sx={{ bgcolor: 'grey.200', height: PREVIEW_PANE_H, overflow: 'hidden', display: 'flex', justifyContent: 'center' }}
+      >
+        {/* Scaled footprint keeps the (transformed) iframe centered without scrollbars */}
+        <Box sx={{ width: deviceW * scale, height: PREVIEW_PANE_H, flexShrink: 0 }}>
+          <Box
+            component="iframe"
+            ref={iframeRef}
+            title={t('live_preview')}
+            src={previewUrl}
+            onLoad={() => readyRef.current && post()}
+            sx={{
+              display: 'block',
+              width: deviceW,
+              height: PREVIEW_PANE_H / scale,
+              border: 0,
+              transformOrigin: 'top left',
+              transform: `scale(${scale})`,
+            }}
+          />
+        </Box>
       </Box>
     </Card>
   );
