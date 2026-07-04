@@ -45,7 +45,7 @@ import MediaPickerDialog from 'src/components/media-picker/media-picker-dialog';
 import FormProvider, { RHFSelect, RHFTextField } from 'src/components/hook-form';
 import VerificationGate from 'src/components/verification-gate/verification-gate';
 
-import { STORE_THEMES } from './store-themes';
+import { STORE_THEMES, STYLE_PRESETS } from './store-themes';
 
 // ----------------------------------------------------------------------
 
@@ -188,8 +188,9 @@ function LayoutEditor({
 
   const [addMenuEl, setAddMenuEl] = useState(null);
   const [themeOpen, setThemeOpen] = useState(false);
-  // A theme sets a palette too; hold it here until the merchant saves.
+  // A theme also carries a palette + a design style; hold them here until save.
   const [pendingPalette, setPendingPalette] = useState(null);
+  const [pendingStyle, setPendingStyle] = useState(null);
 
   const applyTheme = (theme) => {
     replace(
@@ -203,6 +204,7 @@ function LayoutEditor({
       }))
     );
     setPendingPalette(theme.palette);
+    setPendingStyle(theme.style || null);
     setThemeOpen(false);
   };
 
@@ -221,10 +223,14 @@ function LayoutEditor({
         settings: formToSettings(catalog[r.type], r.raw, r.settings),
       }));
       await replaceHomeLayout(payload, version);
-      // A theme also carries a palette — persist it alongside the layout.
-      if (pendingPalette) {
-        await updateStoreConfig({ config: { appearance: { palette: pendingPalette } } });
+      // A theme also carries a palette + style — persist them alongside the layout.
+      if (pendingPalette || pendingStyle) {
+        const appearance = {};
+        if (pendingPalette) appearance.palette = pendingPalette;
+        if (pendingStyle) appearance.style = pendingStyle;
+        await updateStoreConfig({ config: { appearance } });
         setPendingPalette(null);
+        setPendingStyle(null);
       }
       enqueueSnackbar(t('section_saved'), { variant: 'success' });
       onSaved();
@@ -370,7 +376,7 @@ function LayoutEditor({
         {/* Live preview column */}
         {previewUrl && (
           <Grid xs={12} lg={6}>
-            <LivePreview previewUrl={previewUrl} draftLayout={draftLayout} previewPalette={pendingPalette} storefrontUrl={storefrontUrl} t={t} />
+            <LivePreview previewUrl={previewUrl} draftLayout={draftLayout} previewPalette={pendingPalette} previewStyle={pendingStyle} storefrontUrl={storefrontUrl} t={t} />
           </Grid>
         )}
       </Grid>
@@ -402,7 +408,7 @@ const PREVIEW_DEVICES = {
 };
 const PREVIEW_PANE_H = 660;
 
-function LivePreview({ previewUrl, draftLayout, previewPalette, storefrontUrl, t }) {
+function LivePreview({ previewUrl, draftLayout, previewPalette, previewStyle, storefrontUrl, t }) {
   const iframeRef = useRef(null);
   const readyRef = useRef(false);
   const paneRef = useRef(null);
@@ -412,15 +418,18 @@ function LivePreview({ previewUrl, draftLayout, previewPalette, storefrontUrl, t
   const post = useCallback(() => {
     const win = iframeRef.current?.contentWindow;
     if (!win) return;
+    const appearance = {};
+    if (previewPalette) appearance.palette = previewPalette;
+    if (previewStyle) appearance.style = previewStyle;
     win.postMessage(
       {
         source: 'markium-editor',
         layout: draftLayout,
-        appearance: previewPalette ? { palette: previewPalette } : undefined,
+        appearance: Object.keys(appearance).length ? appearance : undefined,
       },
       '*'
     );
-  }, [draftLayout, previewPalette]);
+  }, [draftLayout, previewPalette, previewStyle]);
 
   // The storefront tells us when it's mounted and ready to receive drafts.
   useEffect(() => {
@@ -512,6 +521,7 @@ LivePreview.propTypes = {
   previewUrl: PropTypes.string.isRequired,
   draftLayout: PropTypes.object.isRequired,
   previewPalette: PropTypes.string,
+  previewStyle: PropTypes.string,
   storefrontUrl: PropTypes.string,
   t: PropTypes.func.isRequired,
 };
@@ -530,46 +540,51 @@ function ThemeCardPreview({ theme }) {
   const cta = heroSection?.settings?.cta_text?.en || 'Shop';
   const rest = theme.sections.filter((s) => s !== heroSection);
   const c = theme.swatch;
+  // Render in the theme's actual display font + corner radius so the card shows
+  // the real design difference, not just the colour.
+  const style = STYLE_PRESETS[theme.style] || STYLE_PRESETS.editorial;
+  const font = style.font;
+  const r = style.radius;
 
   return (
-    <Box sx={{ borderRadius: 1, overflow: 'hidden', bgcolor: '#fff', border: (th) => `1px solid ${th.palette.divider}` }}>
+    <Box sx={{ borderRadius: `${Math.min(r, 12)}px`, overflow: 'hidden', bgcolor: '#fff', border: (th) => `1px solid ${th.palette.divider}` }}>
       {/* Storefront header */}
       <Stack direction="row" alignItems="center" spacing={0.75} sx={{ px: 1, py: 0.75, borderBottom: (th) => `1px solid ${th.palette.divider}` }}>
         <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: c }} />
-        <Box sx={{ width: 32, height: 4, borderRadius: 2, bgcolor: 'grey.300' }} />
+        <Box sx={{ width: 40, height: 6, borderRadius: 1, bgcolor: c, opacity: 0.85, fontFamily: font }} />
         <Box sx={{ flexGrow: 1 }} />
         {[0, 1, 2].map((i) => (
-          <Box key={i} sx={{ width: 10, height: 3, borderRadius: 2, bgcolor: 'grey.200' }} />
+          <Box key={i} sx={{ width: 10, height: 3, borderRadius: 2, bgcolor: 'grey.300' }} />
         ))}
       </Stack>
 
       {/* Hero */}
       <Box sx={{ bgcolor: c, px: 1.5, py: 1.5, minHeight: 92, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 0.5 }}>
         {eyebrow && (
-          <Typography noWrap sx={{ color: 'rgba(255,255,255,0.85)', fontSize: 7.5, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+          <Typography noWrap sx={{ color: 'rgba(255,255,255,0.85)', fontSize: 7.5, letterSpacing: '0.08em', textTransform: 'uppercase', fontFamily: font }}>
             {eyebrow}
           </Typography>
         )}
-        <Typography noWrap sx={{ color: '#fff', fontFamily: 'Georgia, serif', fontWeight: 700, fontSize: 19, lineHeight: 1.1 }}>
+        <Typography noWrap sx={{ color: '#fff', fontFamily: font, fontWeight: 700, fontSize: 19, lineHeight: 1.1 }}>
           {headline}
         </Typography>
-        <Box sx={{ mt: 0.5, alignSelf: 'flex-start', bgcolor: '#fff', color: c, fontSize: 8, fontWeight: 700, px: 1, py: 0.4, borderRadius: 4 }}>
+        <Box sx={{ mt: 0.5, alignSelf: 'flex-start', bgcolor: '#fff', color: c, fontSize: 8, fontWeight: 700, px: 1, py: 0.4, borderRadius: `${Math.min(r, 12)}px`, fontFamily: font }}>
           {cta}
         </Box>
       </Box>
 
       {/* Sections below the hero */}
       <Box sx={{ p: 1, display: 'flex', flexDirection: 'column', gap: 0.75 }}>
-        {rest.length === 0 && <Box sx={{ height: 22, borderRadius: 0.5, bgcolor: 'grey.100' }} />}
+        {rest.length === 0 && <Box sx={{ height: 22, borderRadius: `${Math.min(r, 10)}px`, bgcolor: 'grey.100' }} />}
         {rest.map((s, i) =>
           s.type === 'products-grid-v1' ? (
             <Stack key={i} direction="row" spacing={0.75}>
               {[0, 1, 2].map((j) => (
-                <Box key={j} sx={{ flex: 1, height: 26, borderRadius: 0.5, bgcolor: 'grey.100' }} />
+                <Box key={j} sx={{ flex: 1, height: 26, borderRadius: `${Math.min(r, 10)}px`, bgcolor: 'grey.100' }} />
               ))}
             </Stack>
           ) : (
-            <Box key={i} sx={{ height: 20, borderRadius: 0.5, bgcolor: alpha(c, 0.16) }} />
+            <Box key={i} sx={{ height: 20, borderRadius: `${Math.min(r, 10)}px`, bgcolor: alpha(c, 0.16) }} />
           )
         )}
       </Box>

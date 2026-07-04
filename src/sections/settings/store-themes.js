@@ -15,6 +15,16 @@ const DEFAULT_BANNER =
 // Localized-string helper: L(arabic, english, french)
 const L = (ar, en, fr) => ({ ar, en, fr });
 
+// Mirrors the storefront's src/theme/styles.ts — used to render the gallery
+// mockup in the actual theme font + corner radius (the dashboard loads these
+// font families in index.html).
+export const STYLE_PRESETS = {
+  editorial: { font: "'Fraunces', Georgia, serif", radius: 14 },
+  minimal: { font: "'Geist', system-ui, sans-serif", radius: 4 },
+  bold: { font: "'Space Grotesk', system-ui, sans-serif", radius: 6 },
+  soft: { font: "'Baloo 2', system-ui, sans-serif", radius: 22 },
+};
+
 const hero = (settings) => ({ type: 'hero-v1', enabled: true, settings });
 const banner = (settings) => ({ type: 'image-banner-v1', enabled: true, settings });
 const grid = () => ({ type: 'products-grid-v1', enabled: true, settings: {} });
@@ -22,6 +32,7 @@ const grid = () => ({ type: 'products-grid-v1', enabled: true, settings: {} });
 export const STORE_THEMES = [
   {
     id: 'minimal',
+    style: 'minimal',
     palette: 'graphite',
     swatch: '#454A53',
     sections: [
@@ -42,6 +53,7 @@ export const STORE_THEMES = [
   },
   {
     id: 'bold',
+    style: 'bold',
     palette: 'crimson',
     swatch: '#DE4A40',
     sections: [
@@ -68,6 +80,7 @@ export const STORE_THEMES = [
   },
   {
     id: 'elegant',
+    style: 'editorial',
     palette: 'violet',
     swatch: '#9A69CF',
     sections: [
@@ -94,6 +107,7 @@ export const STORE_THEMES = [
   },
   {
     id: 'warm',
+    style: 'soft',
     palette: 'terracotta',
     swatch: '#DB7150',
     sections: [
@@ -120,6 +134,7 @@ export const STORE_THEMES = [
   },
   {
     id: 'fresh',
+    style: 'minimal',
     palette: 'emerald',
     swatch: '#24A578',
     sections: [
@@ -146,6 +161,7 @@ export const STORE_THEMES = [
   },
   {
     id: 'ocean',
+    style: 'bold',
     palette: 'ocean',
     swatch: '#3E8FDE',
     sections: [
@@ -166,6 +182,7 @@ export const STORE_THEMES = [
   },
   {
     id: 'rose',
+    style: 'soft',
     palette: 'rose',
     swatch: '#DB5B8B',
     sections: [
