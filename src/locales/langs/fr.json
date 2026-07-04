@@ -3706,6 +3706,8 @@
   "store_theme_setup_description": "Personnalisez les sections qui composent la page d'accueil de votre boutique.",
   "store_theme_home_page": "Thème de la boutique — Page d'accueil",
   "view_storefront": "Voir la boutique",
+  "live_preview": "Aperçu en direct",
+  "open": "Ouvrir",
   "section_type_hero-v1": "Bannière principale",
   "section_type_products-grid-v1": "Produits",
   "section_type_image-banner-v1": "Bannière image",

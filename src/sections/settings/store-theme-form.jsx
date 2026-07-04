@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import { useMemo, useState, useEffect, useCallback } from 'react';
+import { useRef, useMemo, useState, useEffect, useCallback } from 'react';
 import { useForm, Controller, useFieldArray, useFormContext } from 'react-hook-form';
 
 import Box from '@mui/material/Box';
@@ -224,37 +224,34 @@ function LayoutEditor({
     ? (import.meta.env.VITE_STOREFRONT_BASE_URL || 'https://{slug}.markium.online').replace('{slug}', storeSlug)
     : null;
 
+  const previewUrl = storeSlug
+    ? (import.meta.env.VITE_STOREFRONT_PREVIEW_URL || `${import.meta.env.VITE_STOREFRONT_BASE_URL || 'https://{slug}.markium.online'}/?preview=1`).replace('{slug}', storeSlug)
+    : null;
+
+  // The unsaved draft, in the storefront's layout shape — recomputed as the
+  // merchant edits and pushed to the preview iframe.
+  const draftLayout = useMemo(() => {
+    const rows = watchedSections || [];
+    return {
+      sections: rows.map((r) => ({
+        id: r.id,
+        type: r.type,
+        enabled: !!r.enabled,
+        settings: formToSettings(catalog[r.type], r.raw, r.settings),
+      })),
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [JSON.stringify(watchedSections), catalog]);
+
   return (
     <FormProvider methods={methods} onSubmit={onSubmit}>
       <Grid container spacing={3}>
         <Grid xs={12}>
-          <Stack
-            direction={{ xs: 'column', sm: 'row' }}
-            spacing={1.5}
-            justifyContent="space-between"
-            alignItems={{ xs: 'flex-start', sm: 'center' }}
-          >
-            <Stack spacing={0.5}>
-              <Typography variant="h6">{t('store_theme_home_page')}</Typography>
-              <Typography variant="body2" color="text.secondary">
-                {t('store_theme_setup_description')}
-              </Typography>
-            </Stack>
-            {storefrontUrl && (
-              <Button
-                component={Link}
-                href={storefrontUrl}
-                target="_blank"
-                rel="noopener"
-                color="inherit"
-                variant="outlined"
-                size="small"
-                startIcon={<Iconify icon="solar:eye-bold" width={18} />}
-                sx={{ flexShrink: 0 }}
-              >
-                {t('view_storefront')}
-              </Button>
-            )}
+          <Stack spacing={0.5}>
+            <Typography variant="h6">{t('store_theme_home_page')}</Typography>
+            <Typography variant="body2" color="text.secondary">
+              {t('store_theme_setup_description')}
+            </Typography>
           </Stack>
         </Grid>
 
@@ -273,7 +270,8 @@ function LayoutEditor({
           </Grid>
         )}
 
-        <Grid xs={12}>
+        {/* Editor column */}
+        <Grid xs={12} lg={6}>
           <Stack spacing={2}>
             {fields.map((row, index) => (
               <SectionCard
@@ -307,26 +305,31 @@ function LayoutEditor({
                 ))}
               </Menu>
             </Box>
+
+            <Stack
+              direction="row"
+              justifyContent="flex-end"
+              spacing={2}
+              sx={{ position: 'sticky', bottom: 0, py: 2, bgcolor: 'background.default', zIndex: 1 }}
+            >
+              <Button type="button" color="inherit" variant="text" onClick={() => reset(defaultValues)} disabled={!isDirty || isSubmitting}>
+                {t('discard')}
+              </Button>
+              <VerificationGate>
+                <LoadingButton type="submit" variant="contained" size="large" loading={isSubmitting} disabled={!isDirty}>
+                  {t('save_changes')}
+                </LoadingButton>
+              </VerificationGate>
+            </Stack>
           </Stack>
         </Grid>
 
-        <Grid xs={12}>
-          <Stack
-            direction="row"
-            justifyContent="flex-end"
-            spacing={2}
-            sx={{ position: 'sticky', bottom: 0, py: 2, bgcolor: 'background.default', zIndex: 1 }}
-          >
-            <Button type="button" color="inherit" variant="text" onClick={() => reset(defaultValues)} disabled={!isDirty || isSubmitting}>
-              {t('discard')}
-            </Button>
-            <VerificationGate>
-              <LoadingButton type="submit" variant="contained" size="large" loading={isSubmitting} disabled={!isDirty}>
-                {t('save_changes')}
-              </LoadingButton>
-            </VerificationGate>
-          </Stack>
-        </Grid>
+        {/* Live preview column */}
+        {previewUrl && (
+          <Grid xs={12} lg={6}>
+            <LivePreview previewUrl={previewUrl} draftLayout={draftLayout} storefrontUrl={storefrontUrl} t={t} />
+          </Grid>
+        )}
       </Grid>
     </FormProvider>
   );
@@ -341,6 +344,73 @@ LayoutEditor.propTypes = {
   isPhoneVerified: PropTypes.bool.isRequired,
   onSaved: PropTypes.func.isRequired,
   enqueueSnackbar: PropTypes.func.isRequired,
+  t: PropTypes.func.isRequired,
+};
+
+// ----------------------------------------------------------------------
+// Live preview: embeds the storefront in preview mode and pushes the unsaved
+// draft to it via postMessage as the merchant edits.
+
+function LivePreview({ previewUrl, draftLayout, storefrontUrl, t }) {
+  const iframeRef = useRef(null);
+  const readyRef = useRef(false);
+
+  const post = useCallback(() => {
+    const win = iframeRef.current?.contentWindow;
+    if (!win) return;
+    win.postMessage({ source: 'markium-editor', layout: draftLayout }, '*');
+  }, [draftLayout]);
+
+  // The storefront tells us when it's mounted and ready to receive drafts.
+  useEffect(() => {
+    const onMessage = (e) => {
+      if (e.data?.source === 'markium-storefront' && e.data.type === 'ready') {
+        readyRef.current = true;
+        post();
+      }
+    };
+    window.addEventListener('message', onMessage);
+    return () => window.removeEventListener('message', onMessage);
+  }, [post]);
+
+  // Push the draft (debounced) whenever it changes.
+  useEffect(() => {
+    if (!readyRef.current) return undefined;
+    const id = setTimeout(post, 300);
+    return () => clearTimeout(id);
+  }, [post]);
+
+  return (
+    <Card variant="outlined" sx={{ position: { lg: 'sticky' }, top: { lg: 16 }, overflow: 'hidden' }}>
+      <Stack direction="row" alignItems="center" spacing={1} sx={{ px: 2, py: 1.25, borderBottom: (theme) => `1px solid ${theme.palette.divider}` }}>
+        <Iconify icon="solar:eye-bold" width={18} sx={{ color: 'text.secondary' }} />
+        <Typography variant="subtitle2" sx={{ flexGrow: 1 }}>
+          {t('live_preview')}
+        </Typography>
+        {storefrontUrl && (
+          <Button component={Link} href={storefrontUrl} target="_blank" rel="noopener" size="small" color="inherit" endIcon={<Iconify icon="solar:arrow-right-up-linear" width={16} />}>
+            {t('open')}
+          </Button>
+        )}
+      </Stack>
+      <Box sx={{ bgcolor: 'grey.100' }}>
+        <Box
+          component="iframe"
+          ref={iframeRef}
+          title={t('live_preview')}
+          src={previewUrl}
+          onLoad={() => readyRef.current && post()}
+          sx={{ display: 'block', width: '100%', height: { xs: 460, lg: 'calc(100vh - 160px)' }, border: 0 }}
+        />
+      </Box>
+    </Card>
+  );
+}
+
+LivePreview.propTypes = {
+  previewUrl: PropTypes.string.isRequired,
+  draftLayout: PropTypes.object.isRequired,
+  storefrontUrl: PropTypes.string,
   t: PropTypes.func.isRequired,
 };
 
