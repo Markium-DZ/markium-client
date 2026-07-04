@@ -11,8 +11,7 @@ import Link from '@mui/material/Link';
 import Alert from '@mui/material/Alert';
 import Stack from '@mui/material/Stack';
 import Switch from '@mui/material/Switch';
-import ToggleButton from '@mui/material/ToggleButton';
-import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
+import Dialog from '@mui/material/Dialog';
 import Button from '@mui/material/Button';
 import Divider from '@mui/material/Divider';
 import { alpha } from '@mui/material/styles';
@@ -23,11 +22,17 @@ import Grid from '@mui/material/Unstable_Grid2';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import LoadingButton from '@mui/lab/LoadingButton';
+import DialogTitle from '@mui/material/DialogTitle';
+import ToggleButton from '@mui/material/ToggleButton';
+import DialogContent from '@mui/material/DialogContent';
+import CardActionArea from '@mui/material/CardActionArea';
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 
 import { paths } from 'src/routes/paths';
 
 import { useTranslate } from 'src/locales';
 import { useAuthContext } from 'src/auth/hooks';
+import { updateStoreConfig } from 'src/api/store';
 import {
   useGetHomeLayout,
   replaceHomeLayout,
@@ -39,6 +44,8 @@ import { useSnackbar } from 'src/components/snackbar';
 import MediaPickerDialog from 'src/components/media-picker/media-picker-dialog';
 import FormProvider, { RHFSelect, RHFTextField } from 'src/components/hook-form';
 import VerificationGate from 'src/components/verification-gate/verification-gate';
+
+import { STORE_THEMES } from './store-themes';
 
 // ----------------------------------------------------------------------
 
@@ -176,10 +183,28 @@ function LayoutEditor({
     reset(defaultValues);
   }, [defaultValues, reset]);
 
-  const { fields, append, remove, move } = useFieldArray({ control, name: 'sections', keyName: 'rowId' });
+  const { fields, append, remove, move, replace } = useFieldArray({ control, name: 'sections', keyName: 'rowId' });
   const watchedSections = watch('sections');
 
   const [addMenuEl, setAddMenuEl] = useState(null);
+  const [themeOpen, setThemeOpen] = useState(false);
+  // A theme sets a palette too; hold it here until the merchant saves.
+  const [pendingPalette, setPendingPalette] = useState(null);
+
+  const applyTheme = (theme) => {
+    replace(
+      theme.sections.map((s) => ({
+        rowId: tempId(),
+        id: tempId(),
+        type: s.type,
+        enabled: s.enabled !== false,
+        raw: s.settings || {},
+        settings: settingsToForm(catalog[s.type], s.settings),
+      }))
+    );
+    setPendingPalette(theme.palette);
+    setThemeOpen(false);
+  };
 
   const onSubmit = handleSubmit(async (data) => {
     const rows = data.sections || [];
@@ -196,6 +221,11 @@ function LayoutEditor({
         settings: formToSettings(catalog[r.type], r.raw, r.settings),
       }));
       await replaceHomeLayout(payload, version);
+      // A theme also carries a palette — persist it alongside the layout.
+      if (pendingPalette) {
+        await updateStoreConfig({ config: { appearance: { palette: pendingPalette } } });
+        setPendingPalette(null);
+      }
       enqueueSnackbar(t('section_saved'), { variant: 'success' });
       onSaved();
     } catch (error) {
@@ -249,11 +279,22 @@ function LayoutEditor({
     <FormProvider methods={methods} onSubmit={onSubmit}>
       <Grid container spacing={3}>
         <Grid xs={12}>
-          <Stack spacing={0.5}>
-            <Typography variant="h6">{t('store_theme_home_page')}</Typography>
-            <Typography variant="body2" color="text.secondary">
-              {t('store_theme_setup_description')}
-            </Typography>
+          <Stack direction="row" alignItems="flex-start" justifyContent="space-between" spacing={2}>
+            <Stack spacing={0.5}>
+              <Typography variant="h6">{t('store_theme_home_page')}</Typography>
+              <Typography variant="body2" color="text.secondary">
+                {t('store_theme_setup_description')}
+              </Typography>
+            </Stack>
+            <Button
+              variant="contained"
+              color="primary"
+              startIcon={<Iconify icon="solar:magic-stick-3-bold" width={18} />}
+              onClick={() => setThemeOpen(true)}
+              sx={{ flexShrink: 0 }}
+            >
+              {t('change_theme')}
+            </Button>
           </Stack>
         </Grid>
 
@@ -329,10 +370,12 @@ function LayoutEditor({
         {/* Live preview column */}
         {previewUrl && (
           <Grid xs={12} lg={6}>
-            <LivePreview previewUrl={previewUrl} draftLayout={draftLayout} storefrontUrl={storefrontUrl} t={t} />
+            <LivePreview previewUrl={previewUrl} draftLayout={draftLayout} previewPalette={pendingPalette} storefrontUrl={storefrontUrl} t={t} />
           </Grid>
         )}
       </Grid>
+
+      <ThemeGalleryDialog open={themeOpen} onClose={() => setThemeOpen(false)} onApply={applyTheme} t={t} />
     </FormProvider>
   );
 }
@@ -359,7 +402,7 @@ const PREVIEW_DEVICES = {
 };
 const PREVIEW_PANE_H = 660;
 
-function LivePreview({ previewUrl, draftLayout, storefrontUrl, t }) {
+function LivePreview({ previewUrl, draftLayout, previewPalette, storefrontUrl, t }) {
   const iframeRef = useRef(null);
   const readyRef = useRef(false);
   const paneRef = useRef(null);
@@ -369,8 +412,15 @@ function LivePreview({ previewUrl, draftLayout, storefrontUrl, t }) {
   const post = useCallback(() => {
     const win = iframeRef.current?.contentWindow;
     if (!win) return;
-    win.postMessage({ source: 'markium-editor', layout: draftLayout }, '*');
-  }, [draftLayout]);
+    win.postMessage(
+      {
+        source: 'markium-editor',
+        layout: draftLayout,
+        appearance: previewPalette ? { palette: previewPalette } : undefined,
+      },
+      '*'
+    );
+  }, [draftLayout, previewPalette]);
 
   // The storefront tells us when it's mounted and ready to receive drafts.
   useEffect(() => {
@@ -461,7 +511,73 @@ function LivePreview({ previewUrl, draftLayout, storefrontUrl, t }) {
 LivePreview.propTypes = {
   previewUrl: PropTypes.string.isRequired,
   draftLayout: PropTypes.object.isRequired,
+  previewPalette: PropTypes.string,
   storefrontUrl: PropTypes.string,
+  t: PropTypes.func.isRequired,
+};
+
+// ----------------------------------------------------------------------
+// Theme gallery: pick a curated look. Applying loads it into the editor + live
+// preview (nothing is saved until the merchant hits Save).
+
+function ThemeGalleryDialog({ open, onClose, onApply, t }) {
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+      <DialogTitle>
+        <Stack spacing={0.25}>
+          <Typography variant="h6">{t('theme_gallery_title')}</Typography>
+          <Typography variant="body2" color="text.secondary">
+            {t('theme_gallery_hint')}
+          </Typography>
+        </Stack>
+      </DialogTitle>
+      <DialogContent dividers>
+        <Grid container spacing={2}>
+          {STORE_THEMES.map((theme) => (
+            <Grid xs={12} sm={6} key={theme.id}>
+              <Card variant="outlined" sx={{ overflow: 'hidden' }}>
+                <CardActionArea onClick={() => onApply(theme)} sx={{ p: 2 }}>
+                  <Stack spacing={1.5}>
+                    <Box
+                      sx={{
+                        height: 72,
+                        borderRadius: 1,
+                        bgcolor: theme.swatch,
+                        display: 'flex',
+                        alignItems: 'flex-end',
+                        p: 1,
+                      }}
+                    >
+                      <Box sx={{ display: 'flex', gap: 0.5 }}>
+                        {theme.sections.map((s, i) => (
+                          <Box
+                            key={i}
+                            sx={{ width: 18, height: 6, borderRadius: 0.5, bgcolor: 'rgba(255,255,255,0.8)' }}
+                          />
+                        ))}
+                      </Box>
+                    </Box>
+                    <Stack spacing={0.25}>
+                      <Typography variant="subtitle2">{t(`theme_${theme.id}`)}</Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {t(`theme_${theme.id}_desc`)}
+                      </Typography>
+                    </Stack>
+                  </Stack>
+                </CardActionArea>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+ThemeGalleryDialog.propTypes = {
+  open: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  onApply: PropTypes.func.isRequired,
   t: PropTypes.func.isRequired,
 };
 
