@@ -795,6 +795,31 @@ SectionCard.propTypes = {
 };
 
 // ----------------------------------------------------------------------
+// Resource picker: choose one of the merchant's own products (stored as ref).
+
+function ProductPickerField({ name, label, hint, t }) {
+  const { products, productsLoading } = useGetProducts();
+
+  return (
+    <RHFSelect name={name} label={label} helperText={hint} native>
+      <option value="">{productsLoading ? '…' : t('featured_pick_product')}</option>
+      {(products || []).map((p) => (
+        <option key={p.ref || p.id} value={p.ref}>
+          {p.name}
+        </option>
+      ))}
+    </RHFSelect>
+  );
+}
+
+ProductPickerField.propTypes = {
+  name: PropTypes.string.isRequired,
+  label: PropTypes.string.isRequired,
+  hint: PropTypes.string,
+  t: PropTypes.func.isRequired,
+};
+
+// ----------------------------------------------------------------------
 // Repeatable blocks widget: add/remove/reorder items whose sub-fields come
 // from the catalog's item_shape (schema-driven, like everything else).
 
@@ -869,6 +894,9 @@ function SectionField({ name, field, t }) {
   switch (field.input) {
     case 'items':
       return <ItemsField name={name} field={field} label={label} t={t} />;
+
+    case 'product':
+      return <ProductPickerField name={name} label={label} hint={hint} t={t} />;
 
     case 'image':
       return <ImageFromLibraryField name={name} label={label} hint={hint} />;
