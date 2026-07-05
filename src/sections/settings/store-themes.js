@@ -101,7 +101,7 @@ export const STORE_THEMES = [
     id: 'elegant',
     thumb: '/assets/themes/elegant.jpg',
     style: 'editorial',
-    structure: 'editorial',
+    structure: 'luxe',
     palette: 'violet',
     swatch: '#9A69CF',
     sections: [
