@@ -73,7 +73,7 @@ export const STORE_THEMES = [
     id: 'bold',
     thumb: '/assets/themes/bold.jpg',
     style: 'bold',
-    structure: 'editorial',
+    structure: 'classic',
     palette: 'crimson',
     swatch: '#DE4A40',
     sections: [
@@ -133,7 +133,7 @@ export const STORE_THEMES = [
     id: 'warm',
     thumb: '/assets/themes/warm.jpg',
     style: 'soft',
-    structure: 'editorial',
+    structure: 'classic',
     palette: 'terracotta',
     swatch: '#DB7150',
     sections: [
