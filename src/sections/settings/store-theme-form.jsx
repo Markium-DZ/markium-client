@@ -210,9 +210,10 @@ function LayoutEditor({
 
   const [addMenuEl, setAddMenuEl] = useState(null);
   const [themeOpen, setThemeOpen] = useState(false);
-  // A theme also carries a palette + a design style; hold them here until save.
+  // A theme also carries a palette + design style + chrome structure; held until save.
   const [pendingPalette, setPendingPalette] = useState(null);
   const [pendingStyle, setPendingStyle] = useState(null);
+  const [pendingStructure, setPendingStructure] = useState(null);
 
   const applyTheme = (theme) => {
     replace(
@@ -227,6 +228,7 @@ function LayoutEditor({
     );
     setPendingPalette(theme.palette);
     setPendingStyle(theme.style || null);
+    setPendingStructure(theme.structure || null);
     setThemeOpen(false);
   };
 
@@ -245,14 +247,16 @@ function LayoutEditor({
         settings: formToSettings(catalog[r.type], r.raw, r.settings),
       }));
       await replaceLayout(page, payload, version);
-      // A theme also carries a palette + style — persist them alongside the layout.
-      if (pendingPalette || pendingStyle) {
+      // A theme also carries palette + style + structure — persist with the layout.
+      if (pendingPalette || pendingStyle || pendingStructure) {
         const appearance = {};
         if (pendingPalette) appearance.palette = pendingPalette;
         if (pendingStyle) appearance.style = pendingStyle;
+        if (pendingStructure) appearance.structure = pendingStructure;
         await updateStoreConfig({ config: { appearance } });
         setPendingPalette(null);
         setPendingStyle(null);
+        setPendingStructure(null);
       }
       enqueueSnackbar(t('section_saved'), { variant: 'success' });
       onSaved();
@@ -421,7 +425,7 @@ function LayoutEditor({
         {/* Live preview column */}
         {previewUrl && (
           <Grid xs={12} lg={6}>
-            <LivePreview previewUrl={previewUrl} draftLayout={draftLayout} previewPalette={pendingPalette} previewStyle={pendingStyle} storefrontUrl={storefrontUrl} t={t} />
+            <LivePreview previewUrl={previewUrl} draftLayout={draftLayout} previewPalette={pendingPalette} previewStyle={pendingStyle} previewStructure={pendingStructure} storefrontUrl={storefrontUrl} t={t} />
           </Grid>
         )}
         {!previewUrl && page === 'product' && (
@@ -460,7 +464,7 @@ const PREVIEW_DEVICES = {
 };
 const PREVIEW_PANE_H = 660;
 
-function LivePreview({ previewUrl, draftLayout, previewPalette, previewStyle, storefrontUrl, t }) {
+function LivePreview({ previewUrl, draftLayout, previewPalette, previewStyle, previewStructure, storefrontUrl, t }) {
   const iframeRef = useRef(null);
   const readyRef = useRef(false);
   const paneRef = useRef(null);
@@ -473,6 +477,7 @@ function LivePreview({ previewUrl, draftLayout, previewPalette, previewStyle, st
     const appearance = {};
     if (previewPalette) appearance.palette = previewPalette;
     if (previewStyle) appearance.style = previewStyle;
+    if (previewStructure) appearance.structure = previewStructure;
     win.postMessage(
       {
         source: 'markium-editor',
@@ -481,7 +486,7 @@ function LivePreview({ previewUrl, draftLayout, previewPalette, previewStyle, st
       },
       '*'
     );
-  }, [draftLayout, previewPalette, previewStyle]);
+  }, [draftLayout, previewPalette, previewStyle, previewStructure]);
 
   // The storefront tells us when it's mounted and ready to receive drafts.
   useEffect(() => {
@@ -574,6 +579,7 @@ LivePreview.propTypes = {
   draftLayout: PropTypes.object.isRequired,
   previewPalette: PropTypes.string,
   previewStyle: PropTypes.string,
+  previewStructure: PropTypes.string,
   storefrontUrl: PropTypes.string,
   t: PropTypes.func.isRequired,
 };
