@@ -5,7 +5,8 @@
 // HONESTY RULE (merchant feedback 2026-07-05): a theme must differ
 // STRUCTURALLY — hero structure, composition, imagery — not just by colour,
 // font, or copy. Colour alone is the Appearance palette picker's job.
-// Four themes, three hero structures, four compositions, four image worlds.
+// Themes: hero structures + chrome structures (appearance.structure) + 
+// compositions + image worlds.
 //
 // Section settings use the editor's stored shape: localized fields are
 // { ar, en, fr } maps. Keys must match the backend SectionCatalog.
@@ -46,6 +47,7 @@ export const STORE_THEMES = [
     id: 'minimal',
     thumb: '/assets/themes/minimal.jpg',
     style: 'minimal',
+    structure: 'editorial',
     palette: 'graphite',
     swatch: '#454A53',
     sections: [
@@ -71,6 +73,7 @@ export const STORE_THEMES = [
     id: 'bold',
     thumb: '/assets/themes/bold.jpg',
     style: 'bold',
+    structure: 'editorial',
     palette: 'crimson',
     swatch: '#DE4A40',
     sections: [
@@ -98,6 +101,7 @@ export const STORE_THEMES = [
     id: 'elegant',
     thumb: '/assets/themes/elegant.jpg',
     style: 'editorial',
+    structure: 'editorial',
     palette: 'violet',
     swatch: '#9A69CF',
     sections: [
@@ -129,6 +133,7 @@ export const STORE_THEMES = [
     id: 'warm',
     thumb: '/assets/themes/warm.jpg',
     style: 'soft',
+    structure: 'editorial',
     palette: 'terracotta',
     swatch: '#DB7150',
     sections: [
@@ -161,6 +166,36 @@ export const STORE_THEMES = [
         ),
         align: 'center',
       }),
+    ],
+  },
+  {
+    // Playful chrome (structure): solid brand banner header, wavy brand
+    // footer, white buy-button product cards — plus a flat statement hero.
+    // Structurally unlike every editorial-chrome theme.
+    id: 'playful',
+    thumb: '/assets/themes/playful.jpg',
+    style: 'soft',
+    palette: 'emerald',
+    swatch: '#24A578',
+    structure: 'playful',
+    sections: [
+      hero({
+        eyebrow: L('جديد هنا؟', 'New here?', 'Nouveau ici ?'),
+        headline: L('تسوق بفرح', 'Shop happy!', 'Achetez heureux !'),
+        subhead: L(
+          'منتجات ممتعة، توصيل سريع، والدفع عند الباب.',
+          'Fun products, fast delivery, pay at your door.',
+          'Des produits fun, livraison rapide, paiement à la porte.'
+        ),
+        cta_text: L('ابدأ التسوق', 'Start shopping', 'Commencer'),
+        cta_link: '/products',
+        layout: 'statement',
+      }),
+      marquee({
+        text: L('توصيل لكل الولايات • الدفع عند الاستلام', 'Delivery to all 58 wilayas • Cash on delivery', 'Livraison 58 wilayas • Paiement à la livraison'),
+        speed: 'medium',
+      }),
+      grid(),
     ],
   },
 ];
