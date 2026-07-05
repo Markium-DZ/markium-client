@@ -211,6 +211,7 @@ export const endpoints = {
   },
   layouts: {
     home: '/layouts/home',
+    page: (page) => `/layouts/${page}`,
     homeSection: (id) => `/layouts/home/sections/${id}`,
     catalog: '/sections-catalog',
   },
