@@ -63,6 +63,11 @@ const tempId = () => `sec_new_${Math.random().toString(36).slice(2, 10)}`;
 // ---- settings <-> form-value coercion ---------------------------------------
 
 function toFormValue(field, stored) {
+  if (field.input === 'items') {
+    // Repeatable blocks: coerce each stored item through the item_shape.
+    const arr = Array.isArray(stored) ? stored : [];
+    return arr.map((item) => settingsToForm(field.item_shape, item));
+  }
   if (field.localized) {
     const langs = {};
     EDITOR_LANGS.forEach(({ value }) => {
@@ -77,6 +82,11 @@ function toFormValue(field, stored) {
 }
 
 function toStoredValue(field, formValue) {
+  if (field.input === 'items') {
+    const arr = Array.isArray(formValue) ? formValue : [];
+    // Items are fully editor-managed: rebuild each from its shape (bounded).
+    return arr.slice(0, field.max_items || 20).map((item) => formToSettings(field.item_shape, {}, item));
+  }
   if (field.localized) {
     const cleaned = {};
     let hasAny = false;
@@ -785,6 +795,71 @@ SectionCard.propTypes = {
 };
 
 // ----------------------------------------------------------------------
+// Repeatable blocks widget: add/remove/reorder items whose sub-fields come
+// from the catalog's item_shape (schema-driven, like everything else).
+
+function ItemsField({ name, field, label, t }) {
+  const { control } = useFormContext();
+  const { fields, append, remove, move } = useFieldArray({ control, name, keyName: 'rowId' });
+  const max = field.max_items || 10;
+
+  return (
+    <Stack spacing={1.5}>
+      <Stack direction="row" alignItems="center" justifyContent="space-between">
+        <Typography variant="subtitle2">{label}</Typography>
+        <Typography variant="caption" color="text.secondary">
+          {fields.length}/{max}
+        </Typography>
+      </Stack>
+
+      {fields.map((row, i) => (
+        <Card key={row.rowId} variant="outlined" sx={{ p: 2, bgcolor: 'background.neutral' }}>
+          <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1.5 }}>
+            <Typography variant="caption" color="text.secondary">
+              #{i + 1}
+            </Typography>
+            <Stack direction="row" spacing={0.5}>
+              <IconButton size="small" onClick={() => move(i, i - 1)} disabled={i === 0} aria-label={t('move_up')}>
+                <Iconify icon="eva:arrow-ios-upward-fill" width={16} />
+              </IconButton>
+              <IconButton size="small" onClick={() => move(i, i + 1)} disabled={i === fields.length - 1} aria-label={t('move_down')}>
+                <Iconify icon="eva:arrow-ios-downward-fill" width={16} />
+              </IconButton>
+              <IconButton size="small" color="error" onClick={() => remove(i)} aria-label={t('remove')}>
+                <Iconify icon="solar:trash-bin-trash-bold" width={16} />
+              </IconButton>
+            </Stack>
+          </Stack>
+          <Stack spacing={2.5}>
+            {(field.item_shape || []).map((sub) => (
+              <SectionField key={sub.key} name={`${name}.${i}.${sub.key}`} field={sub} t={t} />
+            ))}
+          </Stack>
+        </Card>
+      ))}
+
+      <Button
+        variant="outlined"
+        size="small"
+        startIcon={<Iconify icon="mingcute:add-line" width={16} />}
+        onClick={() => append(settingsToForm(field.item_shape, {}))}
+        disabled={fields.length >= max}
+        sx={{ alignSelf: 'flex-start' }}
+      >
+        {t('add_item')}
+      </Button>
+    </Stack>
+  );
+}
+
+ItemsField.propTypes = {
+  name: PropTypes.string.isRequired,
+  field: PropTypes.object.isRequired,
+  label: PropTypes.string.isRequired,
+  t: PropTypes.func.isRequired,
+};
+
+// ----------------------------------------------------------------------
 // Renders one catalog setting by its `input` kind, at a full RHF `name` path.
 
 function SectionField({ name, field, t }) {
@@ -792,6 +867,9 @@ function SectionField({ name, field, t }) {
   const hint = field.hint_key ? t(field.hint_key) : undefined;
 
   switch (field.input) {
+    case 'items':
+      return <ItemsField name={name} field={field} label={label} t={t} />;
+
     case 'image':
       return <ImageFromLibraryField name={name} label={label} hint={hint} />;
 
