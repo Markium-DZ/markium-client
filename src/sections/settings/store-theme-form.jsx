@@ -32,10 +32,11 @@ import { paths } from 'src/routes/paths';
 
 import { useTranslate } from 'src/locales';
 import { useAuthContext } from 'src/auth/hooks';
+import { useGetProducts } from 'src/api/product';
 import { updateStoreConfig } from 'src/api/store';
 import {
-  useGetHomeLayout,
-  replaceHomeLayout,
+  useGetLayout,
+  replaceLayout,
   useGetSectionsCatalog,
 } from 'src/api/store-theme';
 
@@ -113,13 +114,16 @@ const formToSettings = (fields, storedRaw, formValues) => {
 
 // ----------------------------------------------------------------------
 
+const PAGES = ['home', 'product'];
+
 export default function StoreThemeForm() {
   const { t } = useTranslate();
   const { user } = useAuthContext();
   const { enqueueSnackbar } = useSnackbar();
 
-  const { sections, version, layoutLoading, layoutError, mutate } = useGetHomeLayout();
-  const { catalog, catalogTypes, catalogLoading } = useGetSectionsCatalog();
+  const [page, setPage] = useState('home');
+  const { sections, version, layoutLoading, layoutError, mutate } = useGetLayout(page);
+  const { catalog, catalogTypes, catalogMeta, catalogLoading } = useGetSectionsCatalog();
 
   if (layoutLoading || catalogLoading) return <LayoutSkeleton />;
 
@@ -127,29 +131,47 @@ export default function StoreThemeForm() {
     return <Alert severity="error">{layoutError?.message || t('failed_to_load_store_theme')}</Alert>;
   }
 
+  // Stores saved before the product page became composable have no product
+  // layout yet — seed the editor with the static COD core (server assigns ids).
+  const effectiveSections =
+    page === 'product' && sections.length === 0
+      ? [{ id: tempId(), type: 'product-order-v1', enabled: true, settings: {} }]
+      : sections;
+
   return (
-    <LayoutEditor
-      key={version}
-      sections={sections}
+    <>
+      <Tabs value={page} onChange={(_, v) => setPage(v)} sx={{ mb: 2 }}>
+        {PAGES.map((p) => (
+          <Tab key={p} value={p} label={t(`layout_page_${p}`)} />
+        ))}
+      </Tabs>
+      <LayoutEditor
+      key={`${page}:${version}`}
+      page={page}
+      sections={effectiveSections}
       version={version}
       catalog={catalog}
       catalogTypes={catalogTypes}
+      catalogMeta={catalogMeta}
       storeSlug={user?.store?.slug}
       isPhoneVerified={!!user?.is_phone_verified}
       onSaved={mutate}
       enqueueSnackbar={enqueueSnackbar}
       t={t}
-    />
+      />
+    </>
   );
 }
 
 // ----------------------------------------------------------------------
 
 function LayoutEditor({
+  page,
   sections,
   version,
   catalog,
   catalogTypes,
+  catalogMeta,
   storeSlug,
   isPhoneVerified,
   onSaved,
@@ -222,7 +244,7 @@ function LayoutEditor({
         enabled: !!r.enabled,
         settings: formToSettings(catalog[r.type], r.raw, r.settings),
       }));
-      await replaceHomeLayout(payload, version);
+      await replaceLayout(page, payload, version);
       // A theme also carries a palette + style — persist them alongside the layout.
       if (pendingPalette || pendingStyle) {
         const appearance = {};
@@ -262,15 +284,27 @@ function LayoutEditor({
     ? (import.meta.env.VITE_STOREFRONT_BASE_URL || 'https://{slug}.markium.online').replace('{slug}', storeSlug)
     : null;
 
-  const previewUrl = storeSlug
+  // Product-page preview needs a real product to render the COD core.
+  const { products } = useGetProducts();
+  const firstProductSlug = products?.[0]?.slug || products?.[0]?.ref || null;
+
+  const basePreviewUrl = storeSlug
     ? (import.meta.env.VITE_STOREFRONT_PREVIEW_URL || `${import.meta.env.VITE_STOREFRONT_BASE_URL || 'https://{slug}.markium.online'}/?preview=1`).replace('{slug}', storeSlug)
     : null;
+  let previewUrl = basePreviewUrl;
+  if (page === 'product') {
+    previewUrl =
+      basePreviewUrl && firstProductSlug
+        ? `${basePreviewUrl}&product_slug=${encodeURIComponent(firstProductSlug)}`
+        : null;
+  }
 
   // The unsaved draft, in the storefront's layout shape — recomputed as the
   // merchant edits and pushed to the preview iframe.
   const draftLayout = useMemo(() => {
     const rows = watchedSections || [];
     return {
+      page,
       sections: rows.map((r) => ({
         id: r.id,
         type: r.type,
@@ -279,7 +313,7 @@ function LayoutEditor({
       })),
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [JSON.stringify(watchedSections), catalog]);
+  }, [JSON.stringify(watchedSections), catalog, page]);
 
   return (
     <FormProvider methods={methods} onSubmit={onSubmit}>
@@ -292,15 +326,17 @@ function LayoutEditor({
                 {t('store_theme_setup_description')}
               </Typography>
             </Stack>
-            <Button
-              variant="contained"
-              color="primary"
-              startIcon={<Iconify icon="solar:magic-stick-3-bold" width={18} />}
-              onClick={() => setThemeOpen(true)}
-              sx={{ flexShrink: 0 }}
-            >
-              {t('change_theme')}
-            </Button>
+            {page === 'home' && (
+              <Button
+                variant="contained"
+                color="primary"
+                startIcon={<Iconify icon="solar:magic-stick-3-bold" width={18} />}
+                onClick={() => setThemeOpen(true)}
+                sx={{ flexShrink: 0 }}
+              >
+                {t('change_theme')}
+              </Button>
+            )}
           </Stack>
         </Grid>
 
@@ -327,6 +363,7 @@ function LayoutEditor({
                 key={row.rowId}
                 index={index}
                 type={watchedSections?.[index]?.type || row.type}
+                isStatic={!!catalogMeta?.[watchedSections?.[index]?.type || row.type]?.static}
                 enabled={watchedSections?.[index]?.enabled}
                 fields={catalog[watchedSections?.[index]?.type || row.type] || []}
                 isFirst={index === 0}
@@ -347,11 +384,19 @@ function LayoutEditor({
                 {t('add_section')}
               </Button>
               <Menu anchorEl={addMenuEl} open={!!addMenuEl} onClose={() => setAddMenuEl(null)}>
-                {(catalogTypes || []).map((type) => (
-                  <MenuItem key={type} onClick={() => handleAdd(type)}>
-                    {t(`section_type_${type}`)}
-                  </MenuItem>
-                ))}
+                {(catalogTypes || [])
+                  .filter((type) => {
+                    const meta = catalogMeta?.[type] || {};
+                    // Static sections are pinned by the engine (already present);
+                    // page-restricted sections only appear on their pages.
+                    if (meta.static) return false;
+                    return !meta.pages || meta.pages.includes(page);
+                  })
+                  .map((type) => (
+                    <MenuItem key={type} onClick={() => handleAdd(type)}>
+                      {t(`section_type_${type}`)}
+                    </MenuItem>
+                  ))}
               </Menu>
             </Box>
 
@@ -379,6 +424,11 @@ function LayoutEditor({
             <LivePreview previewUrl={previewUrl} draftLayout={draftLayout} previewPalette={pendingPalette} previewStyle={pendingStyle} storefrontUrl={storefrontUrl} t={t} />
           </Grid>
         )}
+        {!previewUrl && page === 'product' && (
+          <Grid xs={12} lg={6}>
+            <Alert severity="info">{t('add_product_to_preview')}</Alert>
+          </Grid>
+        )}
       </Grid>
 
       <ThemeGalleryDialog open={themeOpen} onClose={() => setThemeOpen(false)} onApply={applyTheme} t={t} />
@@ -387,7 +437,9 @@ function LayoutEditor({
 }
 
 LayoutEditor.propTypes = {
+  page: PropTypes.string.isRequired,
   sections: PropTypes.array.isRequired,
+  catalogMeta: PropTypes.object,
   version: PropTypes.number.isRequired,
   catalog: PropTypes.object.isRequired,
   catalogTypes: PropTypes.array.isRequired,
@@ -543,7 +595,7 @@ function ThemeCardPreview({ theme }) {
   // Render in the theme's actual display font + corner radius so the card shows
   // the real design difference, not just the colour.
   const style = STYLE_PRESETS[theme.style] || STYLE_PRESETS.editorial;
-  const font = style.font;
+  const {font} = style;
   const r = style.radius;
 
   return (
@@ -651,7 +703,7 @@ ThemeGalleryDialog.propTypes = {
 
 // ----------------------------------------------------------------------
 
-function SectionCard({ index, type, enabled, fields, isFirst, isLast, onMoveUp, onMoveDown, onRemove, t }) {
+function SectionCard({ index, type, enabled, isStatic, fields, isFirst, isLast, onMoveUp, onMoveDown, onRemove, t }) {
   const [open, setOpen] = useState(true);
 
   return (
@@ -662,26 +714,35 @@ function SectionCard({ index, type, enabled, fields, isFirst, isLast, onMoveUp, 
         spacing={1}
         sx={{ p: 1.5, pl: 2 }}
       >
-        <Iconify icon="solar:widget-bold-duotone" width={20} sx={{ color: 'text.secondary', flexShrink: 0 }} />
+        <Iconify
+          icon={isStatic ? 'solar:lock-keyhole-bold-duotone' : 'solar:widget-bold-duotone'}
+          width={20}
+          sx={{ color: 'text.secondary', flexShrink: 0 }}
+        />
         <Typography variant="subtitle2" sx={{ flexGrow: 1, minWidth: 0 }} noWrap>
           {t(`section_type_${type}`)}
         </Typography>
 
-        <Controller
-          name={`sections.${index}.enabled`}
-          render={({ field }) => (
-            <Switch size="small" checked={!!field.value} onChange={(e) => field.onChange(e.target.checked)} />
-          )}
-        />
+        {/* Static sections are pinned by the engine: always on, not removable. */}
+        {!isStatic && (
+          <Controller
+            name={`sections.${index}.enabled`}
+            render={({ field }) => (
+              <Switch size="small" checked={!!field.value} onChange={(e) => field.onChange(e.target.checked)} />
+            )}
+          />
+        )}
         <IconButton size="small" onClick={onMoveUp} disabled={isFirst} aria-label={t('move_up')}>
           <Iconify icon="eva:arrow-ios-upward-fill" width={18} />
         </IconButton>
         <IconButton size="small" onClick={onMoveDown} disabled={isLast} aria-label={t('move_down')}>
           <Iconify icon="eva:arrow-ios-downward-fill" width={18} />
         </IconButton>
-        <IconButton size="small" color="error" onClick={onRemove} aria-label={t('remove')}>
-          <Iconify icon="solar:trash-bin-trash-bold" width={18} />
-        </IconButton>
+        {!isStatic && (
+          <IconButton size="small" color="error" onClick={onRemove} aria-label={t('remove')}>
+            <Iconify icon="solar:trash-bin-trash-bold" width={18} />
+          </IconButton>
+        )}
         {fields.length > 0 && (
           <IconButton size="small" onClick={() => setOpen((v) => !v)} aria-label={t('edit')}>
             <Iconify icon={open ? 'eva:chevron-up-fill' : 'eva:chevron-down-fill'} width={20} />
@@ -707,6 +768,7 @@ SectionCard.propTypes = {
   index: PropTypes.number.isRequired,
   type: PropTypes.string.isRequired,
   enabled: PropTypes.bool,
+  isStatic: PropTypes.bool,
   fields: PropTypes.array.isRequired,
   isFirst: PropTypes.bool,
   isLast: PropTypes.bool,

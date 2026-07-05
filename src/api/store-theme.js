@@ -13,9 +13,9 @@ const layoutOptions = {
 
 // ----------------------------------------------------------------------
 
-export function useGetHomeLayout() {
+export function useGetLayout(page = 'home') {
   const { data, isLoading, error, mutate } = useSWR(
-    endpoints.layouts.home,
+    endpoints.layouts.page(page),
     fetcher,
     layoutOptions
   );
@@ -47,6 +47,11 @@ export function useGetSectionsCatalog() {
       }, {}),
       // Ordered list of type strings (for the "add section" menu).
       catalogTypes: types.map((entry) => entry.type),
+      // Per-type editor flags: static (pinned, no remove/disable) + page allow-list.
+      catalogMeta: types.reduce((acc, entry) => {
+        acc[entry.type] = { static: !!entry.static, pages: entry.pages || null };
+        return acc;
+      }, {}),
       catalogLoading: isLoading,
       catalogError: error,
     };
@@ -60,10 +65,10 @@ export async function patchHomeSection(sectionId, patch) {
   return res.data?.data;
 }
 
-// Replace the whole home layout (add/remove/reorder). Sends expected_version so
+// Replace a whole page layout (add/remove/reorder). Sends expected_version so
 // a concurrent edit (another tab / MCP agent) returns 409 instead of clobbering.
-export async function replaceHomeLayout(sections, expectedVersion) {
-  const res = await axios.put(endpoints.layouts.home, {
+export async function replaceLayout(page, sections, expectedVersion) {
+  const res = await axios.put(endpoints.layouts.page(page), {
     expected_version: expectedVersion,
     sections,
   });
