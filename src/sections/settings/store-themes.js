@@ -1,16 +1,25 @@
 // Curated starter themes for the Store Theme gallery. Applying one loads its
-// palette + section layout into the editor and the live preview; nothing is
-// persisted until the merchant hits Save (so trying a theme is non-destructive).
+// palette + design style + section layout into the editor and the live
+// preview; nothing is persisted until the merchant hits Save.
 //
-// Section settings use the same shape the editor stores: localized fields are
-// { ar, en, fr } maps; everything else is a plain value. Keys must match the
-// backend SectionCatalog (hero-v1, image-banner-v1, products-grid-v1).
+// HONESTY RULE (merchant feedback 2026-07-05): a theme must differ
+// STRUCTURALLY — hero structure, composition, imagery — not just by colour,
+// font, or copy. Colour alone is the Appearance palette picker's job.
+// Four themes, three hero structures, four compositions, four image worlds.
 //
-// `swatch` is the theme's primary colour; the gallery renders a concrete
-// mini-storefront mockup from it plus the hero copy (see ThemeCardPreview).
+// Section settings use the editor's stored shape: localized fields are
+// { ar, en, fr } maps. Keys must match the backend SectionCatalog.
 
 const DEFAULT_BANNER =
   'https://pub-3ceebe22515549368685ef8994607425.r2.dev/store-front-default-home-image/desktop.png';
+
+// Proven image URLs (same set the storefront's category defaults use).
+const IMG = {
+  studio: 'https://images.unsplash.com/photo-1449247709967-d4461a6a6103?w=1800&q=85', // minimal interior
+  atelier: 'https://images.unsplash.com/photo-1611652022419-a9419f74343d?w=1800&q=85', // jewellery atelier
+  home: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=1800&q=85', // warm living room
+  furniture: 'https://images.unsplash.com/photo-1538688525198-9b88f6f53126?w=1800&q=85',
+};
 
 // Localized-string helper: L(arabic, english, french)
 const L = (ar, en, fr) => ({ ar, en, fr });
@@ -27,10 +36,13 @@ export const STYLE_PRESETS = {
 
 const hero = (settings) => ({ type: 'hero-v1', enabled: true, settings });
 const banner = (settings) => ({ type: 'image-banner-v1', enabled: true, settings });
+const marquee = (settings) => ({ type: 'marquee-strip-v1', enabled: true, settings });
+const richText = (settings) => ({ type: 'rich-text-v1', enabled: true, settings });
 const grid = () => ({ type: 'products-grid-v1', enabled: true, settings: {} });
 
 export const STORE_THEMES = [
   {
+    // Split hero (image beside text), studio imagery, nothing but products.
     id: 'minimal',
     thumb: '/assets/themes/minimal.jpg',
     style: 'minimal',
@@ -38,14 +50,15 @@ export const STORE_THEMES = [
     swatch: '#454A53',
     sections: [
       hero({
-        eyebrow: L('مجموعة جديدة', 'New in', 'Nouveauté'),
-        headline: L('أناقة بسيطة', 'Simply refined', 'La simplicité'),
+        image_desktop: IMG.studio,
+        eyebrow: L('مجموعة مختارة', 'Selected works', 'Sélection'),
+        headline: L('أقل، لكن أفضل', 'Less, but better', 'Moins, mais mieux'),
         subhead: L(
-          'منتجات مختارة بعناية بتصميم عصري وأنيق.',
-          'Carefully chosen pieces with a clean, modern feel.',
-          'Des pièces choisies avec soin, au style épuré.'
+          'قطع مختارة بعناية. لا شيء زائد.',
+          'Carefully chosen pieces. Nothing extra.',
+          'Des pièces choisies avec soin. Rien de superflu.'
         ),
-        cta_text: L('تسوق الآن', 'Shop now', 'Acheter'),
+        cta_text: L('تسوق', 'Shop', 'Boutique'),
         cta_link: '/products',
         layout: 'split',
       }),
@@ -53,15 +66,21 @@ export const STORE_THEMES = [
     ],
   },
   {
+    // Statement hero: flat brand-colour typographic band — no photo at all —
+    // with an announcement marquee. Structurally unlike everything else.
     id: 'bold',
     thumb: '/assets/themes/bold.jpg',
     style: 'bold',
     palette: 'crimson',
     swatch: '#DE4A40',
     sections: [
+      marquee({
+        text: L('توصيل لكل الولايات • الدفع عند الاستلام', 'Delivery to all wilayas • Cash on delivery', 'Livraison 58 wilayas • Paiement à la livraison'),
+        speed: 'medium',
+      }),
       hero({
         eyebrow: L('عرض محدود', 'Limited drop', 'Offre limitée'),
-        headline: L('اطلب الآن', 'Make it yours', 'Faites-vous plaisir'),
+        headline: L('اطلب الآن', 'Grab it now', 'Foncez'),
         subhead: L(
           'أفضل المنتجات بأسعار لا تُقاوم.',
           'Standout products at prices you will love.',
@@ -69,18 +88,13 @@ export const STORE_THEMES = [
         ),
         cta_text: L('اكتشف', 'Discover', 'Découvrir'),
         cta_link: '/products',
-        layout: 'overlap',
-      }),
-      banner({
-        image: DEFAULT_BANNER,
-        caption: L('تخفيضات الموسم', 'Season sale', 'Soldes de saison'),
-        link: '/products',
-        height: 'medium',
+        layout: 'statement',
       }),
       grid(),
     ],
   },
   {
+    // Full-bleed editorial photo hero, serif type, banner below the grid.
     id: 'elegant',
     thumb: '/assets/themes/elegant.jpg',
     style: 'editorial',
@@ -88,6 +102,7 @@ export const STORE_THEMES = [
     swatch: '#9A69CF',
     sections: [
       hero({
+        image_desktop: IMG.atelier,
         eyebrow: L('مختارات', 'Curated', 'Sélection'),
         headline: L('أناقة خالدة', 'Timeless elegance', 'Élégance intemporelle'),
         subhead: L(
@@ -109,6 +124,8 @@ export const STORE_THEMES = [
     ],
   },
   {
+    // Split hero with warm interior imagery, rounded type, story-led
+    // composition: banner + products + an "our story" text block.
     id: 'warm',
     thumb: '/assets/themes/warm.jpg',
     style: 'soft',
@@ -116,6 +133,7 @@ export const STORE_THEMES = [
     swatch: '#DB7150',
     sections: [
       hero({
+        image_desktop: IMG.home,
         eyebrow: L('أهلاً بك', 'Welcome', 'Bienvenue'),
         headline: L('دفء وأصالة', 'Warm & authentic', 'Chaleur & authenticité'),
         subhead: L(
@@ -128,90 +146,21 @@ export const STORE_THEMES = [
         layout: 'split',
       }),
       banner({
-        image: DEFAULT_BANNER,
+        image: IMG.furniture,
         caption: L('جديدنا', 'Just in', 'Nouveautés'),
         link: '/products',
         height: 'medium',
       }),
       grid(),
-    ],
-  },
-  {
-    id: 'fresh',
-    thumb: '/assets/themes/fresh.jpg',
-    style: 'minimal',
-    palette: 'emerald',
-    swatch: '#24A578',
-    sections: [
-      hero({
-        eyebrow: L('طبيعي', 'Natural', 'Naturel'),
-        headline: L('نضارة كل يوم', 'Fresh every day', 'La fraîcheur au quotidien'),
-        subhead: L(
-          'منتجات طبيعية بجودة عالية.',
-          'Natural products, thoughtfully sourced.',
-          'Des produits naturels, sélectionnés avec soin.'
+      richText({
+        heading: L('قصتنا', 'Our story', 'Notre histoire'),
+        body: L(
+          'نختار كل قطعة بعناية لتدوم وتُحب.',
+          'We pick every piece with care, to last and to be loved.',
+          'Chaque pièce est choisie avec soin, pour durer et être aimée.'
         ),
-        cta_text: L('تسوق الآن', 'Shop now', 'Acheter'),
-        cta_link: '/products',
-        layout: 'split',
+        align: 'center',
       }),
-      grid(),
-      banner({
-        image: DEFAULT_BANNER,
-        caption: L('وصل حديثاً', 'New arrivals', 'Nouveautés'),
-        link: '/products',
-        height: 'short',
-      }),
-    ],
-  },
-  {
-    id: 'ocean',
-    thumb: '/assets/themes/ocean.jpg',
-    style: 'bold',
-    palette: 'ocean',
-    swatch: '#3E8FDE',
-    sections: [
-      hero({
-        eyebrow: L('مجموعتنا', 'Our collection', 'Notre collection'),
-        headline: L('اكتشف المزيد', 'Discover more', 'Découvrez plus'),
-        subhead: L(
-          'تجربة تسوق سلسة وممتعة.',
-          'A smooth, effortless shopping experience.',
-          'Une expérience d’achat fluide et agréable.'
-        ),
-        cta_text: L('ابدأ الآن', 'Get started', 'Commencer'),
-        cta_link: '/products',
-        layout: 'overlap',
-      }),
-      grid(),
-    ],
-  },
-  {
-    id: 'rose',
-    thumb: '/assets/themes/rose.jpg',
-    style: 'soft',
-    palette: 'rose',
-    swatch: '#DB5B8B',
-    sections: [
-      hero({
-        eyebrow: L('بلمسة أنثوية', 'With love', 'Avec amour'),
-        headline: L('جمالك يبدأ هنا', 'Your beauty starts here', 'Votre beauté commence ici'),
-        subhead: L(
-          'منتجات مختارة تبرز جمالك.',
-          'Handpicked pieces to make you shine.',
-          'Des pièces choisies pour vous sublimer.'
-        ),
-        cta_text: L('اكتشفي', 'Discover', 'Découvrir'),
-        cta_link: '/products',
-        layout: 'overlap',
-      }),
-      banner({
-        image: DEFAULT_BANNER,
-        caption: L('عروض خاصة', 'Special offers', 'Offres spéciales'),
-        link: '/products',
-        height: 'medium',
-      }),
-      grid(),
     ],
   },
 ];
