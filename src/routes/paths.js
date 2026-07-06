@@ -13,6 +13,7 @@ const ROOTS = {
 // ----------------------------------------------------------------------
 
 export const paths = {
+  impersonate: '/impersonate',
   comingSoon: '/coming-soon',
   maintenance: '/maintenance',
   pricing: '/pricing',

@@ -1,0 +1,114 @@
+name: Production Deploy Guard
+
+# Detects deployments of the markium-clients worker made OUTSIDE this repo's
+# CI (e.g. `wrangler deploy` from a laptop) and immediately redeploys the CI
+# build from main. Manual deploys broke production twice on 2026-07-02: a
+# local build without the VITE_* env shipped a dashboard that could not reach
+# the API (every POST answered 405 by the static-asset handler).
+#
+# Detection keys off the Cloudflare deployment author: CI deploys are authored
+# by the owner of the CLOUDFLARE_API_TOKEN secret; manual deploys carry the
+# person's own Cloudflare login. Limitation: a manual deploy by the token
+# owner themselves is indistinguishable from CI.
+
+on:
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+    inputs:
+      expected_authors:
+        description: 'Override the CI author allow-list (comma-separated, for testing the heal path)'
+        required: false
+
+concurrency: deploy-guard
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Check who made the live deployment
+        id: drift
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CI_DEPLOY_AUTHORS: ${{ github.event.inputs.expected_authors || 'y.driss@esi-sba.dz' }}
+        run: |
+          AUTHOR=$(npx wrangler@4 deployments list --name markium-clients 2>/dev/null \
+            | grep 'Author:' | tail -1 | awk '{print $2}')
+          if [ -z "$AUTHOR" ]; then
+            echo "::error::Could not read the live deployment author from Cloudflare"
+            exit 1
+          fi
+          echo "Live deployment author: $AUTHOR"
+          case ",$CI_DEPLOY_AUTHORS," in
+            *",$AUTHOR,"*)
+              echo "Live deployment came from CI — no drift." >> "$GITHUB_STEP_SUMMARY"
+              echo "drift=false" >> "$GITHUB_OUTPUT"
+              ;;
+            *)
+              echo "::warning::Live deployment was made by $AUTHOR, not CI. Redeploying the CI build."
+              echo "drift=true" >> "$GITHUB_OUTPUT"
+              echo "author=$AUTHOR" >> "$GITHUB_OUTPUT"
+              ;;
+          esac
+
+      - name: Install dependencies
+        if: steps.drift.outputs.drift == 'true'
+        run: npm ci
+
+      - name: Build (production)
+        if: steps.drift.outputs.drift == 'true'
+        env:
+          VITE_API_VERSION: ${{ vars.VITE_API_VERSION }}
+          VITE_HOST_API: ${{ vars.VITE_HOST_API }}
+          VITE_STORAGE_API: ${{ vars.VITE_STORAGE_API }}
+          VITE_PUBLIC_POSTHOG_HOST: ${{ vars.VITE_PUBLIC_POSTHOG_HOST }}
+          VITE_PUBLIC_POSTHOG_KEY: ${{ secrets.VITE_PUBLIC_POSTHOG_KEY }}
+          VITE_PUBLIC_POSTHOG_PROJECT_ID: ${{ vars.VITE_PUBLIC_POSTHOG_PROJECT_ID }}
+          VITE_POSTHOG_PERSONAL_API_KEY: ${{ secrets.VITE_POSTHOG_PERSONAL_API_KEY }}
+          VITE_STOREFRONT_BASE_URL: ${{ vars.VITE_STOREFRONT_BASE_URL }}
+          VITE_TURNSTILE_SITE_KEY: ${{ vars.VITE_TURNSTILE_SITE_KEY }}
+        run: npx vite build --mode production
+
+      - name: Redeploy CI build
+        if: steps.drift.outputs.drift == 'true'
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Open a notification issue
+        if: steps.drift.outputs.drift == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh label create deploy-guard --force --color D93F0B \
+            --description "Non-CI production deploy detected and overwritten" || true
+          OPEN=$(gh issue list --label deploy-guard --state open --json number --jq 'length')
+          if [ "$OPEN" = "0" ]; then
+            gh issue create \
+              --label deploy-guard \
+              --title "Manual production deploy by ${{ steps.drift.outputs.author }} was overwritten" \
+              --body "The deploy guard found a live \`markium-clients\` deployment authored by \`${{ steps.drift.outputs.author }}\` (not CI) and redeployed the CI build from \`main\`.
+
+          Manual \`wrangler deploy\` from a laptop ships whatever that machine has checked out and previously shipped builds without the \`VITE_*\` env (dashboard could not reach the API; uploads answered 405). Please deploy only via the GitHub workflow: push to \`main\`, or run the *Deploy* workflow manually.
+
+          Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          else
+            echo "An open deploy-guard issue already exists — not creating another."
+          fi
+          echo "Drift healed: redeployed CI build over ${{ steps.drift.outputs.author }}'s manual deploy." >> "$GITHUB_STEP_SUMMARY"

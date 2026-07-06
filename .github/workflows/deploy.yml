@@ -54,6 +54,7 @@ jobs:
           VITE_POSTHOG_PERSONAL_API_KEY: ${{ secrets.VITE_POSTHOG_PERSONAL_API_KEY }}
           VITE_STOREFRONT_BASE_URL: ${{ vars.VITE_STOREFRONT_BASE_URL }}
           VITE_TURNSTILE_SITE_KEY: ${{ vars.VITE_TURNSTILE_SITE_KEY }}
+          VITE_VAPID_PUBLIC_KEY: ${{ vars.VITE_VAPID_PUBLIC_KEY }}
         run: npx vite build --mode ${{ steps.env.outputs.name }}
 
       - name: Deploy to Cloudflare
