@@ -8,7 +8,10 @@ export const api_version = import.meta.env.VITE_API_VERSION ;
 export const HOST_API = import.meta.env.VITE_HOST_API ;
 // export const HOST_API = "https://be-test.markium.online/api/v1" ;
 export const ASSETS_API = import.meta.env.VITE_ASSETS_API;
-export const STORAGE_API = import.meta.env.VITE_STORAGE_API ; 
+export const STORAGE_API = import.meta.env.VITE_STORAGE_API ;
+
+// Merchant chat assistant Host (markium-chat-host)
+export const CHAT_HOST_API = import.meta.env.VITE_CHAT_HOST_API || 'http://localhost:8787';
 
 export const FIREBASE_API = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,

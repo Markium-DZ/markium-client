@@ -55,6 +55,7 @@ jobs:
           VITE_STOREFRONT_BASE_URL: ${{ vars.VITE_STOREFRONT_BASE_URL }}
           VITE_TURNSTILE_SITE_KEY: ${{ vars.VITE_TURNSTILE_SITE_KEY }}
           VITE_VAPID_PUBLIC_KEY: ${{ vars.VITE_VAPID_PUBLIC_KEY }}
+          VITE_CHAT_HOST_API: ${{ vars.VITE_CHAT_HOST_API }}
         run: npx vite build --mode ${{ steps.env.outputs.name }}
 
       - name: Deploy to Cloudflare
