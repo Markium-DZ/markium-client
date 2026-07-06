@@ -56,7 +56,7 @@ export default function SystemItemListView({ collection }) {
 
 
 
-    const { items: gVisibleItems, itemsLoading } = useGetCategorySettings();
+    const { items: gVisibleItems, itemsLoading, mutate: mutateCategories } = useGetCategorySettings();
     const [visibleItems, setVisibleItems] = useState(gVisibleItems);
     useEffect(() => {
         setVisibleItems(gVisibleItems)
@@ -107,7 +107,7 @@ export default function SystemItemListView({ collection }) {
         }) || [];
         setDataFiltered(filteredItems?.map(item => ({
             ...item,
-            component: <EnableDisableItem visibleItems={visibleItems} setVisibleItems={setVisibleItems} configurable_type={collection?.type} item={item} setTableData={setDataFiltered} data={dataFiltered} key={item.id || item.key} />
+            component: <EnableDisableItem visibleItems={visibleItems} setVisibleItems={setVisibleItems} configurable_type={collection?.type} item={item} setTableData={setDataFiltered} data={dataFiltered} onSynced={mutateCategories} key={item.id || item.key} />
         }))?.reverse());
     }, [visibleItems]);
 
@@ -123,7 +123,7 @@ export default function SystemItemListView({ collection }) {
         }) || [];
         setTableData(tableItems?.map(item => ({
             ...item,
-            component: <EnableDisableItem visibleItems={visibleItems} setVisibleItems={setVisibleItems} configurable_type={collection?.type} item={item} setTableData={setDataFiltered} data={dataFiltered} key={item.id || item.key} />
+            component: <EnableDisableItem visibleItems={visibleItems} setVisibleItems={setVisibleItems} configurable_type={collection?.type} item={item} setTableData={setDataFiltered} data={dataFiltered} onSynced={mutateCategories} key={item.id || item.key} />
         }))?.reverse());
     }, [visibleItems]);
 
@@ -171,26 +171,27 @@ export default function SystemItemListView({ collection }) {
 // ----------------------------------------------------------------------
 
 
-const EnableDisableItem = ({ item, configurable_type, setTableData }) => {
+const EnableDisableItem = ({ item, configurable_type, setTableData, onSynced }) => {
     const [isChecked, setIsChecked] = useState(item.visibility === "visible");
     const [loading, setLoading] = useState(false);
-    // Unified update logic for visibleItems and tableData
+    // Unified update logic for visibleItems and tableData. IMPORTANT: the row's
+    // visibility is DERIVED from `is_active` on every recompute (tab/filter
+    // change) — the optimistic patch must update that same field, or the
+    // switch snaps back to stale state after a successful save (the root of
+    // the 'enabled in backend, disabled in UI' report).
     const updateVisibility = (checked) => {
         let visibilitys = checked ? t("visible") : t("hidden");
         let visibility = checked ? "visible" : "hidden";
         let color = checked ? "success" : "error";
         setTableData(prev => prev?.map(i => {
             if (i.id === item.id) {
-                return { ...i, visibilitys, visibility, color, system_settings: { is_selected: checked } };
+                return { ...i, is_active: checked, visibilitys, visibility, color };
             }
             return i;
         }));
 
     };
     const handleChange = async (event) => {
-        // if (item?.is_verified == 0) {
-        //     enqueueSnackbar(t("item_not_verified"), { variant: 'error' });
-        // } else {
         setLoading(true);
         const checked = event.target.checked;
         // Optimistically update UI
@@ -199,15 +200,18 @@ const EnableDisableItem = ({ item, configurable_type, setTableData }) => {
         try {
             await changeCategoryVisibility(item?.id, { is_active: checked });
             enqueueSnackbar(t("operation_success"), { variant: 'success' });
+            // Re-sync the source list so derived state matches the server.
+            onSynced?.();
         } catch (error) {
             // Rollback UI on error
             updateVisibility(!checked);
             setIsChecked(!checked);
-            enqueueSnackbar(t("operation_failed"), { variant: 'error' });
+            // Show the server's reason, not a blind generic failure.
+            const reason = error?.message || error?.error?.message;
+            enqueueSnackbar(reason ? `${t("operation_failed")}: ${reason}` : t("operation_failed"), { variant: 'error' });
         } finally {
             setLoading(false);
         }
-        // }
     };
     return (
         <FormGroup sx={{ display: "flex", flexDirection: "row", alignItems: "center" }}>

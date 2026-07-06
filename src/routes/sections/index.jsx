@@ -5,6 +5,7 @@ import { authRoutes } from './auth';
 import { mainRoutes } from './main';
 import { dashboardRoutes } from './dashboard';
 import { onboardingRoutes } from './onboarding';
+import { impersonateRoutes } from './impersonate';
 
 // ----------------------------------------------------------------------
 
@@ -20,6 +21,9 @@ export default function Router() {
     ...mainRoutes,
     // Auth routes
     ...authRoutes,
+
+    // Impersonation landing (public, no auth-guard)
+    ...impersonateRoutes,
 
     // Onboarding routes
     ...onboardingRoutes,

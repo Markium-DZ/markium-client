@@ -5,19 +5,20 @@ import Box from '@mui/material/Box';
 import { useBoolean } from 'src/hooks/use-boolean';
 import { useResponsive } from 'src/hooks/use-responsive';
 
-import { useSettingsContext } from 'src/components/settings';
-import { useTranslate } from 'src/locales';
-
 import SkipToContent from 'src/components/skip-to-content';
-import PushPermissionPrompt from 'src/components/pwa/push-permission-prompt';
+import { useSettingsContext } from 'src/components/settings';
 import InstallPrompt from 'src/components/pwa/install-prompt';
+import IosInstallPrompt from 'src/components/pwa/ios-install-prompt';
+import PushPermissionPrompt from 'src/components/pwa/push-permission-prompt';
+import VerificationBanner from 'src/components/verification-banner/verification-banner';
+import ImpersonationBanner from 'src/components/impersonation-banner/impersonation-banner';
+
 import Main from './main';
 import Header from './header';
 import NavMini from './nav-mini';
+import BottomNav from './bottom-nav';
 import NavVertical from './nav-vertical';
 import NavHorizontal from './nav-horizontal';
-import BottomNav from './bottom-nav';
-import VerificationBanner from 'src/components/verification-banner/verification-banner';
 
 // ----------------------------------------------------------------------
 
@@ -42,6 +43,7 @@ export default function DashboardLayout({ children }) {
     return (
       <>
         <SkipToContent />
+        <ImpersonationBanner />
         <Header onOpenNav={nav.onTrue} />
 
         {lgUp ? renderHorizontal : renderNavVertical}
@@ -49,6 +51,7 @@ export default function DashboardLayout({ children }) {
         <VerificationBanner />
         <Main>{children}</Main>
         <PushPermissionPrompt />
+        <IosInstallPrompt />
         <InstallPrompt />
         {!lgUp && <BottomNav />}
       </>
@@ -59,6 +62,7 @@ export default function DashboardLayout({ children }) {
     return (
       <>
         <SkipToContent />
+        <ImpersonationBanner />
         <Header onOpenNav={nav.onTrue} />
 
         <Box
@@ -76,6 +80,7 @@ export default function DashboardLayout({ children }) {
           </Main>
         </Box>
         <PushPermissionPrompt />
+        <IosInstallPrompt />
         <InstallPrompt />
         {!lgUp && <BottomNav />}
       </>
@@ -85,6 +90,7 @@ export default function DashboardLayout({ children }) {
   return (
     <>
       <SkipToContent />
+      <ImpersonationBanner />
       <Header onOpenNav={nav.onTrue} />
 
       <Box
@@ -102,6 +108,7 @@ export default function DashboardLayout({ children }) {
         </Main>
       </Box>
       <PushPermissionPrompt />
+      <IosInstallPrompt />
       <InstallPrompt />
       {!lgUp && <BottomNav />}
     </>
