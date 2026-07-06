@@ -12,6 +12,16 @@ export function initPostHog() {
     return;
   }
 
+  // Never from non-production hosts — localhost and the workers.dev staging
+  // dashboard ship the prod PostHog key and polluted the project.
+  // Deliberate debugging: ?ph_debug=1.
+  const { hostname, search } = window.location;
+  const isNonProdHost =
+    hostname === 'localhost' || hostname === '127.0.0.1' || hostname.endsWith('.workers.dev');
+  if (isNonProdHost && new URLSearchParams(search).get('ph_debug') !== '1') {
+    return;
+  }
+
   posthog.init(key, {
     api_host: host,
     autocapture: true,
