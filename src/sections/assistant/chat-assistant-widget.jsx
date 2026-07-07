@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 import Fab from '@mui/material/Fab';
 import Zoom from '@mui/material/Zoom';
@@ -15,9 +15,27 @@ import ChatAssistant from './chat-assistant';
 
 // ----------------------------------------------------------------------
 
+/**
+ * Open the assistant drawer from anywhere in the app, optionally sending a
+ * kick-off message (e.g. the "Add product with AI" button on the products page).
+ */
+export function openAssistant(kickoff) {
+  window.dispatchEvent(new CustomEvent('assistant:open', { detail: { kickoff } }));
+}
+
 export default function ChatAssistantWidget() {
   const { t } = useTranslate();
   const [open, setOpen] = useState(false);
+  const [kickoff, setKickoff] = useState(null);
+
+  useEffect(() => {
+    const onOpen = (event) => {
+      setKickoff(event.detail?.kickoff ?? null);
+      setOpen(true);
+    };
+    window.addEventListener('assistant:open', onOpen);
+    return () => window.removeEventListener('assistant:open', onOpen);
+  }, []);
 
   return (
     <>
@@ -61,7 +79,7 @@ export default function ChatAssistantWidget() {
           </IconButton>
         </Stack>
 
-        <ChatAssistant />
+        <ChatAssistant kickoff={kickoff} onKickoffSent={() => setKickoff(null)} />
       </Drawer>
     </>
   );

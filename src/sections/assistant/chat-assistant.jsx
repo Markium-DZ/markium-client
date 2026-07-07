@@ -73,7 +73,12 @@ TextBubble.propTypes = {
   text: PropTypes.string,
 };
 
-export default function ChatAssistant() {
+ChatAssistant.propTypes = {
+  kickoff: PropTypes.string,
+  onKickoffSent: PropTypes.func,
+};
+
+export default function ChatAssistant({ kickoff, onKickoffSent }) {
   const { t } = useTranslate();
   const { messages, sendMessage, status, error, addToolOutput } = useChat({
     transport,
@@ -83,6 +88,16 @@ export default function ChatAssistant() {
   const endRef = useRef(null);
 
   const busy = status === 'submitted' || status === 'streaming';
+
+  // Kick-off message from an explicit entry point (e.g. the "Add product with
+  // AI" button on the products page) — sent once, as soon as the panel opens.
+  useEffect(() => {
+    if (kickoff && !busy) {
+      sendMessage({ text: kickoff });
+      onKickoffSent?.();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [kickoff]);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' });

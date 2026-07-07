@@ -4239,6 +4239,8 @@
     "activity_uploading_image": "أرفع الصورة",
     "activity_creating_product": "أنشئ المنتج",
     "activity_publishing": "أنشر المنتج",
-    "activity_searching_products": "أبحث في منتجاتك"
+    "activity_searching_products": "أبحث في منتجاتك",
+    "add_with_ai": "إضافة بالذكاء الاصطناعي",
+    "add_product_kickoff": "أريد إضافة منتج جديد إلى متجري. إذا كان لدي رابط من مواقع التواصل (إنستغرام/فيسبوك) سألصقه — وإلا أرشدني خطوة بخطوة. تعامل أيضًا مع الخيارات (الألوان، المقاسات)."
   }
 }

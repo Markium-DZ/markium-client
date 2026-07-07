@@ -6,8 +6,8 @@ import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
-import useMediaQuery from '@mui/material/useMediaQuery';
 import { useTheme } from '@mui/material/styles';
+import useMediaQuery from '@mui/material/useMediaQuery';
 import TablePagination from '@mui/material/TablePagination';
 import {
   DataGrid,
@@ -24,31 +24,32 @@ import { useRouter } from 'src/routes/hooks';
 import { RouterLink } from 'src/routes/components';
 
 import { useBoolean } from 'src/hooks/use-boolean';
-import { useTranslate } from 'src/locales';
 
+import { useTranslate } from 'src/locales';
 import { useGetProducts } from 'src/api/product';
 import { PRODUCT_STOCK_OPTIONS } from 'src/_mock';
 
 import Iconify from 'src/components/iconify';
 import { useSnackbar } from 'src/components/snackbar';
 import EmptyContent from 'src/components/empty-content';
-import ConnectionError from 'src/components/connection-error';
 import { ConfirmDialog } from 'src/components/custom-dialog';
 import { useSettingsContext } from 'src/components/settings';
+import ConnectionError from 'src/components/connection-error';
 import CustomBreadcrumbs from 'src/components/custom-breadcrumbs';
 import VerificationGate from 'src/components/verification-gate/verification-gate';
 
+import { openAssistant } from 'src/sections/assistant/chat-assistant-widget';
+
+import ProductMobileCard from '../product-mobile-card';
 import ProductTableToolbar from '../product-table-toolbar';
 import ProductTableFiltersResult from '../product-table-filters-result';
-import ProductMobileCard from '../product-mobile-card';
 import {
   RenderCellStock,
   RenderCellPrice,
-  RenderCellPublish,
-  RenderCellProduct,
-  RenderCellCreatedAt,
-  RenderCellDiscount,
   RenderCellStatus,
+  RenderCellProduct,
+  RenderCellDiscount,
+  RenderCellCreatedAt,
 } from '../product-table-row';
 
 // ----------------------------------------------------------------------
@@ -278,14 +279,24 @@ export default function ProductListView() {
           ]}
           action={
             <VerificationGate>
-              <Button
-                component={RouterLink}
-                href={paths.dashboard.product.new}
-                variant="contained"
-                startIcon={<Iconify icon="mingcute:add-line" />}
-              >
-                {t('new_product')}
-              </Button>
+              <Stack direction="row" spacing={1}>
+                <Button
+                  variant="soft"
+                  color="info"
+                  startIcon={<Iconify icon="solar:magic-stick-3-bold" />}
+                  onClick={() => openAssistant(t('assistant.add_product_kickoff'))}
+                >
+                  {t('assistant.add_with_ai')}
+                </Button>
+                <Button
+                  component={RouterLink}
+                  href={paths.dashboard.product.new}
+                  variant="contained"
+                  startIcon={<Iconify icon="mingcute:add-line" />}
+                >
+                  {t('new_product')}
+                </Button>
+              </Stack>
             </VerificationGate>
           }
           sx={{

@@ -4199,6 +4199,8 @@
     "activity_uploading_image": "Uploading the image",
     "activity_creating_product": "Creating the product",
     "activity_publishing": "Publishing the product",
-    "activity_searching_products": "Searching your products"
+    "activity_searching_products": "Searching your products",
+    "add_with_ai": "Add with AI",
+    "add_product_kickoff": "I want to add a new product to my store. If I have a social media link (Instagram/Facebook) I'll paste it — otherwise guide me step by step. Handle variations (colors, sizes) too."
   }
 }

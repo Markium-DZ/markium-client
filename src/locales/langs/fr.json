@@ -3835,6 +3835,8 @@
     "activity_uploading_image": "Téléversement de l'image",
     "activity_creating_product": "Création du produit",
     "activity_publishing": "Publication du produit",
-    "activity_searching_products": "Recherche dans vos produits"
+    "activity_searching_products": "Recherche dans vos produits",
+    "add_with_ai": "Ajouter avec l'IA",
+    "add_product_kickoff": "Je veux ajouter un nouveau produit à ma boutique. Si j'ai un lien de réseau social (Instagram/Facebook) je le colle — sinon guide-moi étape par étape. Gère aussi les variantes (couleurs, tailles)."
   }
 }
