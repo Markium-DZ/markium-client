@@ -170,9 +170,18 @@ ImageCarousel.propTypes = { images: PropTypes.arrayOf(PropTypes.string) };
 
 // ----------------------------------------------------------------------
 
+// The model occasionally emits a field without a label (or key) despite the
+// schema — never surface "undefined" to the merchant: fall back to the key,
+// and drop fields that have no key at all (they could not be submitted anyway).
+function normalizeFields(rawFields) {
+  return (rawFields ?? [])
+    .filter((f) => f && f.key)
+    .map((f) => ({ ...f, label: f.label || f.key }));
+}
+
 export function ToolFieldForm({ input, disabled, submitted, onSubmit }) {
   const { t } = useTranslate();
-  const fields = input?.fields ?? [];
+  const fields = normalizeFields(input?.fields);
   // Seed each field with any AI-suggested value so the merchant sees a proposal
   // (e.g. a generated product name) they can accept or tweak — never a blank ask.
   const [values, setValues] = useState(() =>
