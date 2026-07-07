@@ -19,6 +19,7 @@ import { useRouter } from 'src/routes/hooks';
 import { paths } from 'src/routes/paths';
 import ZaityListView from 'src/sections/ZaityTables/zaity-list-view';
 import ZaityHeadContainer from 'src/sections/ZaityTables/ZaityHeadContainer';
+import { openAssistant } from 'src/sections/assistant/chat-assistant-widget';
 import Fab from '@mui/material/Fab';
 import ZaityTableFilters from 'src/sections/ZaityTables/ZaityTableFilters';
 import ZaityTableTabs from 'src/sections/ZaityTables/ZaityTableTabs'; // [keep for later use]
@@ -144,24 +145,43 @@ export default function ProductsListView({ }) {
             <ZaityHeadContainer
                 heading={t("productsList")}
                 action={
-                    <Button
-                        component={RouterLink}
-                        href={paths.dashboard.product.new}
-                        variant="contained"
-                        startIcon={<Iconify icon="mingcute:add-line" />}
-                    >
-                        {t("addNewProduct")}
-                    </Button>
+                    <Stack direction="row" spacing={1}>
+                        <Button
+                            variant="soft"
+                            color="info"
+                            startIcon={<Iconify icon="solar:magic-stick-3-bold" />}
+                            onClick={() => openAssistant(t('assistant.add_product_kickoff'))}
+                        >
+                            {t('assistant.add_with_ai')}
+                        </Button>
+                        <Button
+                            component={RouterLink}
+                            href={paths.dashboard.product.new}
+                            variant="contained"
+                            startIcon={<Iconify icon="mingcute:add-line" />}
+                        >
+                            {t("addNewProduct")}
+                        </Button>
+                    </Stack>
                 }
                 mobileAction={
-                    <Fab
-                        component={RouterLink}
-                        href={paths.dashboard.product.new}
-                        color="primary"
-                        size="small"
-                    >
-                        <Iconify icon="mingcute:add-line" width={22} />
-                    </Fab>
+                    <Stack direction="row" spacing={1}>
+                        <Fab
+                            color="info"
+                            size="small"
+                            onClick={() => openAssistant(t('assistant.add_product_kickoff'))}
+                        >
+                            <Iconify icon="solar:magic-stick-3-bold" width={20} />
+                        </Fab>
+                        <Fab
+                            component={RouterLink}
+                            href={paths.dashboard.product.new}
+                            color="primary"
+                            size="small"
+                        >
+                            <Iconify icon="mingcute:add-line" width={22} />
+                        </Fab>
+                    </Stack>
                 }
                 links={[
                     { name: t('dashboard'), href: paths.dashboard.root },
