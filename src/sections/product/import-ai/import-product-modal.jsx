@@ -73,6 +73,7 @@ export default function ImportProductModal({ open, onClose }) {
   const [errorMessage, setErrorMessage] = useState('');
   const [nameError, setNameError] = useState('');
   const [productUrl, setProductUrl] = useState('');
+  const [mainImage, setMainImage] = useState('');
   const abortRef = useRef(null);
 
   const reset = useCallback(() => {
@@ -219,12 +220,46 @@ export default function ImportProductModal({ open, onClose }) {
           <Stack spacing={2}>
             <ImportSteps events={events} steps={ANALYZE_STEPS} />
             {draft.previewImages?.[0] && (
-              <Box
-                component="img"
-                src={draft.previewImages[0]}
-                alt=""
-                sx={{ width: 1, maxHeight: 180, objectFit: 'cover', borderRadius: 1.5 }}
-              />
+              <Stack spacing={1}>
+                <Box
+                  component="img"
+                  src={mainImage || draft.previewImages[0]}
+                  alt=""
+                  sx={{ width: 1, maxHeight: 180, objectFit: 'cover', borderRadius: 1.5 }}
+                />
+                {draft.previewImages.length > 1 && (
+                  <Stack direction="row" spacing={1} sx={{ overflowX: 'auto', pb: 0.5 }}>
+                    {draft.previewImages.map((img) => (
+                      <Box
+                        key={img}
+                        component="img"
+                        src={img}
+                        alt=""
+                        onClick={() => setMainImage(img)}
+                        sx={{
+                          width: 56,
+                          height: 56,
+                          flexShrink: 0,
+                          objectFit: 'cover',
+                          borderRadius: 1,
+                          cursor: 'pointer',
+                          border: (muiTheme) =>
+                            `solid 2px ${(mainImage || draft.previewImages[0]) === img ? muiTheme.palette.info.main : 'transparent'}`,
+                        }}
+                      />
+                    ))}
+                    {draft.imageCount > draft.previewImages.length && (
+                      <Stack
+                        alignItems="center"
+                        justifyContent="center"
+                        sx={{ width: 56, height: 56, flexShrink: 0, borderRadius: 1, bgcolor: 'background.neutral' }}
+                      >
+                        <Typography variant="caption">+{draft.imageCount - draft.previewImages.length}</Typography>
+                      </Stack>
+                    )}
+                  </Stack>
+                )}
+              </Stack>
             )}
             <TextField
               fullWidth
