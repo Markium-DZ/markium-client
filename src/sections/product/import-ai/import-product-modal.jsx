@@ -115,7 +115,7 @@ export default function ImportProductModal({ open, onClose }) {
       if (terminal?.step === 'draft') {
         const d = terminal.draft;
         setDraft(d);
-        setForm({ name: d.name, description: d.description, price: '', quantity: '' });
+        setForm({ name: d.name ?? '', description: d.description ?? '', price: '', quantity: '' });
         setOptionValues(d.option?.values ?? []);
         setPhase('form');
       } else {
@@ -171,7 +171,7 @@ export default function ImportProductModal({ open, onClose }) {
   }, [url, form, draft, optionValues, t]);
 
   const canPublish =
-    form.name.trim() && form.description.trim() && Number(form.price) > 0 && parseInt(form.quantity, 10) > 0;
+    (form.name ?? '').trim() && (form.description ?? '').trim() && Number(form.price) > 0 && parseInt(form.quantity, 10) > 0;
 
   return (
     <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm" fullScreen={fullScreen}>
