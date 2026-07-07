@@ -19,7 +19,7 @@ import { useRouter } from 'src/routes/hooks';
 import { paths } from 'src/routes/paths';
 import ZaityListView from 'src/sections/ZaityTables/zaity-list-view';
 import ZaityHeadContainer from 'src/sections/ZaityTables/ZaityHeadContainer';
-import { openAssistant } from 'src/sections/assistant/chat-assistant-widget';
+import ImportProductModal from 'src/sections/product/import-ai/import-product-modal';
 import Fab from '@mui/material/Fab';
 import ZaityTableFilters from 'src/sections/ZaityTables/ZaityTableFilters';
 import ZaityTableTabs from 'src/sections/ZaityTables/ZaityTableTabs'; // [keep for later use]
@@ -51,6 +51,8 @@ export default function ProductsListView({ }) {
     const { products, productsLoading, productsError, productsMutate } = useGetProducts();
 
     const { user } = useContext(AuthContext);
+
+    const importModal = useBoolean();
 
     const [tableData, setTableData] = useState(null);
     const [dataFiltered, setDataFiltered] = useState(null);
@@ -150,7 +152,7 @@ export default function ProductsListView({ }) {
                             variant="soft"
                             color="info"
                             startIcon={<Iconify icon="solar:magic-stick-3-bold" />}
-                            onClick={() => openAssistant(t('assistant.add_product_kickoff'))}
+                            onClick={importModal.onTrue}
                         >
                             {t('assistant.add_with_ai')}
                         </Button>
@@ -169,7 +171,7 @@ export default function ProductsListView({ }) {
                         <Fab
                             color="info"
                             size="small"
-                            onClick={() => openAssistant(t('assistant.add_product_kickoff'))}
+                            onClick={importModal.onTrue}
                         >
                             <Iconify icon="solar:magic-stick-3-bold" width={20} />
                         </Fab>
@@ -207,6 +209,7 @@ export default function ProductsListView({ }) {
                     </Card>
                 )}
             </ZaityHeadContainer>
+            <ImportProductModal open={importModal.value} onClose={importModal.onFalse} />
         </>
     );
 }
