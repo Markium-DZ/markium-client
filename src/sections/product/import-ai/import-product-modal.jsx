@@ -23,7 +23,25 @@ import ImportSteps from './import-steps';
 
 // ----------------------------------------------------------------------
 
+const YOUCAN_FAVICON =
+  'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZlcnNpb249IjEuMSIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHdpZHRoPSI0OCIgaGVpZ2h0PSI0OCI+PHN2ZyB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIHZpZXdCb3g9IjAgMCA0OCA0OCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQ4IiBoZWlnaHQ9IjQ4IiBmaWxsPSIjRTExMTZGIj48L3JlY3Q+CjxwYXRoIGQ9Ik0xOC42NTQyIDEyLjA2NjVDMTguNjM2NCAxMi4wMjYyIDE4LjU5NTEgMTIgMTguNTQ5NCAxMkgxMS4xMTM4QzExLjAzMjUgMTIgMTAuOTc3NCAxMi4wNzkzIDExLjAwOTEgMTIuMTUwOUwxNi40MjY1IDI0LjQzMzVDMTYuNDQ0MyAyNC40NzM4IDE2LjQ4NTYgMjQuNSAxNi41MzEzIDI0LjVIMjMuOTYyNEMyNC4wNDM4IDI0LjUgMjQuMDk4OCAyNC40MjA4IDI0LjA2NzIgMjQuMzQ5MUwxOC42NTQyIDEyLjA2NjVaIiBmaWxsPSJ3aGl0ZSI+PC9wYXRoPgo8cGF0aCBkPSJNMzAuMDg1NyAxMkMzMC4wMzk5IDEyIDI5Ljk5ODYgMTIuMDI2MiAyOS45ODA5IDEyLjA2NjZMMjQuNTMxOCAyNC40NTc5TDE5LjA4MjggMzYuODQ5MkMxOS4wNTEzIDM2LjkyMDggMTkuMTA2MyAzNyAxOS4xODc2IDM3QzE5LjE4NzYgMzcgMjYuNTUxMSAzNyAyNi41OTY5IDM3QzI2LjYyOTggMzcgMjYuNjY5NiAzNi45NjU2IDI2LjY4OTMgMzYuOTQ2M0MyNi42OTc4IDM2LjkzOCAyNi43MDQxIDM2LjkyNzkgMjYuNzA4OSAzNi45MTcxTDMyLjE1MDggMjQuNTQyMUMzMi4xNTA4IDI0LjU0MjEgMzcuNTY4NCAxMi4yMjI0IDM3LjU5OTkgMTIuMTUwOEMzNy42MzE0IDEyLjA3OTIgMzcuNTc2MyAxMiAzNy40OTUgMTJIMzAuMDg1N1oiIGZpbGw9IndoaXRlIj48L3BhdGg+Cjwvc3ZnPjxzdHlsZT5AbWVkaWEgKHByZWZlcnMtY29sb3Itc2NoZW1lOiBsaWdodCkgeyA6cm9vdCB7IGZpbHRlcjogbm9uZTsgfSB9CkBtZWRpYSAocHJlZmVycy1jb2xvci1zY2hlbWU6IGRhcmspIHsgOnJvb3QgeyBmaWx0ZXI6IG5vbmU7IH0gfQo8L3N0eWxlPjwvc3ZnPg==';
+
 const ANALYZE_STEPS = ['read_post', 'collect_images', 'analyze'];
+
+// Supported sources; `match` substrings detect the pasted link's platform so the
+// chip row can collapse to the recognized one.
+const SOURCES = [
+  { name: 'Instagram', icon: 'skill-icons:instagram', match: ['instagram.com', 'instagr.am'] },
+  { name: 'Facebook', icon: 'logos:facebook', match: ['facebook.com', 'fb.com', 'fb.watch'] },
+  { name: 'TikTok', icon: 'logos:tiktok-icon', match: ['tiktok.com'] },
+  { name: 'Shopify', icon: 'logos:shopify', match: ['myshopify.com', 'shopify.com'] },
+  { name: 'YouCan', img: YOUCAN_FAVICON, match: ['youcan.shop', 'youcan.store'] },
+];
+
+function detectSource(url) {
+  const lower = (url || '').toLowerCase();
+  return SOURCES.find((s) => s.match.some((m) => lower.includes(m)))?.name ?? null;
+}
 
 function authHeaders() {
   return {
@@ -198,29 +216,43 @@ export default function ImportProductModal({ open, onClose }) {
               {t('assistant.import_intro')}
             </Typography>
 
-            <Stack direction="row" justifyContent="center" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
-              {[
-                { name: 'Instagram', icon: 'skill-icons:instagram' },
-                { name: 'Facebook', icon: 'logos:facebook' },
-                { name: 'TikTok', icon: 'logos:tiktok-icon' },
-                { name: 'Shopify', icon: 'logos:shopify' },
-                { name: 'YouCan', img: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZlcnNpb249IjEuMSIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHdpZHRoPSI0OCIgaGVpZ2h0PSI0OCI+PHN2ZyB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIHZpZXdCb3g9IjAgMCA0OCA0OCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQ4IiBoZWlnaHQ9IjQ4IiBmaWxsPSIjRTExMTZGIj48L3JlY3Q+CjxwYXRoIGQ9Ik0xOC42NTQyIDEyLjA2NjVDMTguNjM2NCAxMi4wMjYyIDE4LjU5NTEgMTIgMTguNTQ5NCAxMkgxMS4xMTM4QzExLjAzMjUgMTIgMTAuOTc3NCAxMi4wNzkzIDExLjAwOTEgMTIuMTUwOUwxNi40MjY1IDI0LjQzMzVDMTYuNDQ0MyAyNC40NzM4IDE2LjQ4NTYgMjQuNSAxNi41MzEzIDI0LjVIMjMuOTYyNEMyNC4wNDM4IDI0LjUgMjQuMDk4OCAyNC40MjA4IDI0LjA2NzIgMjQuMzQ5MUwxOC42NTQyIDEyLjA2NjVaIiBmaWxsPSJ3aGl0ZSI+PC9wYXRoPgo8cGF0aCBkPSJNMzAuMDg1NyAxMkMzMC4wMzk5IDEyIDI5Ljk5ODYgMTIuMDI2MiAyOS45ODA5IDEyLjA2NjZMMjQuNTMxOCAyNC40NTc5TDE5LjA4MjggMzYuODQ5MkMxOS4wNTEzIDM2LjkyMDggMTkuMTA2MyAzNyAxOS4xODc2IDM3QzE5LjE4NzYgMzcgMjYuNTUxMSAzNyAyNi41OTY5IDM3QzI2LjYyOTggMzcgMjYuNjY5NiAzNi45NjU2IDI2LjY4OTMgMzYuOTQ2M0MyNi42OTc4IDM2LjkzOCAyNi43MDQxIDM2LjkyNzkgMjYuNzA4OSAzNi45MTcxTDMyLjE1MDggMjQuNTQyMUMzMi4xNTA4IDI0LjU0MjEgMzcuNTY4NCAxMi4yMjI0IDM3LjU5OTkgMTIuMTUwOEMzNy42MzE0IDEyLjA3OTIgMzcuNTc2MyAxMiAzNy40OTUgMTJIMzAuMDg1N1oiIGZpbGw9IndoaXRlIj48L3BhdGg+Cjwvc3ZnPjxzdHlsZT5AbWVkaWEgKHByZWZlcnMtY29sb3Itc2NoZW1lOiBsaWdodCkgeyA6cm9vdCB7IGZpbHRlcjogbm9uZTsgfSB9CkBtZWRpYSAocHJlZmVycy1jb2xvci1zY2hlbWU6IGRhcmspIHsgOnJvb3QgeyBmaWx0ZXI6IG5vbmU7IH0gfQo8L3N0eWxlPjwvc3ZnPg==' },
-              ].map((source) => (
-                <Stack
-                  key={source.name}
-                  direction="row"
-                  alignItems="center"
-                  spacing={0.75}
-                  sx={{ px: 1.25, py: 0.5, borderRadius: 5, bgcolor: 'background.neutral' }}
-                >
-                  {source.img ? (
-                    <Box component="img" src={source.img} alt="" sx={{ width: 16, height: 16, borderRadius: 0.5 }} />
-                  ) : (
-                    <Iconify icon={source.icon} width={16} />
-                  )}
-                  <Typography variant="caption" sx={{ fontWeight: 600 }}>{source.name}</Typography>
-                </Stack>
-              ))}
+            <Stack direction="row" justifyContent="center" spacing={0} alignItems="center" flexWrap="wrap" useFlexGap>
+              {SOURCES.map((source) => {
+                const detected = detectSource(url);
+                const hidden = !!detected && detected !== source.name;
+                const matched = detected === source.name;
+                return (
+                  <Stack
+                    key={source.name}
+                    direction="row"
+                    alignItems="center"
+                    spacing={hidden ? 0 : 0.75}
+                    sx={{
+                      px: hidden ? 0 : 1.25,
+                      py: 0.5,
+                      borderRadius: 5,
+                      bgcolor: 'background.neutral',
+                      overflow: 'hidden',
+                      whiteSpace: 'nowrap',
+                      maxWidth: hidden ? 0 : 200,
+                      opacity: hidden ? 0 : 1,
+                      transform: hidden ? 'scale(0.6)' : 'scale(1)',
+                      marginInlineEnd: hidden ? 0 : 1,
+                      transition: 'all 0.35s ease',
+                      ...(matched && {
+                        boxShadow: (muiTheme) => `0 0 0 1.5px ${muiTheme.palette.info.main}`,
+                      }),
+                    }}
+                  >
+                    {source.img ? (
+                      <Box component="img" src={source.img} alt="" sx={{ width: 16, height: 16, borderRadius: 0.5 }} />
+                    ) : (
+                      <Iconify icon={source.icon} width={16} />
+                    )}
+                    <Typography variant="caption" sx={{ fontWeight: 600 }}>{source.name}</Typography>
+                  </Stack>
+                );
+              })}
             </Stack>
 
             <TextField
