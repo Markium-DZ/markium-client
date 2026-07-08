@@ -1,44 +1,43 @@
-import { Alert, Avatar, Box, Button, Card, FormControlLabel, FormGroup, Grid, IconButton, Link, ListItemText, MenuItem, Stack, Switch, Tooltip, Typography } from '@mui/material';
 import { t } from 'i18next';
-import { set } from 'lodash'; // [keep for later use]
-import { enqueueSnackbar, useSnackbar } from 'notistack';
-import { useCallback, useContext, useEffect, useState } from 'react';
-import { changeItemVisibilityInSettings, useGetMainSpecs, useGetSystemVisibleItem } from 'src/api/settings'; // [keep for later use]
-import { createUser, deleteUser, useRoles, useUsers } from 'src/api/users';
-import { useValues } from 'src/api/utils';
-import PermissionsContext from 'src/auth/context/permissions/permissions-context';
+
+import { Box, Card, Link, Alert, Stack, Avatar, Button, MenuItem, IconButton, Typography, ListItemText } from '@mui/material'; // [keep for later use]
+import { enqueueSnackbar } from 'notistack';
+import { useState, useEffect, useContext , useCallback } from 'react';
+
+// [keep for later use]
+
 import { ConfirmDialog } from 'src/components/custom-dialog';
-import ContentDialog from 'src/components/custom-dialog/content-dialog';
-import CustomPopover, { usePopover } from 'src/components/custom-popover';
-import { fileData } from 'src/components/file-thumbnail'; // [keep for later use]
-import Iconify from 'src/components/iconify';
-import { useBoolean } from 'src/hooks/use-boolean';
-import { useTranslate } from 'src/locales';
-import { RouterLink } from 'src/routes/components';
-import { useRouter } from 'src/routes/hooks';
-import { paths } from 'src/routes/paths';
-import ZaityListView from 'src/sections/ZaityTables/zaity-list-view';
-import ZaityHeadContainer from 'src/sections/ZaityTables/ZaityHeadContainer';
-import ImportProductModal from 'src/sections/product/import-ai/import-product-modal';
+import CustomPopover, { usePopover } from 'src/components/custom-popover'; // [keep for later use]
 import Fab from '@mui/material/Fab';
+
+import { paths } from 'src/routes/paths';
+import { useRouter } from 'src/routes/hooks';
+import { RouterLink } from 'src/routes/components';
+
+import { useBoolean } from 'src/hooks/use-boolean';
+
+import { useTranslate } from 'src/locales';
+
+import Iconify from 'src/components/iconify';
+
+import ZaityListView from 'src/sections/ZaityTables/zaity-list-view';
+import ZaityTableTabs from 'src/sections/ZaityTables/ZaityTableTabs';
 import ZaityTableFilters from 'src/sections/ZaityTables/ZaityTableFilters';
-import ZaityTableTabs from 'src/sections/ZaityTables/ZaityTableTabs'; // [keep for later use]
-import { fDate } from 'src/utils/format-time';
-import { getStorefrontUrl } from 'src/config-global';
-import showError from 'src/utils/show_error';
-import * as Yup from 'yup';
-import { useMemo } from 'react';
-import { useForm } from 'react-hook-form';
-import { yupResolver } from '@hookform/resolvers/yup';
-import FormProvider, { RHFUpload } from 'src/components/hook-form';
+import ZaityHeadContainer from 'src/sections/ZaityTables/ZaityHeadContainer';
+import { aiButtonSx } from 'src/sections/product/import-ai/ai-button-styles';
+import ImportProductModal from 'src/sections/product/import-ai/import-product-modal'; // [keep for later use]
+
 import { LoadingButton } from '@mui/lab';
-import { secondary } from 'src/theme/palette';
-import { color } from 'framer-motion';
-import { LoadingScreen } from 'src/components/loading-screen';
-import { useGetProducts, deployProduct, deleteProduct } from 'src/api/product';
-import Label from 'src/components/label';
-import { AuthContext } from 'src/auth/context/jwt';
+
+import showError from 'src/utils/show_error';
 import { captureEvent } from 'src/utils/posthog';
+
+import { AuthContext } from 'src/auth/context/jwt';
+import { getStorefrontUrl } from 'src/config-global';
+import { deployProduct, deleteProduct, useGetProducts } from 'src/api/product';
+
+import Label from 'src/components/label';
+import { LoadingScreen } from 'src/components/loading-screen';
 
 
 
@@ -59,7 +58,7 @@ export default function ProductsListView({ }) {
 
     const isReady = tableData !== null;
 
-    let TABLE_HEAD = [
+    const TABLE_HEAD = [
         { id: 'name', label: t('name'), type: "render", render: (item) => <ProductNameCell item={item} />, width: 250 },
         // { id: 'phone_number', label: t('phone_number'), type: "text", width: 140 },
         { id: 'quantity', label: t('quantity'), type: "text", width: 140 },
@@ -72,8 +71,7 @@ export default function ProductsListView({ }) {
     ]
 
 
-    const RformulateTable = (data) => {
-        return data?.map((item) => {
+    const RformulateTable = (data) => data?.map((item) => {
             let color = "default";
 
             // Apply status conditions: deployed, processing, draft, failed
@@ -102,7 +100,6 @@ export default function ProductsListView({ }) {
                 sale_price,
             };
         }) || [];
-    };
 
 
     const filters = [
@@ -149,10 +146,10 @@ export default function ProductsListView({ }) {
                 action={
                     <Stack direction="row" spacing={1}>
                         <Button
-                            variant="soft"
-                            color="info"
+                            variant="contained"
                             startIcon={<Iconify icon="solar:magic-stick-3-bold" />}
                             onClick={importModal.onTrue}
+                            sx={aiButtonSx}
                         >
                             {t('assistant.add_with_ai')}
                         </Button>
@@ -169,9 +166,9 @@ export default function ProductsListView({ }) {
                 mobileAction={
                     <Stack direction="row" spacing={1}>
                         <Fab
-                            color="info"
                             size="small"
                             onClick={importModal.onTrue}
+                            sx={aiButtonSx}
                         >
                             <Iconify icon="solar:magic-stick-3-bold" width={20} />
                         </Fab>
@@ -202,8 +199,8 @@ export default function ProductsListView({ }) {
                 ) : (
                     <Card>
                         <ZaityTableTabs filterKey='condition' data={tableData} items={items} defaultFilters={defaultFilters} setTableDate={setDataFiltered} filterFunction={filterFunction}>
-                            <ZaityTableFilters data={dataFiltered} tableData={tableData} setTableDate={setDataFiltered} items={filters} defaultFilters={defaultFilters} dataFiltered={tableData} searchText={t("search_by") + " " + t("name") + " " + t("or_any_value") + " ..."}  >
-                                <ZaityListView TABLE_HEAD={[...TABLE_HEAD]} dense="medium" zaityTableDate={dataFiltered || []} onSelectedRows={({ data, setTableData }) => { return <onSelectedRowsComponent configurable_type={"roles"} setTableData={setTableData} data={products} /> }} />
+                            <ZaityTableFilters data={dataFiltered} tableData={tableData} setTableDate={setDataFiltered} items={filters} defaultFilters={defaultFilters} dataFiltered={tableData} searchText={`${t("search_by")  } ${  t("name")  } ${  t("or_any_value")  } ...`}  >
+                                <ZaityListView TABLE_HEAD={[...TABLE_HEAD]} dense="medium" zaityTableDate={dataFiltered || []} onSelectedRows={({ data, setTableData }) => <onSelectedRowsComponent configurable_type="roles" setTableData={setTableData} data={products} />} />
                             </ZaityTableFilters>
                         </ZaityTableTabs>
                     </Card>
@@ -297,7 +294,7 @@ const ElementActions = ({ item, setTableData , user }) => {
 
 
     return (
-        <Box display={"flex"} rowGap={"10px"} sx={{ gap: '10px' }} >
+        <Box display="flex" rowGap="10px" sx={{ gap: '10px' }} >
 
             <IconButton color={popover.open ? 'inherit' : 'default'} onClick={popover.onOpen}>
                 <Iconify icon="eva:more-vertical-fill" />
@@ -520,7 +517,7 @@ const OrdersDropdown = ({ item }) => {
                                             px: 0.75
                                         }}
                                         color={status.color}
-                                        variant={"soft"}
+                                        variant="soft"
                                     >
                                         {count}
                                     </Label>
