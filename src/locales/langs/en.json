@@ -4229,6 +4229,9 @@
     "import_intro": "Paste a link to a product post — the AI reads the photos, collects them, and writes the name and description for you. You only add the price and quantity, then publish.",
     "import_how_1": "Paste the link",
     "import_how_2": "Review & edit",
-    "import_how_3": "Publish"
+    "import_how_3": "Publish",
+    "import_add_option": "Add variations (colors, sizes…)",
+    "import_option_name": "Option name",
+    "import_option_name_default": "Color"
   }
 }

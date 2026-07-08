@@ -3865,6 +3865,9 @@
     "import_intro": "Collez le lien d'une publication produit — l'IA lit les photos, les récupère et rédige le nom et la description pour vous. Vous ajoutez seulement le prix et la quantité, puis publiez.",
     "import_how_1": "Collez le lien",
     "import_how_2": "Vérifiez & modifiez",
-    "import_how_3": "Publiez"
+    "import_how_3": "Publiez",
+    "import_add_option": "Ajouter des variantes (couleurs, tailles…)",
+    "import_option_name": "Nom de l'option",
+    "import_option_name_default": "Couleur"
   }
 }

@@ -74,6 +74,8 @@ export default function ImportProductModal({ open, onClose }) {
   const [nameError, setNameError] = useState('');
   const [productUrl, setProductUrl] = useState('');
   const [mainImage, setMainImage] = useState('');
+  const [customOption, setCustomOption] = useState(false);
+  const [customOptionName, setCustomOptionName] = useState('');
   const abortRef = useRef(null);
 
   const reset = useCallback(() => {
@@ -87,6 +89,8 @@ export default function ImportProductModal({ open, onClose }) {
     setErrorMessage('');
     setNameError('');
     setProductUrl('');
+    setCustomOption(false);
+    setCustomOptionName('');
   }, []);
 
   const handleClose = useCallback(() => {
@@ -150,8 +154,8 @@ export default function ImportProductModal({ open, onClose }) {
           price: Number(form.price),
           quantity: parseInt(form.quantity, 10),
           tags: draft?.tags ?? [],
-          option: optionValues.length > 0 && draft?.option
-            ? { name: draft.option.name, values: optionValues }
+          option: optionValues.length > 0
+            ? { name: draft?.option?.name || customOptionName || t('assistant.import_option_name_default'), values: optionValues }
             : null,
         }),
       });
@@ -169,7 +173,7 @@ export default function ImportProductModal({ open, onClose }) {
       setErrorMessage(t('assistant.import_error_generic'));
       setPhase('error');
     }
-  }, [url, form, draft, optionValues, t]);
+  }, [url, form, draft, optionValues, customOptionName, t]);
 
   const canPublish =
     (form.name ?? '').trim() && (form.description ?? '').trim() && Number(form.price) > 0 && parseInt(form.quantity, 10) > 0;
@@ -325,9 +329,33 @@ export default function ImportProductModal({ open, onClose }) {
                 onChange={(e) => setForm((f) => ({ ...f, quantity: e.target.value }))}
               />
             </Stack>
-            {draft.option && (
+            {!draft.option && !customOption && (
+              <Button
+                variant="outlined"
+                color="inherit"
+                size="small"
+                startIcon={<Iconify icon="mingcute:add-line" />}
+                onClick={() => {
+                  setCustomOption(true);
+                  setCustomOptionName(t('assistant.import_option_name_default'));
+                }}
+              >
+                {t('assistant.import_add_option')}
+              </Button>
+            )}
+            {(draft.option || customOption) && (
               <Stack spacing={1}>
-                <Typography variant="subtitle2">{draft.option.name}</Typography>
+                {draft.option ? (
+                  <Typography variant="subtitle2">{draft.option.name}</Typography>
+                ) : (
+                  <TextField
+                    size="small"
+                    label={t('assistant.import_option_name')}
+                    value={customOptionName}
+                    sx={{ maxWidth: 220 }}
+                    onChange={(e) => setCustomOptionName(e.target.value)}
+                  />
+                )}
                 <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
                   {optionValues.map((v) => (
                     <Chip
