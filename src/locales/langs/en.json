@@ -4225,6 +4225,10 @@
     "import_change_link": "Change link",
     "import_error_read_post": "Couldn't read this link — is the post public?",
     "import_error_analyze": "Analysis failed. Try again.",
-    "import_error_generic": "Something went wrong. Try again."
+    "import_error_generic": "Something went wrong. Try again.",
+    "import_intro": "Paste a link to a product post — the AI reads the photos, collects them, and writes the name and description for you. You only add the price and quantity, then publish.",
+    "import_how_1": "Paste the link",
+    "import_how_2": "Review & edit",
+    "import_how_3": "Publish"
   }
 }

@@ -185,9 +185,43 @@ export default function ImportProductModal({ open, onClose }) {
         </Button>
       </DialogTitle>
 
-      <DialogContent sx={{ pb: 3 }}>
+      {/* pt keeps floating field labels from being clipped by the scroll
+          boundary (MUI zeroes DialogContent's padding-top after a DialogTitle). */}
+      <DialogContent sx={{ pb: 3, pt: 1 }}>
         {(phase === 'idle' || phase === 'error') && (
-          <Stack spacing={2}>
+          <Stack spacing={2.5}>
+            <Typography variant="body2" sx={{ color: 'text.secondary', textAlign: 'center', px: 1 }}>
+              {t('assistant.import_intro')}
+            </Typography>
+
+            <Stack direction="row" justifyContent="center" spacing={1} alignItems="center">
+              {[
+                { n: 1, label: t('assistant.import_how_1'), icon: 'solar:link-bold' },
+                { n: 2, label: t('assistant.import_how_2'), icon: 'solar:pen-bold' },
+                { n: 3, label: t('assistant.import_how_3'), icon: 'solar:rocket-bold' },
+              ].map((step, i) => (
+                <Stack key={step.n} direction="row" alignItems="center" spacing={1}>
+                  {i > 0 && (
+                    <Typography variant="caption" sx={{ color: 'text.disabled' }}>—</Typography>
+                  )}
+                  <Stack
+                    direction="row"
+                    alignItems="center"
+                    spacing={0.75}
+                    sx={{
+                      px: 1.25,
+                      py: 0.5,
+                      borderRadius: 5,
+                      bgcolor: 'background.neutral',
+                    }}
+                  >
+                    <Iconify icon={step.icon} width={15} sx={{ color: 'info.main' }} />
+                    <Typography variant="caption" sx={{ fontWeight: 600 }}>{step.label}</Typography>
+                  </Stack>
+                </Stack>
+              ))}
+            </Stack>
+
             <TextField
               fullWidth
               autoFocus
