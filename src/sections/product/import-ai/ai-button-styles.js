@@ -17,11 +17,12 @@ const pulseGlow = keyframes`
   50% { box-shadow: 0 0 20px rgba(217, 70, 239, 0.7), 0 0 38px rgba(34, 211, 238, 0.45); }
 `;
 
-// NOTE: no explicit 0%/100% edge stops — the app's RTL transform (stylis rtl)
-// flips '0%' to '100%' inside gradients, clamping all stops and rendering a
-// SOLID color in Arabic. Edge-stop-free syntax survives the RTL pass intact.
+// NOTE: NO stop positions at all — the app's RTL transform flips every
+// percentage inside gradients (0%->100%, 25%->75%...), clamping the stops and
+// rendering a flat/broken gradient in Arabic. Position-free stops distribute
+// evenly and survive the RTL pass untouched.
 const AI_GRADIENT =
-  'linear-gradient(100deg, #7C3AED, #A855F7 25%, #D946EF 50%, #3B82F6 75%, #22D3EE)';
+  'linear-gradient(100deg, #7C3AED, #A855F7, #D946EF, #3B82F6, #22D3EE)';
 
 export const aiButtonSx = {
   color: '#fff',
