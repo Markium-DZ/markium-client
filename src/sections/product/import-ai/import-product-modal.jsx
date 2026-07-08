@@ -200,7 +200,7 @@ export default function ImportProductModal({ open, onClose }) {
                 { name: 'Facebook', icon: 'logos:facebook' },
                 { name: 'TikTok', icon: 'logos:tiktok-icon' },
                 { name: 'Shopify', icon: 'logos:shopify' },
-                { name: 'YouCan', icon: 'solar:shop-bold', color: '#7B2CBF' },
+                { name: 'YouCan', img: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZlcnNpb249IjEuMSIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHdpZHRoPSI0OCIgaGVpZ2h0PSI0OCI+PHN2ZyB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIHZpZXdCb3g9IjAgMCA0OCA0OCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQ4IiBoZWlnaHQ9IjQ4IiBmaWxsPSIjRTExMTZGIj48L3JlY3Q+CjxwYXRoIGQ9Ik0xOC42NTQyIDEyLjA2NjVDMTguNjM2NCAxMi4wMjYyIDE4LjU5NTEgMTIgMTguNTQ5NCAxMkgxMS4xMTM4QzExLjAzMjUgMTIgMTAuOTc3NCAxMi4wNzkzIDExLjAwOTEgMTIuMTUwOUwxNi40MjY1IDI0LjQzMzVDMTYuNDQ0MyAyNC40NzM4IDE2LjQ4NTYgMjQuNSAxNi41MzEzIDI0LjVIMjMuOTYyNEMyNC4wNDM4IDI0LjUgMjQuMDk4OCAyNC40MjA4IDI0LjA2NzIgMjQuMzQ5MUwxOC42NTQyIDEyLjA2NjVaIiBmaWxsPSJ3aGl0ZSI+PC9wYXRoPgo8cGF0aCBkPSJNMzAuMDg1NyAxMkMzMC4wMzk5IDEyIDI5Ljk5ODYgMTIuMDI2MiAyOS45ODA5IDEyLjA2NjZMMjQuNTMxOCAyNC40NTc5TDE5LjA4MjggMzYuODQ5MkMxOS4wNTEzIDM2LjkyMDggMTkuMTA2MyAzNyAxOS4xODc2IDM3QzE5LjE4NzYgMzcgMjYuNTUxMSAzNyAyNi41OTY5IDM3QzI2LjYyOTggMzcgMjYuNjY5NiAzNi45NjU2IDI2LjY4OTMgMzYuOTQ2M0MyNi42OTc4IDM2LjkzOCAyNi43MDQxIDM2LjkyNzkgMjYuNzA4OSAzNi45MTcxTDMyLjE1MDggMjQuNTQyMUMzMi4xNTA4IDI0LjU0MjEgMzcuNTY4NCAxMi4yMjI0IDM3LjU5OTkgMTIuMTUwOEMzNy42MzE0IDEyLjA3OTIgMzcuNTc2MyAxMiAzNy40OTUgMTJIMzAuMDg1N1oiIGZpbGw9IndoaXRlIj48L3BhdGg+Cjwvc3ZnPjxzdHlsZT5AbWVkaWEgKHByZWZlcnMtY29sb3Itc2NoZW1lOiBsaWdodCkgeyA6cm9vdCB7IGZpbHRlcjogbm9uZTsgfSB9CkBtZWRpYSAocHJlZmVycy1jb2xvci1zY2hlbWU6IGRhcmspIHsgOnJvb3QgeyBmaWx0ZXI6IG5vbmU7IH0gfQo8L3N0eWxlPjwvc3ZnPg==' },
               ].map((source) => (
                 <Stack
                   key={source.name}
@@ -209,7 +209,11 @@ export default function ImportProductModal({ open, onClose }) {
                   spacing={0.75}
                   sx={{ px: 1.25, py: 0.5, borderRadius: 5, bgcolor: 'background.neutral' }}
                 >
-                  <Iconify icon={source.icon} width={16} sx={source.color ? { color: source.color } : undefined} />
+                  {source.img ? (
+                    <Box component="img" src={source.img} alt="" sx={{ width: 16, height: 16, borderRadius: 0.5 }} />
+                  ) : (
+                    <Iconify icon={source.icon} width={16} />
+                  )}
                   <Typography variant="caption" sx={{ fontWeight: 600 }}>{source.name}</Typography>
                 </Stack>
               ))}
