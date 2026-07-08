@@ -194,30 +194,23 @@ export default function ImportProductModal({ open, onClose }) {
               {t('assistant.import_intro')}
             </Typography>
 
-            <Stack direction="row" justifyContent="center" spacing={1} alignItems="center">
+            <Stack direction="row" justifyContent="center" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
               {[
-                { n: 1, label: t('assistant.import_how_1'), icon: 'solar:link-bold' },
-                { n: 2, label: t('assistant.import_how_2'), icon: 'solar:pen-bold' },
-                { n: 3, label: t('assistant.import_how_3'), icon: 'solar:rocket-bold' },
-              ].map((step, i) => (
-                <Stack key={step.n} direction="row" alignItems="center" spacing={1}>
-                  {i > 0 && (
-                    <Typography variant="caption" sx={{ color: 'text.disabled' }}>—</Typography>
-                  )}
-                  <Stack
-                    direction="row"
-                    alignItems="center"
-                    spacing={0.75}
-                    sx={{
-                      px: 1.25,
-                      py: 0.5,
-                      borderRadius: 5,
-                      bgcolor: 'background.neutral',
-                    }}
-                  >
-                    <Iconify icon={step.icon} width={15} sx={{ color: 'info.main' }} />
-                    <Typography variant="caption" sx={{ fontWeight: 600 }}>{step.label}</Typography>
-                  </Stack>
+                { name: 'Instagram', icon: 'skill-icons:instagram' },
+                { name: 'Facebook', icon: 'logos:facebook' },
+                { name: 'TikTok', icon: 'logos:tiktok-icon' },
+                { name: 'Shopify', icon: 'logos:shopify' },
+                { name: 'YouCan', icon: 'solar:shop-bold', color: '#7B2CBF' },
+              ].map((source) => (
+                <Stack
+                  key={source.name}
+                  direction="row"
+                  alignItems="center"
+                  spacing={0.75}
+                  sx={{ px: 1.25, py: 0.5, borderRadius: 5, bgcolor: 'background.neutral' }}
+                >
+                  <Iconify icon={source.icon} width={16} sx={source.color ? { color: source.color } : undefined} />
+                  <Typography variant="caption" sx={{ fontWeight: 600 }}>{source.name}</Typography>
                 </Stack>
               ))}
             </Stack>
