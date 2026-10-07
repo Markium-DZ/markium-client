@@ -10,7 +10,7 @@ import { fDate, fTime } from 'src/utils/format-time';
 import Label from 'src/components/label';
 import Iconify from 'src/components/iconify';
 import CustomPopover, { usePopover } from 'src/components/custom-popover';
-import ExpandableText from '../maintain/ExpandableText';
+import ExpandableText from './ExpandableText';
 import { useCallback } from 'react';
 import { useRouter } from 'src/routes/hooks';
 import { Box } from '@mui/material';
@@ -126,23 +126,11 @@ function renderCell(head_row, row, popover, router) {
         </MuiLink>
       );
     case "threeDots":
-      return (
-        <TableCell align="right" sx={{ px: 1, whiteSpace: 'nowrap', display: "flex", justifyContent: 'end' }}>
-          {head_row?.component(row)}
-        </TableCell>
-      );
+      return head_row?.component(row);
     case 'component':
-      return (
-        <TableCell align="center" sx={{ whiteSpace: 'nowrap', display: "flex", justifyContent: "end" }}>
-          {row?.component}
-        </TableCell>
-      );
+      return row?.component;
     case 'render':
-      return (
-        <TableCell align="center" >
-          {head_row?.render(row)}
-        </TableCell>
-      );
+      return head_row?.render(row);
 
     default:
       return row?.[head_row?.id] ?? '--';

@@ -21,6 +21,7 @@ import ZaityListView from 'src/sections/ZaityTables/zaity-list-view';
 import ZaityHeadContainer from 'src/sections/ZaityTables/ZaityHeadContainer';
 import ZaityTableFilters from 'src/sections/ZaityTables/ZaityTableFilters';
 import InventoryAdjustmentDialog from 'src/sections/inventory/inventory-adjustment-dialog';
+import InventoryMobileCard from 'src/sections/inventory/inventory-mobile-card';
 import { fCurrency } from 'src/utils/format-number';
 
 // ----------------------------------------------------------------------
@@ -74,7 +75,7 @@ export default function LowStockInventoryView() {
   const [dataFiltered, setDataFiltered] = useState([]);
   const [adjustmentDialog, setAdjustmentDialog] = useState({ open: false, item: null });
 
-  const { inventory, inventoryLoading, totalPages, total, mutate } = useGetLowStockInventory(page, 20);
+  const { inventory, inventoryLoading, inventoryError, totalPages, total, mutate } = useGetLowStockInventory(page, 20);
 
   const handleOpenAdjustment = (item) => {
     setAdjustmentDialog({ open: true, item });
@@ -307,6 +308,12 @@ export default function LowStockInventoryView() {
         { name: t('low_stock') },
       ]}
     >
+      {!inventoryLoading && inventoryError && allInventory.length === 0 && (
+        <Alert severity="warning" icon={<Iconify icon="solar:cloud-cross-bold" width={22} />} sx={{ mb: 2 }}>
+          {t('no_connection_notice')}
+        </Alert>
+      )}
+
       {total > 0 && (
         <Alert severity="warning" sx={{ mb: 3 }}>
           <Typography variant="subtitle2">
@@ -335,6 +342,12 @@ export default function LowStockInventoryView() {
               TABLE_HEAD={[...TABLE_HEAD]}
               dense="medium"
               zaityTableDate={dataFiltered || []}
+              mobileCardRender={(row) => (
+                <InventoryMobileCard
+                  row={row}
+                  onOpenAdjustment={handleOpenAdjustment}
+                />
+              )}
             />
           )}
         </ZaityTableFilters>

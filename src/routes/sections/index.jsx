@@ -1,13 +1,11 @@
 import { Navigate, useRoutes } from 'react-router-dom';
 
-import MainLayout from 'src/layouts/main';
-
 import { paths } from 'src/routes/paths';
 import { authRoutes } from './auth';
-import { authDemoRoutes } from './auth-demo';
-import { HomePage, mainRoutes } from './main';
+import { mainRoutes } from './main';
 import { dashboardRoutes } from './dashboard';
-import { componentsRoutes } from './components';
+import { onboardingRoutes } from './onboarding';
+import { impersonateRoutes } from './impersonate';
 
 // ----------------------------------------------------------------------
 
@@ -19,20 +17,19 @@ export default function Router() {
       element: <Navigate to={paths.auth.jwt.login} replace />,
     },
 
-    
     // Main routes
     ...mainRoutes,
     // Auth routes
     ...authRoutes,
-    ...authDemoRoutes,
+
+    // Impersonation landing (public, no auth-guard)
+    ...impersonateRoutes,
+
+    // Onboarding routes
+    ...onboardingRoutes,
 
     // Dashboard routes
     ...dashboardRoutes,
-
-
-
-    // Components routes
-    ...componentsRoutes,
 
     // No match 404
     { path: '*', element: <Navigate to="/404" replace /> },

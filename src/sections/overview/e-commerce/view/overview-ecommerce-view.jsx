@@ -1,220 +1,384 @@
-import { useContext, useCallback } from 'react';
+import { useState, useContext, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import Button from '@mui/material/Button';
-import { useTheme } from '@mui/material/styles';
 import Container from '@mui/material/Container';
 import Grid from '@mui/material/Unstable_Grid2';
-
-import { paths } from 'src/routes/paths';
-import { useRouter } from 'src/routes/hooks';
+import Button from '@mui/material/Button';
+import Box from '@mui/material/Box';
+import Card from '@mui/material/Card';
+import CardHeader from '@mui/material/CardHeader';
+import { useTheme } from '@mui/material/styles';
+import { Link as RouterLink } from 'react-router-dom';
 
 import { useGetProducts } from 'src/api/product';
 import { useGetOrders } from 'src/api/orders';
 import { useGetMedia } from 'src/api/media';
+import { useGetMyStore } from 'src/api/store';
+import { useGetLowStockInventory } from 'src/api/inventory';
+import {
+  useGetAnalyticsOverview,
+  useGetAnalyticsTraffic,
+  useGetAnalyticsTopProducts,
+  useGetAnalyticsFunnel,
+  useGetAnalyticsCapabilities,
+} from 'src/api/analytics';
 
 import { AuthContext } from 'src/auth/context/jwt';
-
+import { paths } from 'src/routes/paths';
+import Iconify from 'src/components/iconify';
 import { useSettingsContext } from 'src/components/settings';
-import { MotivationIllustration } from 'src/assets/illustrations';
-
-
-import EcommerceWelcome from '../ecommerce-welcome';
-import EcommerceEventsCalendar from '../ecommerce-events-calendar';
-import EcommerceYearlySales from '../ecommerce-yearly-sales';
-import EcommerceSaleByGender from '../ecommerce-sale-by-gender';
-import EcommerceWidgetSummary from '../ecommerce-widget-summary';
+import ConnectionError from 'src/components/connection-error';
 
 import {
   SetupChecklist,
-  WelcomeNewUser,
-  EmptyStateProducts,
   EmptyStateOrders,
+  YouTubeEmbed,
+  PixelSetupPrompt,
 } from 'src/sections/dashboard/onboarding';
+
+import {
+  ActionCenter,
+  DashboardDataTable,
+} from 'src/sections/dashboard/active-merchant';
+
+import AnalyticsGate from '../../analytics/analytics-gate';
+import EcommerceEventsCalendar from '../ecommerce-events-calendar';
+import DashboardMetrics from '../dashboard-metrics';
+import DashboardChart from '../dashboard-chart';
+import DashboardFunnel from '../dashboard-funnel';
+import DashboardWilayasMap from '../dashboard-wilayas-map';
+import DashboardSkeleton from './dashboard-skeleton';
 
 // ----------------------------------------------------------------------
 
 export default function OverviewEcommerceView() {
   const { user } = useContext(AuthContext);
-  const { products, productsMutate } = useGetProducts();
-  const { orders } = useGetOrders();
-  const { media, total: mediaTotal, mutate: mediaMutate } = useGetMedia(1, 1);
-
-  const theme = useTheme();
-  const settings = useSettingsContext();
   const { t } = useTranslation();
-  const router = useRouter();
+  const theme = useTheme();
+  const { products, productsLoading, productsError, productsMutate } = useGetProducts();
+  const { orders, ordersLoading, ordersError, mutate: ordersMutate } = useGetOrders();
+  const { media, total: mediaTotal, mutate: mediaMutate } = useGetMedia(1, 1);
+  const { store, mutate: storeMutate } = useGetMyStore(user?.store?.slug);
+
+  const settings = useSettingsContext();
 
   // Refresh data when tasks are completed in SetupChecklist
   const handleRefreshData = useCallback(() => {
     productsMutate?.();
     mediaMutate?.();
-  }, [productsMutate, mediaMutate]);
+    storeMutate?.();
+  }, [productsMutate, mediaMutate, storeMutate]);
+
+  // Show skeleton while core data is loading or on connection error (prevents grade misclassification)
+  const isStillLoading = productsLoading || ordersLoading;
+  const hasConnectionError = !isStillLoading && ((productsError && !products?.length) || (ordersError && !orders?.length));
+  const gradeLoading = isStillLoading || hasConnectionError;
 
   const productsCount = products?.length || 0;
   const ordersCount = orders?.length || 0;
   const hasMedia = mediaTotal > 0 || (media && media.length > 0);
-  const confirmedOrdersCount = orders?.filter((i) => i.status === 'confirmed')?.length || 0;
-  const pendingOrdersCount = orders?.filter((i) => i.status === 'pending')?.length || 0;
-  const deliveredOrdersCount = orders?.filter((i) => i.status === 'delivered')?.length || 0;
 
-  // Determine if user is new (no products)
-  const isNewUser = productsCount === 0;
-  // B grade merchant: has products but no orders yet
-  const isBGradeMerchant = productsCount > 0 && ordersCount === 0;
+  const hasDeployedProduct = products?.some((p) => p.status === 'deployed');
+  const onboardingCompleted = !!store?.config?.onboarding_completed || hasDeployedProduct;
+
+  // Determine if user is new (no products, or has products but hasn't completed onboarding step 3)
+  const isNewUser = !gradeLoading && (productsCount === 0 || (productsCount > 0 && !onboardingCompleted));
+  // B grade merchant: has products, completed onboarding, but no orders yet
+  const isBGradeMerchant = !gradeLoading && productsCount > 0 && onboardingCompleted && ordersCount === 0;
+  // Third grade user: has products and orders (established merchant)
+  const isThirdGradeUser = !gradeLoading && !isNewUser && !isBGradeMerchant;
+
+  // Check if any pixel is already configured — if so, hide the pixel setup prompt
+  const storePixels = store?.config?.pixels;
+  const showPixelSetup = !storePixels || !['facebook_pixel', 'tiktok_pixel', 'google_analytics'].some((key) => {
+    const cfg = storePixels?.[key];
+    return cfg?.enabled && (cfg?.pixel_id || cfg?.tracking_id);
+  });
+
+  // HEADER.H_DESKTOP(80) + SPACING(8) = 88px  → Main py = 88px top + 88px bottom = 176px
+  const MAIN_VERTICAL_PADDING = 176;
+
+  // Analytics state
+  const [dateRange, setDateRange] = useState('-7d');
+
+  // Fetch analytics capabilities to gate data fetching by subscription
+  const { sections: analyticsSections } = useGetAnalyticsCapabilities();
+  const canAccessTraffic = analyticsSections?.traffic?.accessible ?? false;
+  const canAccessFunnel = analyticsSections?.funnel?.accessible ?? false;
+  const canAccessOverview = analyticsSections?.overview?.accessible ?? false;
+
+  // Fetch analytics data for Grade B and Grade C merchants
+  const shouldFetchAnalytics = isThirdGradeUser || isBGradeMerchant;
+  const {
+    totalOrders: analyticsOrders,
+    totalOrdersData,
+    totalRevenue,
+    totalRevenueData,
+    totalVisitors,
+    totalVisitorsData,
+    overviewLoading,
+  } = useGetAnalyticsOverview(shouldFetchAnalytics && canAccessOverview ? dateRange : null);
+
+  // Fetch traffic time-series (hourly for 1-day, daily otherwise)
+  const trafficInterval = dateRange === '-1d' ? 'hour' : 'day';
+  const {
+    visitors: trafficVisitors,
+    productViews: trafficProductViews,
+    orderCompleted: trafficOrders,
+    trafficLoading,
+  } = useGetAnalyticsTraffic(shouldFetchAnalytics && canAccessTraffic ? dateRange : null, trafficInterval);
+
+  const { topProducts, topProductsLoading } = useGetAnalyticsTopProducts(isThirdGradeUser && canAccessOverview ? dateRange : null);
+
+  const {
+    funnel: funnelData,
+    funnelLoading,
+  } = useGetAnalyticsFunnel(isThirdGradeUser && canAccessFunnel ? dateRange : null);
+
+  // Low stock data (fetches 10 items for dashboard table + total count)
+  const {
+    inventory: lowStockItems,
+    inventoryLoading: lowStockLoading,
+    total: lowStockTotal,
+  } = useGetLowStockInventory(1, 10);
+
+  // Derived data for Grade C widgets
+  const pendingOrders = useMemo(
+    () => (orders || []).filter((o) => (o.status?.key || o.status) === 'pending').length,
+    [orders]
+  );
+
+  const ordersToShip = useMemo(
+    () => (orders || []).filter((o) => (o.status?.key || o.status) === 'confirmed').length,
+    [orders]
+  );
+
+  const draftProducts = useMemo(
+    () => (products || []).filter((p) => p.status === 'draft').length,
+    [products]
+  );
+
+  // Metric cards data — prefer overview time-series, fallback to traffic time-series
+  const metricCards = useMemo(() => [
+    {
+      label: t('total_orders'),
+      tooltip: t('metric_tooltip_orders'),
+      value: analyticsOrders || ordersCount || 0,
+      data: totalOrdersData?.length ? totalOrdersData : trafficOrders.data,
+      color: theme.palette.primary.main,
+      icon: 'solar:bag-4-bold-duotone',
+    },
+    {
+      label: t('total_visitors'),
+      tooltip: t('metric_tooltip_visitors'),
+      value: totalVisitors || 0,
+      data: totalVisitorsData?.length ? totalVisitorsData : trafficVisitors.data,
+      color: theme.palette.info.main,
+      icon: 'solar:users-group-rounded-bold-duotone',
+    },
+    {
+      label: t('total_revenue'),
+      tooltip: t('metric_tooltip_revenue'),
+      value: totalRevenue || 0,
+      data: totalRevenueData,
+      color: theme.palette.secondary.main,
+      icon: 'solar:wallet-money-bold-duotone',
+      suffix: t('currency_da'),
+      span: 2,
+    },
+  ], [t, theme, analyticsOrders, ordersCount, totalOrdersData, totalRevenue, totalRevenueData, totalVisitors, totalVisitorsData, trafficOrders.data, trafficVisitors.data]);
+
+  const handleRetry = useCallback(() => {
+    productsMutate?.();
+    ordersMutate?.();
+    mediaMutate?.();
+  }, [productsMutate, ordersMutate, mediaMutate]);
+
+  if (isStillLoading) {
+    return <DashboardSkeleton themeStretch={settings.themeStretch} />;
+  }
+
+  if (hasConnectionError) {
+    return <ConnectionError onRetry={handleRetry} sx={{ flexGrow: 1 }} />;
+  }
 
   return (
-    <Container maxWidth={settings.themeStretch ? false : 'xl'}>
-      <Grid container spacing={3}>
-        {/* Welcome Banner - Different for new vs existing users */}
-        <Grid xs={12} md={8}>
-          <WelcomeNewUser
-            userName={user?.name}
-            productsCount={productsCount}
-            img={<MotivationIllustration />}
-          />
-        </Grid>
-
-        {/* Events Calendar */}
-        <Grid xs={12} md={4}>
-          <EcommerceEventsCalendar />
-        </Grid>
-
-        {/* Setup Checklist - Only for new users or incomplete setup */}
+    <Container
+      maxWidth={settings.themeStretch ? false : 'xl'}
+      sx={{
+        ...((isThirdGradeUser || isBGradeMerchant) && {
+          height: { lg: `calc(120vh - ${MAIN_VERTICAL_PADDING}px)` },
+          // overflow: { lg: 'auto' },
+        }),
+      }}
+    >
+      <Grid
+        container
+        spacing={3}
+        sx={{
+          ...((isThirdGradeUser || isBGradeMerchant) && {
+            height: { lg: '100%' },
+          }),
+        }}
+      >
+        {/* ===== GRADE A: Clean centered checklist ===== */}
         {isNewUser && (
-          <Grid xs={12}>
+          <Grid xs={12} data-tour="setup-checklist">
             <SetupChecklist
+              userName={user?.name}
               productsCount={productsCount}
               ordersCount={ordersCount}
               hasMedia={hasMedia}
               isPhoneVerified={user?.is_phone_verified ?? true}
+              onboardingCompleted={onboardingCompleted}
+              products={products}
               onRefresh={handleRefreshData}
             />
           </Grid>
         )}
 
-        {/* B Grade Merchant: has products but no orders - show EmptyStateOrders */}
+        {/* ===== GRADE B: Metrics + Chart + Calendar + EmptyOrders + Video ===== */}
         {isBGradeMerchant && (
-          <Grid xs={12}>
-            <EmptyStateOrders hasProducts />
-          </Grid>
-        )}
-
-        {/* Stats Cards - Only show when user has orders */}
-        {!isNewUser && !isBGradeMerchant && (
           <>
-            <Grid xs={12} md={4}>
-              <EcommerceWidgetSummary
-                title={t('products_published')}
-                percent={2.6}
-                total={productsCount}
-                chart={{
-                  series: [22, 8, 35, 50, 82, 84, 77, 12, 87, 43],
-                }}
+            {/* Row 1: Metrics + Chart + Calendar (same as Grade C) */}
+            <Grid xs={12} md={6} lg={3} >
+            {/* sx={{ height: { lg: '50%' } }} */}
+              <DashboardMetrics
+                metrics={metricCards}
+                dateRange={dateRange}
+                onDateRangeChange={setDateRange}
               />
             </Grid>
 
-            <Grid xs={12} md={4}>
-              <EcommerceWidgetSummary
-                title={t('orders_received')}
-                percent={-0.1}
-                total={ordersCount}
-                chart={{
-                  colors: [theme.palette.info.light, theme.palette.info.main],
-                  series: [56, 47, 40, 62, 73, 30, 23, 54, 67, 68],
-                }}
-              />
+            <Grid xs={12} md={6} lg={6} sx={{ height: { lg: '55%' } }}>
+              <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                <CardHeader
+                  title={t('analytics_traffic')}
+                  action={
+                    <Button
+                      component={RouterLink}
+                      to={paths.dashboard.general.analytics}
+                      size="small"
+                      endIcon={<Iconify icon="eva:arrow-ios-forward-fill" sx={{ transform: theme.direction === 'rtl' ? 'scaleX(-1)' : 'none' }} />}
+                    >
+                      {t('analytics_overview')}
+                    </Button>
+                  }
+                />
+                <AnalyticsGate sectionKey="traffic">
+                  <Box sx={{ flexGrow: 1, minHeight: 0 }}>
+                    <DashboardChart
+                      visitorsData={trafficVisitors.data}
+                      visitorsLabels={trafficVisitors.days || trafficVisitors.labels}
+                      ordersData={trafficOrders.data}
+                      ordersLabels={trafficOrders.days || trafficOrders.labels}
+                      loading={trafficLoading}
+                      interval={trafficInterval}
+                    />
+                  </Box>
+                </AnalyticsGate>
+              </Card>
             </Grid>
 
-            <Grid xs={12} md={4}>
-              <EcommerceWidgetSummary
-                title={t('order_confirmed')}
-                percent={0.6}
-                total={confirmedOrdersCount}
-                chart={{
-                  colors: [theme.palette.warning.light, theme.palette.warning.main],
-                  series: [40, 70, 75, 70, 50, 28, 7, 64, 38, 27],
-                }}
-              />
+            <Grid xs={12} lg={3} sx={{ height: { lg: '50%' } }}>
+              <EcommerceEventsCalendar />
+            </Grid>
+
+            {/* Row 2: EmptyStateOrders (compact) + Pixel Setup + YouTubeEmbed */}
+            <Grid xs={12} lg={showPixelSetup ? 6 : 9} sx={{ height: { lg: '50%' } }}>
+              <EmptyStateOrders hasProducts compact sx={{ height: '100%' }} />
+            </Grid>
+
+            {showPixelSetup && (
+              <Grid xs={12} lg={3} sx={{ height: { lg: '50%' } }}>
+                <PixelSetupPrompt store={store} onStoreRefresh={storeMutate} sx={{ height: '100%' }} />
+              </Grid>
+            )}
+
+            <Grid xs={12} lg={3} sx={{ height: { lg: '50%' } }}>
+              <YouTubeEmbed />
             </Grid>
 
           </>
         )}
 
-
-        {/* Conditional Content Based on User State */}
-        {isNewUser ? (
-          // New User View - Empty states with guidance
+        {/* ===== GRADE C: Operational command center ===== */}
+        {isThirdGradeUser && (
           <>
+            {/* Row 1: Metrics + DataTable + Calendar */}
+            <Grid xs={12} md={6} lg={3} sx={{ height: { lg: '50%' } }}>
+              <DashboardMetrics
+                metrics={metricCards}
+                dateRange={dateRange}
+                onDateRangeChange={setDateRange}
+              />
+            </Grid>
+
+            <Grid xs={12} md={6} lg={6} sx={{ height: { lg: '50%' } }}>
+              <DashboardDataTable
+                orders={orders}
+                ordersLoading={ordersLoading}
+                topProducts={topProducts}
+                topProductsLoading={topProductsLoading}
+                lowStockInventory={lowStockItems}
+                lowStockLoading={lowStockLoading}
+              />
+            </Grid>
+
+            <Grid xs={12} lg={3} sx={{ height: { lg: '50%' } }}>
+              <EcommerceEventsCalendar />
+            </Grid>
+
+            {/* Row 2: ActionCenter + Chart + Funnel */}
+            <Grid xs={12} md={6} lg={3} sx={{ height: { lg: '50%' } }}>
+              <ActionCenter
+                pendingOrders={pendingOrders}
+                ordersToShip={ordersToShip}
+                lowStockCount={lowStockTotal || 0}
+                draftProducts={draftProducts}
+              />
+            </Grid>
+
+            <Grid xs={12} md={6} lg={6} sx={{ height: { lg: '50%' } }}>
+              <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                <CardHeader
+                  title={t('analytics_traffic')}
+                  action={
+                    <Button
+                      component={RouterLink}
+                      to={paths.dashboard.general.analytics}
+                      size="small"
+                      endIcon={<Iconify icon="eva:arrow-ios-forward-fill" sx={{ transform: theme.direction === 'rtl' ? 'scaleX(-1)' : 'none' }} />}
+                    >
+                      {t('analytics_overview')}
+                    </Button>
+                  }
+                />
+                <AnalyticsGate sectionKey="traffic">
+                  <Box sx={{ flexGrow: 1, minHeight: 0 }}>
+                    <DashboardChart
+                      visitorsData={trafficVisitors.data}
+                      visitorsLabels={trafficVisitors.days || trafficVisitors.labels}
+                      ordersData={trafficOrders.data}
+                      ordersLabels={trafficOrders.days || trafficOrders.labels}
+                      loading={trafficLoading}
+                      interval={trafficInterval}
+                    />
+                  </Box>
+                </AnalyticsGate>
+              </Card>
+            </Grid>
+
+            <Grid xs={12} lg={3} sx={{ height: { lg: '50%' } }}>
+              <DashboardFunnel
+                funnel={funnelData}
+                loading={funnelLoading}
+              />
+            </Grid>
+
+            {/* Row 3: Algerian wilayas heatmap (full width) */}
             <Grid xs={12}>
-              <EmptyStateProducts />
-            </Grid>
-          </>
-        ) : !isBGradeMerchant && (
-          // Active User View with orders - Show charts and data
-          <>
-            <Grid xs={12} md={6} lg={4}>
-              <EcommerceSaleByGender
-                title={t('order_status')}
-                total={ordersCount}
-                chart={{
-                  series: [
-                    { label: t('pending'), value: pendingOrdersCount },
-                    { label: t('delivered'), value: deliveredOrdersCount },
-                  ],
-                }}
-              />
-            </Grid>
-
-            <Grid xs={12} md={6} lg={8}>
-              <EcommerceYearlySales
-                title={t('orders_and_revenue')}
-                subheader={t('yearly_comparison')}
-                chart={{
-                  categories: [
-                    t('jan'),
-                    t('feb'),
-                    t('mar'),
-                    t('apr'),
-                    t('may'),
-                    t('jun'),
-                    t('jul'),
-                    t('aug'),
-                    t('sep'),
-                    t('oct'),
-                    t('nov'),
-                    t('dec'),
-                  ],
-                  series: [
-                    {
-                      year: '2024',
-                      data: [
-                        {
-                          name: t('total_revenue'),
-                          data: [10, 41, 35, 51, 49, 62, 69, 91, 148, 35, 51, 49],
-                        },
-                        {
-                          name: t('total_orders'),
-                          data: [10, 34, 13, 56, 77, 88, 99, 77, 45, 13, 56, 77],
-                        },
-                      ],
-                    },
-                    {
-                      year: '2025',
-                      data: [
-                        {
-                          name: t('total_revenue'),
-                          data: [51, 35, 41, 10, 91, 69, 62, 148, 91, 69, 62, 49],
-                        },
-                        {
-                          name: t('total_orders'),
-                          data: [56, 13, 34, 10, 77, 99, 88, 45, 77, 99, 88, 77],
-                        },
-                      ],
-                    },
-                  ],
-                }}
-              />
+              <DashboardWilayasMap orders={orders} loading={ordersLoading} />
             </Grid>
           </>
         )}

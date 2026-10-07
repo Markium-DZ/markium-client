@@ -1,3 +1,4 @@
+import { useState, useCallback } from 'react';
 import PropTypes from 'prop-types';
 
 import Stack from '@mui/material/Stack';
@@ -5,6 +6,11 @@ import Button from '@mui/material/Button';
 import MenuItem from '@mui/material/MenuItem';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
+import CircularProgress from '@mui/material/CircularProgress';
+import Collapse from '@mui/material/Collapse';
+import Divider from '@mui/material/Divider';
+import useMediaQuery from '@mui/material/useMediaQuery';
+import { useTheme } from '@mui/material/styles';
 
 import { RouterLink } from 'src/routes/components';
 
@@ -13,8 +19,37 @@ import { fDateTime } from 'src/utils/format-time';
 import Label from 'src/components/label';
 import Iconify from 'src/components/iconify';
 import CustomPopover, { usePopover } from 'src/components/custom-popover';
-import { getOrderStatusColor, getOrderStatusOptions } from 'src/constants/order-status';
+import { ORDER_STATUSES, getOrderStatusColor, getOrderStatusOptions } from 'src/constants/order-status';
 import { t } from 'i18next';
+
+// ----------------------------------------------------------------------
+
+const NEXT_STATUS_MAP = {
+  pending: {
+    next: 'confirmed',
+    labelKey: 'confirm_order',
+    icon: 'solar:check-circle-bold',
+    color: 'secondary',
+  },
+  confirmed: {
+    action: 'scroll_to_shipping',
+    labelKey: 'create_shipment',
+    icon: 'solar:delivery-bold',
+    color: 'info',
+  },
+  shipment_created: {
+    next: 'shipped',
+    labelKey: 'mark_shipped',
+    icon: 'solar:box-bold',
+    color: 'info',
+  },
+  shipped: {
+    next: 'delivered',
+    labelKey: 'mark_delivered',
+    icon: 'solar:verified-check-bold',
+    color: 'success',
+  },
+};
 
 // ----------------------------------------------------------------------
 
@@ -23,11 +58,50 @@ export default function OrderDetailsToolbar({
   backLink,
   createdAt,
   orderNumber,
-  statusOptions,
   onChangeStatus,
+  onShipOrder,
+  loading,
+  labelUrl,
 }) {
-  const popover = usePopover();
+  const morePopover = usePopover();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const [statusExpanded, setStatusExpanded] = useState(false);
+
   const statuses = getOrderStatusOptions(t);
+  const nextAction = NEXT_STATUS_MAP[status];
+
+  const currentIndex = ORDER_STATUSES.findIndex((s) => s.key === status);
+
+  const handleNextStatus = () => {
+    if (!nextAction) return;
+
+    if (nextAction.action === 'scroll_to_shipping') {
+      onShipOrder?.();
+    } else {
+      onChangeStatus(nextAction.next);
+    }
+  };
+
+  const handleToggleStatusList = useCallback(() => {
+    setStatusExpanded((prev) => !prev);
+  }, []);
+
+  const handleCloseMore = useCallback(() => {
+    morePopover.onClose();
+    setStatusExpanded(false);
+  }, [morePopover]);
+
+  const handlePrint = useCallback(() => {
+    if (labelUrl) {
+      const printWindow = window.open(labelUrl, '_blank');
+      printWindow?.addEventListener('load', () => {
+        printWindow.print();
+      });
+    } else {
+      window.print();
+    }
+  }, [labelUrl]);
 
   return (
     <>
@@ -39,9 +113,11 @@ export default function OrderDetailsToolbar({
         }}
       >
         <Stack spacing={1} direction="row" alignItems="flex-start">
-          <IconButton component={RouterLink} href={backLink}>
-            <Iconify icon="eva:arrow-ios-back-fill" />
-          </IconButton>
+          {!isMobile && (
+            <IconButton component={RouterLink} href={backLink}>
+              <Iconify icon="eva:arrow-ios-back-fill" />
+            </IconButton>
+          )}
 
           <Stack spacing={0.5}>
             <Stack spacing={1} direction="row" alignItems="center">
@@ -67,51 +143,86 @@ export default function OrderDetailsToolbar({
           alignItems="center"
           justifyContent="flex-end"
         >
-          <Button
-            color="inherit"
-            variant="outlined"
-            endIcon={<Iconify icon="eva:arrow-ios-downward-fill" />}
-            onClick={popover.onOpen}
-            sx={{ textTransform: 'capitalize' }}
-          >
-            {t(status)}
-          </Button>
+          {nextAction && (
+            <Button
+              variant="contained"
+              color={nextAction.color}
+              startIcon={loading ? <CircularProgress size={16} color="inherit" /> : <Iconify icon={nextAction.icon} />}
+              onClick={handleNextStatus}
+              disabled={loading}
+            >
+              {t(nextAction.labelKey)}
+            </Button>
+          )}
 
           <Button
             color="inherit"
             variant="outlined"
             startIcon={<Iconify icon="solar:printer-minimalistic-bold" />}
+            onClick={handlePrint}
           >
-            {t('print')}
+            {labelUrl ? t('print_label') : t('print')}
+          </Button>
+
+          <Button
+            color="inherit"
+            variant="outlined"
+            endIcon={<Iconify icon="eva:more-vertical-fill" />}
+            onClick={morePopover.onOpen}
+          >
+            {t('more')}
           </Button>
         </Stack>
       </Stack>
 
+      {/* More actions popover with nested status list */}
       <CustomPopover
-        open={popover.open}
-        onClose={popover.onClose}
+        open={morePopover.open}
+        onClose={handleCloseMore}
         arrow="top-right"
-        sx={{ minWidth: 140 }}
+        sx={{ minWidth: 200 }}
       >
-        {statuses.map((option) => (
-          <MenuItem
-            key={option.value}
-            selected={option.value === status}
-            onClick={() => {
-              popover.onClose();
-              onChangeStatus(option.value);
-            }}
-            sx={{
-              color: `${option.color}.main`,
-              '&:hover': {
-                backgroundColor: `${option.color}.lighter`,
-              }
-            }}
-          >
-            <Iconify icon={option.icon} sx={{ mr: 1 }} />
-            {t('change_to')} {option.label}
-          </MenuItem>
-        ))}
+        <MenuItem onClick={handleToggleStatusList}>
+          <Iconify icon="solar:refresh-circle-bold" sx={{ mr: 1 }} />
+          {t('change_status')}
+          <Iconify
+            icon={statusExpanded ? 'eva:arrow-ios-upward-fill' : 'eva:arrow-ios-downward-fill'}
+            width={16}
+            sx={{ ml: 'auto' }}
+          />
+        </MenuItem>
+
+        <Collapse in={statusExpanded}>
+          <Divider sx={{ borderStyle: 'dashed' }} />
+
+          {statuses.map((option) => {
+            const optionIndex = ORDER_STATUSES.findIndex((s) => s.key === option.value);
+            const isPast = optionIndex <= currentIndex && option.value !== 'cancelled';
+            const isCurrent = option.value === status;
+
+            return (
+              <MenuItem
+                key={option.value}
+                selected={isCurrent}
+                disabled={isPast}
+                onClick={() => {
+                  handleCloseMore();
+                  onChangeStatus(option.value);
+                }}
+                sx={{
+                  pl: 4,
+                  color: isPast ? 'text.disabled' : `${option.color}.main`,
+                  '&:hover': {
+                    backgroundColor: isPast ? undefined : `${option.color}.lighter`,
+                  },
+                }}
+              >
+                <Iconify icon={option.icon} sx={{ mr: 1 }} />
+                {option.label}
+              </MenuItem>
+            );
+          })}
+        </Collapse>
       </CustomPopover>
     </>
   );
@@ -119,9 +230,11 @@ export default function OrderDetailsToolbar({
 
 OrderDetailsToolbar.propTypes = {
   backLink: PropTypes.string,
-  createdAt: PropTypes.instanceOf(Date),
+  createdAt: PropTypes.string,
   onChangeStatus: PropTypes.func,
+  onShipOrder: PropTypes.func,
   orderNumber: PropTypes.string,
   status: PropTypes.string,
-  statusOptions: PropTypes.array,
+  loading: PropTypes.bool,
+  labelUrl: PropTypes.string,
 };

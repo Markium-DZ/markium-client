@@ -18,8 +18,10 @@ import FormProvider, {
   RHFUploadAvatar,
 } from 'src/components/hook-form';
 import showError from 'src/utils/show_error';
+import { captureEvent } from 'src/utils/posthog';
 import { updateStoreLogo } from 'src/api/store';
 import { AuthContext } from 'src/auth/context/jwt';
+import VerificationGate from 'src/components/verification-gate/verification-gate';
 
 // ----------------------------------------------------------------------
 
@@ -77,6 +79,7 @@ export default function StoreLogoForm() {
           });
         }
       }
+      captureEvent('store_updated', { section: 'logo' });
       enqueueSnackbar(t('logo_updated_successfully'), { variant: 'success' });
       setLoading(false);
     } catch (error) {
@@ -177,14 +180,16 @@ export default function StoreLogoForm() {
                 </LoadingButton>
               )}
 
-              <LoadingButton
-                type="submit"
-                variant="contained"
-                loading={isSubmitting || loading}
-                disabled={!values.logo}
-              >
-                {t('save_changes')}
-              </LoadingButton>
+              <VerificationGate>
+                <LoadingButton
+                  type="submit"
+                  variant="contained"
+                  loading={isSubmitting || loading}
+                  disabled={!values.logo}
+                >
+                  {t('save_changes')}
+                </LoadingButton>
+              </VerificationGate>
             </Stack>
           </Stack>
         </Card>

@@ -5,3 +5,14 @@ compatibility_date = "2025-11-07"
 directory = "./dist"
 html_handling = "auto-trailing-slash"
 not_found_handling = "single-page-application"
+
+# ============================================
+# Development Environment
+# ============================================
+[env.dev]
+name = "markium-clients-dev"
+
+# ============================================
+# Production uses the top-level config (no env)
+# so that dashboard.markium.online routes correctly
+# ============================================

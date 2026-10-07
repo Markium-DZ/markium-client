@@ -1,12 +1,8 @@
-import { paramCase } from 'src/utils/change-case';
-
-import { _id, _postTitles } from 'src/_mock/assets';
+import { _id } from 'src/_mock/assets';
 
 // ----------------------------------------------------------------------
 
 const MOCK_ID = _id[1];
-
-const MOCK_TITLE = _postTitles[2];
 
 const ROOTS = {
   AUTH: '/auth',
@@ -17,6 +13,7 @@ const ROOTS = {
 // ----------------------------------------------------------------------
 
 export const paths = {
+  impersonate: '/impersonate',
   comingSoon: '/coming-soon',
   maintenance: '/maintenance',
   pricing: '/pricing',
@@ -45,13 +42,6 @@ export const paths = {
       details: `/product/${MOCK_ID}`,
     },
   },
-  post: {
-    root: `/post`,
-    details: (title) => `/post/${paramCase(title)}`,
-    demo: {
-      details: `/post/${paramCase(MOCK_TITLE)}`,
-    },
-  },
   // AUTH
   auth: {
     amplify: {
@@ -64,6 +54,7 @@ export const paths = {
     jwt: {
       login: `${ROOTS.AUTH}/jwt/login`,
       register: `${ROOTS.AUTH}/jwt/register`,
+      verify: `${ROOTS.AUTH}/jwt/verify`,
     },
     firebase: {
       login: `${ROOTS.AUTH}/firebase/login`,
@@ -98,10 +89,13 @@ export const paths = {
       verify: `${ROOTS.AUTH_DEMO}/modern/verify`,
     },
   },
+  // ONBOARDING
+  onboarding: {
+    storeSetup: '/onboarding/store-setup',
+  },
   // DASHBOARD
   dashboard: {
     root: ROOTS.DASHBOARD,
-    mail: `${ROOTS.DASHBOARD}/mail`,
     chat: `${ROOTS.DASHBOARD}/chat`,
     blank: `${ROOTS.DASHBOARD}/blank`,
     kanban: `${ROOTS.DASHBOARD}/kanban`,
@@ -138,51 +132,19 @@ export const paths = {
       orders: (id) => `${ROOTS.DASHBOARD}/product/${id}/orders`,
       edit: (id) => `${ROOTS.DASHBOARD}/product/${id}/edit`,
       uploadAssets: (id) => `${ROOTS.DASHBOARD}/product/${id}/upload-assets`,
+      costs: (id) => `${ROOTS.DASHBOARD}/product/${id}/costs`,
       demo: {
         details: `${ROOTS.DASHBOARD}/product/${MOCK_ID}`,
         edit: `${ROOTS.DASHBOARD}/product/${MOCK_ID}/edit`,
       },
     },
-
-    maintenance: {
-      root: `${ROOTS.DASHBOARD}/maintenance`,
-      notifications: `${ROOTS.DASHBOARD}/maintenance/notifications`,
-      new: `${ROOTS.DASHBOARD}/maintenance/new`,
-      edit: (id) => `${ROOTS.DASHBOARD}/maintenance/${id}/edit`,
-      newClause: (idMaintenance) => `${ROOTS.DASHBOARD}/maintenance/${idMaintenance}/clause`,
-      editClause: (idMaintenance,idClause) => `${ROOTS.DASHBOARD}/maintenance/${idMaintenance}/clause/${idClause}/edit`,
-      details: (id) => `${ROOTS.DASHBOARD}/maintenance/${id}`,
-
-      currentInMaintenance: `${ROOTS.DASHBOARD}/maintenance/current-in-maintenance`,
-    },
-
-    drivers: {
-      root: `${ROOTS.DASHBOARD}/drivers`,
-      alerts: `${ROOTS.DASHBOARD}/drivers/alerts`,
-      new: `${ROOTS.DASHBOARD}/drivers/new`,
-      details: (id) => `${ROOTS.DASHBOARD}/drivers/${id}`,
-      edit: (id) => `${ROOTS.DASHBOARD}/drivers/${id}/edit`,
-      salary: `${ROOTS.DASHBOARD}/drivers/salary`,
-    },
-
-    documents: {
-      root: `${ROOTS.DASHBOARD}/documents`,
-      alerts: `${ROOTS.DASHBOARD}/documents/alerts`,
-      new: `${ROOTS.DASHBOARD}/documents/new`,
-      preview: `${ROOTS.DASHBOARD}/documents/preview`,
-      edit: (id) => `${ROOTS.DASHBOARD}/documents/${id}/edit`,
-    },
-    clients: {
-      root: `${ROOTS.DASHBOARD}/clients`,
-      alerts: `${ROOTS.DASHBOARD}/clients/alerts`,
-      claims: `${ROOTS.DASHBOARD}/clients/claims`,
-      contracts: `${ROOTS.DASHBOARD}/clients/contracts`,
-      newContracts: `${ROOTS.DASHBOARD}/clients/contracts/new`,
-      editContracts:(id) => `${ROOTS.DASHBOARD}/clients/contracts/${id}/edit`,
-      new: `${ROOTS.DASHBOARD}/clients/new`,
-      edit:(id)=> `${ROOTS.DASHBOARD}/clients/${id}/edit`,
-      details: (id) => `${ROOTS.DASHBOARD}/clients/${id}`,
-      contractsDetails: (id) => `${ROOTS.DASHBOARD}/clients/contracts/${id}`,
+    profitability: {
+      root: `${ROOTS.DASHBOARD}/profitability`,
+      products: `${ROOTS.DASHBOARD}/profitability/products`,
+      product: (id) => `${ROOTS.DASHBOARD}/profitability/products/${id}`,
+      campaigns: `${ROOTS.DASHBOARD}/profitability/campaigns`,
+      channels: `${ROOTS.DASHBOARD}/profitability/channels`,
+      channel: (ch) => `${ROOTS.DASHBOARD}/profitability/channels/${ch}`,
     },
 
     log: {
@@ -199,30 +161,23 @@ export const paths = {
       yearly_payment: `${ROOTS.DASHBOARD}/settings/yearly-payment`,
       points: `${ROOTS.DASHBOARD}/settings/points`,
       marketing_pixels: `${ROOTS.DASHBOARD}/settings/marketing-pixels`,
+      session_replay: `${ROOTS.DASHBOARD}/settings/session-replay`,
       delivery_companies: `${ROOTS.DASHBOARD}/settings/delivery-companies`,
+      cod: `${ROOTS.DASHBOARD}/settings/cod`,
+      notifications: `${ROOTS.DASHBOARD}/settings/notifications`,
       contacts_social: `${ROOTS.DASHBOARD}/settings/contacts-social`,
       color_palette: `${ROOTS.DASHBOARD}/settings/color-palette`,
+      appearance: `${ROOTS.DASHBOARD}/settings/appearance`,
+      store_theme: `${ROOTS.DASHBOARD}/settings/store-theme`,
       store_language: `${ROOTS.DASHBOARD}/settings/store-language`,
       store_location: `${ROOTS.DASHBOARD}/settings/store-location`,
       contact_support: `${ROOTS.DASHBOARD}/contact-support`,
-      pm: `${ROOTS.DASHBOARD}/settings/pm`,
-      new: `${ROOTS.DASHBOARD}/settings/pm/new`,
-      edit: (id)=>`${ROOTS.DASHBOARD}/settings/pm/${id}/edit`,
       states: `${ROOTS.DASHBOARD}/settings/states`,
       statesNew: `${ROOTS.DASHBOARD}/settings/states/new`,
       statesEdit: (id)=>`${ROOTS.DASHBOARD}/settings/states/${id}/edit`,
-      attachment_names: `${ROOTS.DASHBOARD}/settings/attachment_names`,
-      attachment_namesNew: `${ROOTS.DASHBOARD}/settings/attachment_names/new`,
-      attachment_namesEdit: (id)=>`${ROOTS.DASHBOARD}/settings/attachment_names/${id}/edit`,
       payment_methods: `${ROOTS.DASHBOARD}/settings/payment_methods`,
       payment_methodsNew: `${ROOTS.DASHBOARD}/settings/payment_methods/new`,
       payment_methodsEdit: (id)=>`${ROOTS.DASHBOARD}/settings/payment_methods/${id}/edit`,
-      license_types: `${ROOTS.DASHBOARD}/settings/license_types`,
-      license_typesNew: `${ROOTS.DASHBOARD}/settings/license_types/new`,
-      license_typesEdit: (id)=>`${ROOTS.DASHBOARD}/settings/license_types/${id}/edit`,
-      documents: `${ROOTS.DASHBOARD}/settings/documents`,
-      documentsNew: `${ROOTS.DASHBOARD}/settings/documents/new`,
-      documentsEdit: (id)=>`${ROOTS.DASHBOARD}/settings/documents/${id}/edit`,
       neighborhoods: `${ROOTS.DASHBOARD}/settings/neighborhood`,
       neighborhoodsNew: `${ROOTS.DASHBOARD}/settings/neighborhood/new`,
       neighborhoodsEdit: (id)=>`${ROOTS.DASHBOARD}/settings/neighborhood/${id}/edit`,
@@ -232,45 +187,9 @@ export const paths = {
       countries: `${ROOTS.DASHBOARD}/settings/countries`,
       countriesNew: `${ROOTS.DASHBOARD}/settings/countries/new`,
       countriesEdit: (id)=>`${ROOTS.DASHBOARD}/settings/countries/${id}/edit`,
-      car_models: `${ROOTS.DASHBOARD}/settings/car_models`,
-      car_modelsNew: `${ROOTS.DASHBOARD}/settings/car_models/new`,
-      car_modelsEdit: (id)=>`${ROOTS.DASHBOARD}/settings/car_models/${id}/edit`,
-      car_companies: `${ROOTS.DASHBOARD}/settings/car_companies`,
-      car_companiesNew: `${ROOTS.DASHBOARD}/settings/car_companies/new`,
-      car_companiesEdit: (id)=>`${ROOTS.DASHBOARD}/settings/car_companies/${id}/edit`,
-      specs: `${ROOTS.DASHBOARD}/settings/specs`,
-      specsNew: `${ROOTS.DASHBOARD}/settings/specs/new`,
-      specsEdit: (id)=>`${ROOTS.DASHBOARD}/settings/specs/${id}/edit`,
       categories: `${ROOTS.DASHBOARD}/settings/categories`,
       categoriesNew: `${ROOTS.DASHBOARD}/settings/categories/new`,
       categoriesEdit: (id)=>`${ROOTS.DASHBOARD}/settings/categories/${id}/edit`,
-    },
-    vehicle: {
-      root: `${ROOTS.DASHBOARD}/vehicle`,
-      new: `${ROOTS.DASHBOARD}/vehicle/new`,
-      log: `${ROOTS.DASHBOARD}/vehicle/log`,
-      details: (id) => `${ROOTS.DASHBOARD}/vehicle/${id}`,
-      edit: (id) => `${ROOTS.DASHBOARD}/vehicle/${id}/edit`,
-      demo: {
-        details: `${ROOTS.DASHBOARD}/vehicle/${MOCK_ID}`,
-        edit: `${ROOTS.DASHBOARD}/vehicle/${MOCK_ID}/edit`,
-      },
-      inputs: `${ROOTS.DASHBOARD}/vehicle/inputs`,
-      pm: (id) => `${ROOTS.DASHBOARD}/vehicle/${id}/pm`,
-      addpm: (id) => `${ROOTS.DASHBOARD}/vehicle/${id}/pm/new`,
-    },
-
-    company: {
-      root: `${ROOTS.DASHBOARD}/company`,
-      new: `${ROOTS.DASHBOARD}/company/new`,
-      log: `${ROOTS.DASHBOARD}/company/log`,
-      details: (id) => `${ROOTS.DASHBOARD}/company/${id}`,
-      edit: (id) => `${ROOTS.DASHBOARD}/company/${id}/edit`,
-      demo: {
-        details: `${ROOTS.DASHBOARD}/company/${MOCK_ID}`,
-        edit: `${ROOTS.DASHBOARD}/company/${MOCK_ID}/edit`,
-      },
-      inputs: `${ROOTS.DASHBOARD}/company/inputs`,
     },
     invoice: {
       root: `${ROOTS.DASHBOARD}/invoice`,
@@ -280,16 +199,6 @@ export const paths = {
       demo: {
         details: `${ROOTS.DASHBOARD}/invoice/${MOCK_ID}`,
         edit: `${ROOTS.DASHBOARD}/invoice/${MOCK_ID}/edit`,
-      },
-    },
-    post: {
-      root: `${ROOTS.DASHBOARD}/post`,
-      new: `${ROOTS.DASHBOARD}/post/new`,
-      details: (title) => `${ROOTS.DASHBOARD}/post/${paramCase(title)}`,
-      edit: (title) => `${ROOTS.DASHBOARD}/post/${paramCase(title)}/edit`,
-      demo: {
-        details: `${ROOTS.DASHBOARD}/post/${paramCase(MOCK_TITLE)}`,
-        edit: `${ROOTS.DASHBOARD}/post/${paramCase(MOCK_TITLE)}/edit`,
       },
     },
     order: {
@@ -332,6 +241,11 @@ export const paths = {
     },
     apps:{
       android:"/app/app-release.apk"
-    }
+    },
+    subscription: {
+      root: `${ROOTS.DASHBOARD}/subscription`,
+      checkout: `${ROOTS.DASHBOARD}/subscription/checkout`,
+      history: `${ROOTS.DASHBOARD}/subscription/history`,
+    },
   },
 };

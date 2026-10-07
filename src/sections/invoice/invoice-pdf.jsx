@@ -28,7 +28,7 @@ const useStyles = () =>
         body2: { fontSize: 9 },
         subtitle1: { fontSize: 10, fontWeight: 700 },
         subtitle2: { fontSize: 9, fontWeight: 700 },
-        alignRight: { textAlign: 'right' },
+        alignRight: { textAlign: 'end' },
         page: {
           fontSize: 9,
           lineHeight: 1.6,

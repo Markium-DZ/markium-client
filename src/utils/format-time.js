@@ -1,4 +1,7 @@
 import { format, getTime, formatDistanceToNow } from 'date-fns';
+import { enUS, fr, arSA } from 'date-fns/locale';
+
+const DATE_FNS_LOCALES = { en: enUS, fr, ar: arSA };
 
 // ----------------------------------------------------------------------
 
@@ -24,10 +27,11 @@ export function fTimestamp(date) {
   return date ? getTime(new Date(date)) : '';
 }
 
-export function fToNow(date) {
+export function fToNow(date, lang) {
   return date
     ? formatDistanceToNow(new Date(date), {
         addSuffix: true,
+        locale: DATE_FNS_LOCALES[lang] || enUS,
       })
     : '';
 }

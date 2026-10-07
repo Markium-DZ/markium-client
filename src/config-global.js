@@ -6,8 +6,12 @@ import { paths } from 'src/routes/paths';
 export const api_version = import.meta.env.VITE_API_VERSION ;
 
 export const HOST_API = import.meta.env.VITE_HOST_API ;
+// export const HOST_API = "https://be-test.markium.online/api/v1" ;
 export const ASSETS_API = import.meta.env.VITE_ASSETS_API;
-export const STORAGE_API = import.meta.env.VITE_STORAGE_API ; 
+export const STORAGE_API = import.meta.env.VITE_STORAGE_API ;
+
+// Merchant chat assistant Host (markium-chat-host)
+export const CHAT_HOST_API = import.meta.env.VITE_CHAT_HOST_API || 'http://localhost:8787';
 
 export const FIREBASE_API = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -38,13 +42,22 @@ export const SUPABASE_API = {
 
 export const MAPBOX_API = import.meta.env.VITE_MAPBOX_API;
 
-// PostHog Analytics
+// PostHog Analytics (client-side tracking only)
 export const POSTHOG_API = {
   key: import.meta.env.VITE_PUBLIC_POSTHOG_KEY,
   host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST || 'https://eu.i.posthog.com',
-  queryHost: (import.meta.env.VITE_PUBLIC_POSTHOG_HOST || 'https://eu.i.posthog.com').replace('://eu.i.', '://eu.'),
-  projectId: import.meta.env.VITE_PUBLIC_POSTHOG_PROJECT_ID,
-  personalApiKey: import.meta.env.VITE_POSTHOG_PERSONAL_API_KEY,
+};
+
+// STOREFRONT
+// ----------------------------------------------------------------------
+
+export const STOREFRONT_BASE_URL = import.meta.env.VITE_STOREFRONT_BASE_URL || 'https://{slug}.markium.online';
+
+export const getStorefrontUrl = (slug, params) => {
+  const base = STOREFRONT_BASE_URL.replace('{slug}', slug);
+  if (!params) return base;
+  const search = new URLSearchParams(params).toString();
+  return `${base}?${search}`;
 };
 
 // ROOT PATH AFTER LOGIN SUCCESSFUL

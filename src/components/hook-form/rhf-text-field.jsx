@@ -10,7 +10,7 @@ function convertToLatinNumbers(input) {
   return input.toString().replace(/[٠-٩]/g, d => '0123456789'['٠١٢٣٤٥٦٧٨٩'.indexOf(d)]);
 }
 
-export default function RHFTextField({ name, helperText, type, ...other }) {
+export default function RHFTextField({ name, helperText, type, multiline, sx, ...other }) {
   const { control } = useFormContext();
 
   return (
@@ -35,14 +35,24 @@ export default function RHFTextField({ name, helperText, type, ...other }) {
           }}
           error={!!error}
           helperText={error ? error?.message : helperText}
+          inputProps={{
+            'aria-invalid': !!error,
+            ...(error && { 'aria-describedby': `${name}-error` }),
+          }}
+          FormHelperTextProps={error ? { id: `${name}-error`, role: 'alert' } : undefined}
+          multiline={multiline}
           {...other}
           sx={{
             "& .MuiInputBase-root": {
-              height: 50, // Change height here
+              // Fixed height suits single-line inputs; multiline must grow with
+              // its content (and top-align) or long text spills over the border.
+              height: multiline ? "auto" : 50,
+              ...(multiline && { alignItems: "flex-start" }),
             },
             "& .MuiInputBase-input": {
-              padding: "10px", // Adjust padding to center text properly
+              padding: "10px",
             },
+            ...sx,
           }}
         />
       )}
@@ -54,4 +64,6 @@ RHFTextField.propTypes = {
   helperText: PropTypes.node,
   name: PropTypes.string.isRequired,
   type: PropTypes.string,
+  multiline: PropTypes.bool,
+  sx: PropTypes.object,
 };

@@ -35,32 +35,32 @@ AuthGuard.propTypes = {
 function Container({ children }) {
   const router = useRouter();
 
-  const { authenticated, method } = useAuthContext();
+  const { authenticated, method, user } = useAuthContext();
 
   const [checked, setChecked] = useState(false);
 
- const check = useCallback(() => {
-  if (!authenticated) {
-    const returnTo = window.location.pathname + window.location.search;
+  const check = useCallback(() => {
+    if (!authenticated) {
+      const returnTo = window.location.pathname + window.location.search;
+      const searchParams = new URLSearchParams({ returnTo }).toString();
+      const loginPath = loginPaths[method];
+      const href = `${loginPath}?${searchParams}`;
+      router.replace(href);
+      return;
+    }
 
-    const searchParams = new URLSearchParams({
-      returnTo,
-    }).toString();
+    // Store not set up -> onboarding wizard (works for both verified and unverified users)
+    if (!user?.has_store || !user?.store_setup_complete) {
+      router.replace(paths.onboarding.storeSetup);
+      return;
+    }
 
-    const loginPath = loginPaths[method];
-    const href = `${loginPath}?${searchParams}`;
-
-    router.replace(href);
-  } else {
     setChecked(true);
-  }
-}, [authenticated, method, router]);
-
+  }, [authenticated, method, user, router]);
 
   useEffect(() => {
     check();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [check]);
 
   if (!checked) {
     return null;

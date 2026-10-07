@@ -1,9 +1,10 @@
 import { lazy, Suspense } from 'react';
 import { Outlet, Navigate } from 'react-router-dom';
 
-import MainLayout from 'src/layouts/main';
-
 import { SplashScreen } from 'src/components/loading-screen';
+
+// Lazy-load heavy layout component
+const MainLayout = lazy(() => import('src/layouts/main'));
 
 // ----------------------------------------------------------------------
 
@@ -26,7 +27,6 @@ const BreadcrumbsPage = lazy(() => import('src/pages/components/mui/breadcrumbs'
 const ButtonsPage = lazy(() => import('src/pages/components/mui/buttons'));
 const CheckboxPage = lazy(() => import('src/pages/components/mui/checkbox'));
 const ChipPage = lazy(() => import('src/pages/components/mui/chip'));
-const DataGridPage = lazy(() => import('src/pages/components/mui/data-grid'));
 const DialogPage = lazy(() => import('src/pages/components/mui/dialog'));
 const ListPage = lazy(() => import('src/pages/components/mui/list'));
 const MenuPage = lazy(() => import('src/pages/components/mui/menu'));
@@ -49,7 +49,6 @@ const TransferListPage = lazy(() => import('src/pages/components/mui/transfer-li
 // EXTRA COMPONENTS
 const AnimatePage = lazy(() => import('src/pages/components/extra/animate'));
 const CarouselsPage = lazy(() => import('src/pages/components/extra/carousel'));
-const ChartPage = lazy(() => import('src/pages/components/extra/chart'));
 const CopyToClipboardPage = lazy(() => import('src/pages/components/extra/copy-to-clipboard'));
 const EditorPage = lazy(() => import('src/pages/components/extra/editor'));
 const FormValidationPage = lazy(() => import('src/pages/components/extra/form-validation'));
@@ -71,11 +70,13 @@ const ScrollProgressPage = lazy(() => import('src/pages/components/extra/scroll-
 export const componentsRoutes = [
   {
     element: (
-      <MainLayout>
-        <Suspense fallback={<SplashScreen />}>
-          <Outlet />
-        </Suspense>
-      </MainLayout>
+      <Suspense fallback={<SplashScreen />}>
+        <MainLayout>
+          <Suspense fallback={<SplashScreen />}>
+            <Outlet />
+          </Suspense>
+        </MainLayout>
+      </Suspense>
     ),
     children: [
       {
@@ -112,7 +113,6 @@ export const componentsRoutes = [
               { path: 'buttons', element: <ButtonsPage /> },
               { path: 'checkbox', element: <CheckboxPage /> },
               { path: 'chip', element: <ChipPage /> },
-              { path: 'data-grid', element: <DataGridPage /> },
               { path: 'dialog', element: <DialogPage /> },
               { path: 'list', element: <ListPage /> },
               { path: 'menu', element: <MenuPage /> },
@@ -142,7 +142,6 @@ export const componentsRoutes = [
               },
               { path: 'animate', element: <AnimatePage /> },
               { path: 'carousel', element: <CarouselsPage /> },
-              { path: 'chart', element: <ChartPage /> },
               { path: 'copy-to-clipboard', element: <CopyToClipboardPage /> },
               { path: 'editor', element: <EditorPage /> },
               { path: 'form-validation', element: <FormValidationPage /> },

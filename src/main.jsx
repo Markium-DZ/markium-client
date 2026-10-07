@@ -4,19 +4,17 @@ import { BrowserRouter } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 
 import App from './app';
-import { initPostHog } from './utils/analytics';
+import { initPostHog } from './utils/posthog';
 
 // ----------------------------------------------------------------------
 
 initPostHog();
 
-// ----------------------------------------------------------------------
-
 const root = ReactDOM.createRoot(document.getElementById('root'));
 
 root.render(
   <HelmetProvider>
-    <BrowserRouter>
+    <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <Suspense>
         <App />
       </Suspense>

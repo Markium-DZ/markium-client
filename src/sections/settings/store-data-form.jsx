@@ -20,6 +20,7 @@ import FormProvider, {
   RHFTextField,
 } from 'src/components/hook-form';
 import showError from 'src/utils/show_error';
+import { captureEvent } from 'src/utils/posthog';
 
 // ----------------------------------------------------------------------
 
@@ -85,6 +86,7 @@ export default function StoreDataForm() {
       // Simulated API call
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
+      captureEvent('store_updated', { section: 'store_data' });
       enqueueSnackbar(t('store_data_updated_successfully'), { variant: 'success' });
       setLoading(false);
     } catch (error) {
@@ -196,7 +198,18 @@ export default function StoreDataForm() {
 
         {/* Actions */}
         <Grid xs={12}>
-          <Stack direction="row" justifyContent="flex-end" spacing={2}>
+          <Stack
+            direction="row"
+            justifyContent="flex-end"
+            spacing={2}
+            sx={{
+              position: 'sticky',
+              bottom: 0,
+              py: 2,
+              bgcolor: 'background.default',
+              zIndex: 1,
+            }}
+          >
             <LoadingButton
               type="submit"
               variant="contained"

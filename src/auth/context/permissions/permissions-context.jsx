@@ -3,8 +3,7 @@ import { AuthContext } from 'src/auth/context/jwt';
 
 const PermissionsContext = ({ children, action, isList, mustAll }) => {
     const { user } = useContext(AuthContext);
-    const actions = user?.roles?.flatMap(role => role?.permissions?.map(permission => permission?.key))
-    console.log("actions : ", actions);
+    const actions = user?.roles?.flatMap(role => role?.permissions?.map(permission => permission?.key));
     return (
         <>
 

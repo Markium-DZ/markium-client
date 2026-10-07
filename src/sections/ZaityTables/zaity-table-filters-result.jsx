@@ -70,7 +70,7 @@ export default function OrderTableFiltersResult({
 
         <Button
           color="error"
-          onClick={()=>{onResetFilters}}
+          onClick={onResetFilters}
           startIcon={<Iconify icon="solar:trash-bin-trash-bold" />}
         >
           {t("clear")}

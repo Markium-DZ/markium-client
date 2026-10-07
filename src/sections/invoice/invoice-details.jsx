@@ -29,7 +29,7 @@ import InvoiceToolbar from './invoice-toolbar';
 
 const StyledTableRow = styled(TableRow)(({ theme }) => ({
   '& td': {
-    textAlign: 'right',
+    textAlign: 'end',
     borderBottom: 'none',
     paddingTop: theme.spacing(1),
     paddingBottom: theme.spacing(1),
@@ -101,7 +101,7 @@ export default function InvoiceDetails({ invoice }) {
         </Typography>
       </Grid>
 
-      <Grid xs={12} md={3} sx={{ py: 3, textAlign: 'right' }}>
+      <Grid xs={12} md={3} sx={{ py: 3, textAlign: 'end' }}>
         <Typography variant="subtitle2">Have a Question?</Typography>
 
         <Typography variant="body2">support@minimals.cc</Typography>

@@ -48,7 +48,6 @@ export async function updateStoreLogo(formData) {
       'Content-Type': 'multipart/form-data',
     },
   });
-  capture('store_updated', { updated_fields: ['logo'] });
   return response;
 }
 

@@ -417,7 +417,7 @@ function Block({ label = 'RHFTextField', sx, children }) {
       <Typography
         variant="caption"
         sx={{
-          textAlign: 'right',
+          textAlign: 'end',
           fontStyle: 'italic',
           color: 'text.disabled',
         }}

@@ -49,7 +49,7 @@ import { t } from 'i18next';
 const STATUS_OPTIONS = [{ value: 'all', label: 'All' }, ...ORDER_STATUS_OPTIONS];
 
 const TABLE_HEAD = [
-  { id: 'orderNumber', label: t('vehicle'), width: 116 },
+  { id: 'orderNumber', label: t('product'), width: 116 },
   { id: 'name', label: 'Customer' },
   { id: 'createdAt', label: 'Date', width: 140 },
   { id: 'totalQuantity', label: 'Items', width: 120, align: 'center' },
@@ -123,7 +123,7 @@ export default function OrderListView() {
     (id) => {
       const deleteRow = tableData.filter((row) => row.id !== id);
 
-      enqueueSnackbar('Delete success!');
+      enqueueSnackbar(t('delete_success'));
 
       setTableData(deleteRow);
 
@@ -135,7 +135,7 @@ export default function OrderListView() {
   const handleDeleteRows = useCallback(() => {
     const deleteRows = tableData.filter((row) => !table.selected.includes(row.id));
 
-    enqueueSnackbar('Delete success!');
+    enqueueSnackbar(t('delete_success'));
 
     setTableData(deleteRows);
 
@@ -184,6 +184,9 @@ export default function OrderListView() {
           <Tabs
             value={filters.status}
             onChange={handleFilterStatus}
+            variant="scrollable"
+            scrollButtons="auto"
+            allowScrollButtonsMobile
             sx={{
               px: 2.5,
               boxShadow: (theme) => `inset 0 -2px 0 0 ${alpha(theme.palette.grey[500], 0.08)}`,
@@ -208,7 +211,7 @@ export default function OrderListView() {
                     }
                   >
                     {['completed', 'pending', 'cancelled', 'refunded'].includes(tab.value)
-                      ? tableData.filter((user) => user.status === tab.value).length
+                      ? tableData.filter((user) => (user.status?.key || user.status) === tab.value).length
                       : tableData.length}
                   </Label>
                 }
@@ -256,7 +259,7 @@ export default function OrderListView() {
             />
 
             <Scrollbar>
-              <Table size={table.dense ? 'small' : 'medium'} sx={{ minWidth: 960 }}>
+              <Table size={table.dense ? 'small' : 'medium'} sx={{ minWidth: 960 }} aria-label={t('orders_table')}>
                 <TableHeadCustom
                   order={table.order}
                   orderBy={table.orderBy}
@@ -364,7 +367,7 @@ function applyFilter({ inputData, comparator, filters, dateError }) {
   }
 
   if (status !== 'all') {
-    inputData = inputData.filter((order) => order.status === status);
+    inputData = inputData.filter((order) => (order.status?.key || order.status) === status);
   }
 
   if (!dateError) {

@@ -27,10 +27,7 @@ import FormProvider, { RHFTextField, RHFSelect } from 'src/components/hook-form'
 
 import { useLocales, useTranslate } from 'src/locales';
 
-import { addNewDriver, editDriver } from 'src/api/drivers';
-
 import { useValues } from 'src/api/utils';
-import { useGetCar } from 'src/api/car';
 import { createRole, editRole, usePermissions } from 'src/api/users';
 import { CardContent, CardHeader, Tab, Tabs, Typography } from '@mui/material';
 import PermissionsGroupCard from './PermissionsGroupCard';
@@ -65,12 +62,7 @@ export default function RolesCreateView({ currentRole }) {
 
 
     const groups = [
-        { id: "vehicles", models: ["car"], read_tags: ["car", "vehicle", "car_log"], label: t("vehicles"),icon:"duo-icons:car" },
-        { id: "maintenance", models: ["maintenance"], read_tags: ["maintenance", "maintenance_log"], label: t("maintenance"),icon:"ix:maintenance-info" },
-        { id: "documents", models: ["document", "attachment"], read_tags: ["documents", "attachment", "documents_log"], label: t("documents"),icon:"solar:document-text-bold-duotone" },
-        { id: "drivers", models: ["driver"], read_tags: ["driver", "drivers_log"], label: t("drivers"),icon:"healthicons:truck-driver" },
-        { id: "clients", models: ["client", "contract", "claim"], read_tags: ["client", "contract", "client_log", "claim"], label: t("clients") ,icon:"streamline-ultimate:shopping-basket-1-bold"},
-        { id: "system_settings", models: ["system_setting"], read_tags: ["car_company", "car_model", "country", "color", "state", "neighborhood", "maintenance_specification", "attachment_name", "payment_method", "license_type", "spec"], label: t("system_settings"),icon:"solar:settings-bold-duotone" },
+        { id: "system_settings", models: ["system_setting"], read_tags: ["country", "color", "state", "neighborhood", "payment_method"], label: t("system_settings"),icon:"solar:settings-bold-duotone" },
         { id: "users", models: ["user", "role"], read_tags: ["user", "role"], label: t("users") ,icon:"garden:security-26"},
     ]
 

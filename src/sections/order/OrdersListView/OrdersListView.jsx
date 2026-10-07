@@ -1,13 +1,8 @@
-import { Box, Button, Card, FormControlLabel, FormGroup, Grid, IconButton, MenuItem, Stack, Switch, Tooltip, Typography, Avatar, Chip, Dialog, DialogTitle, DialogContent, Divider } from '@mui/material';
+import { Alert, Box, Button, Card, FormControlLabel, FormGroup, Grid, IconButton, MenuItem, Stack, Switch, Tooltip, Typography, Avatar, Chip, Dialog, DialogTitle, DialogContent, Divider } from '@mui/material';
 import { t } from 'i18next';
 import { set } from 'lodash'; // [keep for later use]
 import { enqueueSnackbar, useSnackbar } from 'notistack';
 import { useCallback, useEffect, useState } from 'react';
-import { AddCarToMentainance, deleteCar, markCarAsAvailable, useGetCar } from 'src/api/car';
-import { useGetClauses } from 'src/api/claim';
-import { useGetClients } from 'src/api/client';
-import { deleteContractClause, useGetContracts } from 'src/api/contract';
-import { markMaintenanceAsCompeleted, useGetMaintenance } from 'src/api/maintainance';
 import { changeItemVisibilityInSettings, useGetMainSpecs, useGetSystemVisibleItem } from 'src/api/settings'; // [keep for later use]
 import { createUser, deleteUser, useRoles, useUsers } from 'src/api/users';
 import { useValues } from 'src/api/utils';
@@ -26,6 +21,7 @@ import ZaityListView from 'src/sections/ZaityTables/zaity-list-view';
 import ZaityHeadContainer from 'src/sections/ZaityTables/ZaityHeadContainer';
 import ZaityTableFilters from 'src/sections/ZaityTables/ZaityTableFilters';
 import ZaityTableTabs from 'src/sections/ZaityTables/ZaityTableTabs'; // [keep for later use]
+import OrderMobileCard from '../order-mobile-card';
 import { fDate } from 'src/utils/format-time';
 import showError from 'src/utils/show_error';
 import * as Yup from 'yup';
@@ -34,14 +30,13 @@ import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import FormProvider, { RHFUpload } from 'src/components/hook-form';
 import { LoadingButton } from '@mui/lab';
-import { deleteDocument, useGetDocuments } from 'src/api/document';
-import { deleteDriver, useGetDrivers } from 'src/api/drivers';
 import { secondary } from 'src/theme/palette';
 import { color } from 'framer-motion';
 import { LoadingScreen } from 'src/components/loading-screen';
 import { useGetProducts } from 'src/api/product';
 import { updateOrder, useGetOrders, useGetOrdersByProduct } from 'src/api/orders';
 import ExportOrdersButton from './ExportOrdersButton';
+import { fCurrency } from 'src/utils/format-number';
 import { HOST_API } from 'src/config-global';
 import { getOrderStatusOptions, getOrderStatus } from 'src/constants/order-status';
 
@@ -172,13 +167,13 @@ function OrderItemDetailsDialog({ open, onClose, item }) {
                 </Typography>
                 <Stack direction="row" spacing={1.5} alignItems="baseline" flexWrap="wrap" sx={{ mt: 0.5 }}>
                     <Typography variant="h5" color="primary.main" sx={{ fontWeight: 700 }}>
-                        {item.unit_price ? `${item.unit_price.toFixed(2)} DA` : '-'}
+                        {item.unit_price ? fCurrency(item.unit_price) : '-'}
                     </Typography>
                     {item.quantity > 1 && (
                         <Typography variant="body2" color="text.secondary">
                             {t('total')}: <Box component="span" sx={{ fontWeight: 700, color: 'primary.dark' }}>
-                                {item.total_price ? `${item.total_price.toFixed(2)} DA` :
-                                (item.unit_price ? `${(item.unit_price * item.quantity).toFixed(2)} DA` : '-')}
+                                {item.total_price ? fCurrency(item.total_price) :
+                                (item.unit_price ? fCurrency(item.unit_price * item.quantity) : '-')}
                             </Box>
                         </Typography>
                     )}
@@ -395,17 +390,20 @@ function OrderItemsCell({ items, order }) {
 
 export default function OrdersListView({ product_id }) {
     // Call hooks unconditionally at the top level
-    const { orders: ordersByProduct, ordersLoading: loadingByProduct } = useGetOrdersByProduct(product_id);
-    const { orders: allOrders, ordersLoading: loadingAll } = useGetOrders();
+    const { orders: ordersByProduct, ordersLoading: loadingByProduct, ordersError: errorByProduct } = useGetOrdersByProduct(product_id);
+    const { orders: allOrders, ordersLoading: loadingAll, ordersError: errorAll } = useGetOrders();
 
     // Use the appropriate data based on product_id
     const orders = product_id ? ordersByProduct : allOrders;
     const ordersLoading = product_id ? loadingByProduct : loadingAll;
+    const ordersError = product_id ? errorByProduct : errorAll;
 
     const { currentLang } = useLocales()
 
-    const [tableData, setTableData] = useState([]);
-    const [dataFiltered, setDataFiltered] = useState([]);
+    const [tableData, setTableData] = useState(null);
+    const [dataFiltered, setDataFiltered] = useState(null);
+
+    const isReady = tableData !== null;
 
     let TABLE_HEAD = [
         // { id: 'ref', label: t('order_ref'), type: "text", width: 140 },
@@ -470,7 +468,7 @@ export default function OrdersListView({ product_id }) {
     const RformulateTable = (data) => {
         return data?.map((item) => {
             // Use centralized order status configuration
-            const statusConfig = getOrderStatus(item?.status);
+            const statusConfig = getOrderStatus(item?.status?.key || item?.status);
             const color = statusConfig?.color || "default";
             const translatedStatus = statusConfig ? t(statusConfig.labelKey) : "";
 
@@ -487,7 +485,7 @@ export default function OrdersListView({ product_id }) {
                 name: item?.customer?.full_name,
                 phone: item?.customer?.phone,
                 total_items: item?.total_items || item?.items?.length || 0,
-                total: item?.total_price ? `${item.total_price.toFixed(2)} DA` : item?.total ? `${item.total.toFixed(2)} DA` : '-',
+                total: item?.total_price ? fCurrency(item.total_price) : item?.total ? fCurrency(item.total) : '-',
                 products_summary: itemsSummary,
                 c_status: translatedStatus,
                 full_address: currentLang?.value === "ar"
@@ -558,11 +556,11 @@ export default function OrdersListView({ product_id }) {
             },
             color: 'primary'
         },
-        { key: 'pending', label: t('pending'), match: (item) => item?.status === 'pending', color: 'warning' },
-        { key: 'confirmed', label: t('confirmed'), match: (item) => item?.status === 'confirmed', color: 'secondary' },
-        { key: 'shipped', label: t('shipped'), match: (item) => item?.status === 'shipped', color: 'info' },
-        { key: 'delivered', label: t('delivered'), match: (item) => item?.status === 'delivered', color: 'success' },
-        { key: 'cancelled', label: t('cancelled'), match: (item) => item?.status === 'cancelled', color: 'error' },
+        { key: 'pending', label: t('pending'), match: (item) => (item?.status?.key || item?.status) === 'pending', color: 'warning' },
+        { key: 'confirmed', label: t('confirmed'), match: (item) => (item?.status?.key || item?.status) === 'confirmed', color: 'secondary' },
+        { key: 'shipped', label: t('shipped'), match: (item) => (item?.status?.key || item?.status) === 'shipped', color: 'info' },
+        { key: 'delivered', label: t('delivered'), match: (item) => (item?.status?.key || item?.status) === 'delivered', color: 'success' },
+        { key: 'cancelled', label: t('cancelled'), match: (item) => (item?.status?.key || item?.status) === 'cancelled', color: 'error' },
     ];
 
     const filterFunction = (data, filters) => {
@@ -593,20 +591,35 @@ export default function OrdersListView({ product_id }) {
                     { name: t('list') },
                 ]}
             >
-                <Card>
-                    <ZaityTableTabs key='condition' data={tableData} items={items} defaultFilters={defaultFilters} setTableDate={setDataFiltered} filterFunction={filterFunction}>
-                        {/* <ZaityTableTabs key='attachable_type' data={tableData} items={items2} defaultFilters={defaultFilters} setTableDate={setDataFiltered} filterFunction={filterFunction}> */}
-                        <ZaityTableFilters data={dataFiltered} tableData={tableData} setTableDate={setDataFiltered} items={filters} defaultFilters={defaultFilters} dataFiltered={tableData} searchText={t("search_by") + " " + t("name") + " " + t("or_any_value") + " ..."}  >
-                            {
-                                ordersLoading ?
-                                    <LoadingScreen sx={{ my: 8 }} color='primary' />
-                                    :
-                                    <ZaityListView TABLE_HEAD={[...TABLE_HEAD]} dense="medium" zaityTableDate={dataFiltered || []} onSelectedRows={({ data, setTableData }) => { return <onSelectedRowsComponent configurable_type={"roles"} setTableData={setTableData} data={orders} /> }} />
-                            }
-                        </ZaityTableFilters>
-                        {/* </ZaityTableTabs> */}
-                    </ZaityTableTabs>
-                </Card>
+                {!ordersLoading && ordersError && !orders?.length && (
+                    <Alert severity="warning" icon={<Iconify icon="solar:cloud-cross-bold" width={22} />} sx={{ mb: 2 }}>
+                        {t('no_connection_notice')}
+                    </Alert>
+                )}
+
+                {(ordersLoading || !isReady) ? (
+                    <LoadingScreen sx={{ my: 8 }} color='primary' />
+                ) : (
+                    <Card>
+                        <ZaityTableTabs filterKey='condition' data={tableData} items={items} defaultFilters={defaultFilters} setTableDate={setDataFiltered} filterFunction={filterFunction}>
+                            <ZaityTableFilters data={dataFiltered} tableData={tableData} setTableDate={setDataFiltered} items={filters} defaultFilters={defaultFilters} dataFiltered={tableData} searchText={t("search_by") + " " + t("name") + " " + t("or_any_value") + " ..."}  >
+                                {(!dataFiltered || dataFiltered.length === 0) ? (
+                                    <Box sx={{ textAlign: 'center', py: 10 }}>
+                                        <Iconify icon="solar:bag-4-bold-duotone" width={64} sx={{ color: 'text.disabled', mb: 2 }} />
+                                        <Typography variant="h6" color="text.secondary" gutterBottom>
+                                            {t('no_orders_yet')}
+                                        </Typography>
+                                        <Typography variant="body2" color="text.disabled" sx={{ mb: 3 }}>
+                                            {t('no_orders_description')}
+                                        </Typography>
+                                    </Box>
+                                ) : (
+                                    <ZaityListView TABLE_HEAD={[...TABLE_HEAD]} dense="medium" zaityTableDate={dataFiltered || []} onSelectedRows={({ data, setTableData }) => { return <onSelectedRowsComponent configurable_type={"roles"} setTableData={setTableData} data={orders} /> }} mobileCardRender={(row) => <OrderMobileCard row={row} />} />
+                                )}
+                            </ZaityTableFilters>
+                        </ZaityTableTabs>
+                    </Card>
+                )}
             </ZaityHeadContainer>
         </>
     );
@@ -642,9 +655,7 @@ const ElementActions = ({ item, setTableData }) => {
                 loading.onTrue()
                 // Update order status - use first item's product_id if backend requires it
                 const productId = item.items?.[0]?.product?.id || item.product_id;
-                console.log("new status : ", { status: selectedStatus.value })
                 await updateOrder(item.id, { status: selectedStatus.value })
-                console.log("Changing order status:", { orderId: item?.id, newStatus: selectedStatus.value });
 
                 // Update table data optimistically
                 setTableData(prev => prev?.map(order =>
@@ -657,7 +668,6 @@ const ElementActions = ({ item, setTableData }) => {
                 setPostloader(false)
                 setSelectedStatus(null)
             } catch (error) {
-                console.log("ersetSelectedStatus setSelectedStatus setSelectedStatus ror : ", error);
                 setPostloader(false)
                 loading.onFalse()
                 showError(error.error)
@@ -699,7 +709,7 @@ const ElementActions = ({ item, setTableData }) => {
                 <Divider sx={{ borderStyle: 'dashed', my: 0.5 }} />
 
                 {statuses
-                    .filter(status => status.value !== item?.status) // Don't show current status
+                    .filter(status => status.value !== (item?.status?.key || item?.status)) // Don't show current status
                     .map((status) => (
                         <MenuItem
                             key={status.value}

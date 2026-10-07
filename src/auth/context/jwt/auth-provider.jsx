@@ -1,16 +1,16 @@
-'use client';
-
 import PropTypes from 'prop-types';
 import { useMemo, useEffect, useReducer, useCallback } from 'react';
 
+import { mutate as swrMutate } from 'swr';
+
 import axios, { endpoints } from 'src/utils/axios';
-import { identifyClient, resetAnalytics, capture } from 'src/utils/analytics';
 
 import { AuthContext } from './auth-context';
 import { setSession, isValidToken, jwtDecode } from './utils';
 import { useValues } from 'src/api/utils';
 import showError from 'src/utils/show_error';
 import { success } from 'src/theme/palette';
+import { identifyUser, resetPostHog, captureEvent } from 'src/utils/posthog';
 
 // ----------------------------------------------------------------------
 /**
@@ -77,7 +77,7 @@ export function AuthProvider({ children }) {
         const getUserInfo = localStorage.getItem(USER_STORAGE_KEY);
         if (getUserInfo !== null) {
           const user = JSON.parse(getUserInfo);
-          identifyClient(user);
+          identifyUser(user);
           dispatch({
             type: 'INITIAL',
             payload: {
@@ -111,20 +111,23 @@ export function AuthProvider({ children }) {
   }, [initialize]);
 
   // LOGIN
-  const login = useCallback(async (phone, password) => {
+  const login = useCallback(async (phone, password, turnstileToken) => {
     const body = {
       phone,
       password,
     };
+    if (turnstileToken) {
+      body['cf-turnstile-response'] = turnstileToken;
+    }
     try {
       const response = await axios.post(endpoints.auth.login, body);
       const { token, client } = response.data.data;
       setSession(token);
       localStorage.setItem(USER_STORAGE_KEY, JSON.stringify({ ...client }));
-
-      identifyClient(client);
-      capture('client_logged_in');
-
+      identifyUser(client);
+      captureEvent('client_logged_in', { method: 'phone' });
+      // Clear stale SWR cache from previous user session
+      swrMutate(() => true, undefined, { revalidate: false });
       dispatch({
         type: 'LOGIN',
         payload: {
@@ -142,31 +145,22 @@ export function AuthProvider({ children }) {
   }, []);
 
   // REGISTER
-  const register = useCallback(async (name, phone, password, store_name,store_slug) => {
-    const formData = new FormData();
-    formData.append('name', name);
-    formData.append('phone', phone);
-    formData.append('password', password);
-    formData.append('store_name', store_name);
-    formData.append('store_slug', store_slug);
-    formData.append('is_phone_verified', true);
+  const register = useCallback(async (name, phone, password, turnstileToken) => {
+    const body = { name, phone, password };
+    if (turnstileToken) {
+      body['cf-turnstile-response'] = turnstileToken;
+    }
 
-    const response = await axios.post(endpoints.auth.register, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+    const response = await axios.post(endpoints.auth.register, body);
 
     const { token, client } = response.data.data;
 
     setSession(token);
     localStorage.setItem(USER_STORAGE_KEY, JSON.stringify({ ...client }));
-
-    identifyClient(client);
-    capture('client_signed_up', {
-      client_name: client.name,
-      store_name: client.store?.name,
-    });
+    identifyUser(client);
+    captureEvent('client_signed_up', { method: 'phone' });
+    // Clear stale SWR cache from any previous session
+    swrMutate(() => true, undefined, { revalidate: false });
 
     dispatch({
       type: 'REGISTER',
@@ -181,9 +175,11 @@ export function AuthProvider({ children }) {
 
   // LOGOUT
   const logout = useCallback(async () => {
-    resetAnalytics();
     setSession(null);
     localStorage.removeItem(USER_STORAGE_KEY);
+    resetPostHog();
+    // Clear all SWR cache so next user doesn't see stale data
+    swrMutate(() => true, undefined, { revalidate: false });
     dispatch({
       type: 'LOGOUT',
     });
@@ -212,6 +208,25 @@ export function AuthProvider({ children }) {
     });
   }, [state.user]);
 
+  // REFRESH USER (fetch latest from server)
+  const refreshUser = useCallback(async () => {
+    try {
+      const response = await axios.get(endpoints.auth.me);
+      const client = response.data.data;
+      const token = localStorage.getItem(STORAGE_KEY);
+      const updatedUser = { ...client, token };
+      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(client));
+      dispatch({
+        type: 'UPDATE_USER',
+        payload: { user: updatedUser },
+      });
+      return updatedUser;
+    } catch (error) {
+      console.error('Failed to refresh user:', error);
+      return null;
+    }
+  }, []);
+
   // ----------------------------------------------------------------------
 
   const checkAuthenticated = state.user ? 'authenticated' : 'unauthenticated';
@@ -233,8 +248,9 @@ export function AuthProvider({ children }) {
       register,
       logout,
       updateUser,
+      refreshUser,
     }),
-    [login, logout, register, updateUser, state.user, status]
+    [login, logout, register, updateUser, refreshUser, state.user, status]
   );
 
   return <AuthContext.Provider value={memoizedValue}>{children}</AuthContext.Provider>;

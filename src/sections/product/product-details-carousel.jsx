@@ -2,12 +2,18 @@ import { useEffect } from 'react';
 import PropTypes from 'prop-types';
 
 import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
 import Avatar from '@mui/material/Avatar';
+import Typography from '@mui/material/Typography';
 import { alpha, styled, useTheme } from '@mui/material/styles';
 
 import { bgGradient } from 'src/theme/css';
 
+import { RouterLink } from 'src/routes/components';
+import { useTranslate } from 'src/locales';
+import { fCurrency } from 'src/utils/format-number';
 import Image from 'src/components/image';
+import Iconify from 'src/components/iconify';
 import Lightbox, { useLightBox } from 'src/components/lightbox';
 import Carousel, { useCarousel, CarouselArrowIndex } from 'src/components/carousel';
 
@@ -61,8 +67,9 @@ const StyledThumbnailsContainer = styled('div')(({ length, theme }) => ({
 
 // ----------------------------------------------------------------------
 
-export default function ProductDetailsCarousel({ product }) {
+export default function ProductDetailsCarousel({ product, editLink }) {
   const theme = useTheme();
+  const { t } = useTranslate();
 
   // Collect all variant media images
   let mediaSource = [];
@@ -87,9 +94,65 @@ export default function ProductDetailsCarousel({ product }) {
       : [product.images];
   }
 
-  const slides = mediaSource.map((img) => ({
-    src: typeof img === 'string' ? img : img?.full_url || img?.url || img?.src || '',
-  }));
+  // Map each image src to variant info (options label + price)
+  const imageVariantMap = {};
+  (product?.variants || []).forEach((variant) => {
+    const media = Array.isArray(variant.media)
+      ? variant.media
+      : variant.media
+      ? [variant.media]
+      : [];
+    const label = variant.options?.map((o) => o.value).filter(Boolean).join(' · ') || '';
+    const price = parseFloat(variant.price) || 0;
+    media.forEach((m) => {
+      const src = m?.full_url || m?.url || m?.src || '';
+      if (src && !imageVariantMap[src]) {
+        imageVariantMap[src] = { label, price };
+      }
+    });
+  });
+
+  const slides = mediaSource.map((img) => {
+    const src = typeof img === 'string' ? img : img?.full_url || img?.url || img?.src || '';
+    const info = imageVariantMap[src];
+    const parts = [info?.label, info?.price > 0 && fCurrency(info.price)].filter(Boolean);
+    return {
+      src,
+      ...(parts.length > 0 && { title: parts.join('  ·  ') }),
+    };
+  });
+
+  const renderEmpty = slides.length === 0 && (
+    <Box
+      sx={{
+        height: 320,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        border: '2px dashed',
+        borderColor: 'divider',
+        borderRadius: 2,
+        color: 'text.disabled',
+        gap: 1.5,
+      }}
+    >
+      <Iconify icon="solar:camera-add-bold-duotone" width={48} />
+      <Typography variant="subtitle2">{t('no_images_yet')}</Typography>
+      {editLink && (
+        <Button
+          component={RouterLink}
+          href={editLink}
+          size="small"
+          variant="outlined"
+          color="inherit"
+          startIcon={<Iconify icon="solar:pen-bold" width={16} />}
+        >
+          {t('add_images')}
+        </Button>
+      )}
+    </Box>
+  );
 
   const lightbox = useLightBox(slides);
 
@@ -135,14 +198,70 @@ export default function ProductDetailsCarousel({ product }) {
         ref={carouselLarge.carouselRef}
       >
         {slides.map((slide) => (
-          <Image
-            key={slide.src}
-            alt={slide.src}
-            src={slide.src}
-            ratio="1/1"
-            onClick={() => lightbox.onOpen(slide.src)}
-            sx={{ cursor: 'zoom-in' }}
-          />
+          <Box key={slide.src} sx={{ position: 'relative' }}>
+            <Image
+              alt={slide.src}
+              src={slide.src}
+              ratio="1/1"
+              onClick={() => lightbox.onOpen(slide.src)}
+              sx={{ cursor: 'zoom-in' }}
+            />
+            {imageVariantMap[slide.src]?.label && (
+              <Box
+                sx={{
+                  position: 'absolute',
+                  bottom: 12,
+                  left: 12,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1,
+                  px: 1.25,
+                  py: 0.625,
+                  borderRadius: 1,
+                  pointerEvents: 'none',
+                  backdropFilter: 'blur(12px)',
+                  bgcolor: (t) => alpha(t.palette.grey[900], 0.6),
+                  border: '1px solid',
+                  borderColor: (t) => alpha(t.palette.common.white, 0.12),
+                }}
+              >
+                <Typography
+                  sx={{
+                    color: 'common.white',
+                    fontWeight: 600,
+                    fontSize: '0.72rem',
+                    lineHeight: 1.4,
+                    letterSpacing: 0.2,
+                  }}
+                >
+                  {imageVariantMap[slide.src].label}
+                </Typography>
+
+                {imageVariantMap[slide.src].price > 0 && (
+                  <>
+                    <Box
+                      sx={{
+                        width: '1px',
+                        height: 14,
+                        bgcolor: (t) => alpha(t.palette.common.white, 0.25),
+                        flexShrink: 0,
+                      }}
+                    />
+                    <Typography
+                      sx={{
+                        color: (t) => alpha(t.palette.common.white, 0.85),
+                        fontWeight: 700,
+                        fontSize: '0.72rem',
+                        lineHeight: 1.4,
+                      }}
+                    >
+                      {fCurrency(imageVariantMap[slide.src].price)}
+                    </Typography>
+                  </>
+                )}
+              </Box>
+            )}
+          </Box>
         ))}
       </Carousel>
 
@@ -186,6 +305,10 @@ export default function ProductDetailsCarousel({ product }) {
     </StyledThumbnailsContainer>
   ) : null;
 
+  if (slides.length === 0) {
+    return renderEmpty;
+  }
+
   return (
     <Box
       sx={{
@@ -211,4 +334,5 @@ export default function ProductDetailsCarousel({ product }) {
 
 ProductDetailsCarousel.propTypes = {
   product: PropTypes.object,
+  editLink: PropTypes.string,
 };

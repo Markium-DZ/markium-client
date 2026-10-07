@@ -21,7 +21,7 @@ export default function HomeCleanInterfaces() {
         mx: 'auto',
         zIndex: { md: 99 },
         position: { md: 'absolute' },
-        textAlign: { xs: 'center', md: 'left' },
+        textAlign: { xs: 'center', md: 'start' },
       }}
     >
       <m.div variants={varFade().inUp}>

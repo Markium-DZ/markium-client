@@ -33,9 +33,10 @@ export function useGetMainSpecs() {
 
     return memoizedValue;
 }
+
 export function useGetMainSpec(id) {
     const { data, isLoading, error, isValidating, mutate } = useSWR(
-        endpoints.settings?.mainspecs+"/"+id,
+        endpoints.settings?.mainspecs + "/" + id,
         fetcher,
         options
     );
@@ -54,17 +55,6 @@ export function useGetMainSpec(id) {
 
     return memoizedValue;
 }
-
-export async function createMainSpec(body) {
-    const URL = endpoints.settings?.mainspecs;
-    return await axios.post(URL, body);
-}
-
-export async function editMainSpec(id, body) {
-    const URL = endpoints.settings?.mainspecs+'/' + id;
-    return await axios.put(URL, body);
-}
-
 
 export function useGetSystemVisibleItem(type) {
     const { data, isLoading, error, isValidating, mutate } = useSWR(
@@ -89,9 +79,31 @@ export function useGetSystemVisibleItem(type) {
 }
 
 export function useGetSystemCategories(page = 1, perPage = 100) {
-    const params = new URLSearchParams({ page, per_page: perPage });
-    // const url = `${endpoints.settings?.categoriesList}?${params.toString()}`;
     const url = endpoints.settings?.categoriesList;
+
+    const { data, isLoading, error, isValidating, mutate } = useSWR(
+        url,
+        fetcher,
+        options
+    );
+
+    const memoizedValue = useMemo(
+        () => ({
+            items: data?.data || [],
+            itemsLoading: isLoading,
+            itemsError: error,
+            itemsValidating: isValidating,
+            itemsEmpty: !isLoading && !data?.data?.length,
+            mutate,
+        }),
+        [data, error, isLoading, isValidating]
+    );
+
+    return memoizedValue;
+}
+
+export function useGetCategorySettings() {
+    const url = endpoints.settings?.categoriesSettings;
 
     const { data, isLoading, error, isValidating, mutate } = useSWR(
         url,
@@ -129,9 +141,10 @@ export async function changeItemVisibilityInSettings(body) {
 }
 
 
-export async function changeCategoryVisibility(id,body) {
-    const URL = endpoints.settings.categories+"/"+id;
-    return await axios.put(URL, body);
+export async function changeCategoryVisibility(id, body) {
+    const action = body?.is_active ? 'select' : 'deselect';
+    const URL = `${endpoints.settings.categories}/${id}/${action}`;
+    return await axios.post(URL);
 }
 
 

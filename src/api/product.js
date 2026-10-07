@@ -9,7 +9,15 @@ import { capture } from 'src/utils/analytics';
 
 export function useGetProducts() {
   const URL = endpoints.product.root;
-  const { data, isLoading, error, isValidating, mutate } = useSWR( URL, fetcher);
+  const { data, isLoading, error, isValidating, mutate } = useSWR(URL, fetcher, {
+    revalidateOnFocus: false,
+    revalidateOnReconnect: false,
+    onErrorRetry: (err, key, config, revalidate, { retryCount }) => {
+      const delays = [5000, 10000, 20000, 30000];
+      if (retryCount >= delays.length) return;
+      setTimeout(() => revalidate({ retryCount }), delays[retryCount]);
+    },
+  });
 
   const memoizedValue = useMemo(
     () => ({
@@ -29,13 +37,16 @@ export function useGetProducts() {
 // ----------------------------------------------------------------------
 
 export function useGetProduct(productId) {
-  const URL = endpoints.product.root ;
+  const URL = endpoints.product.root;
 
-  const { data, isLoading, error, isValidating, mutate } = useSWR(URL, fetcher);
+  const { data, isLoading, error, isValidating, mutate } = useSWR(URL, fetcher, {
+    revalidateOnFocus: false,
+    revalidateOnReconnect: false,
+  });
 
   const memoizedValue = useMemo(
     () => ({
-      product: data?.data?.find( p => p.id == productId) || null,
+      product: data?.data?.find((p) => p.id == productId) || null,
       productLoading: isLoading,
       productError: error,
       productValidating: isValidating,
@@ -54,6 +65,8 @@ export function useSearchProducts(query) {
 
   const { data, isLoading, error, isValidating } = useSWR(URL, fetcher, {
     keepPreviousData: true,
+    revalidateOnFocus: false,
+    revalidateOnReconnect: false,
   });
 
   const memoizedValue = useMemo(
@@ -74,12 +87,6 @@ export function useSearchProducts(query) {
 export async function createProduct(body) {
   const URL = endpoints.product.root;
   const response = await axios.post(URL, body);
-  const product = response.data?.data;
-  capture('product_created', {
-    product_id: product?.id,
-    product_name: product?.name,
-    variant_count: product?.variants?.length,
-  });
   return response;
 }
 
@@ -100,7 +107,6 @@ export async function deleteProduct(id) {
 export async function deployProduct(id) {
   const URL = endpoints.product.deploy(id)
   const response = await axios.post(URL);
-  capture('product_deployment_started', { product_id: id });
   return response;
 }
 
@@ -109,8 +115,7 @@ export async function uploadProductImages(id, body) {
   return await axios.post(URL, body);
 }
 
-export async function createMedia(files) {
-  // const URL = '/media';
+export async function createMedia(files, onProgress) {
   const URL = endpoints.media.root;
   const formData = new FormData();
 
@@ -122,6 +127,12 @@ export async function createMedia(files) {
     headers: {
       'Content-Type': 'multipart/form-data',
     },
+    onUploadProgress: onProgress
+      ? (progressEvent) => {
+          const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          onProgress(percent);
+        }
+      : undefined,
   });
 }
 
@@ -135,4 +146,9 @@ export async function updateProductVariant(productId, variantId, data) {
 export async function deleteProductVariant(productId, variantId) {
   const URL = `/products/${productId}/variants/${variantId}`;
   return await axios.delete(URL);
+}
+
+export async function addOptionValue(productId, data) {
+  const res = await axios.post(`/products/${productId}/variants/add-option-value`, data);
+  return res.data;
 }

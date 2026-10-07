@@ -1,252 +1,439 @@
-import { useState, useCallback } from 'react';
+import { useRef, useState, useCallback, useMemo, useEffect } from 'react';
 import PropTypes from 'prop-types';
 
 import Box from '@mui/material/Box';
 import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import Button from '@mui/material/Button';
 import Stack from '@mui/material/Stack';
 import Grid from '@mui/material/Grid';
-import Card from '@mui/material/Card';
 import Typography from '@mui/material/Typography';
 import CircularProgress from '@mui/material/CircularProgress';
-import Divider from '@mui/material/Divider';
-import { alpha } from '@mui/material/styles';
+import LinearProgress from '@mui/material/LinearProgress';
+import IconButton from '@mui/material/IconButton';
+import { alpha, keyframes } from '@mui/material/styles';
 
 import { useTranslate } from 'src/locales';
-import { useGetMedia, uploadMedia } from 'src/api/media';
+import { useGetMedia, uploadMedia, deleteMedia } from 'src/api/media';
 import { useSnackbar } from 'src/components/snackbar';
 import Iconify from 'src/components/iconify';
-import { Upload } from 'src/components/upload';
-import { fData } from 'src/utils/format-number';
-import { STORAGE_API } from 'src/config-global';
+import { ConfirmDialog } from 'src/components/custom-dialog';
+import { useMediaPreview } from 'src/context/media-preview/media-preview-context';
 
-// ----------------------------------------------------------------------
+// ── Animations ──────────────────────────────────────────────────────────
 
-export default function MediaPickerDialog({ open, onClose, onSelect, multiple = false, title }) {
+const checkPop = keyframes`
+  0% { transform: scale(0); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+`;
+
+const spin = keyframes`
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+`;
+
+const breathe = keyframes`
+  0%, 100% { transform: scale(1); opacity: 0.6; }
+  50% { transform: scale(1.08); opacity: 1; }
+`;
+
+// ── Component ───────────────────────────────────────────────────────────
+
+export default function MediaPickerDialog({ open, onClose, onSelect, multiple = false, selectable = true, title, confirmLabel }) {
   const { t } = useTranslate();
   const { enqueueSnackbar } = useSnackbar();
+  const fileInputRef = useRef(null);
 
   const [selectedMedia, setSelectedMedia] = useState([]);
-  const [localPreviews, setLocalPreviews] = useState([]); // Local previews for immediate display
   const [uploading, setUploading] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const { previewMap, addPreviews, checkS3Readiness } = useMediaPreview();
 
   const { media, mediaLoading, mediaValidating, mutate } = useGetMedia(1, 100);
 
-  // Combine local previews with server media (local previews first)
-  const allMedia = [...localPreviews, ...(media || [])];
+  const serverMediaCount = (media || []).length;
 
-  const handleToggleMedia = useCallback((mediaItem) => {
-    setSelectedMedia((prev) => {
-      const isSelected = prev.some((item) => item.id === mediaItem.id);
+  // ── Display: merge server items with shared blob URL overrides ──
+  const displayMedia = useMemo(() => {
+    const serverItems = media || [];
+    if (previewMap.size === 0) return serverItems;
 
-      if (multiple) {
-        if (isSelected) {
-          return prev.filter((item) => item.id !== mediaItem.id);
-        }
-        return [...prev, mediaItem];
-      }
-
-      // Single selection
-      return isSelected ? [] : [mediaItem];
+    return serverItems.map((item) => {
+      const entry = previewMap.get(item.id);
+      return entry ? { ...item, full_url: entry.blobUrl, _hasLocalPreview: true } : item;
     });
-  }, [multiple]);
+  }, [previewMap, media]);
 
-  const handleDrop = useCallback(async (acceptedFiles) => {
-    try {
-      setUploading(true);
+  const isEmpty = displayMedia.length === 0;
 
-      // Create local previews immediately for instant feedback
-      const previews = acceptedFiles.map((file, index) => ({
-        id: `local-${Date.now()}-${index}`,
-        full_url: URL.createObjectURL(file),
-        alt_text: file.name,
-        width: 0,
-        height: 0,
-        file_size: file.size,
-        isLocal: true, // Flag to identify local previews
-      }));
-      setLocalPreviews((prev) => [...previews, ...prev]);
+  // ── Background: check S3 readiness via shared context ──
+  useEffect(() => {
+    if (previewMap.size === 0 || !media) return;
+    checkS3Readiness(media);
+  }, [media, previewMap, checkS3Readiness]);
 
-      await uploadMedia(acceptedFiles);
+  // ── Handlers ──────────────────────────────────────────────────────────
 
-      // Refresh media list immediately
-      mutate();
+  const handleToggleMedia = useCallback(
+    (mediaItem) => {
+      setSelectedMedia((prev) => {
+        const isSelected = prev.some((item) => item.id === mediaItem.id);
 
-      // Auto-refresh after delay to ensure media is fully created on backend
-      // Then remove local previews as server data should be available
-      setTimeout(() => {
+        if (multiple) {
+          return isSelected
+            ? prev.filter((item) => item.id !== mediaItem.id)
+            : [...prev, mediaItem];
+        }
+
+        return isSelected ? [] : [mediaItem];
+      });
+    },
+    [multiple]
+  );
+
+  const handleUploadFiles = useCallback(
+    async (files) => {
+      try {
+        setUploading(true);
+
+        // Create blob URLs for instant preview
+        const blobUrls = files.map((file) => URL.createObjectURL(file));
+
+        const response = await uploadMedia(files);
+        const uploadedItems = response?.data?.data || [];
+
+        // Store blob URLs in shared context (persists across components)
+        const entries = uploadedItems
+          .map((item, index) => (blobUrls[index] ? { id: item.id, blobUrl: blobUrls[index] } : null))
+          .filter(Boolean);
+        if (entries.length > 0) addPreviews(entries);
+
         mutate();
-      }, 1500);
+        enqueueSnackbar(t('media_uploaded_successfully'), { variant: 'success' });
+      } catch (error) {
+        console.error('Failed to upload media:', error);
+        enqueueSnackbar(error.message || t('failed_to_upload_media'), { variant: 'error' });
+      } finally {
+        setUploading(false);
+      }
+    },
+    [mutate, addPreviews, enqueueSnackbar, t]
+  );
 
-      setTimeout(() => {
-        mutate();
-        // Remove local previews after server data is likely available
-        setLocalPreviews([]);
-      }, 3000);
+  const handleFileInputChange = useCallback(
+    (event) => {
+      const files = Array.from(event.target.files);
+      if (files.length > 0) handleUploadFiles(files);
+      event.target.value = '';
+    },
+    [handleUploadFiles]
+  );
 
-      enqueueSnackbar(t('media_uploaded_successfully'), { variant: 'success' });
-    } catch (error) {
-      console.error('Failed to upload media:', error);
-      enqueueSnackbar(error.message || t('failed_to_upload_media'), { variant: 'error' });
-      // Remove local previews on error
-      setLocalPreviews([]);
-    } finally {
-      setUploading(false);
-    }
-  }, [mutate, enqueueSnackbar, t]);
+  const handleAddClick = useCallback(() => {
+    fileInputRef.current?.click();
+  }, []);
 
   const handleSelect = useCallback(() => {
-    // Filter out local previews from selection (they can't be used as actual media)
-    const validSelection = selectedMedia.filter((item) => !item.isLocal);
-    onSelect(multiple ? validSelection : validSelection[0]);
-
-    // Reset state
+    // Selected items come from displayMedia, whose full_url may be a local
+    // blob: preview — resolve back to the canonical server media so a blob
+    // URL never leaves this dialog (consumers persist full_url).
+    const canonical = selectedMedia.map(
+      (sel) => (media || []).find((item) => item.id === sel.id) || sel
+    );
+    const notReady = canonical.filter((item) => !item.url);
+    if (notReady.length > 0) {
+      mutate();
+      enqueueSnackbar(t('media_still_processing'), { variant: 'warning' });
+      return;
+    }
+    onSelect(multiple ? canonical : canonical[0]);
     setSelectedMedia([]);
-    setLocalPreviews([]);
-
     onClose();
-  }, [selectedMedia, multiple, onSelect, onClose]);
+  }, [selectedMedia, media, multiple, onSelect, onClose, mutate, enqueueSnackbar, t]);
 
   const handleCancel = useCallback(() => {
     setSelectedMedia([]);
-    setLocalPreviews([]);
     onClose();
   }, [onClose]);
 
-  const handleRefresh = useCallback(() => {
-    mutate();
-  }, [mutate]);
+  const handleDeleteMedia = useCallback(async () => {
+    if (!deleteTarget) return;
+    try {
+      setDeleting(true);
+      await deleteMedia(deleteTarget.id);
+      setSelectedMedia((prev) => prev.filter((m) => m.id !== deleteTarget.id));
+      mutate();
+      enqueueSnackbar(t('media_deleted_successfully'), { variant: 'success' });
+    } catch (error) {
+      enqueueSnackbar(error.message || t('failed_to_delete_media'), { variant: 'error' });
+    } finally {
+      setDeleting(false);
+      setDeleteTarget(null);
+    }
+  }, [deleteTarget, mutate, enqueueSnackbar, t]);
+
+  // ── Render ────────────────────────────────────────────────────────────
 
   return (
     <Dialog
       open={open}
       onClose={handleCancel}
-      maxWidth="md"
+      maxWidth="sm"
       fullWidth
       PaperProps={{
-        sx: { height: '80vh' },
+        sx: {
+          borderRadius: 3,
+          overflow: 'hidden',
+          maxHeight: '75vh',
+        },
       }}
     >
-      <DialogTitle>
-        {title || t('select_media')}
-      </DialogTitle>
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*,.heic,.heif"
+        multiple
+        onChange={handleFileInputChange}
+        style={{ display: 'none' }}
+      />
 
-      <DialogContent sx={{ p: 3 }}>
-        <Stack spacing={3}>
-          {/* Upload Section */}
-          <Box>
-            <Upload
-              multiple
-              onDrop={handleDrop}
-              disabled={uploading}
-              accept={{ 'image/*': [] }}
-              placeholder={
-                <Stack spacing={2.5} alignItems="center" sx={{ py: 2 }}>
-                  {/* Upload Icon */}
-                  <Box
-                    sx={{
-                      width: 80,
-                      height: 80,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      borderRadius: '50%',
-                      bgcolor: (theme) => alpha(theme.palette.primary.main, 0.08),
-                    }}
-                  >
-                    <Iconify
-                      icon="eva:cloud-upload-fill"
-                      width={40}
-                      sx={{ color: 'primary.main' }}
-                    />
-                  </Box>
-
-                  {/* Upload Text */}
-                  <Stack spacing={0.5} alignItems="center">
-                    <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                      {t('drop_or_select_file')}
-                    </Typography>
-                    <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                      {t('supported_formats')}: JPG, PNG, GIF (max 3MB)
-                    </Typography>
-                  </Stack>
-                </Stack>
-              }
-            />
-
-            {uploading && (
-              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 3 }}>
-                <CircularProgress />
-                <Typography sx={{ ml: 2 }}>{t('uploading')}</Typography>
-              </Box>
-            )}
+      {/* ── Header ── */}
+      <Stack
+        direction="row"
+        alignItems="center"
+        justifyContent="space-between"
+        sx={{
+          px: 2.5,
+          py: 1.5,
+          borderBottom: (theme) => `1px solid ${alpha(theme.palette.grey[500], 0.12)}`,
+        }}
+      >
+        <Stack direction="row" alignItems="center" spacing={1.25}>
+          <Box
+            sx={{
+              width: 34,
+              height: 34,
+              borderRadius: 1.5,
+              bgcolor: (theme) => alpha(theme.palette.primary.main, 0.08),
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}
+          >
+            <Iconify icon="solar:gallery-bold-duotone" width={18} sx={{ color: 'primary.main' }} />
           </Box>
 
-          <Divider />
-
-          {/* Media Library Section */}
-          <Box>
-            <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
-              <Typography variant="h6">
-                {t('media_library')}
+          <Stack spacing={0}>
+            <Typography variant="subtitle2" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
+              {title || t('media_library')}
+            </Typography>
+            {serverMediaCount > 0 && (
+              <Typography variant="caption" sx={{ color: 'text.disabled', fontSize: '0.68rem' }}>
+                {t('photos_count', { count: serverMediaCount })}
               </Typography>
-              <Button
-                size="small"
-                startIcon={<Iconify icon="solar:refresh-bold" />}
-                onClick={handleRefresh}
-                disabled={mediaLoading || mediaValidating}
-              >
-                {mediaValidating ? t('refreshing') : t('refresh')}
-              </Button>
-            </Stack>
-
-            {mediaLoading && localPreviews.length === 0 ? (
-              <Box sx={{ display: 'flex', justifyContent: 'center', py: 5 }}>
-                <CircularProgress />
-              </Box>
-            ) : allMedia.length > 0 ? (
-              <Grid container spacing={2}>
-                {allMedia.map((item) => (
-                  <Grid item xs={6} sm={4} md={3} key={item.id}>
-                    <MediaCard
-                      item={item}
-                      selected={selectedMedia.some((m) => m.id === item.id)}
-                      onToggle={() => handleToggleMedia(item)}
-                      isLocal={item.isLocal}
-                    />
-                  </Grid>
-                ))}
-              </Grid>
-            ) : (
-              <Box sx={{ textAlign: 'center', py: 5 }}>
-                <Iconify icon="solar:gallery-bold" width={64} sx={{ color: 'text.disabled', mb: 2 }} />
-                <Typography variant="h6" color="text.secondary">
-                  {t('no_media_found')}
-                </Typography>
-                <Typography variant="body2" color="text.disabled" sx={{ mt: 1 }}>
-                  {t('upload_media_to_get_started')}
-                </Typography>
-              </Box>
             )}
-          </Box>
+          </Stack>
         </Stack>
+
+        <Stack direction="row" alignItems="center" spacing={0.75}>
+          <Button
+            size="small"
+            variant="soft"
+            color="primary"
+            startIcon={<Iconify icon="solar:add-circle-bold" width={18} />}
+            onClick={handleAddClick}
+            disabled={uploading}
+            sx={{
+              height: 32,
+              fontSize: '0.78rem',
+              fontWeight: 600,
+              px: 1.5,
+              borderRadius: 1.5,
+              textTransform: 'none',
+            }}
+          >
+            {uploading ? t('uploading') : t('add')}
+          </Button>
+
+          <IconButton
+            size="small"
+            onClick={() => mutate()}
+            disabled={mediaLoading || mediaValidating}
+            sx={{
+              width: 32,
+              height: 32,
+              color: 'text.disabled',
+              '&:hover': { color: 'text.primary' },
+            }}
+          >
+            <Iconify
+              icon="solar:refresh-bold"
+              width={16}
+              sx={mediaValidating ? { animation: `${spin} 0.8s linear infinite` } : {}}
+            />
+          </IconButton>
+
+          <IconButton
+            size="small"
+            onClick={handleCancel}
+            sx={{
+              width: 32,
+              height: 32,
+              color: 'text.disabled',
+              '&:hover': { color: 'text.primary' },
+            }}
+          >
+            <Iconify icon="mingcute:close-line" width={16} />
+          </IconButton>
+        </Stack>
+      </Stack>
+
+      {/* ── Upload progress ── */}
+      {uploading && (
+        <LinearProgress
+          sx={{
+            height: 2,
+            bgcolor: (theme) => alpha(theme.palette.primary.main, 0.06),
+            '& .MuiLinearProgress-bar': { borderRadius: 2 },
+          }}
+        />
+      )}
+
+      {/* ── Content ── */}
+      <DialogContent
+        sx={{
+          p: 2,
+          overflow: 'auto',
+          display: 'flex',
+          flexDirection: 'column',
+          ...(isEmpty && !mediaLoading && { justifyContent: 'center', alignItems: 'center' }),
+        }}
+      >
+        {mediaLoading && displayMedia.length === 0 ? (
+          <Stack alignItems="center" justifyContent="center" sx={{ py: 8 }}>
+            <CircularProgress size={28} thickness={4} />
+          </Stack>
+        ) : isEmpty ? (
+          /* ── Empty state ── */
+          <Stack
+            alignItems="center"
+            spacing={2.5}
+            onClick={handleAddClick}
+            sx={{
+              py: 4,
+              px: 3,
+              cursor: 'pointer',
+              borderRadius: 3,
+              border: (theme) => `2px dashed ${alpha(theme.palette.grey[500], 0.2)}`,
+              bgcolor: (theme) => alpha(theme.palette.grey[500], 0.02),
+              transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+              width: '100%',
+              maxWidth: 320,
+              '&:hover': {
+                borderColor: (theme) => alpha(theme.palette.primary.main, 0.3),
+                bgcolor: (theme) => alpha(theme.palette.primary.main, 0.02),
+                '& .empty-icon-wrap': {
+                  bgcolor: (theme) => alpha(theme.palette.primary.main, 0.1),
+                },
+              },
+            }}
+          >
+            <Box
+              className="empty-icon-wrap"
+              sx={{
+                width: 64,
+                height: 64,
+                borderRadius: 2,
+                bgcolor: (theme) => alpha(theme.palette.grey[500], 0.06),
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'background-color 0.25s',
+                animation: `${breathe} 3s ease-in-out infinite`,
+              }}
+            >
+              <Iconify icon="solar:cloud-upload-bold-duotone" width={32} sx={{ color: 'text.disabled' }} />
+            </Box>
+
+            <Stack spacing={0.5} alignItems="center">
+              <Typography variant="subtitle2" sx={{ color: 'text.secondary', fontWeight: 600 }}>
+                {t('no_media_found')}
+              </Typography>
+              <Typography
+                variant="caption"
+                sx={{ color: 'text.disabled', textAlign: 'center', lineHeight: 1.5 }}
+              >
+                {t('upload_media_to_get_started')}
+              </Typography>
+            </Stack>
+          </Stack>
+        ) : (
+          /* ── Photo grid ── */
+          <Grid container spacing={1}>
+            {displayMedia.map((item) => (
+              <Grid item xs={4} sm={3} key={item.id}>
+                <MediaCard
+                  item={item}
+                  selected={selectable && selectedMedia.some((m) => m.id === item.id)}
+                  selectable={selectable}
+                  onToggle={() => selectable && handleToggleMedia(item)}
+                  onDelete={() => setDeleteTarget(item)}
+                />
+              </Grid>
+            ))}
+          </Grid>
+        )}
       </DialogContent>
 
-      <DialogActions sx={{ px: 3, py: 2 }}>
-        <Button onClick={handleCancel} color="inherit">
+      {/* ── Footer ── */}
+      <DialogActions
+        sx={{
+          px: 2.5,
+          py: 1.5,
+          borderTop: (theme) => `1px solid ${alpha(theme.palette.grey[500], 0.08)}`,
+        }}
+      >
+        <Button onClick={handleCancel} color="inherit" sx={{ fontWeight: 500 }}>
           {t('cancel')}
         </Button>
         <Button
-          onClick={handleSelect}
+          onClick={selectable ? handleSelect : handleCancel}
           variant="contained"
-          disabled={selectedMedia.length === 0}
+          disabled={selectable && selectedMedia.length === 0}
+          sx={{
+            minWidth: 100,
+            fontWeight: 600,
+            boxShadow: 'none',
+            '&:hover': { boxShadow: 'none' },
+          }}
         >
-          {t('select')} {selectedMedia.length > 0 && `(${selectedMedia.length})`}
+          {confirmLabel || (selectable && selectedMedia.length > 0 ? `${t('select')} (${selectedMedia.length})` : t('select'))}
         </Button>
       </DialogActions>
+
+      {/* ── Delete confirmation ── */}
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        title={t('delete_media')}
+        content={t('are_you_sure_delete_media')}
+        action={
+          <Button
+            variant="contained"
+            color="error"
+            onClick={handleDeleteMedia}
+            disabled={deleting}
+          >
+            {deleting ? t('deleting') : t('delete')}
+          </Button>
+        }
+      />
     </Dialog>
   );
 }
@@ -254,119 +441,135 @@ export default function MediaPickerDialog({ open, onClose, onSelect, multiple = 
 MediaPickerDialog.propTypes = {
   open: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
-  onSelect: PropTypes.func.isRequired,
+  onSelect: PropTypes.func,
   multiple: PropTypes.bool,
+  selectable: PropTypes.bool,
   title: PropTypes.string,
+  confirmLabel: PropTypes.string,
 };
 
-// ----------------------------------------------------------------------
+// ── MediaCard ───────────────────────────────────────────────────────────
 
-function MediaCard({ item, selected, onToggle, isLocal }) {
+function MediaCard({ item, selected, selectable = true, onToggle, onDelete }) {
   return (
-    <Card
-      onClick={isLocal ? undefined : onToggle}
+    <Box
+      onClick={selectable ? onToggle : undefined}
       sx={{
         position: 'relative',
-        cursor: isLocal ? 'default' : 'pointer',
-        transition: 'all 0.2s',
-        border: (theme) => `2px solid ${selected ? theme.palette.primary.main : 'transparent'}`,
-        opacity: isLocal ? 0.7 : 1,
+        width: '100%',
+        paddingTop: '100%',
+        borderRadius: 1.5,
+        overflow: 'hidden',
+        cursor: selectable ? 'pointer' : 'default',
+        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+        outline: (theme) =>
+          selected
+            ? `3px solid ${theme.palette.primary.main}`
+            : '3px solid transparent',
+        outlineOffset: -3,
+        boxShadow: (theme) =>
+          selected
+            ? `0 0 0 1px ${alpha(theme.palette.primary.main, 0.3)}, 0 4px 14px ${alpha(theme.palette.primary.main, 0.25)}`
+            : 'none',
+        transform: selected ? 'scale(0.95)' : 'scale(1)',
         '&:hover': {
-          boxShadow: isLocal ? 'none' : (theme) => theme.customShadows.z8,
+          transform: selected ? 'scale(0.95)' : selectable ? 'scale(1.03)' : 'scale(1)',
+          boxShadow: (theme) =>
+            selected
+              ? `0 0 0 1px ${alpha(theme.palette.primary.main, 0.3)}, 0 4px 14px ${alpha(theme.palette.primary.main, 0.25)}`
+              : selectable
+                ? `0 4px 16px ${alpha(theme.palette.common.black, 0.1)}`
+                : 'none',
+          '& .media-delete-btn': { opacity: 1 },
         },
       }}
     >
       <Box
+        component="img"
+        src={item.full_url}
+        alt={item.alt_text || ''}
+        loading="lazy"
         sx={{
-          position: 'relative',
+          position: 'absolute',
+          top: 0,
+          left: 0,
           width: '100%',
-          paddingTop: '100%',
-          overflow: 'hidden',
+          height: '100%',
+          objectFit: 'cover',
         }}
-      >
+      />
+
+      {/* Selection scrim — gradient from bottom for depth */}
+      {selected && (
         <Box
-          component="img"
-          src={item.full_url}
-          alt={item.alt_text || 'Media'}
-          loading="lazy"
           sx={{
             position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover',
+            inset: 0,
+            background: (theme) =>
+              `linear-gradient(to top, ${alpha(theme.palette.primary.darker || theme.palette.primary.dark, 0.35)} 0%, ${alpha(theme.palette.primary.main, 0.12)} 60%, ${alpha(theme.palette.primary.main, 0.06)} 100%)`,
+            pointerEvents: 'none',
           }}
         />
+      )}
 
-        {/* Loading overlay for local previews */}
-        {isLocal && (
-          <Box
-            sx={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              bgcolor: (theme) => alpha(theme.palette.common.black, 0.4),
-            }}
-          >
-            <CircularProgress size={24} sx={{ color: 'white' }} />
-          </Box>
-        )}
-
-        {selected && !isLocal && (
-          <Box
-            sx={{
-              position: 'absolute',
-              top: 8,
-              right: 8,
-              width: 24,
-              height: 24,
-              borderRadius: '50%',
-              bgcolor: 'primary.main',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <Iconify icon="eva:checkmark-fill" width={16} sx={{ color: 'white' }} />
-          </Box>
-        )}
-
+      {/* Check badge */}
+      {selected && (
         <Box
           sx={{
             position: 'absolute',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            bgcolor: (theme) => alpha(theme.palette.common.black, 0.6),
-            p: 0.5,
+            top: 6,
+            right: 6,
+            width: 26,
+            height: 26,
+            borderRadius: '50%',
+            bgcolor: 'primary.main',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            animation: `${checkPop} 0.3s cubic-bezier(0.4, 0, 0.2, 1)`,
+            boxShadow: (theme) =>
+              `0 2px 8px ${alpha(theme.palette.primary.main, 0.5)}, 0 0 0 2px ${alpha(theme.palette.common.white, 0.9)}`,
           }}
         >
-          <Typography
-            variant="caption"
-            sx={{
-              color: 'white',
-              fontSize: '0.65rem',
-              display: 'block',
-              textAlign: 'center',
-            }}
-          >
-            {isLocal ? item.alt_text : `${item.width} × ${item.height} • ${fData(item.file_size)}`}
-          </Typography>
+          <Iconify icon="eva:checkmark-fill" width={16} sx={{ color: 'white' }} />
         </Box>
-      </Box>
-    </Card>
+      )}
+
+      {/* Delete button — shown on hover when not selectable */}
+      {!selectable && onDelete && (
+        <IconButton
+          className="media-delete-btn"
+          size="small"
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete();
+          }}
+          sx={{
+            position: 'absolute',
+            top: 4,
+            right: 4,
+            width: 28,
+            height: 28,
+            opacity: 0,
+            transition: 'opacity 0.2s',
+            bgcolor: (theme) => alpha(theme.palette.error.main, 0.85),
+            color: 'common.white',
+            '&:hover': {
+              bgcolor: 'error.dark',
+            },
+          }}
+        >
+          <Iconify icon="solar:trash-bin-trash-bold" width={15} />
+        </IconButton>
+      )}
+    </Box>
   );
 }
 
 MediaCard.propTypes = {
   item: PropTypes.object.isRequired,
   selected: PropTypes.bool.isRequired,
+  selectable: PropTypes.bool,
   onToggle: PropTypes.func.isRequired,
-  isLocal: PropTypes.bool,
+  onDelete: PropTypes.func,
 };

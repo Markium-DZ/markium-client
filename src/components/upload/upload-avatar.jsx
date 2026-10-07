@@ -6,13 +6,16 @@ import Stack from '@mui/material/Stack';
 import { alpha } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
 
+import { useTranslate } from 'src/locales';
+
 import Image from '../image';
 import Iconify from '../iconify';
 import RejectionFiles from './errors-rejection-files';
 
 // ----------------------------------------------------------------------
 
-export default function UploadAvatar({ error, file, disabled, helperText, sx, ...other }) {
+export default function UploadAvatar({ error, file, disabled, helperText, uploadText, updateText, sx, ...other }) {
+  const { t } = useTranslate();
   const { getRootProps, getInputProps, isDragActive, isDragReject, fileRejections } = useDropzone({
     multiple: false,
     disabled,
@@ -77,7 +80,7 @@ export default function UploadAvatar({ error, file, disabled, helperText, sx, ..
     >
       <Iconify icon="solar:camera-add-bold" width={32} />
 
-      <Typography variant="caption">{file ? 'Update photo' : 'Upload photo'}</Typography>
+      <Typography variant="caption">{file ? (updateText || t('update_photo')) : (uploadText || t('upload_photo'))}</Typography>
     </Stack>
   );
 

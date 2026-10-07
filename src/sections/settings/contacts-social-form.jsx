@@ -28,7 +28,6 @@ import { AuthContext } from 'src/auth/context/jwt';
 export default function ContactsSocialForm() {
   const { user } = useContext(AuthContext)
   const { store } = useGetMyStore(user?.store?.slug);
-  console.log("store :store : ", store);
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslate();
 
@@ -103,9 +102,6 @@ export default function ContactsSocialForm() {
         },
       };
 
-      // Console log the structured data
-      console.log('Contacts & Social Media data:', structuredData);
-
       await updateStoreConfig({ config: { contacts_social: structuredData } });
 
       enqueueSnackbar(t('contacts_social_saved_successfully'), { variant: 'success' });
@@ -133,9 +129,20 @@ export default function ContactsSocialForm() {
   return (
     <FormProvider methods={methods} onSubmit={onSubmit}>
       <Grid container spacing={3}>
-        {/* Information Alert */}
+        {/* Save Button */}
         <Grid xs={12}>
-          <Stack direction="row" justifyContent="flex-end" spacing={2}>
+          <Stack
+            direction="row"
+            justifyContent="flex-end"
+            spacing={2}
+            sx={{
+              position: 'sticky',
+              top: 0,
+              py: 1,
+              bgcolor: 'background.default',
+              zIndex: 1,
+            }}
+          >
             <LoadingButton
               type="submit"
               variant="contained"

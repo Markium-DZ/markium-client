@@ -1,13 +1,8 @@
-import { Avatar, Box, Button, Card, FormControlLabel, FormGroup, Grid, IconButton, Link, ListItemText, MenuItem, Stack, Switch, Tooltip, Typography } from '@mui/material';
+import { Alert, Avatar, Box, Button, Card, FormControlLabel, FormGroup, Grid, IconButton, Link, ListItemText, MenuItem, Stack, Switch, Tooltip, Typography } from '@mui/material';
 import { t } from 'i18next';
 import { set } from 'lodash'; // [keep for later use]
 import { enqueueSnackbar, useSnackbar } from 'notistack';
 import { useCallback, useContext, useEffect, useState } from 'react';
-import { AddCarToMentainance, deleteCar, markCarAsAvailable, useGetCar } from 'src/api/car';
-import { useGetClauses } from 'src/api/claim';
-import { useGetClients } from 'src/api/client';
-import { deleteContractClause, useGetContracts } from 'src/api/contract';
-import { markMaintenanceAsCompeleted, useGetMaintenance } from 'src/api/maintainance';
 import { changeItemVisibilityInSettings, useGetMainSpecs, useGetSystemVisibleItem } from 'src/api/settings'; // [keep for later use]
 import { createUser, deleteUser, useRoles, useUsers } from 'src/api/users';
 import { useValues } from 'src/api/utils';
@@ -24,9 +19,12 @@ import { useRouter } from 'src/routes/hooks';
 import { paths } from 'src/routes/paths';
 import ZaityListView from 'src/sections/ZaityTables/zaity-list-view';
 import ZaityHeadContainer from 'src/sections/ZaityTables/ZaityHeadContainer';
+import { openAssistant } from 'src/sections/assistant/chat-assistant-widget';
+import Fab from '@mui/material/Fab';
 import ZaityTableFilters from 'src/sections/ZaityTables/ZaityTableFilters';
 import ZaityTableTabs from 'src/sections/ZaityTables/ZaityTableTabs'; // [keep for later use]
 import { fDate } from 'src/utils/format-time';
+import { getStorefrontUrl } from 'src/config-global';
 import showError from 'src/utils/show_error';
 import * as Yup from 'yup';
 import { useMemo } from 'react';
@@ -34,14 +32,13 @@ import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import FormProvider, { RHFUpload } from 'src/components/hook-form';
 import { LoadingButton } from '@mui/lab';
-import { deleteDocument, useGetDocuments } from 'src/api/document';
-import { deleteDriver, useGetDrivers } from 'src/api/drivers';
 import { secondary } from 'src/theme/palette';
 import { color } from 'framer-motion';
 import { LoadingScreen } from 'src/components/loading-screen';
 import { useGetProducts, deployProduct, deleteProduct } from 'src/api/product';
 import Label from 'src/components/label';
 import { AuthContext } from 'src/auth/context/jwt';
+import { captureEvent } from 'src/utils/posthog';
 
 
 
@@ -51,13 +48,14 @@ import { AuthContext } from 'src/auth/context/jwt';
 
 export default function ProductsListView({ }) {
 
-    const { products, productsLoading } = useGetProducts()
-    console.log("products : ",products);
+    const { products, productsLoading, productsError, productsMutate } = useGetProducts();
 
     const { user } = useContext(AuthContext);
 
-    const [tableData, setTableData] = useState([]);
-    const [dataFiltered, setDataFiltered] = useState([]);
+    const [tableData, setTableData] = useState(null);
+    const [dataFiltered, setDataFiltered] = useState(null);
+
+    const isReady = tableData !== null;
 
     let TABLE_HEAD = [
         { id: 'name', label: t('name'), type: "render", render: (item) => <ProductNameCell item={item} />, width: 250 },
@@ -120,10 +118,9 @@ export default function ProductsListView({ }) {
 
     const items = [
         { key: 'all', label: t('all'), match: () => true },
-        { key: 'deployed', label: t('deployed'), match: (item) => !item?.status == "deployed", color: 'success' },
-        { key: 'processing', label: t('processing'), match: (item) => item?.status == "processing", color: 'warning' },
-        { key: 'draft', label: t('draft'), match: (item) => item?.status == "draft", color: 'default' },
-        { key: 'failed', label: t('not_enabled'), match: (item) => item?.status == "failed", color: 'error' },
+        { key: 'deployed', label: t('deployed'), match: (item) => item?.status === "deployed", color: 'success' },
+        { key: 'processing', label: t('processing'), match: (item) => item?.status === "processing", color: 'warning' },
+        { key: 'draft', label: t('draft'), match: (item) => item?.status === "draft", color: 'default' },
     ];
 
     const filterFunction = (data, filters) => {
@@ -148,14 +145,43 @@ export default function ProductsListView({ }) {
             <ZaityHeadContainer
                 heading={t("productsList")}
                 action={
-                    <Button
-                        component={RouterLink}
-                        href={paths.dashboard.product.new}
-                        variant="contained"
-                        startIcon={<Iconify icon="mingcute:add-line" />}
-                    >
-                        {t("addNewProduct")}
-                    </Button>
+                    <Stack direction="row" spacing={1}>
+                        <Button
+                            variant="soft"
+                            color="info"
+                            startIcon={<Iconify icon="solar:magic-stick-3-bold" />}
+                            onClick={() => openAssistant(t('assistant.add_product_kickoff'))}
+                        >
+                            {t('assistant.add_with_ai')}
+                        </Button>
+                        <Button
+                            component={RouterLink}
+                            href={paths.dashboard.product.new}
+                            variant="contained"
+                            startIcon={<Iconify icon="mingcute:add-line" />}
+                        >
+                            {t("addNewProduct")}
+                        </Button>
+                    </Stack>
+                }
+                mobileAction={
+                    <Stack direction="row" spacing={1}>
+                        <Fab
+                            color="info"
+                            size="small"
+                            onClick={() => openAssistant(t('assistant.add_product_kickoff'))}
+                        >
+                            <Iconify icon="solar:magic-stick-3-bold" width={20} />
+                        </Fab>
+                        <Fab
+                            component={RouterLink}
+                            href={paths.dashboard.product.new}
+                            color="primary"
+                            size="small"
+                        >
+                            <Iconify icon="mingcute:add-line" width={22} />
+                        </Fab>
+                    </Stack>
                 }
                 links={[
                     { name: t('dashboard'), href: paths.dashboard.root },
@@ -163,20 +189,23 @@ export default function ProductsListView({ }) {
                     { name: t('list') },
                 ]}
             >
-                <Card>
-                    <ZaityTableTabs key='condition' data={tableData} items={items} defaultFilters={defaultFilters} setTableDate={setDataFiltered} filterFunction={filterFunction}>
-                        {/* <ZaityTableTabs key='attachable_type' data={tableData} items={items2} defaultFilters={defaultFilters} setTableDate={setDataFiltered} filterFunction={filterFunction}> */}
-                        <ZaityTableFilters data={dataFiltered} tableData={tableData} setTableDate={setDataFiltered} items={filters} defaultFilters={defaultFilters} dataFiltered={tableData} searchText={t("search_by") + " " + t("name") + " " + t("or_any_value") + " ..."}  >
-                            {
-                                productsLoading ?
-                                    <LoadingScreen sx={{ my: 8 }} color='primary' />
-                                    :
-                                    <ZaityListView TABLE_HEAD={[...TABLE_HEAD]} dense="medium" zaityTableDate={dataFiltered || []} onSelectedRows={({ data, setTableData }) => { return <onSelectedRowsComponent configurable_type={"roles"} setTableData={setTableData} data={products} /> }} />
-                            }
-                        </ZaityTableFilters>
-                        {/* </ZaityTableTabs> */}
-                    </ZaityTableTabs>
-                </Card>
+                {!productsLoading && productsError && !products?.length && (
+                    <Alert severity="warning" icon={<Iconify icon="solar:cloud-cross-bold" width={22} />} sx={{ mb: 2 }}>
+                        {t('no_connection_notice')}
+                    </Alert>
+                )}
+
+                {(productsLoading || !isReady) ? (
+                    <LoadingScreen sx={{ my: 8 }} color='primary' />
+                ) : (
+                    <Card>
+                        <ZaityTableTabs filterKey='condition' data={tableData} items={items} defaultFilters={defaultFilters} setTableDate={setDataFiltered} filterFunction={filterFunction}>
+                            <ZaityTableFilters data={dataFiltered} tableData={tableData} setTableDate={setDataFiltered} items={filters} defaultFilters={defaultFilters} dataFiltered={tableData} searchText={t("search_by") + " " + t("name") + " " + t("or_any_value") + " ..."}  >
+                                <ZaityListView TABLE_HEAD={[...TABLE_HEAD]} dense="medium" zaityTableDate={dataFiltered || []} onSelectedRows={({ data, setTableData }) => { return <onSelectedRowsComponent configurable_type={"roles"} setTableData={setTableData} data={products} /> }} />
+                            </ZaityTableFilters>
+                        </ZaityTableTabs>
+                    </Card>
+                )}
             </ZaityHeadContainer>
         </>
     );
@@ -203,7 +232,7 @@ const ElementActions = ({ item, setTableData , user }) => {
 
     const onEditRow = useCallback(
         (id) => {
-            router.push(paths.dashboard.drivers.edit(id));
+            router.push(paths.dashboard.product.edit(id));
         },
         [router]
     );
@@ -230,7 +259,7 @@ const ElementActions = ({ item, setTableData , user }) => {
 
 
     const copyToClipboard = () => {
-        navigator.clipboard.writeText(`https://${user?.store?.slug}.markium.online/?product=${item?.id}`)
+        navigator.clipboard.writeText(getStorefrontUrl(user?.store?.slug, { product: item?.id }))
             .then(() => {
                 enqueueSnackbar(t("operation_success"));
             })
@@ -242,15 +271,17 @@ const ElementActions = ({ item, setTableData , user }) => {
     const onDeployProduct = useCallback(
         async (id) => {
             setDeployLoader(true)
+            captureEvent('product_deployment_started', { product_id: id });
             try {
                 const res = await deployProduct(id);
-                console.log("deploy res : ", res);
+                captureEvent('product_deployment_succeeded', { product_id: id });
                 // Update the item status in the table
                 setTableData(prev => prev?.map(i => i.id === id ? { ...i, status: 'deployed', color: 'success', c_status: t('deployed') } : i))
                 enqueueSnackbar(t("operation_success"));
                 deployConfirm.onFalse();
                 setDeployLoader(false)
             } catch (error) {
+                captureEvent('product_deployment_failed', { product_id: id, error: error?.message });
                 console.log("error : ", error);
                 setDeployLoader(false)
                 showError(error)

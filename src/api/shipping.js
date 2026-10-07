@@ -91,7 +91,7 @@ export async function deleteShippingConnection(connectionId) {
 // ----------------------------------------------------------------------
 
 export function useGetShippingRates(orderId) {
-  const url = orderId ? endpoints.shipping.orderRatesByProvider(orderId) : null;
+  const url = orderId ? endpoints.shipping.orderRates(orderId) : null;
 
   const { data, isLoading, error, isValidating, mutate } = useSWR(
     url,
@@ -101,23 +101,19 @@ export function useGetShippingRates(orderId) {
 
   const memoizedValue = useMemo(
     () => {
-      // Transform provider-grouped data into flat quotes array with provider info
-      const providerData = data?.data || {};
-      const quotes = [];
+      const quotes = data?.data?.quotes || [];
 
-      Object.keys(providerData).forEach((providerName) => {
-        const providerQuotes = providerData[providerName] || [];
-        providerQuotes.forEach((quote) => {
-          quotes.push({
-            ...quote,
-            providerName, // Add provider name to each quote for grouping
-          });
-        });
+      // Group quotes by provider name for the UI
+      const grouped = {};
+      quotes.forEach((quote) => {
+        const providerName = quote.provider?.name || quote.connection?.provider?.name || 'unknown';
+        if (!grouped[providerName]) grouped[providerName] = [];
+        grouped[providerName].push(quote);
       });
 
       return {
         quotes,
-        quotesGroupedByProvider: providerData, // Keep original grouped structure
+        quotesGroupedByProvider: grouped,
         ratesLoading: isLoading,
         ratesError: error,
         ratesValidating: isValidating,
@@ -132,6 +128,16 @@ export function useGetShippingRates(orderId) {
 }
 
 export async function refreshShippingRates(orderId) {
-  const URL = endpoints.shipping.refreshOrderRates(orderId);
+  const URL = `${endpoints.shipping.refreshOrderRates(orderId)}?sync=true`;
   return await axios.post(URL);
+}
+
+export async function createShipment(orderId, { connectionId, quoteId, serviceCode, metadata }) {
+  const URL = endpoints.shipping.shipOrder(orderId);
+  return await axios.post(URL, {
+    connection_id: connectionId,
+    quote_id: quoteId || null,
+    service_code: serviceCode || null,
+    metadata: metadata || null,
+  });
 }

@@ -55,7 +55,7 @@ export default function BankingRecentTransitions({
 
       <Divider sx={{ borderStyle: 'dashed' }} />
 
-      <Box sx={{ p: 2, textAlign: 'right' }}>
+      <Box sx={{ p: 2, textAlign: 'end' }}>
         <Button
           size="small"
           color="inherit"

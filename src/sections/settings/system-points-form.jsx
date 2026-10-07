@@ -23,6 +23,7 @@ import FormProvider, {
   RHFSelect,
 } from 'src/components/hook-form';
 import showError from 'src/utils/show_error';
+import VerificationGate from 'src/components/verification-gate/verification-gate';
 
 // ----------------------------------------------------------------------
 
@@ -258,14 +259,16 @@ export default function SystemPointsForm() {
             <Button variant="outlined" size="large">
               {t('view_transaction_history')}
             </Button>
-            <LoadingButton
-              type="submit"
-              variant="contained"
-              size="large"
-              loading={isSubmitting || loading}
-            >
-              {t('purchase_points')}
-            </LoadingButton>
+            <VerificationGate>
+              <LoadingButton
+                type="submit"
+                variant="contained"
+                size="large"
+                loading={isSubmitting || loading}
+              >
+                {t('purchase_points')}
+              </LoadingButton>
+            </VerificationGate>
           </Stack>
         </Grid>
       </Grid>

@@ -118,7 +118,7 @@ export default function HomeTimeline() {
                   <Box
                     sx={{
                       flex: 1,
-                      textAlign: { xs: 'left', md: index % 2 === 0 ? 'right' : 'left' },
+                      textAlign: { xs: 'start', md: index % 2 === 0 ? 'end' : 'start' },
                       pl: { xs: 7, md: 0 },
                     }}
                   >

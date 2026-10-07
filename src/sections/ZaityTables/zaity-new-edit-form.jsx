@@ -12,7 +12,6 @@ import { t } from 'i18next';
 import SimpleAutocomplete from 'src/components/hook-form/rhf-simple-autocomplete';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import RHFTextarea from 'src/components/hook-form/RHFTextarea';
-import { renderActionsCell } from '@mui/x-data-grid';
 import showError from 'src/utils/show_error';
 import { useEffect } from 'react';
 import showValidationError from 'src/utils/show_validation_error';
@@ -87,7 +86,6 @@ export default function ZaityDynamicForm({ currentItem = {}, schema, fields, onS
 
 export function DynamicFormField({ field, options = {}, values,setValue }) {
   const { name, label, type, required, data = [], ...rest } = field;
-  console.log(name," : " , type);
 
   switch (type) {
     case 'text':
@@ -139,7 +137,6 @@ export function DynamicFormField({ field, options = {}, values,setValue }) {
 
     case 'condition':
       if (field.condition(values[field?.conditionKey])) {
-        console.log("field.condition(values[field?.conditionKey]) : ",field.condition(values[field?.conditionKey]));
         return <DynamicFormField field={{ ...field, type: field?.conditionType }} value={values} setValue={setValue} />;
       }
       else return  null

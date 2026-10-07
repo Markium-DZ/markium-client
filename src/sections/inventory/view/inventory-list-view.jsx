@@ -13,6 +13,7 @@ import { useTranslate } from 'src/locales';
 import { useGetInventory } from 'src/api/inventory';
 import { paths } from 'src/routes/paths';
 import { RouterLink } from 'src/routes/components';
+import Alert from '@mui/material/Alert';
 import { LoadingScreen } from 'src/components/loading-screen';
 import Iconify from 'src/components/iconify';
 import CustomPopover, { usePopover } from 'src/components/custom-popover';
@@ -21,6 +22,7 @@ import ZaityHeadContainer from 'src/sections/ZaityTables/ZaityHeadContainer';
 import ZaityTableFilters from 'src/sections/ZaityTables/ZaityTableFilters';
 import ZaityTableTabs from 'src/sections/ZaityTables/ZaityTableTabs';
 import InventoryAdjustmentDialog from 'src/sections/inventory/inventory-adjustment-dialog';
+import InventoryMobileCard from 'src/sections/inventory/inventory-mobile-card';
 import { fCurrency } from 'src/utils/format-number';
 
 // ----------------------------------------------------------------------
@@ -70,11 +72,13 @@ export default function InventoryListView() {
 
   const [page, setPage] = useState(1);
   const [allInventory, setAllInventory] = useState([]);
-  const [tableData, setTableData] = useState([]);
-  const [dataFiltered, setDataFiltered] = useState([]);
+  const [tableData, setTableData] = useState(null);
+  const [dataFiltered, setDataFiltered] = useState(null);
   const [adjustmentDialog, setAdjustmentDialog] = useState({ open: false, item: null });
 
-  const { inventory, inventoryLoading, totalPages, mutate } = useGetInventory(page, 20);
+  const isReady = tableData !== null;
+
+  const { inventory, inventoryLoading, inventoryError, totalPages, mutate } = useGetInventory(page, 20);
 
   const handleOpenAdjustment = (item) => {
     setAdjustmentDialog({ open: true, item });
@@ -338,36 +342,48 @@ export default function InventoryListView() {
         { name: t('list') },
       ]}
     >
-      <Card>
-        <ZaityTableTabs
-          key="stock_status"
-          data={tableData}
-          items={items}
-          defaultFilters={defaultFilters}
-          setTableDate={setDataFiltered}
-          filterFunction={filterFunction}
-        >
-          <ZaityTableFilters
-            data={dataFiltered}
-            tableData={tableData}
-            setTableDate={setDataFiltered}
-            items={filters}
+      {!inventoryLoading && inventoryError && allInventory.length === 0 && (
+        <Alert severity="warning" icon={<Iconify icon="solar:cloud-cross-bold" width={22} />} sx={{ mb: 2 }}>
+          {t('no_connection_notice')}
+        </Alert>
+      )}
+
+      {(inventoryLoading || !isReady) ? (
+        <LoadingScreen sx={{ my: 8 }} color="primary" />
+      ) : (
+        <Card>
+          <ZaityTableTabs
+            filterKey="stock_status"
+            data={tableData}
+            items={items}
             defaultFilters={defaultFilters}
-            dataFiltered={tableData}
-            searchText={`${t('search_by')} ${t('product')} ${t('or_any_value')} ...`}
+            setTableDate={setDataFiltered}
+            filterFunction={filterFunction}
           >
-            {inventoryLoading ? (
-              <LoadingScreen sx={{ my: 8 }} color="primary" />
-            ) : (
+            <ZaityTableFilters
+              data={dataFiltered}
+              tableData={tableData}
+              setTableDate={setDataFiltered}
+              items={filters}
+              defaultFilters={defaultFilters}
+              dataFiltered={tableData}
+              searchText={`${t('search_by')} ${t('product')} ${t('or_any_value')} ...`}
+            >
               <ZaityListView
                 TABLE_HEAD={[...TABLE_HEAD]}
                 dense="medium"
                 zaityTableDate={dataFiltered || []}
+                mobileCardRender={(row) => (
+                  <InventoryMobileCard
+                    row={row}
+                    onOpenAdjustment={handleOpenAdjustment}
+                  />
+                )}
               />
-            )}
-          </ZaityTableFilters>
-        </ZaityTableTabs>
-      </Card>
+            </ZaityTableFilters>
+          </ZaityTableTabs>
+        </Card>
+      )}
 
       <InventoryAdjustmentDialog
         open={adjustmentDialog.open}

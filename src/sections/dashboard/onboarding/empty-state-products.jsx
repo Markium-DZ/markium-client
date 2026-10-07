@@ -15,6 +15,8 @@ import Iconify from 'src/components/iconify';
 
 // ----------------------------------------------------------------------
 
+const TUTORIAL_URL = 'https://markium.online/tutorials/getting-started';
+
 export default function EmptyStateProducts({ sx, ...other }) {
   const { t } = useTranslation();
   const theme = useTheme();
@@ -201,8 +203,12 @@ export default function EmptyStateProducts({ sx, ...other }) {
           <Button
             variant="outlined"
             size="large"
+            component="a"
+            href={TUTORIAL_URL}
+            target="_blank"
+            rel="noopener noreferrer"
             startIcon={<Iconify icon="solar:play-circle-bold" />}
-            onClick={() => {}}
+            aria-label={`${t('empty_products_watch_tutorial')} (opens in new tab)`}
           >
             {t('empty_products_watch_tutorial')}
           </Button>

@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { root } from 'postcss';
+import { mutate as swrMutate } from 'swr';
 
 import { HOST_API } from 'src/config-global';
 
@@ -9,21 +9,36 @@ const axiosInstance = axios.create({ baseURL: HOST_API });
 axiosInstance.interceptors.response.use(
   (res) => res,
   (error) => {
-    // Log the error for debugging
-    console.error('Axios error intercepted:', {
-      status: error.response?.status,
-      data: error.response?.data,
-      url: error.config?.url,
-    });
+    // Only log server errors (not network/connection errors which spam the console)
+    if (error.response) {
+      console.error('Axios error intercepted:', {
+        status: error.response.status,
+        data: error.response.data,
+        url: error.config?.url,
+      });
+    }
 
-    // Check for 401 status and redirect to login
+    // Check for 401 status and redirect to login (skip for auth endpoints)
     if (error.response?.status === 401) {
-      // Clear session data
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('zaity-user-info');
+      const url = error.config?.url || '';
+      const isAuthEndpoint = url.includes('/auth/login') || url.includes('/auth/signup');
 
-      // Redirect to login
-      window.location.href = '/auth/jwt/login';
+      if (!isAuthEndpoint) {
+        // Clear session data
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('zaity-user-info');
+        // Clear SWR cache so next user doesn't see stale data
+        swrMutate(() => true, undefined, { revalidate: false });
+
+        // Redirect to login
+        window.location.href = '/auth/jwt/login';
+      }
+    }
+
+    // Handle 403 PHONE_NOT_VERIFIED — emit event for UI to show OTP modal
+    if (error.response?.status === 403 && error.response?.data?.error?.code === 'PHONE_NOT_VERIFIED') {
+      window.dispatchEvent(new CustomEvent('phone-not-verified'));
+      return Promise.reject(error.response.data);
     }
 
     // Handle 422 validation errors explicitly
@@ -37,8 +52,16 @@ axiosInstance.interceptors.response.use(
       return Promise.reject(errorData);
     }
 
+    // Network error — no response from server (offline / server down)
+    if (!error.response) {
+      return Promise.reject({ isNetworkError: true });
+    }
+
     // Throw the error with consistent structure for all other errors
     const errorData = error.response?.data || { message: 'Something went wrong' };
+    if (error.response?.status) {
+      errorData.status = error.response.status;
+    }
     return Promise.reject(errorData);
   }
 );
@@ -46,11 +69,9 @@ axiosInstance.interceptors.response.use(
 // Add a request interceptor
 axiosInstance.interceptors.request.use(
   (config) => {
-    const settings = localStorage.getItem('settings');
-    if (settings !== null) {
-      const getLang = JSON.parse(settings);
-      config.headers['Accept-Language'] = getLang?.themeDirection === 'rtl' ? 'ar-AR' : 'en-US';
-    }
+    const lang = localStorage.getItem('i18nextLng') || 'ar';
+    config.headers['Accept-Language'] = lang;
+    config.headers['Accept'] = 'application/json';
     return config;
   },
   (error) => {
@@ -86,24 +107,18 @@ export const endpoints = {
     register: `/auth/signup`,
     changePassword: `/auth/changePassword`,
     changePasswordByAdmin: `/auth/changePasswordByAdmin`,
+    sendOtp: `/auth/send-otp`,
+    verifyOtp: `/auth/verify-otp`,
+    resendOtp: `/auth/resend-otp`,
   },
-  clauses: {
-    root: `/maintenance/clauses`,
-    list: (id) => `/maintenance/${id}/clauses`,
-    add: `/maintenance/clauses`,
-    edit: (id) => `/maintenance/clauses/${id}`,
-
+  storeSetup: {
+    basics: `/store/setup/basics`,
+    branding: `/store/setup/branding`,
+    categories: `/store/setup/categories`,
+    status: `/store/setup/status`,
   },
-  mail: {
-    list: '/api/mail/list',
-    details: '/api/mail/details',
-    labels: '/api/mail/labels',
-  },
-  post: {
-    list: '/api/post/list',
-    details: '/api/post/details',
-    latest: '/api/post/latest',
-    search: '/api/post/search',
+  categories: {
+    root: `/categories`,
   },
   product: {
     root: '/products',
@@ -130,61 +145,13 @@ export const endpoints = {
     items: (id) => `/inventory/${id}/items`,
     itemTracking: (inventoryId, itemId) => `/inventory/${inventoryId}/items/${itemId}/tracking`,
   },
-  company: {
-    list: '/company',
-    statistics: "/company/statistics"
-  },
-  maintenance: {
-    list: '/maintenance',
-    specs: "/maintenance/specifications",
-    complete: (id) => `/maintenance/${id}/complete`,
-    updateExitDate: (id) => `/maintenance/${id}/updateExitDate`,
-    release: (id) => `/maintenance/${id}/car_release`,
-    logs: "/maintenance/logs",
-  },
-  cars: {
-    list: '/car',
-    transactions: '/car/transactions',
-    logs: '/car/logs',
-    attach: '/car/driver/attach',
-    detach: '/car/driver/detach',
-    under_maintainance: '/car/under_maintainance',
-    pm: (id) => `/car/${id}/maintenance/periodic`,
-  },
-  clients: {
-    list: '/client',
-    client: (id) => `/client/` + id
-  },
-  contracts: {
-    list: '/contract',
-    claims: (id) => `/contract/${id}/claims`,
-    clauses: (id) => `/contract/${id}/clauses`,
-    cancleClause: (id) => `/contract/clauses/${id}/cancel`,
-    allclaims: `/contract/claims/all`,
-    logs: "/contract/claims/logs",
-    allClaims:{
-      root:"/contract/claims"
-    },
-    clause:{
-      root:"/contract/clauses",
-      replace:(id) => `/contract/clauses/${id}/replace`,
-    }
-  },
-  claims: {
-    list: '/contract/1/claims',
-    new: "/contract/claims",
-    logs: "/contract/claims/logs",
-    edit: (id) => `/contract/claims/${id}`,
-    paid: (id) => `/contract/claims/${id}/paid`,
-  },
   settings: {
+    mainspecs: '/main-specs',
     items: (slug)=>`/${slug}`,
     categories: '/categories',
     categoriesList: '/categories/list',
+    categoriesSettings: '/categories/settings',
     visibility: '/system-settings/visibility',
-    mainspecs: '/maintenance/specifications',
-    new: "/contract/claims",
-    logs: "/contract/claims/logs"
   },
   users: {
     root: '/auth/registerCompanyEmployeer',
@@ -196,24 +163,57 @@ export const endpoints = {
     permissions: '/permissions',
     user_permissions: '/auth/permissions',
     visibility: '/system-settings/visibility',
-    mainspecs: '/maintenance/specifications',
-    new: "/contract/claims",
-    logs: "/contract/claims/logs"
-  },
-  documents: {
-    list: '/attachments',
   },
   statistics: {
     root: '/attachments',
   },
-
-  drivers: {
-    list: '/driver',
+  analytics: {
+    overview: '/analytics/overview',
+    traffic: '/analytics/traffic',
+    funnel: '/analytics/funnel',
+    topProducts: '/analytics/top-products',
+    capabilities: '/analytics/capabilities',
+    trafficSources: '/analytics/traffic-sources',
+    conversion: '/analytics/conversion',
+    ordersGeography: '/analytics/orders-geography',
+    cartAbandonment: '/analytics/cart-abandonment',
+    customerInsights: '/analytics/customer-insights',
+    deliveryPerformance: '/analytics/delivery-performance',
+    revenueBreakdown: '/analytics/revenue-breakdown',
+    export: '/analytics/export',
+    deviceBreakdown: '/analytics/device-breakdown',
+    visitorTypes: '/analytics/visitor-types',
+    landingPages: '/analytics/landing-pages',
+    bounceRate: '/analytics/bounce-rate',
+    sessionDuration: '/analytics/session-duration',
+    aov: '/analytics/aov',
   },
+  productCosts: {
+    list: (productId) => `/products/${productId}/costs`,
+    create: (productId) => `/products/${productId}/costs`,
+    bulk: (productId) => `/products/${productId}/costs/bulk`,
+    update: (productId, costId) => `/products/${productId}/costs/${costId}`,
+    delete: (productId, costId) => `/products/${productId}/costs/${costId}`,
+  },
+  profitability: {
+    store: '/analytics/profitability',
+    products: '/analytics/profitability/products',
+    product: (id) => `/analytics/profitability/products/${id}`,
+    campaigns: '/analytics/profitability/campaigns',
+    channels: '/analytics/profitability/channels',
+    channel: (ch) => `/analytics/profitability/channels/${ch}`,
+  },
+
   store: {
     logo: '/store/logo',
     root: '/store',
     slug: (slug)=>`/stores/${slug}`,
+  },
+  layouts: {
+    home: '/layouts/home',
+    page: (page) => `/layouts/${page}`,
+    homeSection: (id) => `/layouts/home/sections/${id}`,
+    catalog: '/sections-catalog',
   },
   shipping: {
     providers: '/shipping/providers',
@@ -225,6 +225,7 @@ export const endpoints = {
     orderRates: (orderId) => `/shipping/orders/${orderId}/rates`,
     orderRatesByProvider: (orderId) => `/shipping/orders/${orderId}/rates/by-provider`,
     refreshOrderRates: (orderId) => `/shipping/orders/${orderId}/rates/refresh`,
+    shipOrder: (orderId) => `/shipping/orders/${orderId}/ship`,
   },
   payment: {
     providers: '/payment/providers',
@@ -233,5 +234,31 @@ export const endpoints = {
     validateConnection: (connectionId) => `/payment/connections/${connectionId}/validate`,
     setDefaultConnection: (connectionId) => `/payment/connections/${connectionId}/set-default`,
     deleteConnection: (connectionId) => `/payment/connections/${connectionId}`,
+  },
+  subscriptions: {
+    packages: '/subscriptions/packages',
+    checkout: '/subscriptions/checkout',
+    payments: '/subscriptions/payments',
+    payment: (id) => `/subscriptions/payments/${id}`,
+    current: '/subscriptions/current',
+  },
+  wallet: {
+    balance: '/wallet/balance',
+    topup: '/wallet/topup',
+    transactions: '/wallet/transactions',
+  },
+  addons: {
+    available: '/add-ons',
+    active: '/add-ons/active',
+    checkout: '/add-ons/checkout',
+    cancel: (id) => `/add-ons/${id}/cancel`,
+  },
+  notifications: {
+    root: '/notifications',
+    read: (id) => `/notifications/${id}/read`,
+    readAll: '/notifications/read-all',
+    delete: (id) => `/notifications/${id}`,
+    preferences: '/notifications/preferences',
+    subscriptions: '/notifications/subscriptions',
   },
 };

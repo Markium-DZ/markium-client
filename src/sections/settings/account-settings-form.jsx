@@ -20,6 +20,7 @@ import FormProvider, {
 } from 'src/components/hook-form';
 import showError from 'src/utils/show_error';
 import RHFTextarea from 'src/components/hook-form/RHFTextarea';
+import VerificationGate from 'src/components/verification-gate/verification-gate';
 
 // ----------------------------------------------------------------------
 
@@ -137,13 +138,15 @@ export default function AccountSettingsForm() {
             <Stack spacing={3} alignItems="flex-end" sx={{ mt: 3 }}>
               <RHFTextarea name="about" multiline rows={4} label={t('about')} />
 
-              <LoadingButton
-                type="submit"
-                variant="contained"
-                loading={isSubmitting || loading}
-              >
-                {t('save_changes')}
-              </LoadingButton>
+              <VerificationGate>
+                <LoadingButton
+                  type="submit"
+                  variant="contained"
+                  loading={isSubmitting || loading}
+                >
+                  {t('save_changes')}
+                </LoadingButton>
+              </VerificationGate>
             </Stack>
           </Card>
         </Grid>

@@ -21,6 +21,7 @@ import Label from 'src/components/label';
 import Iconify from 'src/components/iconify';
 import Scrollbar from 'src/components/scrollbar';
 import SearchNotFound from 'src/components/search-not-found';
+import { useTranslate } from 'src/locales';
 
 import ResultItem from './result-item';
 import { useNavData } from '../../dashboard/config-navigation';
@@ -30,6 +31,7 @@ import { applyFilter, groupedData, getAllItems } from './utils';
 
 function Searchbar() {
   const theme = useTheme();
+  const { t } = useTranslate();
 
   const router = useRouter();
 
@@ -108,7 +110,7 @@ function Searchbar() {
 
   const renderButton = (
     <Stack direction="row" alignItems="center">
-      <IconButton onClick={search.onTrue}>
+      <IconButton onClick={search.onTrue} aria-label={t('search')}>
         <Iconify icon="eva:search-fill" />
       </IconButton>
 
@@ -145,7 +147,7 @@ function Searchbar() {
           <InputBase
             fullWidth
             autoFocus
-            placeholder="Search..."
+            placeholder={t('search')}
             value={searchQuery}
             onChange={handleSearch}
             startAdornment={

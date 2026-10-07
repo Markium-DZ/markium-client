@@ -25,6 +25,7 @@ import FormProvider from 'src/components/hook-form';
 import showError from 'src/utils/show_error';
 import { updateStoreConfig, useGetMyStore } from 'src/api/store';
 import { AuthContext } from 'src/auth/context/jwt';
+import VerificationGate from 'src/components/verification-gate/verification-gate';
 
 // ----------------------------------------------------------------------
 
@@ -119,15 +120,17 @@ export default function StoreLanguageForm() {
         {/* Information Alert */}
         <Grid xs={12}>
           <Stack direction="row" justifyContent="flex-end" spacing={2}>
-            <LoadingButton
-              type="submit"
-              variant="contained"
-              size="large"
-              loading={isSubmitting || loading}
-              startIcon={<Iconify icon="solar:check-circle-bold" />}
-            >
-              {t('save_changes')}
-            </LoadingButton>
+            <VerificationGate>
+              <LoadingButton
+                type="submit"
+                variant="contained"
+                size="large"
+                loading={isSubmitting || loading}
+                startIcon={<Iconify icon="solar:check-circle-bold" />}
+              >
+                {t('save_changes')}
+              </LoadingButton>
+            </VerificationGate>
           </Stack>
         </Grid>
         <Grid xs={12}>

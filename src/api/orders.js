@@ -11,6 +11,11 @@ const options = {
     revalidateIfStale: true,
     revalidateOnFocus: false,
     revalidateOnReconnect: false,
+    onErrorRetry: (err, key, config, revalidate, { retryCount }) => {
+        const delays = [5000, 10000, 20000, 30000];
+        if (retryCount >= delays.length) return;
+        setTimeout(() => revalidate({ retryCount }), delays[retryCount]);
+    },
 };
 
 export function useGetOrdersByProduct(product_id) {
@@ -42,15 +47,11 @@ export function useGetOrdersByProduct(product_id) {
 export function useGetOrders(page = 1, perPage = 100) {
     const params = new URLSearchParams({ page, per_page: perPage });
     const url = `${endpoints.order?.root}?${params.toString()}`;
-    console.log("url : ",url);
-
     const { data, isLoading, error, isValidating, mutate } = useSWR(
         url,
         fetcher,
         options
     );
-    console.log("data : ", data);
-    console.log("error : ", error);
 
     const memoizedValue = useMemo(
         () => ({
@@ -78,8 +79,6 @@ export function useGetOrder(order_id) {
         fetcher,
         options
     );
-    console.log("data : ", data);
-    console.log("error : ", error);
 
     const memoizedValue = useMemo(
         () => ({
@@ -113,6 +112,5 @@ export async function createProduct(body) {
 
 export async function updateOrder(order_id, body) {
     const URL = endpoints.order.root+"/"+order_id;
-    console.log(" URL : ", URL)
     return await axios.patch(URL, body);
 }

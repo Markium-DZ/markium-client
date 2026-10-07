@@ -1,5 +1,7 @@
 import PropTypes from 'prop-types';
+import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSnackbar } from 'notistack';
 
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
@@ -10,165 +12,439 @@ import { alpha, useTheme } from '@mui/material/styles';
 
 import { useRouter } from 'src/routes/hooks';
 import { paths } from 'src/routes/paths';
+import { useAuthContext } from 'src/auth/hooks';
 
 import Iconify from 'src/components/iconify';
+import { getStorefrontUrl } from 'src/config-global';
+
+// ── Tip config ────────────────────────────────────────────────────
+
+const TIPS = [
+  { icon: 'solar:share-circle-bold', color: '#2563EB', darkColor: '#60A5FA' },
+  { icon: 'solar:users-group-rounded-bold', color: '#7C3AED', darkColor: '#A78BFA' },
+  { icon: 'solar:tag-price-bold', color: '#059669', darkColor: '#34D399' },
+];
 
 // ----------------------------------------------------------------------
 
-export default function EmptyStateOrders({ hasProducts = false, sx, ...other }) {
+export default function EmptyStateOrders({ hasProducts = false, compact = false, sx, ...other }) {
   const { t } = useTranslation();
   const theme = useTheme();
   const router = useRouter();
+  const { user } = useAuthContext();
+  const { enqueueSnackbar } = useSnackbar();
 
-  const tips = [
-    {
-      icon: 'solar:share-bold',
-      text: t('empty_orders_tip1'),
-    },
-    {
-      icon: 'solar:gallery-bold',
-      text: t('empty_orders_tip2'),
-    },
-    {
-      icon: 'solar:refresh-bold',
-      text: t('empty_orders_tip3'),
-    },
-  ];
+  const handleCopyStoreLink = useCallback(async () => {
+    const slug = user?.store?.slug;
+    if (!slug) {
+      enqueueSnackbar(t('store_url_not_available'), { variant: 'warning' });
+      return;
+    }
+    const storeUrl = getStorefrontUrl(slug, { store: slug });
+    try {
+      await navigator.clipboard.writeText(storeUrl);
+      enqueueSnackbar(t('store_url_copied'), { variant: 'success' });
+    } catch {
+      enqueueSnackbar(t('failed_to_copy'), { variant: 'error' });
+    }
+  }, [user?.store?.slug, enqueueSnackbar, t]);
 
-  return (
-    <Card
+  const handleGrowthGuide = useCallback(() => {
+    router.push(paths.dashboard.settings.contact_support || paths.dashboard.settings.root);
+  }, [router]);
+
+  const isDark = theme.palette.mode === 'dark';
+
+  const tips = TIPS.map((cfg, i) => ({
+    ...cfg,
+    color: isDark ? cfg.darkColor : cfg.color,
+    step: `0${i + 1}`,
+    title: t(`empty_orders_tip${i + 1}_title`),
+    text: t(`empty_orders_tip${i + 1}`),
+  }));
+
+  // ── Tip card ────────────────────────────────────────────────────
+
+  const renderTipCard = (tip, index) => (
+    <Box
+      key={index}
       sx={{
-        p: 4,
-        textAlign: 'center',
-        bgcolor: alpha(theme.palette.grey[500], 0.04),
-        border: `dashed 1px ${alpha(theme.palette.grey[500], 0.2)}`,
-        ...sx,
+        position: 'relative',
+        p: compact ? 2 : 2.5,
+        borderRadius: 1.5,
+        overflow: 'hidden',
+        bgcolor: alpha(tip.color, isDark ? 0.12 : 0.03),
+        border: `1px solid ${alpha(tip.color, isDark ? 0.24 : 0.08)}`,
+        transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+        '&:hover': {
+          bgcolor: alpha(tip.color, isDark ? 0.18 : 0.06),
+          transform: 'translateY(-2px)',
+          boxShadow: `0 4px 16px ${alpha(tip.color, isDark ? 0.2 : 0.12)}`,
+          borderColor: alpha(tip.color, isDark ? 0.36 : 0.16),
+        },
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: 3,
+          background: `linear-gradient(90deg, ${tip.color}, ${alpha(tip.color, isDark ? 0.4 : 0.3)})`,
+        },
       }}
-      {...other}
     >
-      <Stack spacing={3} alignItems="center">
-        {/* Icon */}
+      {/* Step number watermark */}
+      <Typography
+        sx={{
+          position: 'absolute',
+          bottom: compact ? 4 : 8,
+          right: compact ? 8 : 12,
+          fontSize: compact ? '2.5rem' : '3.5rem',
+          fontWeight: 900,
+          lineHeight: 1,
+          color: alpha(tip.color, isDark ? 0.12 : 0.06),
+          userSelect: 'none',
+          pointerEvents: 'none',
+        }}
+      >
+        {tip.step}
+      </Typography>
+
+      {/* Icon + title */}
+      <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: compact ? 0.75 : 1.5 }}>
         <Box
           sx={{
-            width: 80,
-            height: 80,
-            borderRadius: '50%',
+            width: compact ? 28 : 36,
+            height: compact ? 28 : 36,
+            borderRadius: compact ? 0.75 : 1,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            bgcolor: alpha(theme.palette.warning.main, 0.08),
-            color: 'warning.main',
+            bgcolor: alpha(tip.color, isDark ? 0.16 : 0.1),
+            color: tip.color,
+            flexShrink: 0,
           }}
         >
-          <Iconify icon="solar:bag-smile-bold" width={40} />
+          <Iconify icon={tip.icon} width={compact ? 16 : 20} />
         </Box>
+        <Typography
+          variant={compact ? 'caption' : 'subtitle2'}
+          sx={{
+            fontWeight: 800,
+            color: tip.color,
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em',
+            lineHeight: 1.2,
+          }}
+        >
+          {tip.title}
+        </Typography>
+      </Stack>
 
-        {/* Title & Description */}
-        <Stack spacing={1}>
-          <Typography variant="h6">{t('empty_orders_title')}</Typography>
-          <Typography variant="body2" sx={{ color: 'text.secondary', maxWidth: 400, mx: 'auto' }}>
-            {hasProducts ? t('empty_orders_description_with_products') : t('empty_orders_description_no_products')}
-          </Typography>
-        </Stack>
+      {/* Tip text */}
+      <Typography
+        variant={compact ? 'caption' : 'body2'}
+        sx={{
+          color: 'text.secondary',
+          lineHeight: 1.6,
+          display: 'block',
+          position: 'relative',
+          zIndex: 1,
+        }}
+      >
+        {tip.text}
+      </Typography>
+    </Box>
+  );
 
-        {/* Tips Section */}
-        {hasProducts && (
-          <Stack spacing={2} sx={{ width: '100%', maxWidth: 400 }}>
-            <Typography variant="subtitle2" sx={{ color: 'text.primary' }}>
-              {t('empty_orders_tips_title')}
-            </Typography>
-            {tips.map((tip, index) => (
-              <Stack
-                key={index}
-                direction="row"
-                spacing={2}
-                alignItems="center"
-                sx={{
-                  p: 2,
-                  borderRadius: 1.5,
-                  bgcolor: 'background.paper',
-                  border: `1px solid ${alpha(theme.palette.grey[500], 0.12)}`,
-                  textAlign: 'left',
-                }}
+  // ── Encouragement footer ────────────────────────────────────────
+
+  const renderEncouragement = () => (
+    <Stack
+      direction="row"
+      spacing={0.75}
+      alignItems="center"
+      sx={{
+        px: compact ? 2 : 2.5,
+        py: compact ? 1 : 1.25,
+        borderTop: `1px dashed ${theme.palette.divider}`,
+        flexShrink: 0,
+        bgcolor: alpha(theme.palette.success.main, 0.03),
+      }}
+    >
+      <Box
+        sx={{
+          width: 18,
+          height: 18,
+          borderRadius: '50%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          bgcolor: alpha(theme.palette.success.main, 0.1),
+        }}
+      >
+        <Iconify icon="solar:star-bold" sx={{ color: 'success.main', fontSize: 10 }} />
+      </Box>
+      <Typography variant="caption" sx={{ color: 'success.dark', fontWeight: 500 }}>
+        {t('empty_orders_encouragement')}
+      </Typography>
+    </Stack>
+  );
+
+  // ── Compact: dashboard-embedded layout ──────────────────────────
+
+  if (compact) {
+    return (
+      <Card
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+          ...sx,
+        }}
+        {...other}
+      >
+        {/* Header */}
+        <Stack
+          direction="row"
+          alignItems="center"
+          justifyContent="space-between"
+          sx={{
+            px: 2.5,
+            py: 1.5,
+            borderBottom: `1px dashed ${theme.palette.divider}`,
+            flexShrink: 0,
+          }}
+        >
+          <Stack direction="row" alignItems="center" spacing={1.5} sx={{ minWidth: 0 }}>
+            <Box
+              sx={{
+                width: 32,
+                height: 32,
+                borderRadius: 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                bgcolor: alpha(theme.palette.warning.main, 0.1),
+                color: 'warning.dark',
+                flexShrink: 0,
+              }}
+            >
+              <Iconify icon="solar:bag-check-bold" width={18} />
+            </Box>
+            <Box sx={{ minWidth: 0 }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 800, lineHeight: 1.2 }}>
+                {t('empty_orders_title')}
+              </Typography>
+              <Typography
+                variant="caption"
+                sx={{ color: 'text.disabled', lineHeight: 1.3, display: { xs: 'none', lg: 'block' } }}
               >
-                <Box
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: '50%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    bgcolor: alpha(theme.palette.primary.main, 0.08),
-                    color: 'primary.main',
-                    flexShrink: 0,
-                  }}
-                >
-                  <Iconify icon={tip.icon} width={20} />
-                </Box>
-                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                  {tip.text}
-                </Typography>
-              </Stack>
-            ))}
+                {hasProducts
+                  ? t('empty_orders_description_with_products')
+                  : t('empty_orders_description_no_products')}
+              </Typography>
+            </Box>
           </Stack>
-        )}
 
-        {/* Action Buttons */}
-        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
           {hasProducts ? (
-            <>
+            <Stack direction="row" spacing={1} sx={{ flexShrink: 0 }}>
               <Button
                 variant="contained"
-                size="large"
-                startIcon={<Iconify icon="solar:copy-bold" />}
-                onClick={() => {}}
+                size="small"
+                startIcon={<Iconify icon="solar:copy-bold" width={15} />}
+                onClick={handleCopyStoreLink}
+                sx={{
+                  textTransform: 'none',
+                  fontWeight: 700,
+                  fontSize: '0.75rem',
+                  px: 1.5,
+                  background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
+                  boxShadow: `0 2px 8px ${alpha(theme.palette.primary.main, 0.25)}`,
+                  '&:hover': {
+                    boxShadow: `0 4px 14px ${alpha(theme.palette.primary.main, 0.35)}`,
+                  },
+                }}
               >
                 {t('empty_orders_copy_link')}
               </Button>
               <Button
-                variant="outlined"
-                size="large"
-                startIcon={<Iconify icon="solar:chart-bold" />}
-                onClick={() => {}}
+                variant="soft"
+                size="small"
+                color="inherit"
+                startIcon={<Iconify icon="solar:chart-2-bold" width={15} />}
+                onClick={handleGrowthGuide}
+                sx={{ textTransform: 'none', fontWeight: 600, fontSize: '0.75rem', px: 1.5 }}
               >
                 {t('empty_orders_marketing_tips')}
               </Button>
-            </>
+            </Stack>
           ) : (
             <Button
               variant="contained"
-              size="large"
-              startIcon={<Iconify icon="solar:box-add-bold" />}
+              size="small"
+              startIcon={<Iconify icon="solar:box-add-bold" width={15} />}
               onClick={() => router.push(paths.dashboard.product.new)}
+              sx={{
+                textTransform: 'none',
+                fontWeight: 700,
+                fontSize: '0.75rem',
+                flexShrink: 0,
+                background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
+              }}
             >
               {t('empty_orders_create_product')}
             </Button>
           )}
         </Stack>
 
-        {/* Encouragement Message */}
-        <Stack
-          direction="row"
-          spacing={1}
-          alignItems="center"
+        {/* Strategy cards */}
+        {hasProducts && (
+          <Box
+            sx={{
+              flexGrow: 1,
+              overflow: 'auto',
+              p: 2,
+              display: 'grid',
+              gap: 1.5,
+              gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' },
+              alignContent: 'center',
+            }}
+          >
+            {tips.map(renderTipCard)}
+          </Box>
+        )}
+
+        {/* Encouragement */}
+        {renderEncouragement()}
+      </Card>
+    );
+  }
+
+  // ── Default: full-size centered layout ──────────────────────────
+
+  return (
+    <Card
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+        ...sx,
+      }}
+      {...other}
+    >
+      {/* Hero header */}
+      <Stack
+        alignItems="center"
+        sx={{
+          pt: 5,
+          pb: 3,
+          px: 3,
+          textAlign: 'center',
+          background: `linear-gradient(180deg, ${alpha(theme.palette.warning.main, 0.04)} 0%, transparent 100%)`,
+        }}
+      >
+        <Box
           sx={{
-            p: 1.5,
-            borderRadius: 1,
-            bgcolor: alpha(theme.palette.success.main, 0.08),
+            width: 56,
+            height: 56,
+            borderRadius: 2,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            bgcolor: alpha(theme.palette.warning.main, 0.1),
+            color: 'warning.dark',
+            mb: 2,
+            boxShadow: `0 8px 24px ${alpha(theme.palette.warning.main, 0.12)}`,
           }}
         >
-          <Iconify icon="solar:star-bold" sx={{ color: 'success.main', fontSize: 18 }} />
-          <Typography variant="caption" sx={{ color: 'success.dark' }}>
-            {t('empty_orders_encouragement')}
-          </Typography>
-        </Stack>
+          <Iconify icon="solar:bag-check-bold" width={28} />
+        </Box>
+
+        <Typography variant="h5" sx={{ fontWeight: 800, mb: 0.5 }}>
+          {t('empty_orders_title')}
+        </Typography>
+
+        <Typography variant="body2" sx={{ color: 'text.secondary', maxWidth: 400 }}>
+          {hasProducts
+            ? t('empty_orders_description_with_products')
+            : t('empty_orders_description_no_products')}
+        </Typography>
       </Stack>
+
+      {/* Strategy cards */}
+      {hasProducts && (
+        <Box
+          sx={{
+            px: 3,
+            pb: 1,
+            display: 'grid',
+            gap: 2,
+            gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' },
+          }}
+        >
+          {tips.map(renderTipCard)}
+        </Box>
+      )}
+
+      {/* CTA */}
+      <Stack direction="row" justifyContent="center" spacing={1.5} sx={{ py: 3 }}>
+        {hasProducts ? (
+          <>
+            <Button
+              variant="contained"
+              startIcon={<Iconify icon="solar:copy-bold" />}
+              onClick={handleCopyStoreLink}
+              sx={{
+                textTransform: 'none',
+                fontWeight: 700,
+                px: 3,
+                background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
+                boxShadow: `0 4px 14px ${alpha(theme.palette.primary.main, 0.3)}`,
+                '&:hover': {
+                  boxShadow: `0 6px 20px ${alpha(theme.palette.primary.main, 0.4)}`,
+                },
+              }}
+            >
+              {t('empty_orders_copy_link')}
+            </Button>
+            <Button
+              variant="soft"
+              color="inherit"
+              startIcon={<Iconify icon="solar:chart-2-bold" />}
+              onClick={handleGrowthGuide}
+              sx={{ textTransform: 'none', fontWeight: 600 }}
+            >
+              {t('empty_orders_marketing_tips')}
+            </Button>
+          </>
+        ) : (
+          <Button
+            variant="contained"
+            size="large"
+            startIcon={<Iconify icon="solar:box-add-bold" />}
+            onClick={() => router.push(paths.dashboard.product.new)}
+            sx={{
+              textTransform: 'none',
+              fontWeight: 700,
+              px: 4,
+              background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
+              boxShadow: `0 4px 14px ${alpha(theme.palette.primary.main, 0.3)}`,
+            }}
+          >
+            {t('empty_orders_create_product')}
+          </Button>
+        )}
+      </Stack>
+
+      {/* Encouragement */}
+      {renderEncouragement()}
     </Card>
   );
 }
 
 EmptyStateOrders.propTypes = {
   hasProducts: PropTypes.bool,
+  compact: PropTypes.bool,
   sx: PropTypes.object,
 };

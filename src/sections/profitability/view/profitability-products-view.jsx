@@ -1,0 +1,175 @@
+import { useState } from 'react';
+
+import {
+  Container,
+  Card,
+  CardHeader,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableRow,
+  TableHead,
+  Typography,
+  Stack,
+  Box,
+  CircularProgress,
+} from '@mui/material';
+import { alpha } from '@mui/material/styles';
+
+import { paths } from 'src/routes/paths';
+import { useRouter } from 'src/routes/hooks';
+
+import { useGetProductsPnL } from 'src/api/profitability';
+import { useTranslate } from 'src/locales';
+import { useSettingsContext } from 'src/components/settings';
+import CustomBreadcrumbs from 'src/components/custom-breadcrumbs';
+import EmptyContent from 'src/components/empty-content';
+import Label from 'src/components/label';
+import Iconify from 'src/components/iconify';
+import { useTable, TablePaginationCustom } from 'src/components/table';
+
+import ProfitabilityDateFilter from '../components/profitability-date-filter';
+import ProfitabilityGate from '../components/profitability-gate';
+import MarginBar from '../components/margin-bar';
+import { DEFAULT_DATE_RANGE, fmtAmount, fmtPct } from '../constants';
+
+// ----------------------------------------------------------------------
+
+export default function ProfitabilityProductsView() {
+  const settings = useSettingsContext();
+  const { t } = useTranslate();
+  const router = useRouter();
+
+  const table = useTable({ defaultRowsPerPage: 10 });
+
+  const [dateFrom, setDateFrom] = useState(DEFAULT_DATE_RANGE);
+
+  const {
+    products,
+    productsPnLLoading,
+    productsPnLError,
+    productsPnLForbidden,
+  } = useGetProductsPnL(dateFrom);
+
+  const paginatedProducts = products.slice(
+    table.page * table.rowsPerPage,
+    table.page * table.rowsPerPage + table.rowsPerPage
+  );
+
+  const content = (
+    <Stack spacing={3}>
+      {products.length === 0 ? (
+        <EmptyContent title={t('no_cost_data')} />
+      ) : (
+        <Card>
+          <CardHeader
+            title={t('products_pnl')}
+            action={
+              <Label variant="soft" color="primary">
+                {`${products.length} ${t('products')}`}
+              </Label>
+            }
+          />
+          <TableContainer>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>{t('product')}</TableCell>
+                  <TableCell align="right">{t('revenue')}</TableCell>
+                  <TableCell align="right">{t('units_sold')}</TableCell>
+                  <TableCell align="right">{t('total_costs')}</TableCell>
+                  <TableCell align="right">{t('gross_profit')}</TableCell>
+                  <TableCell align="right" sx={{ minWidth: 160 }}>{t('margin')}</TableCell>
+                  <TableCell align="right">{t('profit_per_unit')}</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {paginatedProducts.map((row) => {
+                  const isPositive = typeof row.gross_profit === 'number' && row.gross_profit >= 0;
+                  return (
+                    <TableRow
+                      key={row.product_id}
+                      hover
+                      sx={{
+                        cursor: 'pointer',
+                        '&:hover': { bgcolor: (theme) => alpha(theme.palette.primary.main, 0.04) },
+                      }}
+                      onClick={() => router.push(paths.dashboard.profitability.product(row.product_id))}
+                    >
+                      <TableCell>
+                        <Stack direction="row" alignItems="center" spacing={1.5}>
+                          <Iconify
+                            icon={isPositive ? 'solar:graph-up-bold-duotone' : 'solar:graph-down-bold-duotone'}
+                            width={18}
+                            sx={{ color: isPositive ? 'success.main' : 'error.main' }}
+                          />
+                          <Typography variant="subtitle2">{row.product_name}</Typography>
+                        </Stack>
+                      </TableCell>
+                      <TableCell align="right">
+                        <Typography variant="body2" fontWeight={500}>{fmtAmount(row.revenue)}</Typography>
+                      </TableCell>
+                      <TableCell align="right">{row.units_sold}</TableCell>
+                      <TableCell align="right">
+                        <Typography variant="body2" color="text.secondary">{fmtAmount(row.total_costs)}</Typography>
+                      </TableCell>
+                      <TableCell align="right">
+                        <Typography variant="body2" fontWeight={600} color={isPositive ? 'success.main' : 'error.main'}>
+                          {fmtAmount(row.gross_profit)}
+                        </Typography>
+                      </TableCell>
+                      <TableCell align="right">
+                        <MarginBar value={row.profit_margin_pct} />
+                      </TableCell>
+                      <TableCell align="right">
+                        <Typography variant="body2" fontWeight={600} color={isPositive ? 'success.main' : 'error.main'}>
+                          {fmtAmount(row.profit_per_unit)}
+                        </Typography>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </TableContainer>
+
+          <TablePaginationCustom
+            count={products.length}
+            page={table.page}
+            rowsPerPage={table.rowsPerPage}
+            onPageChange={table.onChangePage}
+            onRowsPerPageChange={table.onChangeRowsPerPage}
+          />
+        </Card>
+      )}
+    </Stack>
+  );
+
+  return (
+    <Container maxWidth={settings.themeStretch ? false : 'lg'}>
+      <CustomBreadcrumbs
+        heading={t('products_pnl')}
+        links={[
+          { name: t('dashboard'), href: paths.dashboard.root },
+          { name: t('profitability'), href: paths.dashboard.profitability.root },
+          { name: t('products_pnl') },
+        ]}
+        action={<ProfitabilityDateFilter value={dateFrom} onChange={setDateFrom} />}
+        sx={{ mb: { xs: 3, md: 5 } }}
+      />
+
+      {productsPnLLoading ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}>
+          <CircularProgress />
+        </Box>
+      ) : productsPnLError && !productsPnLForbidden ? (
+        <EmptyContent title={t('error')} description={t('error_loading_data', 'Could not load data. Please try again.')} />
+      ) : (
+        <ProfitabilityGate forbidden={productsPnLForbidden}>
+          {content}
+        </ProfitabilityGate>
+      )}
+    </Container>
+  );
+}

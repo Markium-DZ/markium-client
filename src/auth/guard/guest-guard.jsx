@@ -1,6 +1,7 @@
 import PropTypes from 'prop-types';
 import { useEffect, useCallback } from 'react';
 
+import { paths } from 'src/routes/paths';
 import { useRouter, useSearchParams } from 'src/routes/hooks';
 
 import { PATH_AFTER_LOGIN } from 'src/config-global';
@@ -28,15 +29,21 @@ function Container({ children }) {
 
   const searchParams = useSearchParams();
 
-  const returnTo = searchParams.get('returnTo') || PATH_AFTER_LOGIN;
+  const returnTo = searchParams.get('returnTo');
 
-  const { authenticated } = useAuthContext();
+  const { authenticated, user } = useAuthContext();
 
   const check = useCallback(() => {
     if (authenticated) {
-      router.replace(returnTo);
+      // No store -> onboarding wizard (works for both verified and unverified users)
+      if (!user?.has_store || !user?.store_setup_complete) {
+        router.replace(paths.onboarding.storeSetup);
+        return;
+      }
+
+      router.replace(returnTo || PATH_AFTER_LOGIN);
     }
-  }, [authenticated, returnTo, router]);
+  }, [authenticated, user, returnTo, router]);
 
   useEffect(() => {
     check();

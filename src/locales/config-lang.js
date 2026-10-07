@@ -1,21 +1,4 @@
-import merge from 'lodash/merge';
-// date fns
-import {
-  fr as frFRAdapter,
-  vi as viVNAdapter,
-  enUS as enUSAdapter,
-  zhCN as zhCNAdapter,
-  arSA as arSAAdapter,
-} from 'date-fns/locale';
-
-// date pickers (MUI)
-import {
-  enUS as enUSDate,
-  frFR as frFRDate,
-  viVN as viVNDate,
-  zhCN as zhCNDate,
-} from '@mui/x-date-pickers/locales';
-// core (MUI)
+// core (MUI) - lightweight locale strings for base components only
 import {
   enUS as enUSCore,
   frFR as frFRCore,
@@ -23,14 +6,6 @@ import {
   zhCN as zhCNCore,
   arSA as arSACore,
 } from '@mui/material/locale';
-// data grid (MUI)
-import {
-  enUS as enUSDataGrid,
-  frFR as frFRDataGrid,
-  viVN as viVNDataGrid,
-  zhCN as zhCNDataGrid,
-  arSD as arSDDataGrid,
-} from '@mui/x-data-grid';
 
 // PLEASE REMOVE `LOCAL STORAGE` WHEN YOU CHANGE SETTINGS.
 // ----------------------------------------------------------------------
@@ -39,8 +14,7 @@ export const allLangs = [
   {
     label: 'English',
     value: 'en',
-    systemValue: merge(enUSDate, enUSDataGrid, enUSCore),
-    adapterLocale: enUSAdapter,
+    systemValue: enUSCore,
     icon: 'flagpack:gb-nir',
     numberFormat: {
       code: 'en-US',
@@ -50,8 +24,7 @@ export const allLangs = [
   {
     label: 'French',
     value: 'fr',
-    systemValue: merge(frFRDate, frFRDataGrid, frFRCore),
-    adapterLocale: frFRAdapter,
+    systemValue: frFRCore,
     icon: 'flagpack:fr',
     numberFormat: {
       code: 'fr-Fr',
@@ -61,8 +34,7 @@ export const allLangs = [
   // {
   //   label: 'Vietnamese',
   //   value: 'vi',
-  //   systemValue: merge(viVNDate, viVNDataGrid, viVNCore),
-  //   adapterLocale: viVNAdapter,
+  //   systemValue: viVNCore,
   //   icon: 'flagpack:vn',
   //   numberFormat: {
   //     code: 'vi-VN',
@@ -72,8 +44,7 @@ export const allLangs = [
   // {
   //   label: 'Chinese',
   //   value: 'cn',
-  //   systemValue: merge(zhCNDate, zhCNDataGrid, zhCNCore),
-  //   adapterLocale: zhCNAdapter,
+  //   systemValue: zhCNCore,
   //   icon: 'flagpack:cn',
   //   numberFormat: {
   //     code: 'zh-CN',
@@ -81,10 +52,9 @@ export const allLangs = [
   //   },
   // },
   {
-    label: 'العربية',
+    label: '\u0627\u0644\u0639\u0631\u0628\u064A\u0629',
     value: 'ar',
-    systemValue: merge(arSDDataGrid, arSACore),
-    adapterLocale: arSAAdapter,
+    systemValue: arSACore,
     icon: 'flagpack:dz',
     numberFormat: {
       code: 'ar',
@@ -98,8 +68,7 @@ export function allLangs2(english,arabic){
   {
     label:english,
     value: 'en',
-    systemValue: merge(enUSDate, enUSDataGrid, enUSCore),
-    adapterLocale: enUSAdapter,
+    systemValue: enUSCore,
     icon: 'flagpack:gb-nir',
     numberFormat: {
       code: 'en-US',
@@ -109,8 +78,7 @@ export function allLangs2(english,arabic){
   {
     label: arabic,
     value: 'ar',
-    systemValue: merge(arSDDataGrid, arSACore),
-    adapterLocale: arSAAdapter,
+    systemValue: arSACore,
     icon: 'flagpack:sa',
     numberFormat: {
       code: 'ar',
@@ -120,8 +88,7 @@ export function allLangs2(english,arabic){
   // {
   //   label: 'French',
   //   value: 'fr',
-  //   systemValue: merge(frFRDate, frFRDataGrid, frFRCore),
-  //   adapterLocale: frFRAdapter,
+  //   systemValue: frFRCore,
   //   icon: 'flagpack:fr',
   //   numberFormat: {
   //     code: 'fr-Fr',
@@ -131,8 +98,7 @@ export function allLangs2(english,arabic){
   // {
   //   label: 'Vietnamese',
   //   value: 'vi',
-  //   systemValue: merge(viVNDate, viVNDataGrid, viVNCore),
-  //   adapterLocale: viVNAdapter,
+  //   systemValue: viVNCore,
   //   icon: 'flagpack:vn',
   //   numberFormat: {
   //     code: 'vi-VN',
@@ -142,15 +108,14 @@ export function allLangs2(english,arabic){
   // {
   //   label: 'Chinese',
   //   value: 'cn',
-  //   systemValue: merge(zhCNDate, zhCNDataGrid, zhCNCore),
-  //   adapterLocale: zhCNAdapter,
+  //   systemValue: zhCNCore,
   //   icon: 'flagpack:cn',
   //   numberFormat: {
   //     code: 'zh-CN',
   //     currency: 'CNY',
   //   },
   // },
-  
+
 ]
 
 };
@@ -161,8 +126,3 @@ export const defaultLang = allLangs[1]; // Arabic
 // GET MORE COUNTRY FLAGS
 // https://icon-sets.iconify.design/flagpack/
 // https://www.dropbox.com/sh/nec1vwswr9lqbh9/AAB9ufC8iccxvtWi3rzZvndLa?dl=0
-
-
-
-
-

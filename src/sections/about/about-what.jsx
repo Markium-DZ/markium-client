@@ -53,7 +53,7 @@ export default function AboutWhat() {
               <m.div variants={varFade().inUp}>
                 <Image
                   alt="our office 2"
-                  src="/assets/images/about/what_2.png"
+                  src="/assets/images/about/what_2.webp"
                   ratio="1/1"
                   sx={{ borderRadius: 3, boxShadow: shadow }}
                 />
@@ -64,7 +64,7 @@ export default function AboutWhat() {
               <m.div variants={varFade().inUp}>
                 <Image
                   alt="our office 1"
-                  src="/assets/images/about/what_1.png"
+                  src="/assets/images/about/what_1.webp"
                   ratio="3/4"
                   sx={{ borderRadius: 3, boxShadow: shadow }}
                 />
@@ -97,7 +97,7 @@ export default function AboutWhat() {
             {SKILLS.map((progress, index) => (
               <Box component={m.div} key={progress.label} variants={varFade().inRight}>
                 <Stack direction="row" alignItems="center" sx={{ mb: 1 }}>
-                  <Typography variant="subtitle2" sx={{ flexGrow: 1, textAlign: 'left' }}>
+                  <Typography variant="subtitle2" sx={{ flexGrow: 1, textAlign: 'start' }}>
                     {progress.label}
                   </Typography>
 

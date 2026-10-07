@@ -5,11 +5,20 @@ import Box from '@mui/material/Box';
 import { useBoolean } from 'src/hooks/use-boolean';
 import { useResponsive } from 'src/hooks/use-responsive';
 
+import SkipToContent from 'src/components/skip-to-content';
 import { useSettingsContext } from 'src/components/settings';
+import InstallPrompt from 'src/components/pwa/install-prompt';
+import IosInstallPrompt from 'src/components/pwa/ios-install-prompt';
+import PushPermissionPrompt from 'src/components/pwa/push-permission-prompt';
+import VerificationBanner from 'src/components/verification-banner/verification-banner';
+import ImpersonationBanner from 'src/components/impersonation-banner/impersonation-banner';
+
+import ChatAssistantWidget from 'src/sections/assistant/chat-assistant-widget';
 
 import Main from './main';
 import Header from './header';
 import NavMini from './nav-mini';
+import BottomNav from './bottom-nav';
 import NavVertical from './nav-vertical';
 import NavHorizontal from './nav-horizontal';
 
@@ -35,11 +44,19 @@ export default function DashboardLayout({ children }) {
   if (isHorizontal) {
     return (
       <>
+        <SkipToContent />
+        <ImpersonationBanner />
         <Header onOpenNav={nav.onTrue} />
 
         {lgUp ? renderHorizontal : renderNavVertical}
 
+        <VerificationBanner />
         <Main>{children}</Main>
+        <PushPermissionPrompt />
+        <IosInstallPrompt />
+        <InstallPrompt />
+        <ChatAssistantWidget />
+        {!lgUp && <BottomNav />}
       </>
     );
   }
@@ -47,6 +64,8 @@ export default function DashboardLayout({ children }) {
   if (isMini) {
     return (
       <>
+        <SkipToContent />
+        <ImpersonationBanner />
         <Header onOpenNav={nav.onTrue} />
 
         <Box
@@ -58,14 +77,24 @@ export default function DashboardLayout({ children }) {
         >
           {lgUp ? renderNavMini : renderNavVertical}
 
-          <Main>{children}</Main>
+          <Main>
+            <VerificationBanner />
+            {children}
+          </Main>
         </Box>
+        <PushPermissionPrompt />
+        <IosInstallPrompt />
+        <InstallPrompt />
+        <ChatAssistantWidget />
+        {!lgUp && <BottomNav />}
       </>
     );
   }
 
   return (
     <>
+      <SkipToContent />
+      <ImpersonationBanner />
       <Header onOpenNav={nav.onTrue} />
 
       <Box
@@ -77,8 +106,16 @@ export default function DashboardLayout({ children }) {
       >
         {renderNavVertical}
 
-        <Main>{children}</Main>
+        <Main>
+          <VerificationBanner />
+          {children}
+        </Main>
       </Box>
+      <PushPermissionPrompt />
+      <IosInstallPrompt />
+      <InstallPrompt />
+      <ChatAssistantWidget />
+      {!lgUp && <BottomNav />}
     </>
   );
 }

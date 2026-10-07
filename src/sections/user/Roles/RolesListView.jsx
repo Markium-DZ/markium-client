@@ -4,7 +4,6 @@ import { t } from 'i18next';
 import { set } from 'lodash'; // [keep for later use]
 import { enqueueSnackbar } from 'notistack';
 import { useCallback, useEffect, useState } from 'react';
-import { deleteDriver } from 'src/api/drivers';
 import { changeItemVisibilityInSettings, useGetMainSpecs } from 'src/api/settings'; // [keep for later use]
 import { deleteEmptyRole, deleteRole, useRoles } from 'src/api/users';
 import { useValues } from 'src/api/utils';
@@ -43,8 +42,8 @@ export default function RolesListView({ }) {
     const defaultFilters = { status: 'all', name: "" };
     const items = [
         { key: 'all', label: t('all'), match: () => true },
-        { key: 'selected', label: t('selected'), match: (item) => item?.status == "selected", color: 'primary' },
-        { key: 'not_selected', label: t('not_selected'), match: (item) => item?.status == "not_selected", color: 'warning' },
+        { key: 'selected', label: t('selected'), match: (item) => item?.status === "selected", color: 'primary' },
+        { key: 'not_selected', label: t('not_selected'), match: (item) => item?.status === "not_selected", color: 'warning' },
     ];
     const filterFunction = (data, filters) => {
         const activeTab = filters.tabKey;

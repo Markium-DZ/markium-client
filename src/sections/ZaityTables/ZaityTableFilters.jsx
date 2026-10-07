@@ -35,7 +35,6 @@ const ZaityTableFilters = ({ data = [], tableData, items, children, searchText, 
 
   useEffect(() => {
     setTableDate(dataFiltered);
-    console.log("filters:", filters);
   }, [filters]);
 
   // ✅ Reset only if any filter value differs from its default

@@ -1,7 +1,6 @@
 import useSWR from 'swr';
 import { useMemo } from 'react';
 import axios, { fetcher, endpoints } from 'src/utils/axios';
-import { capture } from 'src/utils/analytics';
 
 // ----------------------------------------------------------------------
 
@@ -9,6 +8,11 @@ const options = {
   revalidateIfStale: true,
   revalidateOnFocus: false,
   revalidateOnReconnect: false,
+  onErrorRetry: (err, key, config, revalidate, { retryCount }) => {
+    const delays = [5000, 10000, 20000, 30000];
+    if (retryCount >= delays.length) return;
+    setTimeout(() => revalidate({ retryCount }), delays[retryCount]);
+  },
 };
 
 /**
@@ -66,7 +70,6 @@ export async function uploadMedia(files) {
       'Content-Type': 'multipart/form-data',
     },
   });
-  capture('media_uploaded', { file_count: fileArray.length });
   return response;
 }
 

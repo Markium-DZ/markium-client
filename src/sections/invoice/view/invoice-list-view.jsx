@@ -32,6 +32,7 @@ import { useSnackbar } from 'src/components/snackbar';
 import { ConfirmDialog } from 'src/components/custom-dialog';
 import { useSettingsContext } from 'src/components/settings';
 import CustomBreadcrumbs from 'src/components/custom-breadcrumbs';
+import VerificationGate from 'src/components/verification-gate/verification-gate';
 import {
   useTable,
   emptyRows,
@@ -230,14 +231,16 @@ export default function InvoiceListView() {
             },
           ]}
           action={
-            <Button
-              component={RouterLink}
-              href={paths.dashboard.invoice.new}
-              variant="contained"
-              startIcon={<Iconify icon="mingcute:add-line" />}
-            >
-              New Invoice
-            </Button>
+            <VerificationGate>
+              <Button
+                component={RouterLink}
+                href={paths.dashboard.invoice.new}
+                variant="contained"
+                startIcon={<Iconify icon="mingcute:add-line" />}
+              >
+                New Invoice
+              </Button>
+            </VerificationGate>
           }
           sx={{
             mb: { xs: 3, md: 5 },

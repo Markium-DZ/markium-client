@@ -619,13 +619,13 @@ export default function ColorPaletteForm() {
             {generatedPalette?.metadata && (
               <Box sx={{ mt: 1, display: 'flex', gap: 1, alignItems: 'center' }}>
                 <Chip
-                  label={`Tone: ${generatedPalette.metadata.emotionalTone}`}
+                  label={`${t('tone')}: ${generatedPalette.metadata.emotionalTone}`}
                   size="small"
                   color="primary"
                   variant="outlined"
                 />
                 <Chip
-                  label={`Harmony: ${generatedPalette.metadata.harmony}`}
+                  label={`${t('harmony')}: ${generatedPalette.metadata.harmony}`}
                   size="small"
                   color="secondary"
                   variant="outlined"

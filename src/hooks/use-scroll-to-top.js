@@ -8,6 +8,11 @@ export function useScrollToTop() {
 
   useEffect(() => {
     window.scrollTo(0, 0);
+
+    const mainContent = document.getElementById('main-content');
+    if (mainContent) {
+      mainContent.focus({ preventScroll: true });
+    }
   }, [pathname]);
 
   return null;

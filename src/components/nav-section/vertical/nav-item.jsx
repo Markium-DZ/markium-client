@@ -4,7 +4,7 @@ import { forwardRef } from 'react';
 import Box from '@mui/material/Box';
 import Link from '@mui/material/Link';
 import Tooltip from '@mui/material/Tooltip';
-import { alpha, styled } from '@mui/material/styles';
+import { alpha, styled, useTheme } from '@mui/material/styles';
 import ListItemButton from '@mui/material/ListItemButton';
 
 import { RouterLink } from 'src/routes/components';
@@ -35,6 +35,8 @@ const NavItem = forwardRef(
     ref
   ) => {
     const subItem = depth !== 1;
+    const theme = useTheme();
+    const isRTL = theme.direction === 'rtl';
 
     const renderContent = (
       <StyledNavItem
@@ -86,7 +88,7 @@ const NavItem = forwardRef(
           <Iconify
             width={16}
             className="arrow"
-            icon={open ? 'eva:arrow-ios-downward-fill' : 'eva:arrow-ios-forward-fill'}
+            icon={open ? 'eva:arrow-ios-downward-fill' : isRTL ? 'eva:arrow-ios-back-fill' : 'eva:arrow-ios-forward-fill'}
           />
         )}
       </StyledNavItem>

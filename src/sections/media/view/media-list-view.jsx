@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import PropTypes from 'prop-types';
 
 import Box from '@mui/material/Box';
@@ -9,23 +9,33 @@ import Container from '@mui/material/Container';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
 import CircularProgress from '@mui/material/CircularProgress';
+import Alert from '@mui/material/Alert';
 import Grid from '@mui/material/Grid';
 import MenuItem from '@mui/material/MenuItem';
+import TextField from '@mui/material/TextField';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
 import { alpha } from '@mui/material/styles';
 import { Divider } from '@mui/material';
 
 import { useTranslate } from 'src/locales';
-import { useGetMedia, uploadMedia, deleteMedia } from 'src/api/media';
+import { useGetMedia, uploadMedia, deleteMedia, updateMediaAltText } from 'src/api/media';
 import { useSettingsContext } from 'src/components/settings';
 import { useSnackbar } from 'src/components/snackbar';
 import Iconify from 'src/components/iconify';
-import { fDate, fDateTime } from 'src/utils/format-time';
+import { useMediaPreview } from 'src/context/media-preview/media-preview-context';
+import { fDate } from 'src/utils/format-time';
 import { fData } from 'src/utils/format-number';
 import CustomPopover, { usePopover } from 'src/components/custom-popover';
 import { ConfirmDialog } from 'src/components/custom-dialog';
+import { captureEvent } from 'src/utils/posthog';
 import showError from 'src/utils/show_error';
-import { STORAGE_API } from 'src/config-global';
 import { LoadingScreen } from 'src/components/loading-screen';
+import Lightbox, { useLightBox } from 'src/components/lightbox';
+import { useCopyToClipboard } from 'src/hooks/use-copy-to-clipboard';
+import VerificationGate from 'src/components/verification-gate/verification-gate';
 
 // ----------------------------------------------------------------------
 
@@ -37,6 +47,8 @@ export default function MediaListView() {
   const [page, setPage] = useState(1);
   const [allMedia, setAllMedia] = useState([]);
   const [uploading, setUploading] = useState(false);
+
+  const { previewMap, addPreviews, checkS3Readiness } = useMediaPreview();
 
   const fileInputRef = useRef(null);
   const scrollContainerRef = useRef(null);
@@ -73,8 +85,23 @@ export default function MediaListView() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [handleScroll]);
 
+  // Merge server items with shared blob URL overrides while S3 upload is pending
+  const displayMedia = useMemo(() => {
+    if (previewMap.size === 0) return allMedia;
+    return allMedia.map((item) => {
+      const entry = previewMap.get(item.id);
+      return entry ? { ...item, full_url: entry.blobUrl } : item;
+    });
+  }, [allMedia, previewMap]);
+
+  // Check S3 readiness via shared context when media data changes
+  useEffect(() => {
+    if (previewMap.size === 0 || allMedia.length === 0) return;
+    checkS3Readiness(allMedia);
+  }, [allMedia, previewMap, checkS3Readiness]);
+
   // Group media by creation date
-  const groupedMedia = allMedia.reduce((groups, item) => {
+  const groupedMedia = displayMedia.reduce((groups, item) => {
     const date = fDate(item.created_at);
     if (!groups[date]) {
       groups[date] = [];
@@ -83,14 +110,38 @@ export default function MediaListView() {
     return groups;
   }, {});
 
+  // Lightbox slides from all media
+  const slides = useMemo(
+    () => allMedia.map((item) => ({ src: item.full_url })),
+    [allMedia]
+  );
+
+  const lightbox = useLightBox(slides);
+
+  const handlePreview = useCallback((item) => {
+    lightbox.onOpen(item.full_url);
+  }, [lightbox]);
+
   // Handle file upload
   const handleFileSelect = useCallback(async (event) => {
     const files = event.target.files;
     if (!files || files.length === 0) return;
 
+    // Create blob URLs for instant local preview
+    const fileArray = Array.from(files);
+    const blobUrls = fileArray.map((file) => URL.createObjectURL(file));
+
     try {
       setUploading(true);
-      await uploadMedia(files);
+      const response = await uploadMedia(files);
+      captureEvent('media_uploaded', { count: fileArray.length });
+
+      // Store blob URLs in shared context (persists across components)
+      const uploadedItems = response?.data?.data || [];
+      const entries = uploadedItems
+        .map((item, index) => (blobUrls[index] ? { id: item.id, blobUrl: blobUrls[index] } : null))
+        .filter(Boolean);
+      if (entries.length > 0) addPreviews(entries);
 
       // Reset page and media to refresh from beginning
       setPage(1);
@@ -104,6 +155,8 @@ export default function MediaListView() {
         fileInputRef.current.value = '';
       }
     } catch (error) {
+      // Revoke blob URLs on failure
+      blobUrls.forEach((url) => URL.revokeObjectURL(url));
       console.error('Failed to upload media:', error);
       enqueueSnackbar(error.message || t('failed_to_upload_media'), { variant: 'error' });
     } finally {
@@ -126,8 +179,21 @@ export default function MediaListView() {
       enqueueSnackbar(t('media_deleted_successfully'), { variant: 'success' });
     } catch (error) {
       console.error('Failed to delete media:', error);
-      // enqueueSnackbar(error.message || t('failed_to_delete_media'), { variant: 'error' });
-      showError(error)
+      showError(error);
+    }
+  }, [enqueueSnackbar, t]);
+
+  // Handle alt text update
+  const handleUpdateAltText = useCallback(async (mediaId, newAltText) => {
+    try {
+      await updateMediaAltText(mediaId, newAltText);
+      setAllMedia((prev) =>
+        prev.map((item) => (item.id === mediaId ? { ...item, alt_text: newAltText } : item))
+      );
+      enqueueSnackbar(t('alt_text_updated'), { variant: 'success' });
+    } catch (error) {
+      console.error('Failed to update alt text:', error);
+      showError(error);
     }
   }, [enqueueSnackbar, t]);
 
@@ -136,32 +202,34 @@ export default function MediaListView() {
       <Stack direction="row" alignItems="center" justifyContent="space-between" mb={5}>
         <Typography variant="h4">{t('media')}</Typography>
 
-        <Button
-          variant="contained"
-          startIcon={uploading ? <CircularProgress size={20} /> : <Iconify icon="eva:plus-fill" />}
-          onClick={handleUploadClick}
-          disabled={uploading}
-        >
-          {uploading ? t('uploading') : t('upload_media')}
-        </Button>
+        <VerificationGate>
+          <Button
+            variant="contained"
+            startIcon={uploading ? <CircularProgress size={20} /> : <Iconify icon="eva:plus-fill" />}
+            onClick={handleUploadClick}
+            disabled={uploading}
+          >
+            {uploading ? t('uploading') : t('upload_media')}
+          </Button>
+        </VerificationGate>
 
         <input
           ref={fileInputRef}
           type="file"
           multiple
-          accept="image/*"
+          accept="image/*,.heic,.heif"
           style={{ display: 'none' }}
           onChange={handleFileSelect}
         />
       </Stack>
 
-      <Box ref={scrollContainerRef}>
-        {mediaError && (
-          <Typography color="error" sx={{ textAlign: 'center', py: 3 }}>
-            {t('failed_to_load_media')}
-          </Typography>
-        )}
+      {mediaError && allMedia.length === 0 && !mediaLoading && (
+        <Alert severity="warning" icon={<Iconify icon="solar:cloud-cross-bold" width={22} />} sx={{ mb: 2 }}>
+          {t('no_connection_notice')}
+        </Alert>
+      )}
 
+      <Box ref={scrollContainerRef}>
         {Object.keys(groupedMedia).length === 0 && !mediaLoading && (
           <Card sx={{ p: 5, textAlign: 'center' }}>
             <Iconify icon="solar:gallery-bold" width={64} sx={{ mx: 'auto', color: 'text.disabled', mb: 2 }} />
@@ -178,7 +246,7 @@ export default function MediaListView() {
           <Box key={date} sx={{ mb: 4 }}>
 
             <Divider orientation="horizontal" sx={{ mt: 4, display: 'flex' }} />
-            <Typography variant="subtitle1" color={"text.secondary"} sx={{ mb: 2, mt: 2, display: "flex", alignItems: "center", fontWeight: 600 }} >
+            <Typography variant="subtitle1" color="text.secondary" sx={{ mb: 2, mt: 2, display: 'flex', alignItems: 'center', fontWeight: 600 }} >
               <Iconify icon="solar:calendar-bold" width="20px" height="20px" sx={{ mr: 1, color: 'primary.main' }} />
               {date}
             </Typography>
@@ -186,7 +254,12 @@ export default function MediaListView() {
             <Grid container spacing={2}>
               {items.map((item) => (
                 <Grid item xs={4} sm={3} md={2} lg={1.5} key={item.id}>
-                  <MediaItem item={item} onDelete={handleDeleteMedia} />
+                  <MediaItem
+                    item={item}
+                    onDelete={handleDeleteMedia}
+                    onPreview={handlePreview}
+                    onUpdateAltText={handleUpdateAltText}
+                  />
                 </Grid>
               ))}
             </Grid>
@@ -195,21 +268,33 @@ export default function MediaListView() {
 
         {mediaLoading && (
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
-            {/* <CircularProgress /> */}
             <LoadingScreen />
           </Box>
         )}
       </Box>
+
+      <Lightbox
+        index={lightbox.selected}
+        slides={slides}
+        open={lightbox.open}
+        close={lightbox.onClose}
+        onGetCurrentIndex={(index) => lightbox.setSelected(index)}
+      />
     </Container>
   );
 }
 
 // ----------------------------------------------------------------------
 
-function MediaItem({ item, onDelete }) {
+function MediaItem({ item, onDelete, onPreview, onUpdateAltText }) {
   const { t } = useTranslate();
+  const { enqueueSnackbar } = useSnackbar();
+  const { copy } = useCopyToClipboard();
   const popover = usePopover();
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [altTextDialog, setAltTextDialog] = useState(false);
+  const [altTextValue, setAltTextValue] = useState(item.alt_text || '');
+
   const handleDeleteClick = useCallback(() => {
     popover.onClose();
     setConfirmDelete(true);
@@ -224,6 +309,28 @@ function MediaItem({ item, onDelete }) {
     setConfirmDelete(false);
   }, []);
 
+  const handleCopyUrl = useCallback(() => {
+    popover.onClose();
+    copy(item.full_url);
+    enqueueSnackbar(t('url_copied'), { variant: 'success' });
+  }, [copy, item.full_url, popover, enqueueSnackbar, t]);
+
+  const handlePreviewClick = useCallback(() => {
+    popover.onClose();
+    onPreview(item);
+  }, [popover, onPreview, item]);
+
+  const handleEditAltText = useCallback(() => {
+    popover.onClose();
+    setAltTextValue(item.alt_text || '');
+    setAltTextDialog(true);
+  }, [popover, item.alt_text]);
+
+  const handleSaveAltText = useCallback(async () => {
+    setAltTextDialog(false);
+    await onUpdateAltText(item.id, altTextValue);
+  }, [onUpdateAltText, item.id, altTextValue]);
+
   return (
     <>
       <Card
@@ -233,11 +340,16 @@ function MediaItem({ item, onDelete }) {
           transition: 'all 0.2s',
           '&:hover': {
             boxShadow: (theme) => theme.customShadows.z8,
+            transform: 'scale(1.02)',
             '& .media-overlay': {
               opacity: 1,
             },
           },
+          '&:active': {
+            transform: 'scale(0.98)',
+          },
         }}
+        onClick={() => onPreview(item)}
       >
         <Box
           sx={{
@@ -283,7 +395,10 @@ function MediaItem({ item, onDelete }) {
             <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
               <IconButton
                 size="small"
-                onClick={popover.onOpen}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  popover.onOpen(e);
+                }}
                 sx={{
                   color: 'white',
                   bgcolor: (theme) => alpha(theme.palette.common.black, 0.4),
@@ -327,8 +442,25 @@ function MediaItem({ item, onDelete }) {
         open={popover.open}
         onClose={popover.onClose}
         arrow="right-top"
-        sx={{ width: 140 }}
+        sx={{ width: 160 }}
       >
+        <MenuItem onClick={handlePreviewClick}>
+          <Iconify icon="solar:eye-bold" />
+          {t('preview')}
+        </MenuItem>
+
+        <MenuItem onClick={handleCopyUrl}>
+          <Iconify icon="solar:copy-bold" />
+          {t('copy_link')}
+        </MenuItem>
+
+        <MenuItem onClick={handleEditAltText}>
+          <Iconify icon="solar:pen-bold" />
+          {t('edit_alt_text')}
+        </MenuItem>
+
+        <Divider sx={{ borderStyle: 'dashed' }} />
+
         <MenuItem
           onClick={handleDeleteClick}
           sx={{ color: 'error.main' }}
@@ -337,6 +469,33 @@ function MediaItem({ item, onDelete }) {
           {t('delete')}
         </MenuItem>
       </CustomPopover>
+
+      {/* Alt Text Edit Dialog */}
+      <Dialog
+        open={altTextDialog}
+        onClose={() => setAltTextDialog(false)}
+        maxWidth="sm"
+        fullWidth
+        onClick={(e) => e.stopPropagation()}
+      >
+        <DialogTitle>{t('edit_alt_text')}</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            fullWidth
+            multiline
+            rows={3}
+            value={altTextValue}
+            onChange={(e) => setAltTextValue(e.target.value)}
+            placeholder={t('edit_alt_text')}
+            sx={{ mt: 1 }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setAltTextDialog(false)}>{t('cancel')}</Button>
+          <Button variant="contained" onClick={handleSaveAltText}>{t('save')}</Button>
+        </DialogActions>
+      </Dialog>
 
       <ConfirmDialog
         open={confirmDelete}
@@ -356,4 +515,6 @@ function MediaItem({ item, onDelete }) {
 MediaItem.propTypes = {
   item: PropTypes.object.isRequired,
   onDelete: PropTypes.func.isRequired,
+  onPreview: PropTypes.func.isRequired,
+  onUpdateAltText: PropTypes.func.isRequired,
 };

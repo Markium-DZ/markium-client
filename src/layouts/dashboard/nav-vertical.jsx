@@ -1,45 +1,74 @@
-import { useContext, useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import PropTypes from 'prop-types';
 
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
+import Divider from '@mui/material/Divider';
 import Drawer from '@mui/material/Drawer';
+import Typography from '@mui/material/Typography';
+import { useTheme } from '@mui/material/styles';
 
 import { usePathname } from 'src/routes/hooks';
+import { RouterLink } from 'src/routes/components';
+import { paths } from 'src/routes/paths';
 
 import { useResponsive } from 'src/hooks/use-responsive';
-import { useMockedUser } from 'src/hooks/use-mocked-user';
 
 import Logo from 'src/components/logo';
+import Iconify from 'src/components/iconify';
 import Scrollbar from 'src/components/scrollbar';
 import { NavSectionVertical } from 'src/components/nav-section';
 
+import { useAuthContext } from 'src/auth/hooks';
+import { useGetProducts } from 'src/api/product';
+import { useGetCurrentSubscription } from 'src/api/subscriptions';
+import { useTranslate } from 'src/locales';
+
 import { NAV } from '../config-layout';
-// import NavUpgrade from '../common/nav-upgrade';
+import NavUserProfile from '../common/nav-user-profile';
 import { useNavData } from './config-navigation';
 import NavToggleButton from '../common/nav-toggle-button';
-import { IconButton, Tooltip, Typography } from '@mui/material';
-import { t } from 'i18next';
-import { AuthContext } from 'src/auth/context/jwt';
-import { useAuthContext } from 'src/auth/hooks';
-import Iconify from 'src/components/iconify';
 
 // ----------------------------------------------------------------------
 
-export default function NavVertical({ openNav, onCloseNav }) {
-  // const { user } = useMockedUser();
-  // const { user } = useContext(AuthContext);
-  const { user } = useAuthContext();
+const FREE_SLUGS = ['payg', 'free-trial'];
 
-  const publicProductUrl = user?.store?.slug
-    ? `https://${user.store.slug}.markium.online/?store=${user?.store?.slug}`
-    : '';
+function getPlanTier(slug) {
+  if (!slug || FREE_SLUGS.includes(slug)) return 'free';
+  if (slug.startsWith('business')) return 'business';
+  return 'pro';
+}
+
+export default function NavVertical({ openNav, onCloseNav }) {
+  const theme = useTheme();
+  const { user } = useAuthContext();
+  const { t } = useTranslate();
+  const { subscription } = useGetCurrentSubscription();
+
+  const planTier = getPlanTier(subscription?.package?.slug);
 
   const pathname = usePathname();
 
   const lgUp = useResponsive('up', 'lg');
 
   const navData = useNavData();
+  const { products } = useGetProducts();
+  const isNewUser = (products?.length || 0) === 0;
+
+  // Dim irrelevant nav items for Grade A (new users with 0 products)
+  const DIMMED_PATHS = [paths.dashboard.order.root, paths.dashboard.inventory.root];
+
+  const adjustedNavData = useMemo(() => {
+    if (!isNewUser) return navData;
+    return navData.map((group) => ({
+      ...group,
+      items: group.items.map((item) => ({
+        ...item,
+        dimmed: DIMMED_PATHS.includes(item.path),
+        dimmedReason: DIMMED_PATHS.includes(item.path) ? t('nav_dimmed_create_product_first') : undefined,
+      })),
+    }));
+  }, [navData, isNewUser]);
 
   useEffect(() => {
     if (openNav) {
@@ -49,47 +78,70 @@ export default function NavVertical({ openNav, onCloseNav }) {
   }, [pathname]);
 
   const renderContent = (
-    <Scrollbar
-      sx={{
-        height: 1,
-        '& .simplebar-content': {
-          height: 1,
-          display: 'flex',
-          flexDirection: 'column',
-        },
-      }}
-    >
-      <Box display="flex" alignItems="center" sx={{ mt: 3, ml: 4, mb: 1 }}>
-        <Logo user={user} />
-        <Typography color="primary" mx={1} fontWeight="500" >
-          {user?.store?.name || t("markium")}
-        </Typography>
-        <Tooltip title={t('open_in_new_tab')}>
-          <IconButton
-            component="a"
-            href={publicProductUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            size="small"
-            color="primary"
-            sx={{ p: 0.5 }}
-          >
-            <Iconify icon="eva:external-link-fill" width={16} />
-          </IconButton>
-        </Tooltip>
-      </Box>
-
-      <NavSectionVertical
-        data={navData}
-        slotProps={{
-          currentRole: user?.role,
+    <Stack sx={{ height: 1 }}>
+      <Scrollbar
+        sx={{
+          flexGrow: 1,
+          '& .simplebar-content': {
+            display: 'flex',
+            flexDirection: 'column',
+          },
         }}
-      />
+      >
+        <Box
+          component={RouterLink}
+          href={paths.dashboard.root}
+          sx={{
+            px: 2.5,
+            pt: 3,
+            pb: 2,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1.5,
+            textDecoration: 'none',
+            color: 'inherit',
+          }}
+        >
+          <Logo disabledLink sx={{ width: 36, height: 36 }} />
+          <Typography
+            variant="subtitle1"
+            noWrap
+            sx={{
+              fontWeight: 700,
+              ...(planTier === 'pro' && {
+                color: theme.palette.primary.main,
+              }),
+              ...(planTier === 'business' && {
+                background: `linear-gradient(135deg, ${theme.palette.warning.main}, ${theme.palette.warning.dark})`,
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+              }),
+            }}
+          >
+            {t('markium')}
+          </Typography>
+          {planTier === 'business' && (
+            <Iconify
+              icon="solar:crown-bold"
+              width={18}
+              sx={{ color: 'warning.main', ml: -0.5 }}
+            />
+          )}
+        </Box>
 
-      <Box sx={{ flexGrow: 1 }} />
+        <Divider sx={{ borderStyle: 'dashed', mx: 2.5, mb: 2 }} />
 
-      {/* <NavUpgrade /> */}
-    </Scrollbar>
+        <NavSectionVertical
+          data={adjustedNavData}
+          slotProps={{
+            currentRole: user?.role,
+          }}
+          aria-label={t('main_navigation')}
+        />
+      </Scrollbar>
+
+      <NavUserProfile />
+    </Stack>
   );
 
   return (
@@ -119,6 +171,7 @@ export default function NavVertical({ openNav, onCloseNav }) {
           PaperProps={{
             sx: {
               width: NAV.W_VERTICAL,
+              pt: 'env(safe-area-inset-top)',
             },
           }}
         >

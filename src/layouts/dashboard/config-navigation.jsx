@@ -44,13 +44,11 @@ const ICONS = {
   analytics: icon('ic_analytics'),
   settings: icon('ic_settings'),
   dashboard: icon('ic_dashboard'),
-  car: <Iconify icon="tabler:car" />,
-  maintenance: <Iconify icon="map:car-repair" />,
-  document: <Iconify icon="carbon:document" />,
-  driver: <Iconify icon="healthicons:truck-driver" />,
   support: <Iconify icon="solar:chat-round-call-bold-duotone" />,
   media: <Iconify icon="solar:gallery-bold" />,
   inventory: <Iconify icon="solar:box-bold" />,
+  subscription: <Iconify icon="solar:wallet-bold-duotone" />,
+  profitability: <Iconify icon="solar:chart-2-bold-duotone" />,
 };
 
 // ----------------------------------------------------------------------
@@ -63,12 +61,29 @@ export function useNavData() {
       // OVERVIEW
       // ----------------------------------------------------------------------
       {
-        subheader: t('overview'),
+        subheader: '',
         items: [
           {
-            title: t('statistics'),
+            title: t('overview'),
             path: paths.dashboard.root,
+            icon: ICONS.dashboard,
+          },
+          {
+            title: t('analytics_title'),
+            path: paths.dashboard.general.analytics,
             icon: ICONS.analytics,
+          },
+          {
+            title: t('profitability'),
+            path: paths.dashboard.profitability.root,
+            icon: ICONS.profitability,
+            info: <Label color="info">PRO</Label>,
+            children: [
+              { title: t('profitability_overview'), path: paths.dashboard.profitability.root },
+              { title: t('products_pnl'), path: paths.dashboard.profitability.products },
+              { title: t('campaigns_roi'), path: paths.dashboard.profitability.campaigns },
+              { title: t('channels_overview'), path: paths.dashboard.profitability.channels },
+            ],
           },
         ],
       },
@@ -78,17 +93,6 @@ export function useNavData() {
       {
         subheader: t('management'),
         items: [
-          // {
-          //   title: t('vehicles'),
-          //   path: paths.dashboard.vehicle.root,
-          //   icon: ICONS.car,
-          //   permissions:["read.car"],
-          //   children: [
-          //     { title: t('vehiclesList'), permissions:"read.car", path: paths.dashboard.vehicle.root },
-          //     { title: t('logAndNotification'), permissions:"read.car_log", path: paths.dashboard.vehicle.log },
-          //     { title: t('costAndInput'), permissions:"read.car", path: paths.dashboard.vehicle.inputs },
-          //   ],
-          // },
           {
             title: t('products'),
             path: paths.dashboard.product.root,
@@ -126,6 +130,7 @@ export function useNavData() {
             icon: ICONS.media,
           },
 
+
         ],
       },
 
@@ -137,9 +142,18 @@ export function useNavData() {
             title: t('settings'),
             path: paths.dashboard.settings.root,
             icon: ICONS.settings,
-            permissions: ["read.color", "read.car_company", "read.car_model", "read.spec", "read.attahcment_name", "read.country", "read.neighborhood", "read.state"],
+            permissions: ["read.color", "read.country", "read.neighborhood", "read.state"],
             roles: ['admin', 'manager'],
             // permissions:"read.system_settings",
+          },
+          {
+            title: t('subscription'),
+            path: paths.dashboard.subscription.root,
+            icon: ICONS.subscription,
+            children: [
+              { title: t('checkout'), path: paths.dashboard.subscription.checkout },
+              { title: t('payment_history'), path: paths.dashboard.subscription.history },
+            ],
           },
           {
             title: t('contact_support'),

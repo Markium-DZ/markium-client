@@ -3,14 +3,6 @@ import { Controller, useFormContext } from 'react-hook-form';
 import TextField from '@mui/material/TextField';
 import Autocomplete from '@mui/material/Autocomplete';
 
-// Example data
-// const options = [
-//   { id: 1, plat_number: 'Apple' },
-//   { id: 2, plat_number: 'Banana' },
-//   { id: 3, plat_number: 'Cherry' },
-//   { id: 4, plat_number: 'Grapes' },
-//   { id: 5, plat_number: 'Orange' }
-// ];
 
 export default function SimpleAutocomplete({ name, label, disabled, getOptionLabel, options, placeholder, multiple = false }) {
   const { control, setValue } = useFormContext();
@@ -25,7 +17,7 @@ export default function SimpleAutocomplete({ name, label, disabled, getOptionLab
           options={options}
           disabled={disabled}
           multiple={multiple}
-          getOptionLabel={!!getOptionLabel ? getOptionLabel : (option) => option.name} // Display `plat_number`
+          getOptionLabel={!!getOptionLabel ? getOptionLabel : (option) => option.name}
           value={multiple ? options.filter((o) => value?.includes(o.id)) : options?.find((o) => o.id == value) || null} // Convert id to object for UI
           isOptionEqualToValue={(option, val) => option.id == val?.id} // Prevent mismatches
           onChange={(event, newValue) =>

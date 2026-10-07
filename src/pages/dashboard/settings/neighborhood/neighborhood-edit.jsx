@@ -1,6 +1,5 @@
 import { Helmet } from 'react-helmet-async';
 import { useParams } from 'react-router';
-import DocumentCreateView from 'src/sections/settings/SystemDocuments/DocumentCreateView';
 import NeighborhoodCreateView from 'src/sections/settings/SystemNeighborhoods/NeighborhoodCreateView';
 
 // ----------------------------------------------------------------------

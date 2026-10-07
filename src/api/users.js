@@ -11,54 +11,6 @@ const options = {
     revalidateOnReconnect: false,
 };
 
-export function useGetMainSpecs() {
-    const { data, isLoading, error, isValidating, mutate } = useSWR(
-        endpoints.settings?.mainspecs,
-        fetcher,
-        options
-    );
-
-    const memoizedValue = useMemo(
-        () => ({
-            mainspecs: data?.data || [],
-            mainspecsLoading: isLoading,
-            mainspecsError: error,
-            mainspecsValidating: isValidating,
-            mainspecsEmpty: !isLoading && !data?.data?.length,
-            mutate,
-        }),
-        [data, error, isLoading, isValidating]
-    );
-
-    return memoizedValue;
-}
-export function useGetMainSpec(id) {
-    const { data, isLoading, error, isValidating, mutate } = useSWR(
-        endpoints.settings?.mainspecs + "/" + id,
-        fetcher,
-        options
-    );
-
-    const memoizedValue = useMemo(
-        () => ({
-            mainspec: data?.data || [],
-            mainspecLoading: isLoading,
-            mainspecError: error,
-            mainspecValidating: isValidating,
-            mainspecEmpty: !isLoading && !data?.data?.length,
-            mutate,
-        }),
-        [data, error, isLoading, isValidating]
-    );
-
-    return memoizedValue;
-}
-
-export async function createMainSpec(body) {
-    const URL = endpoints.settings?.mainspecs;
-    return await axios.post(URL, body);
-}
-
 export function useUsers() {
     const { data, isLoading, error, isValidating, mutate } = useSWR(
         endpoints.users.users,
@@ -242,7 +194,6 @@ export function useUserPermissions() {
 
 export async function editRole(id, body) {
     const URL = endpoints.users.roles + '/' + id;
-    // const URL = endpoints.cars.list + '/' + id;
 
     return await axios.put(URL, body);
 }

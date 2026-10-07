@@ -181,7 +181,7 @@ export default function ProductVariantEditDialog({ open, onClose, variant, produ
                 type="number"
                 inputProps={{ step: '0.01', min: '0' }}
                 InputProps={{
-                  startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                  startAdornment: <InputAdornment position="start">{t('currency_da')}</InputAdornment>,
                 }}
                 {...register('price', {
                   min: { value: 0, message: t('price_must_be_positive') },
@@ -196,7 +196,7 @@ export default function ProductVariantEditDialog({ open, onClose, variant, produ
                 type="number"
                 inputProps={{ step: '0.01', min: '0' }}
                 InputProps={{
-                  startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                  startAdornment: <InputAdornment position="start">{t('currency_da')}</InputAdornment>,
                 }}
                 {...register('compare_at_price', {
                   min: { value: 0, message: t('price_must_be_positive') },
@@ -213,7 +213,7 @@ export default function ProductVariantEditDialog({ open, onClose, variant, produ
                 type="number"
                 inputProps={{ step: '0.01', min: '0' }}
                 InputProps={{
-                  startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                  startAdornment: <InputAdornment position="start">{t('currency_da')}</InputAdornment>,
                 }}
                 {...register('cost', {
                   min: { value: 0, message: t('price_must_be_positive') },

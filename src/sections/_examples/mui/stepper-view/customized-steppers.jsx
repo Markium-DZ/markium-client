@@ -245,7 +245,7 @@ export default function CustomizedSteppers() {
             <Typography sx={{ my: 1 }}>{getStepContent(activeStep)}</Typography>
           </Paper>
 
-          <Box sx={{ textAlign: 'right' }}>
+          <Box sx={{ textAlign: 'end' }}>
             <Button disabled={activeStep === 0} onClick={handleBack} sx={{ mr: 1 }}>
               Back
             </Button>

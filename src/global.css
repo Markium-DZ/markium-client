@@ -1,19 +1,12 @@
 /* scrollbar */
 @import 'simplebar-react/dist/simplebar.min.css';
 
-
 /* lazy image */
 @import 'react-lazy-load-image-component/src/effects/blur.css';
-
-
-/* editor */
-@import 'react-quill/dist/quill.snow.css';
-
 
 /* carousel */
 @import 'slick-carousel/slick/slick.css';
 @import 'slick-carousel/slick/slick-theme.css';
-
 
 /* lightbox */
 @import 'yet-another-react-lightbox/styles.css';
@@ -21,8 +14,29 @@
 @import 'yet-another-react-lightbox/plugins/thumbnails.css';
 
 
-@import url("https://fonts.googleapis.com/css2?family=Montserrat&display=swap");
+/* WebView / Mobile app fixes */
+html, body {
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
+}
 
+/* Safe area insets for notched devices — horizontal only.
+   Vertical insets are handled per-layout to avoid double-padding
+   with fixed-position headers and bottom nav. */
+body {
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+/* Prevent iOS auto-zoom on input focus (requires >= 16px font-size) */
+input, select, textarea {
+  font-size: 16px !important;
+}
+
+/* Disable tap highlight in WebView */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
 
 
 .checkbox {
@@ -80,4 +94,3 @@
 .support a:hover{
   transform: scale(1.1);
 }
-
