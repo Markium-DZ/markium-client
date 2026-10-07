@@ -141,3 +141,42 @@ export async function createShipment(orderId, { connectionId, quoteId, serviceCo
     metadata: metadata || null,
   });
 }
+
+// ----------------------------------------------------------------------
+// Shipping prices per commune
+
+export function useGetCommuneShippingRates() {
+  const url = endpoints.shipping.rates;
+
+  const { data, isLoading, error, isValidating, mutate } = useSWR(url, fetcher, options);
+
+  const memoizedValue = useMemo(
+    () => ({
+      rates: data?.data || [],
+      ratesLoading: isLoading,
+      ratesError: error,
+      ratesValidating: isValidating,
+      ratesEmpty: !isLoading && !data?.data?.length,
+      mutate,
+    }),
+    [data, error, isLoading, isValidating, mutate]
+  );
+
+  return memoizedValue;
+}
+
+// body: { commune_ids: number[], home_price: number, desk_price: number }
+export async function bulkSetShippingRates(body) {
+  const URL = endpoints.shipping.ratesBulk;
+  const response = await axios.put(URL, body);
+  capture('shipping_rates_set', { communes_count: body?.commune_ids?.length });
+  return response;
+}
+
+// commune_ids: number[] — sent as the DELETE request body
+export async function bulkClearShippingRates(commune_ids) {
+  const URL = endpoints.shipping.ratesBulk;
+  const response = await axios.delete(URL, { data: { commune_ids } });
+  capture('shipping_rates_cleared', { communes_count: commune_ids?.length });
+  return response;
+}

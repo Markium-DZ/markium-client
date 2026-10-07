@@ -170,3 +170,29 @@ export function useGetWilayas() {
 
   return memoizedValue;
 }
+
+// Static reference data — no need to revalidate once loaded.
+const staticOptions = {
+  revalidateIfStale: false,
+  revalidateOnFocus: false,
+  revalidateOnReconnect: false,
+};
+
+export function useGetCommunes() {
+  const URL = endpoints.settings.communes;
+  const { data, isLoading, error, isValidating, mutate } = useSWR(URL, fetcher, staticOptions);
+
+  const memoizedValue = useMemo(
+    () => ({
+      communes: data?.data || [],
+      communesLoading: isLoading,
+      communesError: error,
+      communesValidating: isValidating,
+      communesEmpty: !isLoading && !data?.data?.length,
+      mutate,
+    }),
+    [data, error, isLoading, isValidating, mutate]
+  );
+
+  return memoizedValue;
+}

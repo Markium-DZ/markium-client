@@ -75,6 +75,7 @@ const SystemPointsView = lazy(() => import('src/pages/dashboard/settings/system-
 const MarketingPixelsView = lazy(() => import('src/pages/dashboard/settings/marketing-pixels-view'));
 const SessionReplayView = lazy(() => import('src/pages/dashboard/settings/session-replay-view'));
 const DeliveryCompaniesView = lazy(() => import('src/pages/dashboard/settings/delivery-companies-view'));
+const ShippingPricesView = lazy(() => import('src/pages/dashboard/settings/shipping-prices-view'));
 const CodSettingsView = lazy(() => import('src/pages/dashboard/settings/cod-settings-view'));
 const NotificationSettingsView = lazy(() => import('src/pages/dashboard/settings/notification-settings-view'));
 const ContactsSocialView = lazy(() => import('src/pages/dashboard/settings/contacts-social-view'));
@@ -222,6 +223,7 @@ export const dashboardRoutes = [
           { path: 'marketing-pixels', element: <MarketingPixelsView /> },
           { path: 'session-replay', element: <SessionReplayView /> },
           { path: 'delivery-companies', element: <DeliveryCompaniesView /> },
+          { path: 'shipping-prices', element: <ShippingPricesView /> },
           { path: 'cod', element: <CodSettingsView /> },
           { path: 'notifications', element: <NotificationSettingsView /> },
           { path: 'contacts-social', element: <ContactsSocialView /> },

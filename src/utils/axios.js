@@ -152,6 +152,8 @@ export const endpoints = {
     categoriesList: '/categories/list',
     categoriesSettings: '/categories/settings',
     visibility: '/system-settings/visibility',
+    wilayas: '/wilayas',
+    communes: '/communes',
   },
   users: {
     root: '/auth/registerCompanyEmployeer',
@@ -226,6 +228,8 @@ export const endpoints = {
     orderRatesByProvider: (orderId) => `/shipping/orders/${orderId}/rates/by-provider`,
     refreshOrderRates: (orderId) => `/shipping/orders/${orderId}/rates/refresh`,
     shipOrder: (orderId) => `/shipping/orders/${orderId}/ship`,
+    rates: '/shipping-rates',
+    ratesBulk: '/shipping-rates/bulk',
   },
   payment: {
     providers: '/payment/providers',

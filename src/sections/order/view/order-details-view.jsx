@@ -264,11 +264,6 @@ export default function OrderDetailsView({ id }) {
     shippingRatesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }, []);
 
-  const shippingCost = currentOrder?.active_shipment?.cost?.amount
-    || (currentOrder?.total_price && currentOrder?.subtotal
-      ? currentOrder.total_price - currentOrder.subtotal
-      : 0);
-
   const activeStep = getActiveStep(currentOrder);
   const isCancelled = status === 'cancelled';
 
@@ -373,7 +368,9 @@ export default function OrderDetailsView({ id }) {
           <Stack spacing={3}>
             <OrderDetailsItems
               items={currentOrder?.items}
-              shipping={shippingCost}
+              deliveryType={currentOrder?.delivery_type ?? null}
+              shippingPrice={currentOrder?.shipping_price ?? null}
+              isBlurred={!!currentOrder?.is_blurred}
               discount={currentOrder?.discount || 0}
               subTotal={currentOrder?.subtotal}
               totalAmount={currentOrder?.total_price}
@@ -410,6 +407,7 @@ export default function OrderDetailsView({ id }) {
             <OrderDetailsInfo
               customer={currentOrder?.customer}
               shippingAddress={currentOrder?.address}
+              deliveryType={currentOrder?.delivery_type ?? null}
             />
 
             <OrderTrackingAnalytics trackingAnalytics={currentOrder?.tracking_analytics} />

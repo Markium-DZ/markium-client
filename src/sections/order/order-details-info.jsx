@@ -13,6 +13,8 @@ import { useLocales } from 'src/locales';
 
 import Iconify from 'src/components/iconify';
 
+import OrderDeliveryTypeLabel from './order-delivery-type-label';
+
 // ----------------------------------------------------------------------
 
 const getLocalizedName = (item, currentLang) => {
@@ -29,7 +31,7 @@ const getLocalizedName = (item, currentLang) => {
   }
 };
 
-export default function OrderDetailsInfo({ customer, shippingAddress }) {
+export default function OrderDetailsInfo({ customer, shippingAddress, deliveryType }) {
   const { t } = useTranslate();
   const { currentLang } = useLocales();
 
@@ -90,6 +92,16 @@ export default function OrderDetailsInfo({ customer, shippingAddress }) {
             {getLocalizedFullAddress() || '-'}
           </Typography>
         </Stack>
+
+        {deliveryType && (
+          <Stack direction="row" spacing={1} alignItems="center">
+            <Iconify icon="solar:delivery-bold" width={18} sx={{ color: 'text.disabled' }} />
+            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+              {t('delivery_type')}
+            </Typography>
+            <OrderDeliveryTypeLabel deliveryType={deliveryType} />
+          </Stack>
+        )}
       </Stack>
     </Card>
   );
@@ -98,4 +110,5 @@ export default function OrderDetailsInfo({ customer, shippingAddress }) {
 OrderDetailsInfo.propTypes = {
   customer: PropTypes.object,
   shippingAddress: PropTypes.object,
+  deliveryType: PropTypes.oneOf(['home', 'stop_desk', null]),
 };

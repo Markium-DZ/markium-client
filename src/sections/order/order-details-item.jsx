@@ -19,12 +19,26 @@ import Iconify from 'src/components/iconify';
 
 export default function OrderDetailsItems({
   items,
-  shipping,
+  deliveryType,
+  shippingPrice,
+  isBlurred,
   discount,
   subTotal,
   totalAmount,
 }) {
   const { t } = useTranslate();
+
+  // Legacy orders (no delivery_type) predate per-commune shipping: hide the line.
+  // delivery_type set + shipping_price null = unpriced commune ("to be confirmed").
+  const showShipping = !!deliveryType;
+
+  let shippingDisplay = '-';
+  if (!isBlurred) {
+    shippingDisplay =
+      shippingPrice === null || shippingPrice === undefined
+        ? t('shipping_to_be_confirmed')
+        : fCurrency(shippingPrice);
+  }
 
   return (
     <Card>
@@ -124,12 +138,22 @@ export default function OrderDetailsItems({
               <Box sx={{ width: 160, typography: 'subtitle2' }}>{fCurrency(subTotal) || '-'}</Box>
             </Stack>
 
-            <Stack direction="row">
-              <Box sx={{ color: 'text.secondary' }}>{t('shipping')}</Box>
-              <Box sx={{ width: 160, ...(shipping && { color: 'success.main' }) }}>
-                {shipping ? fCurrency(shipping) : '-'}
-              </Box>
-            </Stack>
+            {showShipping && (
+              <Stack direction="row">
+                <Box sx={{ color: 'text.secondary' }}>{t('shipping')}</Box>
+                <Box
+                  sx={{
+                    width: 160,
+                    ...(!isBlurred &&
+                      (shippingPrice === null || shippingPrice === undefined) && {
+                        color: 'warning.main',
+                      }),
+                  }}
+                >
+                  {shippingDisplay}
+                </Box>
+              </Stack>
+            )}
 
             <Stack direction="row">
               <Box sx={{ color: 'text.secondary' }}>{t('discount')}</Box>
@@ -152,7 +176,9 @@ export default function OrderDetailsItems({
 OrderDetailsItems.propTypes = {
   discount: PropTypes.number,
   items: PropTypes.array,
-  shipping: PropTypes.number,
+  deliveryType: PropTypes.oneOf(['home', 'stop_desk', null]),
+  shippingPrice: PropTypes.number,
+  isBlurred: PropTypes.bool,
   subTotal: PropTypes.number,
   totalAmount: PropTypes.number,
 };

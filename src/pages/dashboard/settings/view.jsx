@@ -91,6 +91,12 @@ const TABS = [
         icon: 'solar:delivery-bold-duotone',
         href: paths?.dashboard.settings.delivery_companies,
       },
+      {
+        key: 'shipping_prices',
+        titleKey: 'shipping_prices',
+        icon: 'solar:tag-price-bold-duotone',
+        href: paths?.dashboard.settings.shipping_prices,
+      },
     ],
   },
   {

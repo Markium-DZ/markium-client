@@ -40,6 +40,8 @@ import { fCurrency } from 'src/utils/format-number';
 import { HOST_API } from 'src/config-global';
 import { getOrderStatusOptions, getOrderStatus } from 'src/constants/order-status';
 
+import OrderDeliveryTypeLabel from '../order-delivery-type-label';
+
 
 
 
@@ -459,6 +461,7 @@ export default function OrdersListView({ product_id }) {
             width: 140
         },
         { id: 'total', label: t('total'), type: "text", width: 120 },
+        { id: 'delivery_type', label: t('delivery_type'), type: "render", render: (item) => <OrderDeliveryTypeLabel deliveryType={item.delivery_type ?? null} />, width: 110 },
         { id: 'c_status', label: t('status'), type: "label", width: 100 },
         { id: 'full_address', label: t('address'), type: "long_text", length: 2, width: 200 },
         { id: 'actions', label: t('actions'), type: "threeDots", component: (item) => <ElementActions item={item} setTableData={setTableData} />, width: 60, align: "right" },

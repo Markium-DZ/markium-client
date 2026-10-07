@@ -14,6 +14,8 @@ import Iconify from 'src/components/iconify';
 import { useRouter } from 'src/routes/hooks';
 import { paths } from 'src/routes/paths';
 
+import OrderDeliveryTypeLabel from './order-delivery-type-label';
+
 // ----------------------------------------------------------------------
 
 export default function OrderMobileCard({ row, onActionsClick }) {
@@ -87,6 +89,13 @@ export default function OrderMobileCard({ row, onActionsClick }) {
             >
               {row.c_status || '-'}
             </Label>
+
+            {row.delivery_type && (
+              <OrderDeliveryTypeLabel
+                deliveryType={row.delivery_type}
+                sx={{ height: 22, fontSize: 11 }}
+              />
+            )}
 
             {items.length > 1 && (
               <Typography variant="caption" color="text.secondary">

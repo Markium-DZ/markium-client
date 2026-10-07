@@ -37,7 +37,7 @@ export default function StoreLocationForm() {
   const getWilayaName = (wilaya) => {
     if (!wilaya) return '';
     if (currentLang.value === 'ar') return wilaya.name_ar || wilaya.name;
-    if (currentLang.value === 'fr') return wilaya.name_en || wilaya.name;
+    if (currentLang.value === 'fr') return wilaya.name || wilaya.name_en;
     return wilaya.name_en || wilaya.name;
   };
 
