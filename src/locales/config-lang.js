@@ -120,8 +120,8 @@ export function allLangs2(english,arabic){
 
 };
 
-// export const defaultLang = allLangs[0]; // English
-export const defaultLang = allLangs[1]; // Arabic
+// Arabic is the dashboard default (looked up by value — allLangs order is en, fr, ar)
+export const defaultLang = allLangs.find((lang) => lang.value === 'ar');
 
 // GET MORE COUNTRY FLAGS
 // https://icon-sets.iconify.design/flagpack/

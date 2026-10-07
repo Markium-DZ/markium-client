@@ -48,7 +48,7 @@ export default function App() {
       <SettingsProvider
         defaultSettings={{
           themeMode: 'light', // 'light' | 'dark'
-          themeDirection: 'ltr', //  'rtl' | 'ltr'
+          themeDirection: 'rtl', //  'rtl' | 'ltr' — Arabic is the default language
           themeContrast: 'default', // 'default' | 'bold'
           themeLayout: 'vertical', // 'vertical' | 'horizontal' | 'mini'
           themeColorPresets: 'default', // 'default' | 'cyan' | 'purple' | 'blue' | 'orange' | 'red'

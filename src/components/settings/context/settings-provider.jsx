@@ -4,6 +4,7 @@ import { useMemo, useState, useEffect, useCallback } from 'react';
 
 import { useLocalStorage } from 'src/hooks/use-local-storage';
 
+import { defaultLang } from 'src/locales/config-lang';
 import { localStorageGetItem } from 'src/utils/storage-available';
 
 import { SettingsContext } from './settings-context';
@@ -17,7 +18,7 @@ export function SettingsProvider({ children, defaultSettings }) {
 
   const [openDrawer, setOpenDrawer] = useState(false);
 
-  const isArabic = localStorageGetItem('i18nextLng') === 'ar';
+  const isArabic = localStorageGetItem('i18nextLng', defaultLang.value) === 'ar';
 
   useEffect(() => {
     if (isArabic) {
