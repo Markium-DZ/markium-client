@@ -13,6 +13,15 @@ function urlBase64ToUint8Array(base64String) {
   return outputArray;
 }
 
+function isSameKey(subscriptionKey, base64Key) {
+  if (!subscriptionKey) {
+    return true;
+  }
+  const a = new Uint8Array(subscriptionKey);
+  const b = urlBase64ToUint8Array(base64Key);
+  return a.length === b.length && a.every((byte, i) => byte === b[i]);
+}
+
 export function isPushSupported() {
   return 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
 }
@@ -28,6 +37,14 @@ export async function subscribeToPush() {
   const registration = await navigator.serviceWorker.ready;
 
   let subscription = await registration.pushManager.getSubscription();
+
+  // Drop a subscription created with a previous VAPID key — the push service
+  // rejects deliveries signed with a different key.
+  if (subscription && !isSameKey(subscription.options?.applicationServerKey, VAPID_PUBLIC_KEY)) {
+    await subscription.unsubscribe();
+    subscription = null;
+  }
+
   if (!subscription) {
     subscription = await registration.pushManager.subscribe({
       userVisibleOnly: true,
