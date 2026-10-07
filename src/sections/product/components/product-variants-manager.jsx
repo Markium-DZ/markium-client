@@ -25,6 +25,7 @@ import { alpha, keyframes } from '@mui/material/styles';
 import Tooltip from '@mui/material/Tooltip';
 
 import Iconify from 'src/components/iconify';
+import { MediaPickerDialog } from 'src/components/media-picker';
 import { useTranslate } from 'src/locales';
 import Image from 'src/components/image';
 
