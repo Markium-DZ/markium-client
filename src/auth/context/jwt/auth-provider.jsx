@@ -87,6 +87,17 @@ export function AuthProvider({ children }) {
               },
             },
           });
+
+          // The cached profile can be stale (e.g. store slug changed by an
+          // admin) — refresh it from the server in the background.
+          axios
+            .get(endpoints.auth.me)
+            .then((response) => {
+              const client = response.data.data;
+              localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(client));
+              dispatch({ type: 'UPDATE_USER', payload: { user: { ...client, token } } });
+            })
+            .catch(() => {});
         }
       } else {
         dispatch({
