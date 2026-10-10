@@ -110,6 +110,13 @@ export async function deployProduct(id) {
   return response;
 }
 
+// Hide a deployed product from the storefront (status → draft). Show again = deployProduct.
+export async function unpublishProduct(id) {
+  const URL = endpoints.product.unpublish(id);
+  const response = await axios.post(URL);
+  return response;
+}
+
 export async function uploadProductImages(id, body) {
   const URL = endpoints.product.assets(id);
   return await axios.post(URL, body);

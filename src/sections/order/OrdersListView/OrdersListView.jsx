@@ -1,4 +1,4 @@
-import { Alert, Box, Button, Card, FormControlLabel, FormGroup, Grid, IconButton, MenuItem, Stack, Switch, Tooltip, Typography, Avatar, Chip, Dialog, DialogTitle, DialogContent, Divider } from '@mui/material';
+import { Alert, Box, Button, Card, FormControlLabel, FormGroup, Grid, IconButton, MenuItem, Stack, Switch, Tooltip, Typography, Avatar, Chip, Dialog, DialogTitle, DialogContent, Divider, LinearProgress } from '@mui/material';
 import { t } from 'i18next';
 import { set } from 'lodash'; // [keep for later use]
 import { enqueueSnackbar, useSnackbar } from 'notistack';
@@ -19,7 +19,6 @@ import { useRouter } from 'src/routes/hooks';
 import { paths } from 'src/routes/paths';
 import ZaityListView from 'src/sections/ZaityTables/zaity-list-view';
 import ZaityHeadContainer from 'src/sections/ZaityTables/ZaityHeadContainer';
-import ZaityTableFilters from 'src/sections/ZaityTables/ZaityTableFilters';
 import ZaityTableTabs from 'src/sections/ZaityTables/ZaityTableTabs'; // [keep for later use]
 import OrderMobileCard from '../order-mobile-card';
 import { fDate } from 'src/utils/format-time';
@@ -34,13 +33,21 @@ import { secondary } from 'src/theme/palette';
 import { color } from 'framer-motion';
 import { LoadingScreen } from 'src/components/loading-screen';
 import { useGetProducts } from 'src/api/product';
-import { updateOrder, useGetOrders, useGetOrdersByProduct } from 'src/api/orders';
+import { updateOrder, useGetOrders } from 'src/api/orders';
 import ExportOrdersButton from './ExportOrdersButton';
 import { fCurrency } from 'src/utils/format-number';
 import { HOST_API } from 'src/config-global';
 import { getOrderStatusOptions, getOrderStatus } from 'src/constants/order-status';
 
 import OrderDeliveryTypeLabel from '../order-delivery-type-label';
+import { formatOrderNumber } from '../utils/order-share-message';
+import { resolveDateRange } from '../utils/order-date-range';
+import OrdersListToolbar, { ORDER_TABS } from './OrdersListToolbar';
+import OrdersSelectionBar from './OrdersSelectionBar';
+import { useDebounce } from 'src/hooks/use-debounce';
+
+// Tabs that map to a backend `status` value ("all" / "today" don't)
+const STATUS_TABS = ORDER_TABS.map((tab) => tab.key).filter((key) => key !== 'all' && key !== 'today');
 
 
 
@@ -391,21 +398,57 @@ function OrderItemsCell({ items, order }) {
 
 
 export default function OrdersListView({ product_id }) {
-    // Call hooks unconditionally at the top level
-    const { orders: ordersByProduct, ordersLoading: loadingByProduct, ordersError: errorByProduct } = useGetOrdersByProduct(product_id);
-    const { orders: allOrders, ordersLoading: loadingAll, ordersError: errorAll } = useGetOrders();
+    // NOTE: useGetOrdersByProduct used to fetch the unfiltered /orders list as well (no product filter
+    // server-side), so both pages now share the same server-side paginated + filtered list.
 
-    // Use the appropriate data based on product_id
-    const orders = product_id ? ordersByProduct : allOrders;
-    const ordersLoading = product_id ? loadingByProduct : loadingAll;
-    const ordersError = product_id ? errorByProduct : errorAll;
+    // ---- Filters / pagination state (server-side, see GET /orders A1) ----
+    const [tab, setTab] = useState('all');
+    const [searchInput, setSearchInput] = useState('');
+    const search = useDebounce(searchInput, 400);
+    const [datePreset, setDatePreset] = useState('all');
+    const [customFrom, setCustomFrom] = useState(null);
+    const [customTo, setCustomTo] = useState(null);
+    const [page, setPage] = useState(0);
+    const [rowsPerPage, setRowsPerPage] = useState(25);
+
+    // ---- Selection (kept across pages / filters, keyed by order id) ----
+    const [selectedMap, setSelectedMap] = useState({});
+
+    const { dateFrom, dateTo } = tab === 'today'
+        ? resolveDateRange('today')
+        : resolveDateRange(datePreset, customFrom, customTo);
+
+    const {
+        orders,
+        pagination,
+        ordersLoading,
+        ordersError,
+        ordersValidating,
+        mutate: mutateOrders,
+    } = useGetOrders({
+        page: page + 1,
+        perPage: rowsPerPage,
+        status: STATUS_TABS.includes(tab) ? tab : undefined,
+        dateFrom,
+        dateTo,
+        search,
+    });
+
+    // Any filter change → back to the first page (search is debounced, hence the effect)
+    useEffect(() => {
+        setPage(0);
+    }, [search]);
+    const withPageReset = (setter) => (value) => {
+        setter(value);
+        setPage(0);
+    };
 
     const { currentLang } = useLocales()
 
     const [tableData, setTableData] = useState(null);
-    const [dataFiltered, setDataFiltered] = useState(null);
 
     const isReady = tableData !== null;
+    const hasActiveFilters = tab !== 'all' || !!search || datePreset !== 'all';
 
     let TABLE_HEAD = [
         // { id: 'ref', label: t('order_ref'), type: "text", width: 140 },
@@ -464,7 +507,19 @@ export default function OrdersListView({ product_id }) {
         { id: 'delivery_type', label: t('delivery_type'), type: "render", render: (item) => <OrderDeliveryTypeLabel deliveryType={item.delivery_type ?? null} />, width: 110 },
         { id: 'c_status', label: t('status'), type: "label", width: 100 },
         { id: 'full_address', label: t('address'), type: "long_text", length: 2, width: 200 },
-        { id: 'actions', label: t('actions'), type: "threeDots", component: (item) => <ElementActions item={item} setTableData={setTableData} />, width: 60, align: "right" },
+        { id: 'actions', label: t('actions'), type: "threeDots", component: (item) => <ElementActions item={item} setTableData={setTableData} onUpdated={mutateOrders} />, width: 60, align: "right" },
+        {
+            id: 'order_number',
+            label: '',
+            type: "render",
+            render: (item) => (
+                <Typography variant="caption" color="text.disabled" sx={{ fontWeight: 600, whiteSpace: 'nowrap' }}>
+                    {formatOrderNumber(item)}
+                </Typography>
+            ),
+            width: 56,
+            align: "right",
+        },
     ]
 
 
@@ -484,7 +539,7 @@ export default function OrdersListView({ product_id }) {
 
             return {
                 ...item,
-                ref: item?.ref || `#${item?.id}`,
+                ref: item?.ref || formatOrderNumber(item),
                 name: item?.customer?.full_name,
                 phone: item?.customer?.phone,
                 total_items: item?.total_items || item?.items?.length || 0,
@@ -499,89 +554,38 @@ export default function OrdersListView({ product_id }) {
         }) || [];
     };
 
-
-    const filters = [
-        {
-            key: 'search', label: t('search'), match: (item, value) => {
-                const lowerValue = value?.toLowerCase();
-
-                // Search in customer fields
-                const customerMatch =
-                    item?.customer?.full_name?.toLowerCase().includes(lowerValue) ||
-                    item?.customer?.first_name?.toLowerCase().includes(lowerValue) ||
-                    item?.customer?.last_name?.toLowerCase().includes(lowerValue) ||
-                    item?.customer?.phone?.toLowerCase().includes(lowerValue) ||
-                    item?.customer?.email?.toLowerCase().includes(lowerValue);
-
-                // Search in all items' product names and SKUs
-                const productsMatch = item?.items?.some(orderItem =>
-                    orderItem?.product?.name?.toLowerCase().includes(lowerValue) ||
-                    orderItem?.product?.ref?.toLowerCase().includes(lowerValue) ||
-                    orderItem?.variant?.sku?.toLowerCase().includes(lowerValue)
-                );
-
-                // Search in address fields
-                const addressMatch =
-                    item?.address?.street_address?.toLowerCase().includes(lowerValue) ||
-                    item?.address?.commune?.name?.toLowerCase().includes(lowerValue) ||
-                    item?.address?.commune?.name_ar?.toLowerCase().includes(lowerValue) ||
-                    item?.address?.wilaya?.name?.toLowerCase().includes(lowerValue) ||
-                    item?.address?.wilaya?.name_ar?.toLowerCase().includes(lowerValue) ||
-                    item?.address?.full_address?.toLowerCase().includes(lowerValue);
-
-                // Search in other fields
-                const otherMatch =
-                    item?.ref?.toLowerCase().includes(lowerValue) ||
-                    item?.id?.toString().includes(value) ||
-                    item?.store?.name?.toLowerCase().includes(lowerValue) ||
-                    item?.notes?.toLowerCase().includes(lowerValue);
-
-                return customerMatch || productsMatch || addressMatch || otherMatch;
-            },
-        },
-    ];
-
-    const defaultFilters = {
-        search: '',
-    };
-
-    // Filter by status (pending, confirmed, shipped, delivered, cancelled)
-    const items = [
-        { key: 'all', label: t('all'), match: () => true },
-        {
-            key: 'today',
-            label: t('today'),
-            match: (item) => {
-                if (!item?.created_at) return false;
-                const orderDate = new Date(item.created_at);
-                const today = new Date();
-                return orderDate.toDateString() === today.toDateString();
-            },
-            color: 'primary'
-        },
-        { key: 'pending', label: t('pending'), match: (item) => (item?.status?.key || item?.status) === 'pending', color: 'warning' },
-        { key: 'confirmed', label: t('confirmed'), match: (item) => (item?.status?.key || item?.status) === 'confirmed', color: 'secondary' },
-        { key: 'shipped', label: t('shipped'), match: (item) => (item?.status?.key || item?.status) === 'shipped', color: 'info' },
-        { key: 'delivered', label: t('delivered'), match: (item) => (item?.status?.key || item?.status) === 'delivered', color: 'success' },
-        { key: 'cancelled', label: t('cancelled'), match: (item) => (item?.status?.key || item?.status) === 'cancelled', color: 'error' },
-    ];
-
-    const filterFunction = (data, filters) => {
-        const activeTab = filters.tabKey;
-        const item = tableData.find(i => i?.key === activeTab);
-        if (item?.match) return data.filter((d) => item.match(d, filters));
-        return data;
-    }
-
-
-
-
-    useEffect(() => {
-        setDataFiltered(RformulateTable(orders));
-    }, [orders]);
     useEffect(() => {
         setTableData(RformulateTable(orders));
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [orders]);
+
+    // ---- Selection handlers ----
+    const selectedIds = useMemo(() => Object.keys(selectedMap).map((id) => selectedMap[id].id), [selectedMap]);
+    const selectedOrders = useMemo(() => Object.values(selectedMap), [selectedMap]);
+
+    const handleToggleRow = useCallback((row) => {
+        setSelectedMap((prev) => {
+            const next = { ...prev };
+            if (next[row.id]) delete next[row.id];
+            else next[row.id] = row;
+            return next;
+        });
+    }, []);
+
+    const handleToggleAllRows = useCallback((checked, rows) => {
+        setSelectedMap((prev) => {
+            const next = { ...prev };
+            rows.forEach((row) => {
+                if (checked) next[row.id] = row;
+                else delete next[row.id];
+            });
+            return next;
+        });
+    }, []);
+
+    const handleClearSelection = useCallback(() => setSelectedMap({}), []);
+
+    const total = pagination?.total ?? null;
 
     return (
         <>
@@ -600,27 +604,62 @@ export default function OrdersListView({ product_id }) {
                     </Alert>
                 )}
 
-                {(ordersLoading || !isReady) ? (
+                {/* Full-page loader only before the first response; later loads keep the toolbar mounted */}
+                {((ordersLoading && !pagination) || !isReady) ? (
                     <LoadingScreen sx={{ my: 8 }} color='primary' />
                 ) : (
-                    <Card>
-                        <ZaityTableTabs filterKey='condition' data={tableData} items={items} defaultFilters={defaultFilters} setTableDate={setDataFiltered} filterFunction={filterFunction}>
-                            <ZaityTableFilters data={dataFiltered} tableData={tableData} setTableDate={setDataFiltered} items={filters} defaultFilters={defaultFilters} dataFiltered={tableData} searchText={t("search_by") + " " + t("name") + " " + t("or_any_value") + " ..."}  >
-                                {(!dataFiltered || dataFiltered.length === 0) ? (
-                                    <Box sx={{ textAlign: 'center', py: 10 }}>
-                                        <Iconify icon="solar:bag-4-bold-duotone" width={64} sx={{ color: 'text.disabled', mb: 2 }} />
-                                        <Typography variant="h6" color="text.secondary" gutterBottom>
-                                            {t('no_orders_yet')}
-                                        </Typography>
-                                        <Typography variant="body2" color="text.disabled" sx={{ mb: 3 }}>
-                                            {t('no_orders_description')}
-                                        </Typography>
-                                    </Box>
-                                ) : (
-                                    <ZaityListView TABLE_HEAD={[...TABLE_HEAD]} dense="medium" zaityTableDate={dataFiltered || []} onSelectedRows={({ data, setTableData }) => { return <onSelectedRowsComponent configurable_type={"roles"} setTableData={setTableData} data={orders} /> }} mobileCardRender={(row) => <OrderMobileCard row={row} />} />
-                                )}
-                            </ZaityTableFilters>
-                        </ZaityTableTabs>
+                    <Card sx={{ position: 'relative' }}>
+                        <OrdersListToolbar
+                            tab={tab}
+                            onTabChange={withPageReset(setTab)}
+                            total={total}
+                            search={searchInput}
+                            onSearchChange={setSearchInput}
+                            datePreset={datePreset}
+                            onDatePresetChange={withPageReset(setDatePreset)}
+                            customFrom={customFrom}
+                            customTo={customTo}
+                            onCustomFromChange={withPageReset(setCustomFrom)}
+                            onCustomToChange={withPageReset(setCustomTo)}
+                        />
+
+                        <OrdersSelectionBar selectedOrders={selectedOrders} onClear={handleClearSelection} />
+
+                        {ordersValidating && <LinearProgress sx={{ height: 2 }} />}
+
+                        {(!tableData || tableData.length === 0) ? (
+                            <Box sx={{ textAlign: 'center', py: 10 }}>
+                                <Iconify icon="solar:bag-4-bold-duotone" width={64} sx={{ color: 'text.disabled', mb: 2 }} />
+                                <Typography variant="h6" color="text.secondary" gutterBottom>
+                                    {hasActiveFilters ? t('orders_no_results') : t('no_orders_yet')}
+                                </Typography>
+                                <Typography variant="body2" color="text.disabled" sx={{ mb: 3 }}>
+                                    {hasActiveFilters ? t('orders_no_results_description') : t('no_orders_description')}
+                                </Typography>
+                            </Box>
+                        ) : (
+                            <ZaityListView
+                                TABLE_HEAD={[...TABLE_HEAD]}
+                                dense="medium"
+                                zaityTableDate={tableData || []}
+                                mobileCardRender={(row, selection) => <OrderMobileCard row={row} selectable selected={!!selection?.selected} onToggleSelect={selection?.onToggleSelect} />}
+                                rowsPerPageOptions={[10, 25, 50, 100]}
+                                serverPagination={{
+                                    count: total ?? tableData.length,
+                                    page,
+                                    rowsPerPage,
+                                    onPageChange: (event, newPage) => setPage(newPage),
+                                    onRowsPerPageChange: (event) => {
+                                        setRowsPerPage(parseInt(event.target.value, 10));
+                                        setPage(0);
+                                    },
+                                }}
+                                selectable
+                                selectedIds={selectedIds}
+                                onToggleRow={handleToggleRow}
+                                onToggleAllRows={handleToggleAllRows}
+                            />
+                        )}
                     </Card>
                 )}
             </ZaityHeadContainer>
@@ -632,7 +671,7 @@ export default function OrdersListView({ product_id }) {
 
 
 
-const ElementActions = ({ item, setTableData }) => {
+const ElementActions = ({ item, setTableData, onUpdated }) => {
     const popover = usePopover();
     const confirm = useBoolean();
     const loading = useBoolean();
@@ -666,6 +705,8 @@ const ElementActions = ({ item, setTableData }) => {
                 ))
 
                 enqueueSnackbar(t("operation_success"));
+                // Re-fetch: the order may no longer match the active status tab
+                onUpdated?.();
                 confirm.onFalse();
                 loading.onFalse()
                 setPostloader(false)
@@ -676,7 +717,7 @@ const ElementActions = ({ item, setTableData }) => {
                 showError(error.error)
             }
         },
-        [loading, confirm, setTableData, selectedStatus, item?.id]
+        [loading, confirm, setTableData, selectedStatus, item?.id, onUpdated]
     );
 
 
@@ -736,7 +777,7 @@ const ElementActions = ({ item, setTableData }) => {
                 onClose={confirm.onFalse}
                 title={t("change_status")}
                 content={t('confirm_status_change', {
-                    order: `#${item?.id}`,
+                    order: formatOrderNumber(item),
                     status: selectedStatus?.label || ''
                 })}
                 action={

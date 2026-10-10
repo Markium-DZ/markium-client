@@ -35,7 +35,7 @@ import { LoadingButton } from '@mui/lab';
 import { secondary } from 'src/theme/palette';
 import { color } from 'framer-motion';
 import { LoadingScreen } from 'src/components/loading-screen';
-import { useGetProducts, deployProduct, deleteProduct } from 'src/api/product';
+import { useGetProducts, deployProduct, deleteProduct, unpublishProduct } from 'src/api/product';
 import Label from 'src/components/label';
 import { AuthContext } from 'src/auth/context/jwt';
 import { captureEvent } from 'src/utils/posthog';
@@ -93,7 +93,8 @@ export default function ProductsListView({ }) {
 
             return {
                 ...item,
-                c_status: t(item?.status),
+                // Draft products are not visible on the storefront → label them "Hidden"
+                c_status: item?.status === 'draft' ? t('product_visibility.hidden') : t(item?.status),
                 color,
                 quantity,
                 real_price,
@@ -120,7 +121,7 @@ export default function ProductsListView({ }) {
         { key: 'all', label: t('all'), match: () => true },
         { key: 'deployed', label: t('deployed'), match: (item) => item?.status === "deployed", color: 'success' },
         { key: 'processing', label: t('processing'), match: (item) => item?.status === "processing", color: 'warning' },
-        { key: 'draft', label: t('draft'), match: (item) => item?.status === "draft", color: 'default' },
+        { key: 'draft', label: t('product_visibility.hidden'), match: (item) => item?.status === "draft", color: 'default' },
     ];
 
     const filterFunction = (data, filters) => {
@@ -222,10 +223,14 @@ const ElementActions = ({ item, setTableData , user }) => {
     const completed = useBoolean();
     const loading = useBoolean();
     const deployConfirm = useBoolean();
+    const hideConfirm = useBoolean();
     const router = useRouter();
 
     const [postloader, setPostloader] = useState(false)
     const [deployLoader, setDeployLoader] = useState(false)
+    const [hideLoader, setHideLoader] = useState(false)
+
+    const isDeployed = item?.status === 'deployed';
 
 
 
@@ -277,7 +282,7 @@ const ElementActions = ({ item, setTableData , user }) => {
                 captureEvent('product_deployment_succeeded', { product_id: id });
                 // Update the item status in the table
                 setTableData(prev => prev?.map(i => i.id === id ? { ...i, status: 'deployed', color: 'success', c_status: t('deployed') } : i))
-                enqueueSnackbar(t("operation_success"));
+                enqueueSnackbar(t('product_visibility.shown_success'));
                 deployConfirm.onFalse();
                 setDeployLoader(false)
             } catch (error) {
@@ -288,6 +293,25 @@ const ElementActions = ({ item, setTableData , user }) => {
             }
         },
         [setTableData, deployConfirm]
+    );
+
+    const onHideProduct = useCallback(
+        async (id) => {
+            setHideLoader(true)
+            try {
+                await unpublishProduct(id);
+                captureEvent('product_hidden', { product_id: id });
+                // Optimistic row update → draft ("Hidden")
+                setTableData(prev => prev?.map(i => i.id === id ? { ...i, status: 'draft', color: 'default', c_status: t('product_visibility.hidden') } : i))
+                enqueueSnackbar(t('product_visibility.hidden_success'));
+                hideConfirm.onFalse();
+            } catch (error) {
+                showError(error)
+            } finally {
+                setHideLoader(false)
+            }
+        },
+        [setTableData, hideConfirm]
     );
 
 
@@ -361,18 +385,28 @@ const ElementActions = ({ item, setTableData , user }) => {
                     :
                     null
                 }
-                {/* {item?.status === "draft" ? ( */}
+                {isDeployed ? (
                     <MenuItem
-                        onClick={(e) => {
+                        onClick={() => {
+                            hideConfirm.onTrue();
+                            popover.onClose();
+                        }}
+                    >
+                        <Iconify icon="solar:eye-closed-bold" />
+                        {t('product_visibility.hide')}
+                    </MenuItem>
+                ) : (
+                    <MenuItem
+                        onClick={() => {
                             deployConfirm.onTrue();
                             popover.onClose();
                         }}
-                        sx={{ color: 'warning.main' }}
+                        sx={{ color: 'success.main' }}
                     >
-                        <Iconify icon="solar:upload-bold" />
-                        {t('deploy')}
+                        <Iconify icon="solar:eye-bold" />
+                        {t('product_visibility.show')}
                     </MenuItem>
-                {/* ) : null} */}
+                )}
 
                 <MenuItem
                     onClick={() => {
@@ -409,19 +443,37 @@ const ElementActions = ({ item, setTableData , user }) => {
             <ConfirmDialog
                 open={deployConfirm.value}
                 onClose={deployConfirm.onFalse}
-                title={t("deploy")}
-                content={t('are_you_sure_you_want_to_deploy_this_product')}
+                title={t('product_visibility.show_title')}
+                content={t('product_visibility.show_confirm')}
                 action={
                     <LoadingButton
-                        isSubmitting={deployLoader}
                         loading={deployLoader}
                         variant="contained"
-                        color="warning"
+                        color="success"
                         onClick={() => {
                             onDeployProduct(item?.id);
                         }}
                     >
-                        {t("deploy")}
+                        {t('product_visibility.show')}
+                    </LoadingButton>
+                }
+            />
+
+            <ConfirmDialog
+                open={hideConfirm.value}
+                onClose={hideConfirm.onFalse}
+                title={t('product_visibility.hide_title')}
+                content={t('product_visibility.hide_confirm', { name: item?.name })}
+                action={
+                    <LoadingButton
+                        loading={hideLoader}
+                        variant="contained"
+                        color="warning"
+                        onClick={() => {
+                            onHideProduct(item?.id);
+                        }}
+                    >
+                        {t('product_visibility.hide')}
                     </LoadingButton>
                 }
             />

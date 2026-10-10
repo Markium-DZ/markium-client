@@ -153,7 +153,7 @@ export default function ProductDetailsToolbar({
               textTransform: 'capitalize',
             }}
           >
-            {isPublished ? t('published') : t('draft')}
+            {isPublished ? t('published') : t('product_visibility.hidden')}
           </LoadingButton>
         </Stack>
       </Stack>
@@ -168,7 +168,6 @@ export default function ProductDetailsToolbar({
           <MenuItem
             key={option.value}
             selected={option.value === publish}
-            disabled={option.value === 'draft' && isPublished}
             onClick={() => {
               popover.onClose();
               onChangePublish(option.value);
@@ -182,13 +181,13 @@ export default function ProductDetailsToolbar({
             }}
           >
             <Iconify
-              icon={option.value === 'published' ? 'eva:cloud-upload-fill' : 'solar:file-text-bold'}
+              icon={option.value === 'published' ? 'solar:eye-bold' : 'solar:eye-closed-bold'}
               width={18}
               sx={{
                 color: option.value === 'published' ? 'success.main' : 'warning.main',
               }}
             />
-            {option.value === 'published' ? t('published') : t('draft')}
+            {option.value === 'published' ? t('product_visibility.show') : t('product_visibility.hide')}
           </MenuItem>
         ))}
       </CustomPopover>

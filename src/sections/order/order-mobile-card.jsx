@@ -4,10 +4,11 @@ import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
 import Avatar from '@mui/material/Avatar';
+import Checkbox from '@mui/material/Checkbox';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
 
-import { fCurrency } from 'src/utils/format-number';
+import { useTranslate } from 'src/locales';
 
 import Label from 'src/components/label';
 import Iconify from 'src/components/iconify';
@@ -15,11 +16,13 @@ import { useRouter } from 'src/routes/hooks';
 import { paths } from 'src/routes/paths';
 
 import OrderDeliveryTypeLabel from './order-delivery-type-label';
+import { formatOrderNumber } from './utils/order-share-message';
 
 // ----------------------------------------------------------------------
 
-export default function OrderMobileCard({ row, onActionsClick }) {
+export default function OrderMobileCard({ row, onActionsClick, selectable = false, selected = false, onToggleSelect }) {
   const router = useRouter();
+  const { t } = useTranslate();
   const items = row.items || [];
   const firstItem = items[0];
 
@@ -36,10 +39,31 @@ export default function OrderMobileCard({ row, onActionsClick }) {
 
   return (
     <Card
-      sx={{ p: 1.5, mb: 1, cursor: 'pointer' }}
+      sx={{
+        p: 1.5,
+        mb: 1,
+        cursor: 'pointer',
+        ...(selected && {
+          outline: (theme) => `2px solid ${theme.palette.primary.main}`,
+          outlineOffset: -2,
+        }),
+      }}
       onClick={() => router.push(paths.dashboard.order.details(row.id))}
     >
       <Stack direction="row" spacing={1.5}>
+        {selectable && (
+          <Checkbox
+            size="small"
+            checked={selected}
+            onClick={(event) => {
+              event.stopPropagation();
+              onToggleSelect?.();
+            }}
+            inputProps={{ 'aria-label': t('select_row') }}
+            sx={{ p: 0.5, m: -0.5, alignSelf: 'center', flexShrink: 0 }}
+          />
+        )}
+
         {/* Product thumbnail */}
         {imageUrl ? (
           <Avatar
@@ -74,6 +98,11 @@ export default function OrderMobileCard({ row, onActionsClick }) {
                 {row.actions(() => {})}
               </Box>
             )}
+
+            {/* Per-store order number (corner) */}
+            <Typography variant="caption" color="text.disabled" sx={{ flexShrink: 0, fontWeight: 600 }}>
+              {formatOrderNumber(row)}
+            </Typography>
           </Stack>
 
           {/* Price + Status row */}
@@ -99,7 +128,7 @@ export default function OrderMobileCard({ row, onActionsClick }) {
 
             {items.length > 1 && (
               <Typography variant="caption" color="text.secondary">
-                {items.length} items
+                {t('multiple_items', { count: items.length })}
               </Typography>
             )}
           </Stack>
@@ -129,4 +158,7 @@ export default function OrderMobileCard({ row, onActionsClick }) {
 OrderMobileCard.propTypes = {
   row: PropTypes.object,
   onActionsClick: PropTypes.func,
+  selectable: PropTypes.bool,
+  selected: PropTypes.bool,
+  onToggleSelect: PropTypes.func,
 };

@@ -12,7 +12,7 @@ import Grid from '@mui/material/Unstable_Grid2';
 import { paths } from 'src/routes/paths';
 import { RouterLink } from 'src/routes/components';
 
-import { useGetProduct, deployProduct } from 'src/api/product';
+import { useGetProduct, deployProduct, unpublishProduct } from 'src/api/product';
 import showError from 'src/utils/show_error';
 import { PRODUCT_PUBLISH_OPTIONS } from 'src/_mock';
 
@@ -70,6 +70,8 @@ export default function ProductDetailsView({ id }) {
 
   const publishConfirm = useBoolean();
 
+  const hideConfirm = useBoolean();
+
   // Check if product is already deployed
   const isDeployed = product?.status === 'deployed' || product?.status === 'published';
 
@@ -88,11 +90,27 @@ export default function ProductDetailsView({ id }) {
     } else if (newValue === 'published' && isDeployed) {
       // Product is already deployed, show info message
       enqueueSnackbar(t('product_already_published'), { variant: 'info' });
-    } else {
-      // For draft, just update local state (or implement unpublish API if available)
-      setPublish(newValue);
+    } else if (newValue === 'draft' && isDeployed) {
+      // Hide from the storefront → confirm, then POST products/{id}/unpublish
+      hideConfirm.onTrue();
     }
-  }, [isDeployed, publishConfirm, enqueueSnackbar, t]);
+    // draft → draft: nothing to do
+  }, [isDeployed, publishConfirm, hideConfirm, enqueueSnackbar, t]);
+
+  const handleConfirmHide = useCallback(async () => {
+    try {
+      setPublishLoading(true);
+      await unpublishProduct(id);
+      setPublish('draft');
+      enqueueSnackbar(t('product_visibility.hidden_success'), { variant: 'success' });
+      productMutate();
+      hideConfirm.onFalse();
+    } catch (error) {
+      showError(error);
+    } finally {
+      setPublishLoading(false);
+    }
+  }, [id, enqueueSnackbar, t, productMutate, hideConfirm]);
 
   const handleConfirmPublish = useCallback(async () => {
     try {
@@ -249,6 +267,23 @@ export default function ProductDetailsView({ id }) {
               {t('publish')}
             </LoadingButton>
           </VerificationGate>
+        }
+      />
+
+      <ConfirmDialog
+        open={hideConfirm.value}
+        onClose={hideConfirm.onFalse}
+        title={t('product_visibility.hide_title')}
+        content={t('product_visibility.hide_confirm', { name: product?.name || '' })}
+        action={
+          <LoadingButton
+            variant="contained"
+            color="warning"
+            loading={publishLoading}
+            onClick={handleConfirmHide}
+          >
+            {t('product_visibility.hide')}
+          </LoadingButton>
         }
       />
     </>

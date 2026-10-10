@@ -44,25 +44,49 @@ export function useGetOrdersByProduct(product_id) {
 }
 
 
-export function useGetOrders(page = 1, perPage = 100) {
+/**
+ * Orders list (server-side pagination + filters).
+ *
+ * Accepts either the legacy positional form `useGetOrders(page, perPage)` or an
+ * options object `useGetOrders({ page, perPage, status, dateFrom, dateTo, search })`.
+ * `dateFrom` / `dateTo` must be `yyyy-MM-dd` strings. Empty filters are omitted.
+ */
+export function useGetOrders(pageOrParams = 1, perPageArg = 100) {
+    const isObject = pageOrParams !== null && typeof pageOrParams === 'object';
+    const {
+        page = 1,
+        perPage = perPageArg,
+        status,
+        dateFrom,
+        dateTo,
+        search,
+    } = isObject ? pageOrParams : { page: pageOrParams };
+
     const params = new URLSearchParams({ page, per_page: perPage });
+    if (status && status !== 'all') params.set('status', status);
+    if (dateFrom) params.set('date_from', dateFrom);
+    if (dateTo) params.set('date_to', dateTo);
+    if (search && String(search).trim()) params.set('search', String(search).trim());
+
     const url = `${endpoints.order?.root}?${params.toString()}`;
     const { data, isLoading, error, isValidating, mutate } = useSWR(
         url,
         fetcher,
-        options
+        // keepPreviousData: avoid flashing an empty list while the next page / filter loads
+        { ...options, keepPreviousData: true }
     );
 
     const memoizedValue = useMemo(
         () => ({
             orders: data?.data || [],
+            pagination: data?.pagination || null,
             ordersLoading: isLoading,
             ordersError: error,
             ordersValidating: isValidating,
             ordersEmpty: !isLoading && !data?.data?.length,
             mutate,
         }),
-        [data, error, isLoading, isValidating]
+        [data, error, isLoading, isValidating, mutate]
     );
 
     return memoizedValue;

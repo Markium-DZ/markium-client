@@ -128,6 +128,7 @@ export const endpoints = {
     delete:(id)=> `/products/${id}`,
     assets:(id)=> `/products/${id}/assets`,
     deploy:(id)=> `/products/${id}/deploy`,
+    unpublish:(id)=> `/products/${id}/unpublish`,
     orders:(id)=> `/products/${id}/orders`,
     updateOrdersStatus:(product_id,order_id)=> `/products/${product_id}/orders/${order_id}/status`,
     search: '/product/search',

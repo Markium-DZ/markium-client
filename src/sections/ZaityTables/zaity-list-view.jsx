@@ -62,7 +62,18 @@ const defaultFilters = {
 
 // ----------------------------------------------------------------------
 
-export default function ZaityListView({ TABLE_HEAD, dense, zaityTableDate, onSelectedRows,maxWidth,rowsPerPage,minHeight,height , rowsPerPageOptions, hidePagination, mobileCardRender }) {
+export default function ZaityListView({
+  TABLE_HEAD, dense, zaityTableDate, onSelectedRows, maxWidth, rowsPerPage, minHeight, height, rowsPerPageOptions, hidePagination, mobileCardRender,
+  // --- Opt-in: server-side pagination. When set, rows are rendered as given (no client slicing).
+  //     { count, page (0-based), rowsPerPage, onPageChange(event, page), onRowsPerPageChange(event) }
+  serverPagination,
+  // --- Opt-in: controlled row selection (checkbox column + mobile card toggle).
+  //     selectedIds: array of row ids; onToggleRow(row); onToggleAllRows(checked, rowsOnPage)
+  selectable = false,
+  selectedIds,
+  onToggleRow,
+  onToggleAllRows,
+}) {
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslate();
   const theme = useTheme();
@@ -144,10 +155,15 @@ export default function ZaityListView({ TABLE_HEAD, dense, zaityTableDate, onSel
     },
     [handleFilters]
   );
-  const paginatedData = dataFiltered.slice(
-    table.page * (rowsPerPage || table.rowsPerPage),
-    table.page * (rowsPerPage || table.rowsPerPage) + (rowsPerPage || table.rowsPerPage)
-  );
+  const paginatedData = serverPagination
+    ? dataFiltered
+    : dataFiltered.slice(
+      table.page * (rowsPerPage || table.rowsPerPage),
+      table.page * (rowsPerPage || table.rowsPerPage) + (rowsPerPage || table.rowsPerPage)
+    );
+
+  const isRowSelected = (row) => (selectable ? !!selectedIds?.includes(row?.id) : table.selected.includes(row?.id));
+  const numSelectedOnPage = selectable ? paginatedData.filter((row) => isRowSelected(row)).length : table.selected.length;
 
   return (
     <>
@@ -159,7 +175,9 @@ export default function ZaityListView({ TABLE_HEAD, dense, zaityTableDate, onSel
           ) : (
             paginatedData.map((row) => (
               <Box key={row?.id}>
-                {mobileCardRender(row)}
+                {selectable
+                  ? mobileCardRender(row, { selected: isRowSelected(row), onToggleSelect: () => onToggleRow?.(row) })
+                  : mobileCardRender(row)}
               </Box>
             ))
           )}
@@ -173,9 +191,10 @@ export default function ZaityListView({ TABLE_HEAD, dense, zaityTableDate, onSel
                 order={table.order}
                 orderBy={table.orderBy}
                 headLabel={TABLE_HEAD}
-                rowCount={dataFiltered.length}
-                numSelected={table.selected.length}
+                rowCount={selectable ? paginatedData.length : dataFiltered.length}
+                numSelected={numSelectedOnPage}
                 onSort={table.onSort}
+                onSelectAllRows={selectable ? (checked) => onToggleAllRows?.(checked, paginatedData) : undefined}
               />
 
               <TableBody>
@@ -185,14 +204,15 @@ export default function ZaityListView({ TABLE_HEAD, dense, zaityTableDate, onSel
                       TABLE_HEAD={TABLE_HEAD}
                       key={row?.id}
                       row={row}
-                      selected={table.selected.includes(row.id)}
-                      onSelectRow={() => table.onSelectRow(row.id)}
+                      selected={isRowSelected(row)}
+                      onSelectRow={selectable ? () => onToggleRow?.(row) : () => table.onSelectRow(row.id)}
+                      selectable={selectable}
                     />
                   ))}
 
                 <TableEmptyRows
                   height={denseHeight}
-                  emptyRows={emptyRows(table.page, (rowsPerPage || table.rowsPerPage), dataFiltered.length)}
+                  emptyRows={serverPagination ? 0 : emptyRows(table.page, (rowsPerPage || table.rowsPerPage), dataFiltered.length)}
                 />
                 <TableNoData notFound={notFound} />
               </TableBody>
@@ -201,7 +221,20 @@ export default function ZaityListView({ TABLE_HEAD, dense, zaityTableDate, onSel
         </TableContainer>
       )}
 
-      {!hidePagination && (
+      {!hidePagination && serverPagination && (
+        <TablePaginationCustom
+          rowsPerPageOptions={rowsPerPageOptions}
+          count={serverPagination.count}
+          page={serverPagination.page}
+          rowsPerPage={serverPagination.rowsPerPage}
+          onPageChange={serverPagination.onPageChange}
+          onRowsPerPageChange={serverPagination.onRowsPerPageChange}
+          dense={table.dense}
+          onChangeDense={table.onChangeDense}
+        />
+      )}
+
+      {!hidePagination && !serverPagination && (
         <TablePaginationCustom
           rowsPerPageOptions={rowsPerPageOptions}
           count={dataFiltered.length}

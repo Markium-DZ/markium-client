@@ -49,6 +49,7 @@ import OrderTrackingAnalytics from '../order-tracking-analytics';
 import OrderShipping from '../order-shipping';
 import OrderTracking from '../order-tracking';
 import OrderDetailsSkeleton from '../order-details-skeleton';
+import { formatOrderNumber } from '../utils/order-share-message';
 
 // ----------------------------------------------------------------------
 
@@ -301,7 +302,7 @@ export default function OrderDetailsView({ id }) {
     <Container maxWidth={settings.themeStretch ? false : 'lg'}>
       <OrderDetailsToolbar
         backLink={paths.dashboard.order.root}
-        orderNumber={currentOrder?.id ? `ORD-${currentOrder.id}` : ''}
+        orderNumber={formatOrderNumber(currentOrder)}
         createdAt={currentOrder?.created_at}
         status={status}
         onChangeStatus={handleRequestStatusChange}
@@ -375,8 +376,19 @@ export default function OrderDetailsView({ id }) {
               subTotal={currentOrder?.subtotal}
               totalAmount={currentOrder?.total_price}
             />
+ <OrderDetailsInfo
+              customer={currentOrder?.customer}
+              shippingAddress={currentOrder?.address}
+              deliveryType={currentOrder?.delivery_type ?? null}
+            />
+            
 
-            {!!currentOrder?.active_shipment && status !== 'pending' && status !== 'confirmed' && (
+          </Stack>
+        </Grid>
+
+        <Grid xs={12} md={4}>
+          <Stack spacing={3}>
+           {!!currentOrder?.active_shipment && status !== 'pending' && status !== 'confirmed' && (
               <Card>
                 <CardHeader title={t('shipping')} />
                 <Stack sx={{ p: 3, pt: 1 }}>
@@ -399,17 +411,6 @@ export default function OrderDetailsView({ id }) {
               </div>
             )}
 
-          </Stack>
-        </Grid>
-
-        <Grid xs={12} md={4}>
-          <Stack spacing={3}>
-            <OrderDetailsInfo
-              customer={currentOrder?.customer}
-              shippingAddress={currentOrder?.address}
-              deliveryType={currentOrder?.delivery_type ?? null}
-            />
-
             <OrderTrackingAnalytics trackingAnalytics={currentOrder?.tracking_analytics} />
 
             <OrderDetailsHistory currentOrder={currentOrder} />
@@ -431,7 +432,7 @@ export default function OrderDetailsView({ id }) {
           <Stack spacing={2} sx={{ pt: 1 }}>
             <Typography variant="body2" color="text.secondary">
               {t('confirm_status_change', {
-                order: currentOrder?.id ? `ORD-${currentOrder.id}` : '',
+                order: formatOrderNumber(currentOrder),
                 status: t(confirmDialog.newStatus),
               })}
             </Typography>
