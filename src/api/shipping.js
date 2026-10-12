@@ -1,5 +1,6 @@
 import useSWR from 'swr';
 import { useMemo } from 'react';
+import { CHAT_HOST_API } from 'src/config-global';
 import axios, { fetcher, endpoints } from 'src/utils/axios';
 import { capture } from 'src/utils/analytics';
 
@@ -178,5 +179,36 @@ export async function bulkClearShippingRates(commune_ids) {
   const URL = endpoints.shipping.ratesBulk;
   const response = await axios.delete(URL, { data: { commune_ids } });
   capture('shipping_rates_cleared', { communes_count: commune_ids?.length });
+  return response;
+}
+
+// ----------------------------------------------------------------------
+// AI price-list import
+
+// images: base64 JPEG strings. Throws an Error with `status` and `resetsAt`.
+export async function extractShippingRates(images) {
+  const response = await fetch(`${CHAT_HOST_API}/extract/shipping-rates`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${localStorage.getItem('accessToken') ?? ''}`,
+    },
+    body: JSON.stringify({ images }),
+  });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const error = new Error(body.error || 'extract_failed');
+    error.status = response.status;
+    error.resetsAt = body.resets_at || null;
+    throw error;
+  }
+  capture('shipping_rates_ai_extracted', { rows: body.rows?.length ?? 0, carrier: body.carrier });
+  return body;
+}
+
+// rates: [{ wilaya_id, home_price, desk_price }]
+export async function bulkSetShippingRatesByWilaya(rates) {
+  const response = await axios.put(endpoints.shipping.ratesByWilaya, { rates });
+  capture('shipping_rates_ai_saved', { wilayas_count: rates.length });
   return response;
 }

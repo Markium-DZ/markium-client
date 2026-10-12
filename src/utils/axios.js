@@ -231,6 +231,7 @@ export const endpoints = {
     shipOrder: (orderId) => `/shipping/orders/${orderId}/ship`,
     rates: '/shipping-rates',
     ratesBulk: '/shipping-rates/bulk',
+    ratesByWilaya: '/shipping-rates/by-wilaya',
   },
   payment: {
     providers: '/payment/providers',
