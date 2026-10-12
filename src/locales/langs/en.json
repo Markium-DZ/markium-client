@@ -4320,6 +4320,8 @@
   "shipping_import_retry": "Try again",
   "shipping_import_pdf_protected": "This PDF is password-protected. Remove the password or upload a screenshot instead.",
   "shipping_import_too_large": "The file is too large. Try fewer pages or a smaller photo.",
+  "shipping_import_too_many": "Too many attempts. Please wait a minute and try again.",
+  "shipping_import_save_error": "We couldn't save the prices. Please try again.",
   "delivery_type": "Delivery",
   "delivery_home": "Home",
   "delivery_stop_desk": "Stop-desk",

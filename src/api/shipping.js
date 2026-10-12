@@ -2,8 +2,9 @@ import useSWR from 'swr';
 import { useMemo } from 'react';
 
 import { capture } from 'src/utils/analytics';
-import { CHAT_HOST_API } from 'src/config-global';
 import axios, { fetcher, endpoints } from 'src/utils/axios';
+
+import { CHAT_HOST_API } from 'src/config-global';
 
 // ----------------------------------------------------------------------
 

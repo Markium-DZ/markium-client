@@ -12,6 +12,8 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import CircularProgress from '@mui/material/CircularProgress';
 
+import { useResponsive } from 'src/hooks/use-responsive';
+
 import { useTranslate } from 'src/locales';
 import { useGetWilayas } from 'src/api/settings';
 import {
@@ -33,7 +35,8 @@ const ACCEPT =
   'application/pdf,image/jpeg,image/png,image/webp,image/heic,image/heif';
 
 export default function ShippingImportDialog({ open, onClose }) {
-  const { t } = useTranslate();
+  const { t, i18n } = useTranslate();
+  const smDown = useResponsive('down', 'sm');
   const { enqueueSnackbar } = useSnackbar();
 
   const { wilayas } = useGetWilayas();
@@ -73,6 +76,7 @@ export default function ShippingImportDialog({ open, onClose }) {
   const handleDialogClose = (event, reason) => {
     if (saving) return;
     if (reason === 'backdropClick') return;
+    if (reason === 'escapeKeyDown' && step === 'review') return;
     handleClose();
   };
 
@@ -119,8 +123,12 @@ export default function ShippingImportDialog({ open, onClose }) {
             : t('shipping_import_unsupported')
         );
       } else if (err?.status === 429) {
-        const time = err.resetsAt ? new Date(err.resetsAt).toLocaleTimeString() : '';
-        setError(t('shipping_import_limit', { time }));
+        if (err.resetsAt) {
+          const time = new Date(err.resetsAt).toLocaleTimeString(i18n?.language);
+          setError(t('shipping_import_limit', { time }));
+        } else {
+          setError(t('shipping_import_too_many'));
+        }
       } else if (err?.status === 413) {
         setError(t('shipping_import_too_large'));
       } else {
@@ -146,7 +154,7 @@ export default function ShippingImportDialog({ open, onClose }) {
       reset();
       onClose();
     } catch (err) {
-      enqueueSnackbar(err?.message || t('shipping_import_error'), { variant: 'error' });
+      enqueueSnackbar(err?.message || t('shipping_import_save_error'), { variant: 'error' });
       setSaving(false);
     }
   };
@@ -165,7 +173,11 @@ export default function ShippingImportDialog({ open, onClose }) {
         accept={ACCEPT}
         onChange={handleFiles}
       />
-      <Button variant="contained" onClick={() => inputRef.current?.click()}>
+      <Button
+        variant="contained"
+        disabled={!wilayas?.length}
+        onClick={() => inputRef.current?.click()}
+      >
         {error ? t('shipping_import_retry') : t('shipping_import_pick')}
       </Button>
     </Stack>
@@ -198,7 +210,14 @@ export default function ShippingImportDialog({ open, onClose }) {
   );
 
   return (
-    <Dialog open={open} onClose={handleDialogClose} fullWidth maxWidth="md">
+    <Dialog
+      open={open}
+      onClose={handleDialogClose}
+      fullWidth
+      maxWidth="md"
+      fullScreen={smDown}
+      scroll="paper"
+    >
       <DialogTitle>{t('shipping_import_title')}</DialogTitle>
 
       <DialogContent>

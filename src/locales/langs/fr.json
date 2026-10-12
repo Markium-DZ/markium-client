@@ -3956,6 +3956,8 @@
   "shipping_import_retry": "Réessayer",
   "shipping_import_pdf_protected": "Ce PDF est protégé par un mot de passe. Retirez le mot de passe ou envoyez une capture d'écran.",
   "shipping_import_too_large": "Le fichier est trop volumineux. Essayez moins de pages ou une photo plus légère.",
+  "shipping_import_too_many": "Trop de tentatives. Patientez une minute puis réessayez.",
+  "shipping_import_save_error": "Impossible d'enregistrer les prix. Veuillez réessayer.",
   "delivery_type": "Livraison",
   "delivery_home": "Domicile",
   "delivery_stop_desk": "Stop-desk",

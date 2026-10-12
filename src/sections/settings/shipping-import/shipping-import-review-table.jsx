@@ -1,6 +1,7 @@
 import PropTypes from 'prop-types';
 
 import Chip from '@mui/material/Chip';
+import Stack from '@mui/material/Stack';
 import Table from '@mui/material/Table';
 import Tooltip from '@mui/material/Tooltip';
 import TableRow from '@mui/material/TableRow';
@@ -11,12 +12,17 @@ import TextField from '@mui/material/TextField';
 import ToggleButton from '@mui/material/ToggleButton';
 import TableContainer from '@mui/material/TableContainer';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
+import { alpha } from '@mui/material/styles';
 
 import { useTranslate } from 'src/locales';
+
+import Iconify from 'src/components/iconify';
 
 import { STATUS } from './review-model';
 
 // ----------------------------------------------------------------------
+
+const MAX_PRICE = 100000;
 
 const STATUS_COLOR = {
   [STATUS.FOUND]: 'success',
@@ -45,7 +51,7 @@ export default function ShippingImportReviewTable({ rows, onChange }) {
 
   const renderStatus = (row) => {
     if (row.status === STATUS.CONFLICT) {
-      return (
+      const toggle = (
         <ToggleButtonGroup
           exclusive
           size="small"
@@ -63,6 +69,17 @@ export default function ShippingImportReviewTable({ rows, onChange }) {
           </ToggleButton>
         </ToggleButtonGroup>
       );
+
+      return (
+        <Stack direction="row" alignItems="center" spacing={0.5}>
+          {toggle}
+          {row.note ? (
+            <Tooltip title={String(row.note)}>
+              <Iconify icon="solar:danger-triangle-bold" width={20} sx={{ color: 'warning.main' }} />
+            </Tooltip>
+          ) : null}
+        </Stack>
+      );
     }
 
     return (
@@ -77,7 +94,7 @@ export default function ShippingImportReviewTable({ rows, onChange }) {
     );
   };
 
-  const renderPrice = (row, field) => (
+  const renderPrice = (row, field, labelKey) => (
     <TextField
       size="small"
       type="number"
@@ -85,7 +102,13 @@ export default function ShippingImportReviewTable({ rows, onChange }) {
       onChange={(event) =>
         onChange(row.wilaya.id, { [field]: event.target.value, choice: 'imported' })
       }
-      inputProps={{ min: 0, step: 10 }}
+      error={row[field] !== '' && (Number(row[field]) < 0 || Number(row[field]) > MAX_PRICE)}
+      inputProps={{
+        min: 0,
+        max: MAX_PRICE,
+        step: 10,
+        'aria-label': `${localName(row.wilaya, lang)} – ${t(labelKey)}`,
+      }}
       sx={{ width: 90 }}
     />
   );
@@ -104,13 +127,21 @@ export default function ShippingImportReviewTable({ rows, onChange }) {
         </TableHead>
         <TableBody>
           {rows.map((row) => (
-            <TableRow key={row.wilaya.id} hover>
+            <TableRow
+              key={row.wilaya.id}
+              hover
+              sx={
+                row.status === STATUS.CHECK || (row.status === STATUS.CONFLICT && row.note)
+                  ? { bgcolor: (theme) => alpha(theme.palette.warning.main, 0.08) }
+                  : undefined
+              }
+            >
               <TableCell sx={{ whiteSpace: 'nowrap' }}>
                 {String(row.wilaya.code ?? row.wilaya.id).padStart(2, '0')} -{' '}
                 {localName(row.wilaya, lang)}
               </TableCell>
-              <TableCell>{renderPrice(row, 'home')}</TableCell>
-              <TableCell>{renderPrice(row, 'desk')}</TableCell>
+              <TableCell>{renderPrice(row, 'home', 'shipping_prices_home')}</TableCell>
+              <TableCell>{renderPrice(row, 'desk', 'shipping_prices_desk')}</TableCell>
               <TableCell sx={{ whiteSpace: 'nowrap' }}>{renderCurrent(row.current)}</TableCell>
               <TableCell>{renderStatus(row)}</TableCell>
             </TableRow>
