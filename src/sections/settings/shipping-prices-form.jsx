@@ -35,6 +35,7 @@ import { TableNoData, TableSkeleton } from 'src/components/table';
 
 import ShippingPricesDialog from './shipping-prices-dialog';
 import ShippingPricesWilayaGroup from './shipping-prices-wilaya-group';
+import ShippingImportDialog from './shipping-import/shipping-import-dialog';
 
 // ----------------------------------------------------------------------
 
@@ -88,6 +89,7 @@ export default function ShippingPricesForm() {
 
   const [editIds, setEditIds] = useState(null); // array of commune ids or null
   const [confirmClear, setConfirmClear] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [clearing, setClearing] = useState(false);
 
   const deferredSearch = useDeferredValue(search);
@@ -370,7 +372,14 @@ export default function ShippingPricesForm() {
         }}
       />
 
-      <Stack direction="row" spacing={1.5} alignItems="center" sx={{ flexShrink: 0 }}>
+      <Stack
+        direction="row"
+        spacing={1.5}
+        useFlexGap
+        flexWrap="wrap"
+        alignItems="center"
+        sx={{ flexShrink: 0 }}
+      >
         <TextField
           select
           size="small"
@@ -404,6 +413,15 @@ export default function ShippingPricesForm() {
           }
           sx={{ mx: 0, flexShrink: 0 }}
         />
+
+        <Button
+          variant="contained"
+          onClick={() => setImportOpen(true)}
+          startIcon={<Iconify icon="solar:magic-stick-3-bold" width={18} />}
+          sx={{ whiteSpace: 'nowrap', flexShrink: 0 }}
+        >
+          {t('shipping_import_button')}
+        </Button>
       </Stack>
     </Stack>
   );
@@ -600,6 +618,8 @@ export default function ShippingPricesForm() {
         initialHome={dialogInfo.home}
         initialDesk={dialogInfo.desk}
       />
+
+      <ShippingImportDialog open={importOpen} onClose={() => setImportOpen(false)} />
 
       <ConfirmDialog
         open={confirmClear}
