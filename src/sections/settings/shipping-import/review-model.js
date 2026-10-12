@@ -25,15 +25,17 @@ export function summarizeCurrent(rates) {
   return summary;
 }
 
-// wilayas: [{ id, ... }] (58), extraction: chat-host response, rates: current per-commune rates
+// wilayas: [{ id, code, ... }] (58); extracted rows match on the official code, current rates on id, extraction: chat-host response, rates: current per-commune rates
 export function buildReviewRows(wilayas, extraction, rates) {
   const current = summarizeCurrent(rates);
   const extracted = new Map((extraction?.rows || []).map((r) => [r.wilaya_code, r]));
 
+  const codeOf = (wilaya) => Number(wilaya.code ?? wilaya.id);
+
   return [...wilayas]
-    .sort((a, b) => a.id - b.id)
+    .sort((a, b) => codeOf(a) - codeOf(b))
     .map((wilaya) => {
-      const found = extracted.get(wilaya.id);
+      const found = extracted.get(codeOf(wilaya));
       const cur = current.get(wilaya.id) || null;
       if (!found) {
         return { wilaya, home: '', desk: '', current: cur, status: STATUS.MISSING, note: null, choice: 'imported' };
