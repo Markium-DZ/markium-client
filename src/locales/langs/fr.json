@@ -3986,5 +3986,22 @@
   "orders_share_too_long": "Ce message est trop long pour WhatsApp. Utilisez « Copier le texte » puis collez-le.",
   "orders_share_blurred_excluded": "{{count}} commande(s) verrouillée(s) exclue(s) — leurs détails sont masqués par la limite de votre forfait.",
   "orders_share_nothing_to_share": "Aucune des commandes sélectionnées ne peut être partagée.",
-  "order_share_title": "Commande #{{number}}"
+  "order_share_title": "Commande #{{number}}",
+  "no_variants_yet": "Aucune variante pour le moment",
+  "no_variants_description": "Ajoutez des variantes pour créer différentes combinaisons de ce produit avec des options comme la taille, la couleur ou la matière",
+  "variants_all": "Toutes les variantes",
+  "variants_count": "{{count}} variante(s)",
+  "variants_total_stock": "Stock total",
+  "variants_visible": "Visible",
+  "variants_hidden": "Masquée",
+  "variants_edit_details": "Modifier tous les détails",
+  "variants_changed_count": "{{count}} modifiée(s)",
+  "variants_unsaved_changes": "{{count}} modification(s) non enregistrée(s)",
+  "variants_save_n_changes": "Enregistrer {{count}} modification(s)",
+  "variants_saving_progress": "Enregistrement {{done}}/{{total}}…",
+  "variants_fix_errors": "Corrigez les champs signalés avant d'enregistrer",
+  "variants_saved": "{{count}} variante(s) mise(s) à jour",
+  "variants_save_failed": "{{count}} variante(s) n'ont pas pu être enregistrée(s) — réessayez",
+  "variants_invalid_quantity": "Nombre entier ≥ 0",
+  "variants_invalid_price": "Doit être ≥ 0"
 }

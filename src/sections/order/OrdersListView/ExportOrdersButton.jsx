@@ -8,6 +8,8 @@ import Iconify from 'src/components/iconify';
 import VerificationGate from 'src/components/verification-gate/verification-gate';
 import showError from 'src/utils/show_error';
 
+import { getOrderDisplayNumber } from '../utils/order-share-message';
+
 // ----------------------------------------------------------------------
 
 export default function ExportOrdersButton({ orders }) {
@@ -77,6 +79,8 @@ export default function ExportOrdersButton({ orders }) {
             // Prepare data for export
             const exportData = ordersToExport?.map((order, index) => ({
                 '#': index + 1,
+                // Per-store number (empty for cancelled orders); DB id kept for support / lookups
+                'Order #': getOrderDisplayNumber(order),
                 'Order ID': order.id,
                 'Customer Name': order.customer?.full_name || '',
                 'Customer Phone': order.customer?.phone || '',

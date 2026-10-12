@@ -4390,5 +4390,20 @@
   "orders_share_too_long": "الرسالة طويلة جدًا لواتساب. استخدم «نسخ النص» ثم الصقها.",
   "orders_share_blurred_excluded": "تم استبعاد {{count}} طلب مقفل — تفاصيلها مخفية بسبب حد باقتك.",
   "orders_share_nothing_to_share": "لا يمكن مشاركة أي من الطلبات المحددة.",
-  "order_share_title": "طلب #{{number}}"
+  "order_share_title": "طلب #{{number}}",
+  "variants_all": "كل المتغيرات",
+  "variants_count": "عدد المتغيرات: {{count}}",
+  "variants_total_stock": "إجمالي المخزون",
+  "variants_visible": "ظاهر",
+  "variants_hidden": "مخفي",
+  "variants_edit_details": "تعديل كل التفاصيل",
+  "variants_changed_count": "تم تعديل {{count}}",
+  "variants_unsaved_changes": "تغييرات غير محفوظة: {{count}}",
+  "variants_save_n_changes": "حفظ التغييرات ({{count}})",
+  "variants_saving_progress": "جارٍ الحفظ {{done}}/{{total}}…",
+  "variants_fix_errors": "صحّح الحقول المحددة قبل الحفظ",
+  "variants_saved": "تم تحديث المتغيرات: {{count}}",
+  "variants_save_failed": "تعذّر حفظ {{count}} من المتغيرات — حاول مجددًا",
+  "variants_invalid_quantity": "عدد صحيح ≥ 0",
+  "variants_invalid_price": "يجب أن يكون ≥ 0"
 }

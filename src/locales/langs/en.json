@@ -4350,5 +4350,20 @@
   "orders_share_too_long": "This message is too long for WhatsApp. Use \"Copy text\" and paste it instead.",
   "orders_share_blurred_excluded": "{{count}} locked order(s) were left out — their details are hidden by your plan limit.",
   "orders_share_nothing_to_share": "None of the selected orders can be shared.",
-  "order_share_title": "Order #{{number}}"
+  "order_share_title": "Order #{{number}}",
+  "variants_all": "All variants",
+  "variants_count": "{{count}} variant(s)",
+  "variants_total_stock": "Total stock",
+  "variants_visible": "Visible",
+  "variants_hidden": "Hidden",
+  "variants_edit_details": "Edit all details",
+  "variants_changed_count": "{{count}} changed",
+  "variants_unsaved_changes": "{{count}} unsaved change(s)",
+  "variants_save_n_changes": "Save {{count}} change(s)",
+  "variants_saving_progress": "Saving {{done}}/{{total}}…",
+  "variants_fix_errors": "Fix the highlighted fields before saving",
+  "variants_saved": "{{count}} variant(s) updated",
+  "variants_save_failed": "{{count}} variant(s) could not be saved — try again",
+  "variants_invalid_quantity": "Whole number ≥ 0",
+  "variants_invalid_price": "Must be ≥ 0"
 }

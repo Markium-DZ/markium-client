@@ -19,6 +19,8 @@ import { fCurrency } from 'src/utils/format-number';
 import Label from 'src/components/label';
 import Iconify from 'src/components/iconify';
 
+import { formatOrderNumber } from './utils/order-share-message';
+
 // ----------------------------------------------------------------------
 
 const STATUS_COLOR_MAP = {
@@ -92,10 +94,10 @@ export default function OrderTracking({ order, onRefresh }) {
 
   const handleWhatsAppShare = useCallback(() => {
     if (!customerPhone || !trackingNumber) return;
-    const orderNumber = order?.id ? `ORD-${order.id}` : '';
+    const orderNumber = formatOrderNumber(order);
     const msg = t('tracking_share_message', { orderNumber, trackingNumber });
     window.open(`https://wa.me/${customerPhone}?text=${encodeURIComponent(msg)}`);
-  }, [customerPhone, trackingNumber, order?.id, t]);
+  }, [customerPhone, trackingNumber, order, t]);
 
   const handleContactCustomer = useCallback(() => {
     if (!customerPhone) return;

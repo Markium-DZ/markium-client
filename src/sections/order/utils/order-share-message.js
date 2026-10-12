@@ -12,8 +12,17 @@ export const WHATSAPP_MAX_CHARS = 4000;
 const SECTION_LINE = '━━━━━━━━';
 const ORDER_SEPARATOR = '\n\n════════════\n\n';
 
-/** Per-store order number, falling back to the DB id for legacy rows. */
+/** True when the order's status is `cancelled` (status may be an object or a plain key). */
+export function isCancelledOrder(order) {
+  return (order?.status?.key || order?.status) === 'cancelled';
+}
+
+/**
+ * Per-store order number, falling back to the DB id for legacy rows.
+ * Cancelled orders have no store number (the backend nulls it) → '' (never the DB id).
+ */
 export function getOrderDisplayNumber(order) {
+  if (isCancelledOrder(order)) return order?.order_number ?? '';
   return order?.order_number ?? order?.id ?? '';
 }
 
@@ -78,7 +87,8 @@ export function buildOrderShareText(order, { t, lang, formatMoney }) {
   const lines = [];
 
   const date = formatOrderDate(order?.created_at);
-  const title = t('order_share_title', { number: getOrderDisplayNumber(order) });
+  const number = getOrderDisplayNumber(order);
+  const title = number === '' ? t('order') : t('order_share_title', { number });
   lines.push(`🧾 ${title}${date ? ` — ${date}` : ''}`);
 
   if (order?.customer?.full_name) lines.push(`👤 ${order.customer.full_name}`);

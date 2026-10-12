@@ -48,7 +48,7 @@ export function useGetOrdersByProduct(product_id) {
  * Orders list (server-side pagination + filters).
  *
  * Accepts either the legacy positional form `useGetOrders(page, perPage)` or an
- * options object `useGetOrders({ page, perPage, status, dateFrom, dateTo, search })`.
+ * options object `useGetOrders({ page, perPage, status, excludeStatus, dateFrom, dateTo, search })`.
  * `dateFrom` / `dateTo` must be `yyyy-MM-dd` strings. Empty filters are omitted.
  */
 export function useGetOrders(pageOrParams = 1, perPageArg = 100) {
@@ -57,6 +57,7 @@ export function useGetOrders(pageOrParams = 1, perPageArg = 100) {
         page = 1,
         perPage = perPageArg,
         status,
+        excludeStatus,
         dateFrom,
         dateTo,
         search,
@@ -64,6 +65,7 @@ export function useGetOrders(pageOrParams = 1, perPageArg = 100) {
 
     const params = new URLSearchParams({ page, per_page: perPage });
     if (status && status !== 'all') params.set('status', status);
+    if (excludeStatus) params.set('exclude_status', excludeStatus);
     if (dateFrom) params.set('date_from', dateFrom);
     if (dateTo) params.set('date_to', dateTo);
     if (search && String(search).trim()) params.set('search', String(search).trim());

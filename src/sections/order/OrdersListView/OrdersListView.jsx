@@ -429,6 +429,8 @@ export default function OrdersListView({ product_id }) {
         page: page + 1,
         perPage: rowsPerPage,
         status: STATUS_TABS.includes(tab) ? tab : undefined,
+        // "All" / "Today" hide cancelled orders — they live in the "Cancelled" tab only
+        excludeStatus: tab === 'all' || tab === 'today' ? 'cancelled' : undefined,
         dateFrom,
         dateTo,
         search,

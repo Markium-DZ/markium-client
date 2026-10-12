@@ -159,8 +159,8 @@ export default function ProductVariantEditDialog({ open, onClose, variant, produ
             {variant?.options?.length > 0 && (
               <Box>
                 {variant.options.map((option, idx) => (
-                  <Typography key={idx} variant="caption" color="text.secondary">
-                    {option.name}: {option.value}
+                  <Typography key={idx} variant="caption" color="text.secondary" component="div">
+                    {option.definition_name || option.name}: {option.value}
                   </Typography>
                 ))}
               </Box>
