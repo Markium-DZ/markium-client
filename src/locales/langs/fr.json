@@ -3955,6 +3955,7 @@
   "shipping_import_saved": "Prix enregistrés pour {{count}} wilayas",
   "shipping_import_retry": "Réessayer",
   "shipping_import_pdf_protected": "Ce PDF est protégé par un mot de passe. Retirez le mot de passe ou envoyez une capture d'écran.",
+  "shipping_import_too_large": "Le fichier est trop volumineux. Essayez moins de pages ou une photo plus légère.",
   "delivery_type": "Livraison",
   "delivery_home": "Domicile",
   "delivery_stop_desk": "Stop-desk",

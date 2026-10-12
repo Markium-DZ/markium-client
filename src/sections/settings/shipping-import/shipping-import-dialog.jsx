@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import { useRef, useState, useCallback } from 'react';
+import { useRef, useState, useEffect, useCallback } from 'react';
 
 import Stack from '@mui/material/Stack';
 import Alert from '@mui/material/Alert';
@@ -16,14 +16,14 @@ import { useTranslate } from 'src/locales';
 import { useGetWilayas } from 'src/api/settings';
 import {
   extractShippingRates,
-  bulkSetShippingRatesByWilaya,
   useGetCommuneShippingRates,
+  bulkSetShippingRatesByWilaya,
 } from 'src/api/shipping';
 
 import Iconify from 'src/components/iconify';
 import { useSnackbar } from 'src/components/snackbar';
 
-import { prepareImages, PrepareError } from './prepare-images';
+import { PrepareError, prepareImages } from './prepare-images';
 import { buildReviewRows, buildSavePayload } from './review-model';
 import ShippingImportReviewTable from './shipping-import-review-table';
 
@@ -40,12 +40,20 @@ export default function ShippingImportDialog({ open, onClose }) {
   const { rates, mutate } = useGetCommuneShippingRates();
 
   const inputRef = useRef(null);
+  const abortRef = useRef(null);
 
   const [step, setStep] = useState('upload'); // 'upload' | 'reading' | 'review'
   const [error, setError] = useState('');
   const [rows, setRows] = useState([]);
   const [meta, setMeta] = useState({ carrier: null, truncated: false, warnings: [] });
   const [saving, setSaving] = useState(false);
+
+  const abortImport = useCallback(() => {
+    abortRef.current?.abort();
+    abortRef.current = null;
+  }, []);
+
+  useEffect(() => abortImport, [abortImport]);
 
   const reset = useCallback(() => {
     setStep('upload');
@@ -57,12 +65,13 @@ export default function ShippingImportDialog({ open, onClose }) {
 
   const handleClose = useCallback(() => {
     if (saving) return;
+    abortImport();
     reset();
     onClose();
-  }, [saving, reset, onClose]);
+  }, [saving, abortImport, reset, onClose]);
 
   const handleDialogClose = (event, reason) => {
-    if (saving || step === 'reading') return;
+    if (saving) return;
     if (reason === 'backdropClick') return;
     handleClose();
   };
@@ -74,12 +83,18 @@ export default function ShippingImportDialog({ open, onClose }) {
     event.target.value = '';
     if (!files.length) return;
 
+    abortImport();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     setError('');
     setStep('reading');
 
     try {
       const { images, truncated } = await prepareImages(files);
-      const extraction = await extractShippingRates(images);
+      if (controller.signal.aborted) return;
+      const extraction = await extractShippingRates(images, controller.signal);
+      if (controller.signal.aborted) return;
 
       if (extraction?.document_type !== 'shipping_price_list' || !extraction?.rows?.length) {
         setError(t('shipping_import_not_found'));
@@ -95,11 +110,19 @@ export default function ShippingImportDialog({ open, onClose }) {
       });
       setStep('review');
     } catch (err) {
+      // closed or superseded: reset silently
+      if (controller.signal.aborted || err?.name === 'AbortError') return;
       if (err instanceof PrepareError) {
-        setError(t('shipping_import_unsupported'));
+        setError(
+          err.code === 'pdf_protected'
+            ? t('shipping_import_pdf_protected')
+            : t('shipping_import_unsupported')
+        );
       } else if (err?.status === 429) {
         const time = err.resetsAt ? new Date(err.resetsAt).toLocaleTimeString() : '';
         setError(t('shipping_import_limit', { time }));
+      } else if (err?.status === 413) {
+        setError(t('shipping_import_too_large'));
       } else {
         setError(t('shipping_import_error'));
       }
