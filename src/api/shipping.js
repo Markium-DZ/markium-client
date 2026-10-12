@@ -1,8 +1,9 @@
 import useSWR from 'swr';
 import { useMemo } from 'react';
+
+import { capture } from 'src/utils/analytics';
 import { CHAT_HOST_API } from 'src/config-global';
 import axios, { fetcher, endpoints } from 'src/utils/axios';
-import { capture } from 'src/utils/analytics';
 
 // ----------------------------------------------------------------------
 
@@ -185,16 +186,27 @@ export async function bulkClearShippingRates(commune_ids) {
 // ----------------------------------------------------------------------
 // AI price-list import
 
-// images: base64 JPEG strings. Throws an Error with `status` and `resetsAt`.
-export async function extractShippingRates(images) {
-  const response = await fetch(`${CHAT_HOST_API}/extract/shipping-rates`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${localStorage.getItem('accessToken') ?? ''}`,
-    },
-    body: JSON.stringify({ images }),
-  });
+// images: base64 JPEG strings; signal: optional AbortSignal.
+// Throws an Error with `status` (0 = network) and `resetsAt`; AbortError is rethrown as-is.
+export async function extractShippingRates(images, signal) {
+  let response;
+  try {
+    response = await fetch(`${CHAT_HOST_API}/extract/shipping-rates`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${localStorage.getItem('accessToken') ?? ''}`,
+      },
+      body: JSON.stringify({ images }),
+      signal,
+    });
+  } catch (err) {
+    if (err?.name === 'AbortError') throw err;
+    const networkError = new Error('network');
+    networkError.status = 0;
+    networkError.resetsAt = null;
+    throw networkError;
+  }
   const body = await response.json().catch(() => ({}));
   if (!response.ok) {
     const error = new Error(body.error || 'extract_failed');

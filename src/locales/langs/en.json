@@ -4318,6 +4318,7 @@
   "shipping_import_save": "Save {{count}} wilayas",
   "shipping_import_saved": "Prices saved for {{count}} wilayas",
   "shipping_import_retry": "Try again",
+  "shipping_import_pdf_protected": "This PDF is password-protected. Remove the password or upload a screenshot instead.",
   "delivery_type": "Delivery",
   "delivery_home": "Home",
   "delivery_stop_desk": "Stop-desk",

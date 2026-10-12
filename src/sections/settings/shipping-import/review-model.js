@@ -2,7 +2,13 @@
 
 export const STATUS = { FOUND: 'found', CHECK: 'check', CONFLICT: 'conflict', MISSING: 'missing' };
 
-const num = (v) => (v === null || v === undefined || v === '' ? null : Number(v));
+const num = (v) => {
+  if (v === null || v === undefined) return null;
+  const text = String(v).trim();
+  if (text === '') return null;
+  const n = Number(text);
+  return Number.isFinite(n) ? n : null;
+};
 
 // rates: [{ wilaya_id, home_price, desk_price }] (one per commune, prices may be null)
 // -> Map<wilayaId, { home, desk, varies }> for wilayas with at least one priced commune
@@ -28,7 +34,7 @@ export function summarizeCurrent(rates) {
 // wilayas: [{ id, code, ... }] (58); extracted rows match on the official code, current rates on id, extraction: chat-host response, rates: current per-commune rates
 export function buildReviewRows(wilayas, extraction, rates) {
   const current = summarizeCurrent(rates);
-  const extracted = new Map((extraction?.rows || []).map((r) => [r.wilaya_code, r]));
+  const extracted = new Map((extraction?.rows || []).map((r) => [Number(r.wilaya_code), r]));
 
   const codeOf = (wilaya) => Number(wilaya.code ?? wilaya.id);
 
@@ -44,8 +50,9 @@ export function buildReviewRows(wilayas, extraction, rates) {
       const desk = found.desk_price ?? '';
       const differs = cur && (cur.varies || cur.home !== num(home) || cur.desk !== num(desk));
       let status = STATUS.FOUND;
+      const invalid = num(home) === null || num(desk) === null || num(home) < 0 || num(desk) < 0;
       if (differs) status = STATUS.CONFLICT;
-      else if (found.confidence === 'low' || found.note) status = STATUS.CHECK;
+      else if (invalid || found.confidence === 'low' || found.note) status = STATUS.CHECK;
       return {
         wilaya,
         home,

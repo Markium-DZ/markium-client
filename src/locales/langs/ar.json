@@ -4358,6 +4358,7 @@
   "shipping_import_save": "حفظ {{count}} ولاية",
   "shipping_import_saved": "تم حفظ الأسعار لـ {{count}} ولاية",
   "shipping_import_retry": "إعادة المحاولة",
+  "shipping_import_pdf_protected": "ملف PDF هذا محمي بكلمة مرور. أزل كلمة المرور أو ارفع لقطة شاشة بدلًا منه.",
   "delivery_type": "نوع التوصيل",
   "delivery_home": "للمنزل",
   "delivery_stop_desk": "للمكتب",
