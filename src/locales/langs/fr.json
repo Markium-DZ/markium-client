@@ -3992,6 +3992,7 @@
   "variants_all": "Toutes les variantes",
   "variants_count": "{{count}} variante(s)",
   "variants_total_stock": "Stock total",
+  "variants_pcs": "pcs",
   "variants_visible": "Visible",
   "variants_hidden": "Masquée",
   "variants_edit_details": "Modifier tous les détails",

@@ -4394,6 +4394,7 @@
   "variants_all": "كل المتغيرات",
   "variants_count": "عدد المتغيرات: {{count}}",
   "variants_total_stock": "إجمالي المخزون",
+  "variants_pcs": "قطعة",
   "variants_visible": "ظاهر",
   "variants_hidden": "مخفي",
   "variants_edit_details": "تعديل كل التفاصيل",

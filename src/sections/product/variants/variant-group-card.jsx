@@ -7,19 +7,18 @@ import Typography from '@mui/material/Typography';
 
 import { useTranslate } from 'src/locales';
 
-import Label from 'src/components/label';
 import Iconify from 'src/components/iconify';
 
-import VariantRowEditor from './variant-row-editor';
-import { totalStock, validateDraft } from './variant-utils';
+import VariantRow from './variant-row';
+import { totalStock } from './variant-utils';
 
 // ----------------------------------------------------------------------
 
 /** First variant image → color swatch → the option value itself. */
 function GroupThumbnail({ colorHex, image, label }) {
   const common = {
-    width: 44,
-    height: 44,
+    width: 36,
+    height: 36,
     flexShrink: 0,
     borderRadius: 1.25,
     border: '1px solid',
@@ -64,12 +63,11 @@ GroupThumbnail.propTypes = {
 
 // ----------------------------------------------------------------------
 
-export default function VariantGroupCard({ group, drafts, disabled, onFieldChange, onEdit }) {
+export default function VariantGroupCard({ group, onEdit }) {
   const { t } = useTranslate();
 
   const variants = group.rows.map((row) => row.variant);
-  const stock = totalStock(variants, drafts);
-  const changedCount = variants.filter((variant) => drafts[variant.id]).length;
+  const stock = totalStock(variants);
 
   return (
     <Card variant="outlined" sx={{ borderRadius: 1.5 }}>
@@ -77,49 +75,27 @@ export default function VariantGroupCard({ group, drafts, disabled, onFieldChang
       <Stack
         direction="row"
         alignItems="center"
-        spacing={1.5}
-        sx={{ px: { xs: 2, sm: 2.5 }, py: 1.5, bgcolor: 'background.neutral' }}
+        spacing={1.25}
+        sx={{ px: { xs: 1.5, sm: 2 }, py: 1, bgcolor: 'background.neutral' }}
       >
         <GroupThumbnail colorHex={group.colorHex} image={group.image} label={group.label} />
 
-        <Box sx={{ flexGrow: 1, minWidth: 0 }}>
-          <Typography variant="subtitle1" noWrap>
-            {group.label || t('variants_all')}
-          </Typography>
-          <Typography variant="caption" color="text.secondary">
-            {t('variants_count', { count: variants.length })}
-          </Typography>
-        </Box>
+        <Typography variant="subtitle2" noWrap sx={{ flexGrow: 1, minWidth: 0 }}>
+          {group.label || t('variants_all')}
+        </Typography>
 
-        {changedCount > 0 && (
-          <Label color="primary" variant="soft">
-            {t('variants_changed_count', { count: changedCount })}
-          </Label>
-        )}
-
-        <Stack alignItems="flex-end" sx={{ flexShrink: 0 }}>
-          <Typography variant="caption" color="text.secondary">
-            {t('variants_total_stock')}
-          </Typography>
-          <Typography variant="subtitle2" color={stock > 0 ? 'text.primary' : 'error.main'}>
-            {stock}
-          </Typography>
-        </Stack>
+        <Typography
+          variant="caption"
+          sx={{ flexShrink: 0, fontWeight: 600, color: stock > 0 ? 'text.secondary' : 'error.main' }}
+        >
+          {t('variants_total_stock')}: {stock}
+        </Typography>
       </Stack>
 
-      {/* Rows */}
+      {/* Rows — tap one to edit it */}
       <Box>
         {group.rows.map(({ variant, label }) => (
-          <VariantRowEditor
-            key={variant.id}
-            variant={variant}
-            label={label}
-            draft={drafts[variant.id]}
-            errors={validateDraft(drafts[variant.id])}
-            disabled={disabled}
-            onChange={(field, value) => onFieldChange(variant, field, value)}
-            onEdit={() => onEdit(variant)}
-          />
+          <VariantRow key={variant.id} variant={variant} label={label} onEdit={() => onEdit(variant)} />
         ))}
       </Box>
     </Card>
@@ -134,8 +110,5 @@ VariantGroupCard.propTypes = {
     image: PropTypes.string,
     rows: PropTypes.array,
   }).isRequired,
-  drafts: PropTypes.object.isRequired,
-  disabled: PropTypes.bool,
-  onFieldChange: PropTypes.func.isRequired,
   onEdit: PropTypes.func.isRequired,
 };

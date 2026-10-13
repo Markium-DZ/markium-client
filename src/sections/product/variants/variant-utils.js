@@ -100,70 +100,11 @@ export function groupVariants(variants = [], optionDefinitions = []) {
 }
 
 // ----------------------------------------------------------------------
-// Draft edits: { [variantId]: { quantity?: string, price?: string, is_active?: boolean } }
-// Inputs are kept as strings while typing; only fields that differ from the server value
-// are stored, so "dirty" === "has an entry".
-// ----------------------------------------------------------------------
 
-export const EDITABLE_FIELDS = ['quantity', 'price', 'is_active'];
-
-/** Server value of a field, normalised to the same shape the inputs use. */
-export function originalValue(variant, field) {
-  if (field === 'is_active') return variant?.is_active ?? true;
-  const raw = variant?.[field];
-  return raw === null || raw === undefined ? '' : String(raw);
-}
-
-export function effectiveValue(variant, draft, field) {
-  return draft && field in draft ? draft[field] : originalValue(variant, field);
-}
-
-function sameValue(field, a, b) {
-  if (field === 'is_active') return Boolean(a) === Boolean(b);
-  if (a === '' || b === '') return a === b;
-  return Number(a) === Number(b);
-}
-
-/** Returns the next draft for one variant after changing `field` (or null when back to original). */
-export function applyFieldChange(variant, draft, field, value) {
-  const next = { ...(draft || {}) };
-  if (sameValue(field, value, originalValue(variant, field))) {
-    delete next[field];
-  } else {
-    next[field] = value;
-  }
-  return Object.keys(next).length ? next : null;
-}
-
-/** Field → i18n error key, for invalid draft values. */
-export function validateDraft(draft) {
-  const errors = {};
-  if (!draft) return errors;
-  if ('quantity' in draft && !/^\d+$/.test(String(draft.quantity).trim())) {
-    errors.quantity = 'variants_invalid_quantity';
-  }
-  if ('price' in draft) {
-    const price = String(draft.price).trim();
-    if (price === '' || Number.isNaN(Number(price)) || Number(price) < 0) {
-      errors.price = 'variants_invalid_price';
-    }
-  }
-  return errors;
-}
-
-/** API payload for PUT /products/{p}/variants/{v} — changed fields only. */
-export function draftToPayload(draft) {
-  const payload = {};
-  if ('quantity' in draft) payload.quantity = parseInt(String(draft.quantity).trim(), 10);
-  if ('price' in draft) payload.price = parseFloat(String(draft.price).trim());
-  if ('is_active' in draft) payload.is_active = Boolean(draft.is_active);
-  return payload;
-}
-
-/** Sum of the (draft-aware) stock of the given variants; invalid inputs count as 0. */
-export function totalStock(variants, drafts) {
+/** Total stock of the given variants. */
+export function totalStock(variants) {
   return variants.reduce((sum, variant) => {
-    const quantity = parseInt(effectiveValue(variant, drafts[variant.id], 'quantity'), 10);
+    const quantity = parseInt(variant?.quantity, 10);
     return sum + (Number.isNaN(quantity) ? 0 : quantity);
   }, 0);
 }
