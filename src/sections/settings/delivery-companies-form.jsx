@@ -42,7 +42,9 @@ import {
   validateShippingConnection,
   setDefaultShippingConnection,
   deleteShippingConnection,
+  generatePickupBagLabel,
 } from 'src/api/shipping';
+import { reserveExternalTab, getApiErrorMessage } from 'src/utils/open-external';
 import { LoadingScreen } from 'src/components/loading-screen';
 
 // ----------------------------------------------------------------------
@@ -54,7 +56,7 @@ export default function DeliveryCompaniesForm() {
   const { connections, connectionsLoading, mutate: mutateConnections } = useGetShippingConnections();
 
   const { enqueueSnackbar } = useSnackbar();
-  const { t } = useTranslate();
+  const { t, i18n } = useTranslate();
 
   const [savingProvider, setSavingProvider] = useState(null);
   const [validatingConnection, setValidatingConnection] = useState(null);
@@ -62,11 +64,24 @@ export default function DeliveryCompaniesForm() {
   const [editingProviders, setEditingProviders] = useState({});
   const [configDialog, setConfigDialog] = useState(null); // company id or null
   const [searchQuery, setSearchQuery] = useState('');
+  const [pickupBag, setPickupBag] = useState(null); // { company, trackingNumber, loading } or null
 
   const deliveryCompanies = useMemo(() => {
     if (!providers || providers.length === 0) return [];
 
-    return providers.map((provider) => {
+    // Hide the legacy ZR Express (Procolis, token + key) card — the new platform
+    // replaces it. Merchants who already connected it still see it to manage it.
+    const hasLegacyZrConnection = connections?.some((conn) => conn.provider?.identifier === 'zr_express');
+    const visibleProviders = providers.filter(
+      (provider) => provider.identifier !== 'zr_express' || hasLegacyZrConnection
+    );
+
+    // List the new ZR Express platform first.
+    const ordered = [...visibleProviders].sort(
+      (a, b) => Number(b.identifier === 'zr_express_next') - Number(a.identifier === 'zr_express_next')
+    );
+
+    return ordered.map((provider) => {
       const existingConnection = connections?.find(
         (conn) => conn.provider?.id === provider.id || conn.provider?.identifier === provider.identifier
       );
@@ -86,6 +101,7 @@ export default function DeliveryCompaniesForm() {
         fields,
         descriptionKey: `${provider.identifier}_description`,
         capabilities: provider.capabilities,
+        supportsPickupBagLabel: !!provider.capabilities?.pickup_bag_label,
         isSandboxAvailable: provider.is_sandbox_available,
         connectionId: existingConnection?.id,
         isConnected: !!existingConnection,
@@ -333,6 +349,23 @@ export default function DeliveryCompaniesForm() {
       showError(error);
     } finally {
       setDeletingConnection(null);
+    }
+  };
+
+  const handlePrintPickupBagLabel = async () => {
+    const trackingNumber = pickupBag?.trackingNumber?.trim();
+    if (!pickupBag?.company?.connectionId || !trackingNumber) return;
+    const tab = reserveExternalTab();
+    try {
+      setPickupBag((prev) => ({ ...prev, loading: true }));
+      const result = await generatePickupBagLabel(pickupBag.company.connectionId, trackingNumber);
+      if (!result?.file_url) throw new Error(t('pickup_bag_label_failed'));
+      tab.open(result.file_url);
+      setPickupBag(null);
+    } catch (error) {
+      tab.cancel();
+      enqueueSnackbar(getApiErrorMessage(error, t('pickup_bag_label_failed')), { variant: 'error' });
+      setPickupBag((prev) => (prev ? { ...prev, loading: false } : prev));
     }
   };
 
@@ -603,6 +636,18 @@ export default function DeliveryCompaniesForm() {
                       >
                         {t('check_connection')}
                       </LoadingButton>
+
+                      {activeCompany.supportsPickupBagLabel && activeCompany.isActive && (
+                        <Button
+                          variant="outlined"
+                          color="inherit"
+                          size="small"
+                          onClick={() => setPickupBag({ company: activeCompany, trackingNumber: '', loading: false })}
+                          startIcon={<Iconify icon="solar:printer-minimalistic-bold" width={16} />}
+                        >
+                          {t('pickup_bag_label')}
+                        </Button>
+                      )}
                     </Stack>
                   </>
                 ) : (
@@ -631,7 +676,11 @@ export default function DeliveryCompaniesForm() {
                         label={t(field.labelKey)}
                         type={field.type}
                         size="small"
-                        helperText={field.required ? t('required_field') : t('optional_field')}
+                        helperText={
+                          i18n.exists(`${activeCompany.id}_${field.labelKey}_help`)
+                            ? t(`${activeCompany.id}_${field.labelKey}_help`)
+                            : t(field.required ? 'required_field' : 'optional_field')
+                        }
                       />
                     ))}
                   </>
@@ -684,6 +733,52 @@ export default function DeliveryCompaniesForm() {
             </DialogActions>
           </>
         )}
+      </Dialog>
+
+      {/* Pickup bag label dialog */}
+      <Dialog
+        open={!!pickupBag}
+        onClose={() => !pickupBag?.loading && setPickupBag(null)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle>{t('pickup_bag_label')}</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ pt: 1 }}>
+            <Typography variant="body2" color="text.secondary">
+              {t('pickup_bag_label_hint')}
+            </Typography>
+            <TextField
+              autoFocus
+              fullWidth
+              size="small"
+              label={t('pickup_bag_tracking_number')}
+              value={pickupBag?.trackingNumber || ''}
+              onChange={(e) => setPickupBag((prev) => ({ ...prev, trackingNumber: e.target.value }))}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  handlePrintPickupBagLabel();
+                }
+              }}
+              inputProps={{ dir: 'ltr' }}
+            />
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button color="inherit" onClick={() => setPickupBag(null)} disabled={!!pickupBag?.loading}>
+            {t('cancel')}
+          </Button>
+          <LoadingButton
+            variant="contained"
+            loading={!!pickupBag?.loading}
+            disabled={!pickupBag?.trackingNumber?.trim()}
+            onClick={handlePrintPickupBagLabel}
+            startIcon={<Iconify icon="solar:printer-minimalistic-bold" width={16} />}
+          >
+            {t('pickup_bag_label_print')}
+          </LoadingButton>
+        </DialogActions>
       </Dialog>
     </FormProvider>
   );

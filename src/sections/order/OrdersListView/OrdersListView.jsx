@@ -41,6 +41,8 @@ import { getOrderStatusOptions, getOrderStatus } from 'src/constants/order-statu
 
 import OrderDeliveryTypeLabel from '../order-delivery-type-label';
 import { formatOrderNumber } from '../utils/order-share-message';
+import Label from 'src/components/label';
+import OrderShipmentBadge from '../order-shipment-badge';
 import { resolveDateRange } from '../utils/order-date-range';
 import OrdersListToolbar, { ORDER_TABS } from './OrdersListToolbar';
 import OrdersSelectionBar from './OrdersSelectionBar';
@@ -507,7 +509,21 @@ export default function OrdersListView({ product_id }) {
         },
         { id: 'total', label: t('total'), type: "text", width: 120 },
         { id: 'delivery_type', label: t('delivery_type'), type: "render", render: (item) => <OrderDeliveryTypeLabel deliveryType={item.delivery_type ?? null} />, width: 110 },
-        { id: 'c_status', label: t('status'), type: "label", width: 100 },
+        {
+            id: 'c_status',
+            label: t('status'),
+            type: "render",
+            // Order status + whether it was uploaded to a shipping company's platform
+            render: (item) => (
+                <Stack spacing={0.5} alignItems="flex-start">
+                    <Label variant="soft" color={item.color || 'default'}>
+                        {item.c_status || '-'}
+                    </Label>
+                    <OrderShipmentBadge shipment={item.active_shipment} />
+                </Stack>
+            ),
+            width: 130,
+        },
         { id: 'full_address', label: t('address'), type: "long_text", length: 2, width: 200 },
         { id: 'actions', label: t('actions'), type: "threeDots", component: (item) => <ElementActions item={item} setTableData={setTableData} onUpdated={mutateOrders} />, width: 60, align: "right" },
         {
@@ -625,7 +641,7 @@ export default function OrdersListView({ product_id }) {
                             onCustomToChange={withPageReset(setCustomTo)}
                         />
 
-                        <OrdersSelectionBar selectedOrders={selectedOrders} onClear={handleClearSelection} />
+                        <OrdersSelectionBar selectedOrders={selectedOrders} onClear={handleClearSelection} onRefresh={mutateOrders} />
 
                         {ordersValidating && <LinearProgress sx={{ height: 2 }} />}
 

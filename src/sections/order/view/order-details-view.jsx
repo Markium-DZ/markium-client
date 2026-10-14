@@ -26,7 +26,8 @@ import { alpha, styled } from '@mui/material/styles';
 import { paths } from 'src/routes/paths';
 
 import { useGetOrder, updateOrder } from 'src/api/orders';
-import { useGetShippingRates, refreshShippingRates, createShipment } from 'src/api/shipping';
+import { useGetShippingRates, refreshShippingRates, createShipment, getShipmentLabel } from 'src/api/shipping';
+import { reserveExternalTab, getApiErrorMessage } from 'src/utils/open-external';
 
 import { RouterLink } from 'src/routes/components';
 
@@ -50,6 +51,7 @@ import OrderShipping from '../order-shipping';
 import OrderTracking from '../order-tracking';
 import OrderDetailsSkeleton from '../order-details-skeleton';
 import { formatOrderNumber } from '../utils/order-share-message';
+import { shipmentSupports } from '../utils/shipping-capabilities';
 
 // ----------------------------------------------------------------------
 
@@ -254,8 +256,39 @@ export default function OrderDetailsView({ id }) {
   const handleConfirmStopdesk = useCallback(async () => {
     const { quote, selectedCenterId } = stopdeskDialog;
     setStopdeskDialog({ open: false, quote: null, selectedCenterId: null });
-    await executeShipment(quote, { stopdesk_id: selectedCenterId });
+    // Center ids are compared as strings (ZR uses UUIDs, Yalidine numbers); send the raw id back.
+    const center = quote?.metadata?.centers?.find((c) => String(c.center_id) === selectedCenterId);
+    await executeShipment(quote, { stopdesk_id: center ? center.center_id : selectedCenterId });
   }, [stopdeskDialog, executeShipment]);
+
+  const handleSelectCenter = useCallback((centerId) => {
+    setStopdeskDialog((prev) => ({ ...prev, selectedCenterId: String(centerId) }));
+  }, []);
+
+  // Fresh label link from the provider (links expire, so never reuse a stored one)
+  const activeShipment = currentOrder?.active_shipment;
+  const canFetchLabel = !!activeShipment?.id && shipmentSupports(activeShipment, 'order_label');
+  const [printingLabel, setPrintingLabel] = useState(false);
+
+  const handlePrintLabel = useCallback(async () => {
+    if (!activeShipment?.id) return;
+    const tab = reserveExternalTab();
+    try {
+      setPrintingLabel(true);
+      const result = await getShipmentLabel(activeShipment.id);
+      if (!result?.label_url) {
+        tab.cancel();
+        enqueueSnackbar(t('label_not_available'), { variant: 'error' });
+        return;
+      }
+      tab.open(result.label_url);
+    } catch (error) {
+      tab.cancel();
+      enqueueSnackbar(getApiErrorMessage(error, t('label_fetch_failed')), { variant: 'error' });
+    } finally {
+      setPrintingLabel(false);
+    }
+  }, [activeShipment?.id, enqueueSnackbar, t]);
 
   const handleCancelStopdesk = useCallback(() => {
     setStopdeskDialog({ open: false, quote: null, selectedCenterId: null });
@@ -309,6 +342,8 @@ export default function OrderDetailsView({ id }) {
         onShipOrder={handleScrollToShipping}
         loading={isUpdatingStatus}
         labelUrl={currentOrder?.active_shipment?.label_url}
+        onPrintLabel={canFetchLabel ? handlePrintLabel : undefined}
+        printingLabel={printingLabel}
       />
 
       {/* Order Status Stepper */}
@@ -392,7 +427,12 @@ export default function OrderDetailsView({ id }) {
               <Card>
                 <CardHeader title={t('shipping')} />
                 <Stack sx={{ p: 3, pt: 1 }}>
-                  <OrderTracking order={currentOrder} onRefresh={mutate} />
+                  <OrderTracking
+                    order={currentOrder}
+                    onRefresh={mutate}
+                    onPrintLabel={canFetchLabel ? handlePrintLabel : undefined}
+                    printingLabel={printingLabel}
+                  />
                 </Stack>
               </Card>
             )}
@@ -481,29 +521,25 @@ export default function OrderDetailsView({ id }) {
 
           <RadioGroup
             value={stopdeskDialog.selectedCenterId ?? ''}
-            onChange={(e) =>
-              setStopdeskDialog((prev) => ({ ...prev, selectedCenterId: Number(e.target.value) }))
-            }
+            onChange={(e) => handleSelectCenter(e.target.value)}
           >
             <Stack spacing={1.5}>
               {stopdeskDialog.quote?.metadata?.centers?.map((center) => (
                 <Box
                   key={center.center_id}
-                  onClick={() =>
-                    setStopdeskDialog((prev) => ({ ...prev, selectedCenterId: center.center_id }))
-                  }
+                  onClick={() => handleSelectCenter(center.center_id)}
                   sx={{
                     p: 2,
                     borderRadius: 1,
                     cursor: 'pointer',
                     border: (theme) =>
                       `1px solid ${
-                        stopdeskDialog.selectedCenterId === center.center_id
+                        stopdeskDialog.selectedCenterId === String(center.center_id)
                           ? theme.palette.primary.main
                           : theme.palette.divider
                       }`,
                     bgcolor:
-                      stopdeskDialog.selectedCenterId === center.center_id
+                      stopdeskDialog.selectedCenterId === String(center.center_id)
                         ? 'action.selected'
                         : 'background.paper',
                     transition: 'all 0.2s',
@@ -511,21 +547,41 @@ export default function OrderDetailsView({ id }) {
                   }}
                 >
                   <FormControlLabel
-                    value={center.center_id}
+                    value={String(center.center_id)}
                     control={<Radio size="small" />}
                     sx={{ m: 0, width: '100%', alignItems: 'flex-start' }}
                     label={
                       <Stack spacing={0.5} sx={{ ml: 0.5 }}>
                         <Typography variant="subtitle2">{center.name}</Typography>
-                        <Stack direction="row" spacing={0.5} alignItems="center">
-                          <Iconify icon="solar:map-point-bold" width={14} sx={{ color: 'text.disabled' }} />
-                          <Typography variant="caption" color="text.secondary">
-                            {center.address}
+                        {center.address && (
+                          <Stack direction="row" spacing={0.5} alignItems="center">
+                            <Iconify icon="solar:map-point-bold" width={14} sx={{ color: 'text.disabled' }} />
+                            <Typography variant="caption" color="text.secondary">
+                              {center.address}
+                            </Typography>
+                          </Stack>
+                        )}
+                        {(center.commune_name || center.wilaya_name) && (
+                          <Typography variant="caption" color="text.disabled">
+                            {[center.commune_name, center.wilaya_name].filter(Boolean).join(' · ')}
                           </Typography>
-                        </Stack>
-                        <Typography variant="caption" color="text.disabled">
-                          {center.commune_name}
-                        </Typography>
+                        )}
+                        {center.phone && (
+                          <Stack direction="row" spacing={0.5} alignItems="center">
+                            <Iconify icon="solar:phone-bold" width={14} sx={{ color: 'text.disabled' }} />
+                            <Typography variant="caption" color="text.secondary" dir="ltr">
+                              {center.phone}
+                            </Typography>
+                          </Stack>
+                        )}
+                        {typeof (center.opening_hours || center.schedule) === 'string' && (
+                          <Stack direction="row" spacing={0.5} alignItems="center">
+                            <Iconify icon="solar:clock-circle-bold" width={14} sx={{ color: 'text.disabled' }} />
+                            <Typography variant="caption" color="text.secondary">
+                              {center.opening_hours || center.schedule}
+                            </Typography>
+                          </Stack>
+                        )}
                       </Stack>
                     }
                   />

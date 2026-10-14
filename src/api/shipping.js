@@ -146,6 +146,74 @@ export async function createShipment(orderId, { connectionId, quoteId, serviceCo
 }
 
 // ----------------------------------------------------------------------
+// Labels, bulk shipments, stop-desk hubs
+
+// -> { shipment_id, label_url } (fresh link on every call)
+export async function getShipmentLabel(shipmentId) {
+  const response = await axios.get(endpoints.shipping.shipmentLabel(shipmentId));
+  return response?.data?.data;
+}
+
+// shipmentIds: number[] (same connection) -> { file_url|null, failed: [{ shipment_id, tracking_number, reason }] }
+// inline: true also returns the label document's `html` (fetched by the backend) for print-ready opening
+export async function generateShippingLabels(shipmentIds, { inline = false } = {}) {
+  const response = await axios.post(endpoints.shipping.labels, {
+    shipment_ids: shipmentIds,
+    ...(inline && { inline: true }),
+  });
+  capture('shipping_labels_printed', { shipments_count: shipmentIds?.length });
+  return response?.data?.data;
+}
+
+// -> { tracking_number, file_url }
+export async function generatePickupBagLabel(connectionId, trackingNumber) {
+  const response = await axios.post(endpoints.shipping.pickupBagLabel(connectionId), {
+    tracking_number: trackingNumber,
+  });
+  return response?.data?.data;
+}
+
+// deliveryType: 'home' | 'stop_desk'; stopdeskId optional (backend auto-picks one per order)
+// -> { total, success_count, failure_count, results: [...] }
+export async function createBulkShipments({ orderIds, connectionId, deliveryType, stopdeskId }) {
+  const body = {
+    order_ids: orderIds,
+    connection_id: connectionId,
+    delivery_type: deliveryType,
+  };
+  if (stopdeskId) body.stopdesk_id = String(stopdeskId);
+  const response = await axios.post(endpoints.shipping.bulkShipments, body);
+  const data = response?.data?.data;
+  capture('shipping_bulk_shipments_created', {
+    orders_count: orderIds?.length,
+    success_count: data?.success_count,
+    delivery_type: deliveryType,
+  });
+  return data;
+}
+
+// Stop-desk centers of a connection; pass connectionId = null to skip fetching.
+export function useGetShippingHubs(connectionId, wilayaId) {
+  let url = null;
+  if (connectionId) {
+    url = wilayaId
+      ? [endpoints.shipping.connectionHubs(connectionId), { params: { wilaya_id: wilayaId } }]
+      : endpoints.shipping.connectionHubs(connectionId);
+  }
+
+  const { data, isLoading, error } = useSWR(url, fetcher, options);
+
+  return useMemo(
+    () => ({
+      hubs: data?.data || [],
+      hubsLoading: isLoading,
+      hubsError: error,
+    }),
+    [data, error, isLoading]
+  );
+}
+
+// ----------------------------------------------------------------------
 // Shipping prices per commune
 
 export function useGetCommuneShippingRates() {

@@ -17,6 +17,7 @@ import { paths } from 'src/routes/paths';
 
 import OrderDeliveryTypeLabel from './order-delivery-type-label';
 import { formatOrderNumber } from './utils/order-share-message';
+import OrderShipmentBadge from './order-shipment-badge';
 
 // ----------------------------------------------------------------------
 
@@ -118,6 +119,8 @@ export default function OrderMobileCard({ row, onActionsClick, selectable = fals
             >
               {row.c_status || '-'}
             </Label>
+
+            <OrderShipmentBadge shipment={row.active_shipment} />
 
             {row.delivery_type && (
               <OrderDeliveryTypeLabel

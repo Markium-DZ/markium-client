@@ -27,19 +27,26 @@ export default function ChatAssistantWidget() {
   const { t } = useTranslate();
   const [open, setOpen] = useState(false);
   const [kickoff, setKickoff] = useState(null);
+  // Other floating UI (e.g. the orders selection bar on phones) can ask to hide the button
+  const [fabHidden, setFabHidden] = useState(false);
 
   useEffect(() => {
     const onOpen = (event) => {
       setKickoff(event.detail?.kickoff ?? null);
       setOpen(true);
     };
+    const onFabVisibility = (event) => setFabHidden(!!event.detail?.hidden);
     window.addEventListener('assistant:open', onOpen);
-    return () => window.removeEventListener('assistant:open', onOpen);
+    window.addEventListener('assistant:fab-visibility', onFabVisibility);
+    return () => {
+      window.removeEventListener('assistant:open', onOpen);
+      window.removeEventListener('assistant:fab-visibility', onFabVisibility);
+    };
   }, []);
 
   return (
     <>
-      <Zoom in={!open}>
+      <Zoom in={!open && !fabHidden}>
         <Fab
           color="primary"
           aria-label="Store assistant"

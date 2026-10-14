@@ -6,18 +6,20 @@ import Stack from '@mui/material/Stack';
 import Alert from '@mui/material/Alert';
 import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
+import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
-import { alpha } from '@mui/material/styles';
 
-import { useTranslate, useLocales } from 'src/locales';
 import { useCopyToClipboard } from 'src/hooks/use-copy-to-clipboard';
-import { useSnackbar } from 'src/components/snackbar';
+
 import { fToNow } from 'src/utils/format-time';
 import { fCurrency } from 'src/utils/format-number';
 
+import { useLocales, useTranslate } from 'src/locales';
+
 import Label from 'src/components/label';
 import Iconify from 'src/components/iconify';
+import { useSnackbar } from 'src/components/snackbar';
 
 import { formatOrderNumber } from './utils/order-share-message';
 
@@ -34,22 +36,13 @@ const STATUS_COLOR_MAP = {
   preparing: 'warning',
 };
 
-const STATUS_ICON_MAP = {
-  pending: 'solar:clock-circle-bold',
-  in_transit: 'solar:delivery-bold',
-  out_for_delivery: 'solar:map-point-wave-bold',
-  delivered: 'solar:verified-check-bold',
-  failed: 'solar:close-circle-bold',
-  returned: 'solar:undo-left-bold',
-};
-
 function getShipmentStatus(shipment) {
   return shipment?.status?.key || shipment?.status || 'pending';
 }
 
 // ----------------------------------------------------------------------
 
-export default function OrderTracking({ order, onRefresh }) {
+export default function OrderTracking({ order, onRefresh, onPrintLabel, printingLabel }) {
   const { t, i18n } = useTranslate();
   const { currentLang } = useLocales();
   const langValue = currentLang?.value || 'en';
@@ -116,39 +109,128 @@ export default function OrderTracking({ order, onRefresh }) {
 
   if (!shipment) return null;
 
+  // Carrier hasn't confirmed the parcel yet (job still running) → no tracking number
+  const isCreating = !trackingNumber;
+  const stopDeskName = shipment?.metadata?.stopdesk_name;
+
+  const details = [
+    cost?.amount ? { label: t('shipping_cost'), value: cost.formatted || fCurrency(cost.amount) } : null,
+    stopDeskName ? { label: t('shipment_stop_desk'), value: stopDeskName } : null,
+    lastUpdated ? { label: t('shipment_last_update'), value: fToNow(lastUpdated, i18n.language) } : null,
+  ].filter(Boolean);
+
   return (
-    <Stack spacing={2}>
-      {/* Row 1: Status + last updated + refresh */}
-      <Stack direction="row" alignItems="center" spacing={1}>
-        <Label variant="soft" color={statusColor}>
-          {statusLabel}
-        </Label>
-
-        {lastUpdated && (
-          <Typography variant="caption" sx={{ color: 'text.disabled', flexGrow: 1 }}>
-            {fToNow(lastUpdated, i18n.language)}
-          </Typography>
+    <Stack spacing={2.5}>
+      {/* 1. Carrier · status · refresh */}
+      <Stack direction="row" alignItems="center" spacing={1.5}>
+        {provider.logo ? (
+          // Full logo (wide carrier logos must not be cropped into a square)
+          <Box
+            component="img"
+            src={provider.logo}
+            alt={provider.name}
+            sx={{
+              height: 40,
+              width: 'auto',
+              maxWidth: 112,
+              flexShrink: 0,
+              objectFit: 'contain',
+              borderRadius: 0.75,
+              bgcolor: 'common.white',
+              border: (theme) => `1px solid ${theme.palette.divider}`,
+              p: 0.5,
+            }}
+          />
+        ) : (
+          <Avatar variant="rounded" sx={{ width: 40, height: 40, bgcolor: 'background.neutral' }}>
+            <Iconify icon="solar:delivery-bold" width={22} />
+          </Avatar>
         )}
-
+        <Stack sx={{ minWidth: 0, flexGrow: 1 }}>
+          <Typography variant="subtitle2" noWrap>
+            {provider.name || t('not_available')}
+          </Typography>
+          {serviceName && (
+            <Typography variant="caption" color="text.secondary" noWrap>
+              {serviceName}
+            </Typography>
+          )}
+        </Stack>
+        <Label variant="soft" color={isCreating ? 'default' : statusColor} sx={{ flexShrink: 0 }}>
+          {isCreating ? t('shipment_creating') : statusLabel}
+        </Label>
         {onRefresh && (
-          <Button
-            size="small"
-            color="inherit"
-            onClick={handleRefresh}
-            disabled={isRefreshing}
-            startIcon={
-              <Iconify
-                icon={isRefreshing ? 'svg-spinners:ring-resize' : 'eva:refresh-fill'}
-                width={16}
-              />
-            }
-          >
-            {t('refresh_tracking')}
-          </Button>
+          <Tooltip title={t('refresh_tracking')}>
+            <span>
+              <IconButton size="small" onClick={handleRefresh} disabled={isRefreshing}>
+                <Iconify icon={isRefreshing ? 'svg-spinners:ring-resize' : 'eva:refresh-fill'} width={18} />
+              </IconButton>
+            </span>
+          </Tooltip>
         )}
       </Stack>
 
-      {/* Issue Alert (compact) */}
+      {/* 2. Tracking number */}
+      <Box
+        sx={{
+          p: 1.5,
+          borderRadius: 1,
+          bgcolor: 'background.neutral',
+        }}
+      >
+        <Typography variant="caption" color="text.secondary" component="div" sx={{ mb: 0.5 }}>
+          {t('tracking_number')}
+        </Typography>
+        {isCreating ? (
+          <Stack direction="row" alignItems="center" spacing={1}>
+            <Iconify icon="svg-spinners:ring-resize" width={16} sx={{ color: 'text.disabled' }} />
+            <Typography variant="body2" color="text.secondary">
+              {t('shipment_creating_hint')}
+            </Typography>
+          </Stack>
+        ) : (
+          <Stack direction="row" alignItems="center" spacing={0.5}>
+            <Typography
+              variant="subtitle1"
+              fontFamily="monospace"
+              noWrap
+              sx={{ flexGrow: 1, minWidth: 0, direction: 'ltr', textAlign: 'start' }}
+            >
+              {trackingNumber}
+            </Typography>
+            <Tooltip title={t('copy')}>
+              <IconButton size="small" onClick={handleCopyTracking}>
+                <Iconify icon="eva:copy-fill" width={18} />
+              </IconButton>
+            </Tooltip>
+            {customerPhone && (
+              <Tooltip title={t('shipment_share_with_customer')}>
+                <IconButton size="small" onClick={handleWhatsAppShare} sx={{ color: '#25D366' }}>
+                  <Iconify icon="ic:round-whatsapp" width={20} />
+                </IconButton>
+              </Tooltip>
+            )}
+          </Stack>
+        )}
+      </Box>
+
+      {/* 3. Details */}
+      {details.length > 0 && (
+        <Stack spacing={1}>
+          {details.map((row) => (
+            <Stack key={row.label} direction="row" justifyContent="space-between" spacing={2}>
+              <Typography variant="body2" color="text.secondary">
+                {row.label}
+              </Typography>
+              <Typography variant="body2" fontWeight={600} sx={{ textAlign: 'end' }}>
+                {row.value}
+              </Typography>
+            </Stack>
+          ))}
+        </Stack>
+      )}
+
+      {/* 4. Delivery issue */}
       {issueType && (
         <Alert
           severity={issueType === 'failed' ? 'error' : 'warning'}
@@ -167,85 +249,57 @@ export default function OrderTracking({ order, onRefresh }) {
           }
         >
           <Typography variant="caption">
-            {issueType === 'failed'
-              ? t('delivery_failed_message')
-              : t('customer_unreachable_message')}
+            {issueType === 'failed' ? t('delivery_failed_message') : t('customer_unreachable_message')}
           </Typography>
         </Alert>
       )}
 
-      {/* Row 2: Provider + Tracking number */}
-      <Stack direction="row" alignItems="center" spacing={2}>
-        {/* Provider */}
-        <Stack direction="row" alignItems="center" spacing={1} sx={{ minWidth: 0, flexShrink: 0 }}>
-          <Avatar
-            src={provider.logo}
-            alt={provider.name}
-            variant="rounded"
-            sx={{ width: 32, height: 32, bgcolor: 'background.neutral' }}
-          />
-          <Stack sx={{ minWidth: 0 }}>
-            <Typography variant="caption" fontWeight={600} noWrap>
-              {provider.name || t('not_available')}
-            </Typography>
-            {serviceName && (
-              <Typography variant="caption" color="text.disabled" noWrap>
-                {serviceName}
-              </Typography>
-            )}
-          </Stack>
-        </Stack>
-
-        {/* Tracking number */}
-        {trackingNumber && (
-          <Stack
-            direction="row"
-            alignItems="center"
-            spacing={0.5}
-            sx={{
-              ml: 'auto',
-              px: 1.5,
-              py: 0.75,
-              borderRadius: 0.75,
-              bgcolor: (theme) => theme.palette.grey[100],
-            }}
-          >
-            <Typography variant="caption" fontFamily="monospace" fontWeight={600} noWrap>
-              {trackingNumber}
-            </Typography>
-            <IconButton size="small" onClick={handleCopyTracking} sx={{ p: 0.25 }}>
-              <Iconify icon="eva:copy-fill" width={16} />
-            </IconButton>
-          </Stack>
-        )}
-      </Stack>
-
-      {/* Row 3: Cost + Label download */}
-      {(cost?.amount || labelUrl) && (
-        <Stack direction="row" alignItems="center" justifyContent="space-between">
-          {cost?.amount ? (
-            <Typography variant="body2" color="text.secondary">
-              {t('shipping_cost')}:{' '}
-              <Box component="span" fontWeight={600} color="text.primary">
-                {cost.formatted || fCurrency(cost.amount)}
-              </Box>
-            </Typography>
-          ) : (
-            <Box />
+      {/* 5. Actions */}
+      {(onPrintLabel || labelUrl || trackingUrl) && (
+        <Stack direction="row" spacing={1}>
+          {onPrintLabel && (
+            <Button
+              fullWidth
+              variant="contained"
+              onClick={onPrintLabel}
+              disabled={!!printingLabel || isCreating}
+              startIcon={
+                <Iconify
+                  icon={printingLabel ? 'svg-spinners:ring-resize' : 'solar:printer-minimalistic-bold'}
+                  width={18}
+                />
+              }
+            >
+              {t('print_label')}
+            </Button>
           )}
 
-          {labelUrl && (
+          {!onPrintLabel && labelUrl && (
             <Button
-              size="small"
-              variant="soft"
-              color="inherit"
+              fullWidth
+              variant="contained"
               component="a"
               href={labelUrl}
               target="_blank"
               rel="noopener"
-              startIcon={<Iconify icon="solar:document-bold" width={16} />}
+              startIcon={<Iconify icon="solar:document-bold" width={18} />}
             >
               {t('download_label')}
+            </Button>
+          )}
+
+          {trackingUrl && (
+            <Button
+              variant="outlined"
+              color="inherit"
+              component="a"
+              href={trackingUrl}
+              target="_blank"
+              rel="noopener"
+              startIcon={<Iconify icon="solar:map-point-wave-bold" width={18} />}
+              sx={{ flexShrink: 0 }}
+            >
+              {t('shipment_track')}
             </Button>
           )}
         </Stack>
@@ -257,4 +311,6 @@ export default function OrderTracking({ order, onRefresh }) {
 OrderTracking.propTypes = {
   order: PropTypes.object.isRequired,
   onRefresh: PropTypes.func,
+  onPrintLabel: PropTypes.func,
+  printingLabel: PropTypes.bool,
 };

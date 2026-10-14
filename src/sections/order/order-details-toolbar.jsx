@@ -62,6 +62,8 @@ export default function OrderDetailsToolbar({
   onShipOrder,
   loading,
   labelUrl,
+  onPrintLabel,
+  printingLabel,
 }) {
   const morePopover = usePopover();
   const theme = useTheme();
@@ -158,10 +160,17 @@ export default function OrderDetailsToolbar({
           <Button
             color="inherit"
             variant="outlined"
-            startIcon={<Iconify icon="solar:printer-minimalistic-bold" />}
-            onClick={handlePrint}
+            startIcon={
+              printingLabel ? (
+                <CircularProgress size={16} color="inherit" />
+              ) : (
+                <Iconify icon="solar:printer-minimalistic-bold" />
+              )
+            }
+            onClick={onPrintLabel || handlePrint}
+            disabled={!!printingLabel}
           >
-            {labelUrl ? t('print_label') : t('print')}
+            {onPrintLabel || labelUrl ? t('print_label') : t('print')}
           </Button>
 
           <Button
@@ -237,4 +246,6 @@ OrderDetailsToolbar.propTypes = {
   status: PropTypes.string,
   loading: PropTypes.bool,
   labelUrl: PropTypes.string,
+  onPrintLabel: PropTypes.func,
+  printingLabel: PropTypes.bool,
 };
