@@ -106,9 +106,8 @@ export default function OrdersBulkShippingActions({ selectedOrders, onRefresh, o
 
   const bulkConnections = useMemo(
     () =>
-      (connections || []).filter(
-        (c) => c.is_active && !!c.credentials_validated_at && connectionSupports(c, 'bulk_create_order')
-      ),
+      // Every connected carrier: ones without a bulk API are shipped order by order by the backend
+      (connections || []).filter((c) => c.is_active && !!c.credentials_validated_at),
     [connections]
   );
 
@@ -259,6 +258,14 @@ export default function OrdersBulkShippingActions({ selectedOrders, onRefresh, o
   };
 
   const selectedConnection = bulkConnections.find((c) => c.id === connectionId);
+  // Choosing one specific stop desk needs the carrier's hubs list (ZR new platform)
+  const canPickSpecificDesk = connectionSupports(selectedConnection, 'bulk_create_order');
+
+  // Switching carrier: a stop desk chosen for another carrier doesn't apply anymore
+  useEffect(() => {
+    setHub(null);
+    if (!canPickSpecificDesk) setStopdeskMode('auto');
+  }, [connectionId, canPickSpecificDesk]);
   const tooMany = shippable.length > MAX_BULK_ORDERS;
   const canConfirm =
     !!selectedConnection &&
@@ -351,14 +358,16 @@ export default function OrdersBulkShippingActions({ selectedOrders, onRefresh, o
                       control={<Radio size="small" />}
                       label={<Typography variant="body2">{t('bulk_ship_stopdesk_auto')}</Typography>}
                     />
-                    <FormControlLabel
-                      value="specific"
-                      control={<Radio size="small" />}
-                      label={<Typography variant="body2">{t('bulk_ship_stopdesk_specific')}</Typography>}
-                    />
+                    {canPickSpecificDesk && (
+                      <FormControlLabel
+                        value="specific"
+                        control={<Radio size="small" />}
+                        label={<Typography variant="body2">{t('bulk_ship_stopdesk_specific')}</Typography>}
+                      />
+                    )}
                   </RadioGroup>
 
-                  {stopdeskMode === 'specific' && (
+                  {canPickSpecificDesk && stopdeskMode === 'specific' && (
                     <Autocomplete
                       size="small"
                       options={hubs}
