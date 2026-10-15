@@ -20,6 +20,17 @@ import Iconify from 'src/components/iconify';
 
 import { ToolStatus, ToolChoice, ToolApproval, ToolFieldForm } from './assistant-tools';
 
+/** Image in an assistant reply: a thumbnail that opens the full image in a new tab. */
+function MarkdownImage({ src, alt }) {
+  return (
+    <a href={src} target="_blank" rel="noopener noreferrer" title={alt || undefined}>
+      <img src={src} alt={alt || ''} loading="lazy" />
+    </a>
+  );
+}
+
+MarkdownImage.propTypes = { src: PropTypes.string, alt: PropTypes.string };
+
 // ----------------------------------------------------------------------
 
 // The dashboard's own Sanctum token is forwarded to the Host, which verifies it
@@ -58,9 +69,30 @@ function TextBubble({ isUser, text }) {
               '& p + p': { mt: 1 },
               '& ul, & ol': { m: 0, pl: 2.5 },
               '& strong': { fontWeight: 700 },
+              // Product images the assistant shows: thumbnails, side by side, tap to open full size
+              '& img': {
+                display: 'inline-block',
+                width: 96,
+                height: 96,
+                objectFit: 'cover',
+                borderRadius: 1,
+                border: (theme) => `1px solid ${theme.palette.divider}`,
+                mr: 1,
+                mb: 1,
+                verticalAlign: 'top',
+                cursor: 'zoom-in',
+              },
+              // Variant tables stay readable on phones
+              '& table': { display: 'block', overflowX: 'auto', borderCollapse: 'collapse', my: 1 },
+              '& th, & td': { border: (theme) => `1px solid ${theme.palette.divider}`, px: 1, py: 0.5, whiteSpace: 'nowrap' },
             }}
           >
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>{text}</ReactMarkdown>
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              components={{ img: MarkdownImage }}
+            >
+              {text}
+            </ReactMarkdown>
           </Box>
         )}
       </Paper>
