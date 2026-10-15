@@ -18,7 +18,7 @@ import { CHAT_HOST_API } from 'src/config-global';
 
 import Iconify from 'src/components/iconify';
 
-import { ToolStatus, ToolChoice, ToolApproval, ToolFieldForm } from './assistant-tools';
+import { ToolStatus, ToolChoice, ToolApproval, ToolFieldForm, ToolImagePicker } from './assistant-tools';
 
 /** Image in an assistant reply: a thumbnail that opens the full image in a new tab. */
 function MarkdownImage({ src, alt }) {
@@ -200,6 +200,18 @@ export default function ChatAssistant({ kickoff, onKickoffSent }) {
           disabled={done}
           chosen={done ? part.output : null}
           onChoose={(opt) => addToolOutput({ tool: 'ask_choice', toolCallId: id, output: opt })}
+        />
+      ) : null;
+    }
+
+    if (toolName === 'pick_image') {
+      return uiReady ? (
+        <ToolImagePicker
+          key={id}
+          input={part.input}
+          disabled={done}
+          chosen={done && part.output && typeof part.output === 'object' ? part.output : null}
+          onPick={(output) => addToolOutput({ tool: 'pick_image', toolCallId: id, output })}
         />
       ) : null;
     }

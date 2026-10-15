@@ -131,6 +131,7 @@
   "confirm": "Confirmer",
   "done": "Terminé",
   "cancel": "Annuler",
+  "assistant_pick_images_confirm": "Utiliser {{count}} images",
   "product_options": "Options du Produit",
   "product_options_description": "Définir les options comme la taille, la couleur ou le matériau qui créent différentes variantes",
   "add_option": "Ajouter une Option",

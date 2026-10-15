@@ -132,6 +132,7 @@
   "confirm": "Confirm",
   "done": "Done",
   "cancel": "Cancel",
+  "assistant_pick_images_confirm": "Use {{count}} images",
   "product_options": "Product Options",
   "product_options_description": "Define options like size, color, or material that create different variants",
   "add_option": "Add Option",

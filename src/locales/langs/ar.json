@@ -134,6 +134,7 @@
   "confirm": " تأكيد",
   "done": "تم",
   "cancel": "إلغاء",
+  "assistant_pick_images_confirm": "استخدام {{count}} صور",
   "product_options": "خيارات المنتج",
   "product_options_description": "حدد الخيارات مثل الحجم أو اللون أو المادة التي تنشئ متغيرات مختلفة",
   "add_option": "إضافة خيار",

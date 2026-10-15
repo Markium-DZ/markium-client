@@ -333,3 +333,115 @@ ToolChoice.propTypes = {
   chosen: PropTypes.string,
   onChoose: PropTypes.func.isRequired,
 };
+
+// ----------------------------------------------------------------------
+
+/**
+ * pick_image: a grid of thumbnails the merchant taps to choose an image.
+ * Single mode: one tap answers. Multiple mode: tick several, then confirm.
+ * Answers {media_ids: [...]} (in the order picked).
+ */
+export function ToolImagePicker({ input, disabled, chosen, onPick }) {
+  const { t } = useTranslate();
+  const images = input?.images ?? [];
+  const multiple = !!input?.multiple;
+  const [selected, setSelected] = useState([]);
+
+  const chosenIds = chosen?.media_ids ?? null;
+  const shown = chosenIds ? images.filter((img) => chosenIds.includes(img.media_id)) : images;
+
+  const toggle = (mediaId) => {
+    if (!multiple) {
+      onPick({ media_ids: [mediaId] });
+      return;
+    }
+    setSelected((prev) => (prev.includes(mediaId) ? prev.filter((id) => id !== mediaId) : [...prev, mediaId]));
+  };
+
+  return (
+    <Paper elevation={0} sx={cardSx}>
+      {input?.question && (
+        <Typography variant="body2" sx={{ mb: 1 }}>{input.question}</Typography>
+      )}
+
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(84px, 1fr))',
+          gap: 1,
+        }}
+      >
+        {shown.map((img) => {
+          const order = selected.indexOf(img.media_id);
+          const isSelected = order !== -1 || !!chosenIds;
+          return (
+            <Box
+              key={img.media_id}
+              component="button"
+              type="button"
+              disabled={disabled || !!chosenIds}
+              onClick={() => toggle(img.media_id)}
+              title={img.label || `#${img.media_id}`}
+              sx={{
+                p: 0,
+                position: 'relative',
+                cursor: disabled || chosenIds ? 'default' : 'pointer',
+                border: '2px solid',
+                borderColor: isSelected ? 'primary.main' : 'divider',
+                borderRadius: 1,
+                overflow: 'hidden',
+                bgcolor: 'background.neutral',
+                textAlign: 'start',
+              }}
+            >
+              <Box component="img" src={img.url} alt={img.label || ''} loading="lazy" sx={{ width: 1, aspectRatio: '1', objectFit: 'cover', display: 'block' }} />
+              <Typography variant="caption" noWrap component="div" sx={{ px: 0.5, py: 0.25, color: 'text.secondary' }}>
+                #{img.media_id}{img.label ? ` · ${img.label}` : ''}
+              </Typography>
+              {multiple && order !== -1 && (
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    top: 4,
+                    insetInlineEnd: 4,
+                    width: 20,
+                    height: 20,
+                    borderRadius: '50%',
+                    bgcolor: 'primary.main',
+                    color: 'primary.contrastText',
+                    typography: 'caption',
+                    fontWeight: 700,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  {order + 1}
+                </Box>
+              )}
+            </Box>
+          );
+        })}
+      </Box>
+
+      {multiple && !chosenIds && (
+        <Stack direction="row" spacing={1} sx={{ mt: 1.5 }}>
+          <Button size="small" variant="contained" disabled={disabled || !selected.length} onClick={() => onPick({ media_ids: selected })}>
+            {t('assistant_pick_images_confirm', { count: selected.length })}
+          </Button>
+          <Button size="small" color="inherit" disabled={disabled} onClick={() => onPick({ cancelled: true })}>
+            {t('cancel')}
+          </Button>
+        </Stack>
+      )}
+    </Paper>
+  );
+}
+
+ToolImagePicker.propTypes = {
+  input: PropTypes.object,
+  disabled: PropTypes.bool,
+  chosen: PropTypes.object,
+  onPick: PropTypes.func.isRequired,
+};
+
