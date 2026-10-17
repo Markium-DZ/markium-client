@@ -283,6 +283,14 @@ export async function extractShippingRates(images, signal) {
     error.resetsAt = body.resets_at || null;
     throw error;
   }
+  // The chat host streams 200 + keep-alive spaces while the model reads; a failure
+  // after streaming started arrives as { error, status } inside that 200 body.
+  if (body.error) {
+    const error = new Error(body.error);
+    error.status = body.status;
+    error.resetsAt = body.resets_at || null;
+    throw error;
+  }
   capture('shipping_rates_ai_extracted', { rows: body.rows?.length ?? 0, carrier: body.carrier });
   return body;
 }

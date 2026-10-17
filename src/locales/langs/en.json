@@ -4306,7 +4306,7 @@
   "shipping_import_title": "Import your carrier's price list",
   "shipping_import_hint": "Upload the PDF, a scan or a photo of your delivery price list (up to 5 pages). We'll read it and pre-fill your prices for you to check.",
   "shipping_import_pick": "Choose files",
-  "shipping_import_reading": "Reading your price list… this takes up to 30 seconds.",
+  "shipping_import_reading": "Reading your price list… this can take up to 3 minutes.",
   "shipping_import_truncated": "Only the first 5 pages were read.",
   "shipping_import_not_found": "We couldn't find shipping prices in this file. You can enter them manually.",
   "shipping_import_error": "We couldn't read the file. Please try again.",

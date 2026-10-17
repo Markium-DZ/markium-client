@@ -3942,7 +3942,7 @@
   "shipping_import_title": "Importer la grille tarifaire de votre transporteur",
   "shipping_import_hint": "Téléversez le PDF, un scan ou une photo de votre grille de livraison (5 pages max). Nous la lisons et pré-remplissons vos prix pour que vous les vérifiiez.",
   "shipping_import_pick": "Choisir des fichiers",
-  "shipping_import_reading": "Lecture de votre grille… cela peut prendre 30 secondes.",
+  "shipping_import_reading": "Lecture de votre grille… cela peut prendre jusqu'à 3 minutes.",
   "shipping_import_truncated": "Seules les 5 premières pages ont été lues.",
   "shipping_import_not_found": "Aucun prix de livraison trouvé dans ce fichier. Vous pouvez les saisir manuellement.",
   "shipping_import_error": "Impossible de lire le fichier. Veuillez réessayer.",
