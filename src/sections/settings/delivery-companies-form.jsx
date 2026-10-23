@@ -43,7 +43,9 @@ import {
   setDefaultShippingConnection,
   deleteShippingConnection,
   generatePickupBagLabel,
+  updateShippingWebhookSecret,
 } from 'src/api/shipping';
+import { useCopyToClipboard } from 'src/hooks/use-copy-to-clipboard';
 import { reserveExternalTab, getApiErrorMessage } from 'src/utils/open-external';
 import { LoadingScreen } from 'src/components/loading-screen';
 
@@ -65,6 +67,9 @@ export default function DeliveryCompaniesForm() {
   const [configDialog, setConfigDialog] = useState(null); // company id or null
   const [searchQuery, setSearchQuery] = useState('');
   const [pickupBag, setPickupBag] = useState(null); // { company, trackingNumber, loading } or null
+  const [webhookSecretInput, setWebhookSecretInput] = useState('');
+  const [savingWebhookSecret, setSavingWebhookSecret] = useState(false);
+  const { copy } = useCopyToClipboard();
 
   const deliveryCompanies = useMemo(() => {
     if (!providers || providers.length === 0) return [];
@@ -109,6 +114,8 @@ export default function DeliveryCompaniesForm() {
         isDefault: existingConnection?.is_default || false,
         isValidated: !!existingConnection?.credentials_validated_at,
         isSandbox: existingConnection?.is_sandbox || false,
+        webhookUrl: existingConnection?.webhook_url || null,
+        webhookSecretSet: !!existingConnection?.webhook_secret_set,
         credentials: {},
       };
     });
@@ -352,6 +359,28 @@ export default function DeliveryCompaniesForm() {
     }
   };
 
+  const handleCopyWebhookUrl = async (company) => {
+    if (await copy(company.webhookUrl)) {
+      enqueueSnackbar(t('webhook_url_copied'), { variant: 'success' });
+    }
+  };
+
+  const handleSaveWebhookSecret = async (company) => {
+    const secret = webhookSecretInput.trim();
+    if (!company.connectionId || !secret) return;
+    try {
+      setSavingWebhookSecret(true);
+      await updateShippingWebhookSecret(company.connectionId, secret);
+      enqueueSnackbar(t('webhook_secret_saved'), { variant: 'success' });
+      setWebhookSecretInput('');
+      await mutateConnections();
+    } catch (error) {
+      showError(error);
+    } finally {
+      setSavingWebhookSecret(false);
+    }
+  };
+
   const handlePrintPickupBagLabel = async () => {
     const trackingNumber = pickupBag?.trackingNumber?.trim();
     if (!pickupBag?.company?.connectionId || !trackingNumber) return;
@@ -550,6 +579,7 @@ export default function DeliveryCompaniesForm() {
         onClose={() => {
           setConfigDialog(null);
           setEditingProviders({});
+          setWebhookSecretInput('');
         }}
         maxWidth="sm"
         fullWidth
@@ -580,6 +610,7 @@ export default function DeliveryCompaniesForm() {
                   onClick={() => {
                     setConfigDialog(null);
                     setEditingProviders({});
+                    setWebhookSecretInput('');
                   }}
                   size="small"
                 >
@@ -649,6 +680,71 @@ export default function DeliveryCompaniesForm() {
                         </Button>
                       )}
                     </Stack>
+
+                    {activeCompany.webhookUrl && (
+                      <>
+                        <Divider />
+
+                        <Stack spacing={1.5}>
+                          <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
+                            <Typography variant="subtitle2">{t('webhook_title')}</Typography>
+                            <Chip
+                              size="small"
+                              variant="soft"
+                              color={activeCompany.webhookSecretSet ? 'success' : 'default'}
+                              label={t(activeCompany.webhookSecretSet ? 'webhook_configured' : 'webhook_not_configured')}
+                              sx={{ height: 24, fontSize: '0.7rem' }}
+                            />
+                          </Stack>
+
+                          <Typography variant="caption" color="text.secondary">
+                            {t('webhook_step_url', { name: activeCompany.name })}
+                          </Typography>
+                          <TextField
+                            fullWidth
+                            size="small"
+                            value={activeCompany.webhookUrl}
+                            inputProps={{ readOnly: true, dir: 'ltr' }}
+                            onFocus={(e) => e.target.select()}
+                            InputProps={{
+                              endAdornment: (
+                                <InputAdornment position="end">
+                                  <IconButton size="small" onClick={() => handleCopyWebhookUrl(activeCompany)}>
+                                    <Iconify icon="eva:copy-fill" width={18} />
+                                  </IconButton>
+                                </InputAdornment>
+                              ),
+                            }}
+                          />
+
+                          <Typography variant="caption" color="text.secondary">
+                            {t('webhook_step_secret', { name: activeCompany.name })}
+                          </Typography>
+                          <Stack direction="row" spacing={1} alignItems="flex-start">
+                            <TextField
+                              fullWidth
+                              size="small"
+                              type="password"
+                              autoComplete="off"
+                              label={t('webhook_secret')}
+                              value={webhookSecretInput}
+                              onChange={(e) => setWebhookSecretInput(e.target.value)}
+                              helperText={activeCompany.webhookSecretSet ? t('webhook_secret_replace_hint') : undefined}
+                              inputProps={{ dir: 'ltr' }}
+                            />
+                            <LoadingButton
+                              variant="contained"
+                              loading={savingWebhookSecret}
+                              disabled={!webhookSecretInput.trim()}
+                              onClick={() => handleSaveWebhookSecret(activeCompany)}
+                              sx={{ flexShrink: 0, height: 40 }}
+                            >
+                              {t('save')}
+                            </LoadingButton>
+                          </Stack>
+                        </Stack>
+                      </>
+                    )}
                   </>
                 ) : (
                   <>
@@ -725,6 +821,7 @@ export default function DeliveryCompaniesForm() {
                   onClick={() => {
                     setConfigDialog(null);
                     setEditingProviders({});
+                    setWebhookSecretInput('');
                   }}
                 >
                   {t('close')}

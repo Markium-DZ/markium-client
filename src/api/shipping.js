@@ -86,6 +86,11 @@ export async function setDefaultShippingConnection(connectionId) {
   return await axios.post(URL);
 }
 
+export async function updateShippingWebhookSecret(connectionId, webhookSecret) {
+  const URL = endpoints.shipping.webhookSecret(connectionId);
+  return await axios.put(URL, { webhook_secret: webhookSecret || null });
+}
+
 export async function deleteShippingConnection(connectionId) {
   const URL = endpoints.shipping.deleteConnection(connectionId);
   return await axios.delete(URL);

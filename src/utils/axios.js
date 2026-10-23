@@ -224,6 +224,7 @@ export const endpoints = {
     updateConnection: (connectionId) => `/shipping/connections/${connectionId}`,
     validateConnection: (connectionId) => `/shipping/connections/${connectionId}/validate`,
     setDefaultConnection: (connectionId) => `/shipping/connections/${connectionId}/set-default`,
+    webhookSecret: (connectionId) => `/shipping/connections/${connectionId}/webhook-secret`,
     deleteConnection: (connectionId) => `/shipping/connections/${connectionId}`,
     orderRates: (orderId) => `/shipping/orders/${orderId}/rates`,
     orderRatesByProvider: (orderId) => `/shipping/orders/${orderId}/rates/by-provider`,
