@@ -4466,5 +4466,6 @@
   "variants_invalid_quantity": "عدد صحيح ≥ 0",
   "variants_invalid_price": "يجب أن يكون ≥ 0",
   "settings_marketplace_visible": "عرض منتجاتي في سوق ماركيوم",
-  "settings_marketplace_visible_description": "تُعرض منتجاتك المنشورة مجاناً على"
+  "settings_marketplace_visible_description": "تُعرض منتجاتك المنشورة مجاناً على",
+  "settings_marketplace_hidden_by_admin": "تم إخفاء متجرك من السوق من طرف فريق ماركيوم. تواصل مع الدعم لإعادة عرضه."
 }

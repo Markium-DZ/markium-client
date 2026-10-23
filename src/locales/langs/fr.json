@@ -4064,5 +4064,6 @@
   "variants_invalid_quantity": "Nombre entier ≥ 0",
   "variants_invalid_price": "Doit être ≥ 0",
   "settings_marketplace_visible": "Afficher mes produits sur la marketplace Markium",
-  "settings_marketplace_visible_description": "Vos produits publiés sont présentés gratuitement sur"
+  "settings_marketplace_visible_description": "Vos produits publiés sont présentés gratuitement sur",
+  "settings_marketplace_hidden_by_admin": "Votre boutique a été masquée de la marketplace par l’équipe Markium. Contactez le support pour qu’elle soit à nouveau affichée."
 }

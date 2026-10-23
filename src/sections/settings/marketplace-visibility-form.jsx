@@ -1,6 +1,7 @@
 import { useContext, useState, useEffect } from 'react';
 
 import Box from '@mui/material/Box';
+import Alert from '@mui/material/Alert';
 import Card from '@mui/material/Card';
 import Link from '@mui/material/Link';
 import Stack from '@mui/material/Stack';
@@ -27,6 +28,9 @@ export default function MarketplaceVisibilityForm() {
   const { t } = useTranslate();
 
   const [visible, setVisible] = useState(true);
+
+  // Hidden by a Markium admin: overrides the merchant's switch until an admin lifts it
+  const hiddenByAdmin = !!store?.marketplace_hidden_by_admin;
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -75,9 +79,20 @@ export default function MarketplaceVisibilityForm() {
         {loading ? (
           <CircularProgress size={20} />
         ) : (
-          <Switch checked={visible} onChange={handleToggle} inputProps={{ 'aria-label': t('settings_marketplace_visible') }} />
+          <Switch
+            checked={visible && !hiddenByAdmin}
+            onChange={handleToggle}
+            disabled={hiddenByAdmin}
+            inputProps={{ 'aria-label': t('settings_marketplace_visible') }}
+          />
         )}
       </Stack>
+
+      {hiddenByAdmin && (
+        <Alert severity="warning" sx={{ mx: 2.5, mb: 2 }}>
+          {t('settings_marketplace_hidden_by_admin')}
+        </Alert>
+      )}
     </Card>
   );
 }

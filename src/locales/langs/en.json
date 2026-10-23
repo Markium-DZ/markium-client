@@ -4426,5 +4426,6 @@
   "variants_invalid_quantity": "Whole number ≥ 0",
   "variants_invalid_price": "Must be ≥ 0",
   "settings_marketplace_visible": "Show my products on the Markium marketplace",
-  "settings_marketplace_visible_description": "Your deployed products are listed for free on"
+  "settings_marketplace_visible_description": "Your deployed products are listed for free on",
+  "settings_marketplace_hidden_by_admin": "Your store was hidden from the marketplace by the Markium team. Contact support to have it listed again."
 }
