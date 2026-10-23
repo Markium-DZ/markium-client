@@ -4424,5 +4424,7 @@
   "variants_saved": "{{count}} variant(s) updated",
   "variants_save_failed": "{{count}} variant(s) could not be saved — try again",
   "variants_invalid_quantity": "Whole number ≥ 0",
-  "variants_invalid_price": "Must be ≥ 0"
+  "variants_invalid_price": "Must be ≥ 0",
+  "settings_marketplace_visible": "Show my products on the Markium marketplace",
+  "settings_marketplace_visible_description": "Your deployed products are listed for free on"
 }

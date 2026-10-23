@@ -4464,5 +4464,7 @@
   "variants_saved": "تم تحديث المتغيرات: {{count}}",
   "variants_save_failed": "تعذّر حفظ {{count}} من المتغيرات — حاول مجددًا",
   "variants_invalid_quantity": "عدد صحيح ≥ 0",
-  "variants_invalid_price": "يجب أن يكون ≥ 0"
+  "variants_invalid_price": "يجب أن يكون ≥ 0",
+  "settings_marketplace_visible": "عرض منتجاتي في سوق ماركيوم",
+  "settings_marketplace_visible_description": "تُعرض منتجاتك المنشورة مجاناً على"
 }

@@ -6,6 +6,7 @@ import { useTranslate } from 'src/locales';
 import { useSettingsContext } from 'src/components/settings';
 import CustomBreadcrumbs from 'src/components/custom-breadcrumbs';
 import StoreDataForm from 'src/sections/settings/store-data-form';
+import MarketplaceVisibilityForm from 'src/sections/settings/marketplace-visibility-form';
 
 
 // ----------------------------------------------------------------------
@@ -37,6 +38,8 @@ export default function StoreDataView() {
       />
 
       <StoreDataForm />
+
+      <MarketplaceVisibilityForm />
     </Container>
   );
 }

@@ -4062,5 +4062,7 @@
   "variants_saved": "{{count}} variante(s) mise(s) à jour",
   "variants_save_failed": "{{count}} variante(s) n'ont pas pu être enregistrée(s) — réessayez",
   "variants_invalid_quantity": "Nombre entier ≥ 0",
-  "variants_invalid_price": "Doit être ≥ 0"
+  "variants_invalid_price": "Doit être ≥ 0",
+  "settings_marketplace_visible": "Afficher mes produits sur la marketplace Markium",
+  "settings_marketplace_visible_description": "Vos produits publiés sont présentés gratuitement sur"
 }
