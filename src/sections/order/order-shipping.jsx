@@ -10,6 +10,7 @@ import Chip from '@mui/material/Chip';
 import Alert from '@mui/material/Alert';
 import Button from '@mui/material/Button';
 import Radio from '@mui/material/Radio';
+import Switch from '@mui/material/Switch';
 import RadioGroup from '@mui/material/RadioGroup';
 import FormControlLabel from '@mui/material/FormControlLabel';
 
@@ -25,7 +26,7 @@ import VerificationGate from 'src/components/verification-gate/verification-gate
 
 // ----------------------------------------------------------------------
 
-export default function OrderShipping({ quotesGroupedByProvider, loading, error, onRefresh, onSelect, selectedQuoteId, onShip }) {
+export default function OrderShipping({ quotesGroupedByProvider, loading, error, onRefresh, onSelect, selectedQuoteId, onShip, insurance, onInsuranceChange, declaredValue }) {
   const { t } = useTranslate();
 
   const hasQuotes = quotesGroupedByProvider && Object.keys(quotesGroupedByProvider).length > 0;
@@ -225,6 +226,17 @@ export default function OrderShipping({ quotesGroupedByProvider, loading, error,
           </Stack>
         </RadioGroup>
 
+        {selectedQuoteId && onInsuranceChange && (
+          <Box sx={{ mt: 2 }}>
+            <FormControlLabel
+              control={
+                <Switch checked={!!insurance} onChange={(e) => onInsuranceChange(e.target.checked)} />
+              }
+              label={`${t('shipping_insurance')}${insurance && declaredValue ? ` (${fCurrency(declaredValue)})` : ''}`}
+            />
+          </Box>
+        )}
+
         {selectedQuoteId && onShip && (
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
             <VerificationGate>
@@ -247,4 +259,7 @@ OrderShipping.propTypes = {
   onSelect: PropTypes.func,
   selectedQuoteId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   onShip: PropTypes.func,
+  insurance: PropTypes.bool,
+  onInsuranceChange: PropTypes.func,
+  declaredValue: PropTypes.number,
 };

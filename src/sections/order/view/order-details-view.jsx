@@ -220,12 +220,16 @@ export default function OrderDetailsView({ id }) {
   // Stop desk dialog state
   const [stopdeskDialog, setStopdeskDialog] = useState({ open: false, quote: null, selectedCenterId: null });
 
+  // Insurance (like Yalidine's "assurance"): on by default, declared at the products value
+  const [insurance, setInsurance] = useState(true);
+  const declaredValue = Math.round(Number(currentOrder?.subtotal ?? currentOrder?.total_price) || 0);
+
   const executeShipment = useCallback(async (quote, metadata) => {
     try {
       await createShipment(id, {
         connectionId: quote.connection?.id,
         quoteId: quote.id,
-        metadata,
+        metadata: { ...(metadata || {}), insurance, declared_value: declaredValue },
       });
       // Update order status to shipped
       await updateOrder(id, { status: 'shipped' });
@@ -236,7 +240,7 @@ export default function OrderDetailsView({ id }) {
     } catch (error) {
       enqueueSnackbar(t('error_creating_shipment'), { variant: 'error' });
     }
-  }, [id, mutate, mutateRates, enqueueSnackbar, t]);
+  }, [id, insurance, declaredValue, mutate, mutateRates, enqueueSnackbar, t]);
 
   const handleShipOrder = useCallback(async () => {
     if (!selectedQuoteId) return;
@@ -447,6 +451,9 @@ export default function OrderDetailsView({ id }) {
                   onSelect={handleSelectQuote}
                   selectedQuoteId={selectedQuoteId}
                   onShip={handleShipOrder}
+                  insurance={insurance}
+                  onInsuranceChange={setInsurance}
+                  declaredValue={declaredValue}
                 />
               </div>
             )}

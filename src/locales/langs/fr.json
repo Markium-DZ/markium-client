@@ -1437,6 +1437,7 @@
   "no_shipping_available": "Aucune option de livraison disponible pour cette commande.",
   "integrate_shipping_company": "Intégrer une société de livraison",
   "shipping_refreshed": "Options de livraison actualisées avec succès",
+  "shipping_insurance": "Assurance du colis",
   "select_delivery_provider": "Sélectionnez un transporteur pour créer l'expédition",
   "create_shipment": "Créer une expédition",
   "options": "Options",

@@ -64,7 +64,6 @@ export default function ProductsListView({ }) {
         // { id: 'birth_date', label: t('birth_date'), type: "text", width: 140 },
         { id: 'real_price', label: t('real_price'), type: "text", width: 140 },
         { id: 'sale_price', label: t('sale_price'), type: "text", width: 100 },
-        { id: 'orders', label: t('orders'), type: "render", render: (item) => <OrdersDropdown item={item} />, width: 300 },
         { id: 'c_status', label: t('status'), type: "label", width: 140 },
         { id: 'actions', label: t('actions'), type: "threeDots", component: (item) => <ElementActions user={user} item={item} setTableData={setTableData} />, width: 80, align: "right" },
     ]

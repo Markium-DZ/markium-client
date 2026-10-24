@@ -60,6 +60,8 @@ export default function OrderDetailsItems({
             '& .MuiAccordionSummary-content': {
               my: 0,
               flexDirection: 'column',
+              minWidth: 0,
+              overflow: 'hidden',
             },
             '& .MuiAccordionSummary-expandIconWrapper': {
               mt: 2.5,
@@ -84,6 +86,9 @@ export default function OrderDetailsItems({
                 sx={{
                   py: 2,
                   width: 1,
+                  minWidth: 0,
+                  flexWrap: { xs: 'wrap', sm: 'nowrap' },
+                  rowGap: 1,
                   borderBottom: (theme) => `dashed 1px ${theme.palette.divider}`,
                 }}
               >
@@ -114,7 +119,13 @@ export default function OrderDetailsItems({
                   )}
                 </Box>
 
-                <Stack alignItems="flex-end" sx={{ flexShrink: 0, ml: 2 }}>
+                <Stack
+                  alignItems={{ xs: 'flex-start', sm: 'flex-end' }}
+                  direction={{ xs: 'row', sm: 'column' }}
+                  justifyContent={{ xs: 'space-between', sm: 'flex-start' }}
+                  spacing={{ xs: 2, sm: 0 }}
+                  sx={{ flexShrink: 0, ml: { xs: 0, sm: 2 }, width: { xs: 1, sm: 'auto' } }}
+                >
                   <Typography variant="subtitle2">
                     {fCurrency(item.unit_price)}
                   </Typography>
@@ -135,7 +146,7 @@ export default function OrderDetailsItems({
           >
             <Stack direction="row">
               <Box sx={{ color: 'text.secondary' }}>{t('subtotal')}</Box>
-              <Box sx={{ width: 160, typography: 'subtitle2' }}>{fCurrency(subTotal) || '-'}</Box>
+              <Box sx={{ width: { xs: 110, sm: 160 }, typography: 'subtitle2' }}>{fCurrency(subTotal) || '-'}</Box>
             </Stack>
 
             {showShipping && (
@@ -143,7 +154,7 @@ export default function OrderDetailsItems({
                 <Box sx={{ color: 'text.secondary' }}>{t('shipping')}</Box>
                 <Box
                   sx={{
-                    width: 160,
+                    width: { xs: 110, sm: 160 },
                     ...(!isBlurred &&
                       (shippingPrice === null || shippingPrice === undefined) && {
                         color: 'warning.main',
@@ -157,14 +168,14 @@ export default function OrderDetailsItems({
 
             <Stack direction="row">
               <Box sx={{ color: 'text.secondary' }}>{t('discount')}</Box>
-              <Box sx={{ width: 160, ...(discount && { color: 'error.main' }) }}>
+              <Box sx={{ width: { xs: 110, sm: 160 }, ...(discount && { color: 'error.main' }) }}>
                 {discount ? `- ${fCurrency(discount)}` : '-'}
               </Box>
             </Stack>
 
             <Stack direction="row" sx={{ typography: 'subtitle1' }}>
               <Box>{t('total')}</Box>
-              <Box sx={{ width: 160 }}>{fCurrency(totalAmount) || '-'}</Box>
+              <Box sx={{ width: { xs: 110, sm: 160 } }}>{fCurrency(totalAmount) || '-'}</Box>
             </Stack>
           </Stack>
         </AccordionDetails>

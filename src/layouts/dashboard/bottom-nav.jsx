@@ -13,7 +13,7 @@ const PRIMARY_TABS = [
   { label: 'nav.dashboard', icon: 'solar:widget-5-bold-duotone', path: paths.dashboard.root },
   { label: 'nav.orders', icon: 'solar:bag-check-bold-duotone', path: paths.dashboard.order.root },
   { label: 'nav.products', icon: 'solar:box-bold-duotone', path: paths.dashboard.product.root },
-  { label: 'nav.analytics', icon: 'solar:chart-bold-duotone', path: paths.dashboard.general.analytics },
+  { label: 'nav.settings', icon: 'solar:settings-bold-duotone', path: paths.dashboard.settings.root },
 ];
 
 function getActiveTab(pathname) {

@@ -582,7 +582,22 @@ export default function ProductNewEditForm({ currentProduct, drawerMode = false,
           router.push(paths.dashboard.product.root);
         }
       } catch (error) {
-        showError(error);
+        // Surface backend validation errors (e.g. "name already taken") on the field
+        // and as a toast from this component's own snackbar instance, then bring the field into view.
+        const fieldErrors = error?.errors || error?.error?.details;
+        if (fieldErrors && typeof fieldErrors === 'object' && Object.keys(fieldErrors).length > 0) {
+          Object.entries(fieldErrors).forEach(([field, msgs]) => {
+            const message = Array.isArray(msgs) ? msgs[0] : String(msgs);
+            if (field in defaultValues) methods.setError(field, { type: 'server', message });
+            enqueueSnackbar(message, { variant: 'error' });
+          });
+          const firstField = Object.keys(fieldErrors)[0];
+          document
+            .querySelector(`[name="${firstField}"]`)
+            ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } else {
+          showError(error);
+        }
       }
     },
     (errors) => {

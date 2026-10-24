@@ -1494,6 +1494,7 @@
   "no_shipping_available": "لا توجد خيارات شحن متاحة لهذا الطلب.",
   "integrate_shipping_company": "ربط شركة شحن",
   "shipping_refreshed": "تم تحديث خيارات الشحن بنجاح",
+  "shipping_insurance": "تأمين الشحنة",
   "select_delivery_provider": "اختر شركة التوصيل لإنشاء الشحنة",
   "create_shipment": "إنشاء شحنة",
   "cheapest": "الأرخص",

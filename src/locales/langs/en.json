@@ -1474,6 +1474,7 @@
   "no_shipping_available": "No shipping options available for this order.",
   "integrate_shipping_company": "Integrate Shipping Company",
   "shipping_refreshed": "Shipping options refreshed successfully",
+  "shipping_insurance": "Shipping insurance",
   "select_delivery_provider": "Select a delivery provider to create the shipment",
   "create_shipment": "Create Shipment",
   "cheapest": "Cheapest",
