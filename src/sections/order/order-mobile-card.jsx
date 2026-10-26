@@ -88,9 +88,23 @@ export default function OrderMobileCard({ row, onActionsClick, selectable = fals
               <Typography variant="subtitle2" noWrap>
                 {row.name || '-'}
               </Typography>
-              <Typography variant="caption" color="text.secondary" noWrap>
-                {row.phone || '-'}
-              </Typography>
+              {row.phone ? (
+                <Typography
+                  component="a"
+                  href={`tel:${row.phone}`}
+                  onClick={(event) => event.stopPropagation()}
+                  variant="caption"
+                  dir="ltr"
+                  noWrap
+                  sx={{ color: 'primary.main', fontWeight: 600, textDecoration: 'none', alignSelf: 'flex-start' }}
+                >
+                  {row.phone}
+                </Typography>
+              ) : (
+                <Typography variant="caption" color="text.secondary" noWrap>
+                  -
+                </Typography>
+              )}
             </Stack>
 
             {/* Actions (three dots) */}

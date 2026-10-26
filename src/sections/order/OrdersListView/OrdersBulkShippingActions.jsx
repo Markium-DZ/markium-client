@@ -86,7 +86,7 @@ export default function OrdersBulkShippingActions({ selectedOrders, onRefresh, o
   // ---- Ship with… ----
   const [shipOpen, setShipOpen] = useState(false);
   const [connectionId, setConnectionId] = useState('');
-  const [deliveryType, setDeliveryType] = useState('home');
+  const [deliveryType, setDeliveryType] = useState('as_ordered');
   const [stopdeskMode, setStopdeskMode] = useState('auto');
   const [hub, setHub] = useState(null);
   const [shipping, setShipping] = useState(false);
@@ -138,7 +138,7 @@ export default function OrdersBulkShippingActions({ selectedOrders, onRefresh, o
   }, [shipOpen, connectionId, bulkConnections]);
 
   const handleOpenShip = () => {
-    setDeliveryType('home');
+    setDeliveryType('as_ordered');
     setStopdeskMode('auto');
     setHub(null);
     setShipOpen(true);
@@ -341,6 +341,11 @@ export default function OrdersBulkShippingActions({ selectedOrders, onRefresh, o
                   value={deliveryType}
                   onChange={(e) => setDeliveryType(e.target.value)}
                 >
+                  <FormControlLabel
+                    value="as_ordered"
+                    control={<Radio size="small" />}
+                    label={t('bulk_ship_as_ordered')}
+                  />
                   <FormControlLabel value="home" control={<Radio size="small" />} label={t('bulk_ship_home')} />
                   <FormControlLabel
                     value="stop_desk"

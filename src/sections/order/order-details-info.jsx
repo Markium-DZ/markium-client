@@ -1,4 +1,5 @@
 import PropTypes from 'prop-types';
+import { useState } from 'react';
 
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
@@ -7,11 +8,18 @@ import Avatar from '@mui/material/Avatar';
 import Divider from '@mui/material/Divider';
 import CardHeader from '@mui/material/CardHeader';
 import Typography from '@mui/material/Typography';
+import Button from '@mui/material/Button';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
+import ListItemText from '@mui/material/ListItemText';
 
 import { useTranslate } from 'src/locales';
 import { useLocales } from 'src/locales';
 
 import Iconify from 'src/components/iconify';
+import { useSnackbar } from 'src/components/snackbar';
+import showError from 'src/utils/show_error';
+import { updateOrderDeliveryType } from 'src/api/orders';
 
 import OrderDeliveryTypeLabel from './order-delivery-type-label';
 
@@ -31,8 +39,29 @@ const getLocalizedName = (item, currentLang) => {
   }
 };
 
-export default function OrderDetailsInfo({ customer, shippingAddress, deliveryType }) {
+export default function OrderDetailsInfo({ customer, shippingAddress, deliveryType, orderId, canChangeDeliveryType = false, onDeliveryTypeChanged }) {
+
   const { t } = useTranslate();
+
+  const { enqueueSnackbar } = useSnackbar();
+  const [deliveryMenuAnchor, setDeliveryMenuAnchor] = useState(null);
+  const [savingDeliveryType, setSavingDeliveryType] = useState(false);
+
+  const handleChangeDeliveryType = async (newType) => {
+    setDeliveryMenuAnchor(null);
+    if (!orderId || newType === deliveryType) return;
+    try {
+      setSavingDeliveryType(true);
+      await updateOrderDeliveryType(orderId, newType);
+      enqueueSnackbar(t('delivery_type_updated'), { variant: 'success' });
+      await onDeliveryTypeChanged?.();
+    } catch (error) {
+      showError(error);
+    } finally {
+      setSavingDeliveryType(false);
+    }
+  };
+
   const { currentLang } = useLocales();
 
   const getLocalizedFullAddress = () => {
@@ -69,7 +98,20 @@ export default function OrderDetailsInfo({ customer, shippingAddress, deliveryTy
         {customer?.phone && (
           <Stack direction="row" spacing={1} alignItems="center">
             <Iconify icon="solar:phone-bold" width={18} sx={{ color: 'text.disabled' }} />
-            <Typography variant="body2">{customer.phone}</Typography>
+            <Typography
+              component="a"
+              href={`tel:${customer.phone}`}
+              variant="body2"
+              dir="ltr"
+              sx={{
+                color: 'primary.main',
+                fontWeight: 600,
+                textDecoration: 'none',
+                '&:hover': { textDecoration: 'underline' },
+              }}
+            >
+              {customer.phone}
+            </Typography>
           </Stack>
         )}
 
@@ -93,13 +135,46 @@ export default function OrderDetailsInfo({ customer, shippingAddress, deliveryTy
           </Typography>
         </Stack>
 
-        {deliveryType && (
-          <Stack direction="row" spacing={1} alignItems="center">
+        {(deliveryType || canChangeDeliveryType) && (
+          <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
             <Iconify icon="solar:delivery-bold" width={18} sx={{ color: 'text.disabled' }} />
             <Typography variant="body2" sx={{ color: 'text.secondary' }}>
               {t('delivery_type')}
             </Typography>
-            <OrderDeliveryTypeLabel deliveryType={deliveryType} />
+            <OrderDeliveryTypeLabel deliveryType={deliveryType ?? null} />
+            {canChangeDeliveryType && (
+              <>
+                <Button
+                  size="small"
+                  color="inherit"
+                  disabled={savingDeliveryType}
+                  onClick={(e) => setDeliveryMenuAnchor(e.currentTarget)}
+                  startIcon={<Iconify icon="solar:pen-bold" width={14} />}
+                  sx={{ minWidth: 0, px: 1, fontSize: '0.75rem' }}
+                >
+                  {t('change')}
+                </Button>
+                <Menu
+                  anchorEl={deliveryMenuAnchor}
+                  open={!!deliveryMenuAnchor}
+                  onClose={() => setDeliveryMenuAnchor(null)}
+                >
+                  {['home', 'stop_desk'].map((type) => (
+                    <MenuItem
+                      key={type}
+                      selected={type === deliveryType}
+                      onClick={() => handleChangeDeliveryType(type)}
+                    >
+                      <ListItemText
+                        primary={t(type === 'home' ? 'delivery_home' : 'delivery_stop_desk')}
+                        secondary={t('delivery_type_reprice_hint')}
+                        secondaryTypographyProps={{ variant: 'caption' }}
+                      />
+                    </MenuItem>
+                  ))}
+                </Menu>
+              </>
+            )}
           </Stack>
         )}
       </Stack>
@@ -111,4 +186,7 @@ OrderDetailsInfo.propTypes = {
   customer: PropTypes.object,
   shippingAddress: PropTypes.object,
   deliveryType: PropTypes.oneOf(['home', 'stop_desk', null]),
+  orderId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  canChangeDeliveryType: PropTypes.bool,
+  onDeliveryTypeChanged: PropTypes.func,
 };

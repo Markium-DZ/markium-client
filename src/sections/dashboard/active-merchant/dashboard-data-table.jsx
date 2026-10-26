@@ -376,6 +376,7 @@ export default function DashboardDataTable({
                 dense="small"
                 rowsPerPage={ROWS_PER_PAGE}
                 hidePagination
+                onRowClick={(row) => router.push(paths.dashboard.order.details(row.id))}
               />
             )}
 

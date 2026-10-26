@@ -96,19 +96,33 @@ self.addEventListener('push', (event) => {
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
 
-  const { url } = event.notification.data;
+  const url = new URL(event.notification.data?.url || '/', self.location.origin).href;
 
   event.waitUntil(
-    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
-      for (const client of clientList) {
-        if (client.url.includes(self.location.origin) && 'focus' in client) {
-          client.focus();
-          client.navigate(url);
-          return;
-        }
+    (async () => {
+      const clientList = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+      const client = clientList.find((c) => c.url.startsWith(self.location.origin));
+
+      if (!client) {
+        await self.clients.openWindow(url);
+        return;
       }
-      return self.clients.openWindow(url);
-    })
+
+      await client.focus();
+
+      // Prefer in-app routing (keeps the SPA loaded); the dashboard listens for this message.
+      // A tab that isn't running the app (or an old bundle) is navigated directly instead.
+      if (client.url.includes('/dashboard')) {
+        client.postMessage({ type: 'NOTIFICATION_CLICK', url });
+        return;
+      }
+
+      try {
+        await client.navigate(url);
+      } catch (error) {
+        await self.clients.openWindow(url);
+      }
+    })()
   );
 });
 

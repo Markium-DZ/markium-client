@@ -42,6 +42,7 @@ import { fToNow } from 'src/utils/format-time';
 
 import VerificationGate from 'src/components/verification-gate/verification-gate';
 
+import OrderNotes from '../order-notes';
 import OrderDetailsInfo from '../order-details-info';
 import OrderDetailsItems from '../order-details-item';
 import OrderDetailsToolbar from '../order-details-toolbar';
@@ -419,6 +420,13 @@ export default function OrderDetailsView({ id }) {
               customer={currentOrder?.customer}
               shippingAddress={currentOrder?.address}
               deliveryType={currentOrder?.delivery_type ?? null}
+              orderId={id}
+              canChangeDeliveryType={
+                ['pending', 'confirmed'].includes(status) &&
+                (!currentOrder?.active_shipment ||
+                  ['cancelled', 'failed'].includes(currentOrder.active_shipment?.status?.key))
+              }
+              onDeliveryTypeChanged={mutate}
             />
             
 
@@ -461,6 +469,8 @@ export default function OrderDetailsView({ id }) {
             <OrderTrackingAnalytics trackingAnalytics={currentOrder?.tracking_analytics} />
 
             <OrderDetailsHistory currentOrder={currentOrder} />
+
+            <OrderNotes orderId={id} />
           </Stack>
         </Grid>
       </Grid>

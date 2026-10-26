@@ -4,6 +4,7 @@ import Box from '@mui/material/Box';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 import { useResponsive } from 'src/hooks/use-responsive';
+import { useNotificationClickNavigation } from 'src/hooks/use-notification-click-navigation';
 
 import SkipToContent from 'src/components/skip-to-content';
 import { useSettingsContext } from 'src/components/settings';
@@ -26,6 +27,8 @@ import NavHorizontal from './nav-horizontal';
 
 export default function DashboardLayout({ children }) {
   const settings = useSettingsContext();
+
+  useNotificationClickNavigation();
 
   const lgUp = useResponsive('up', 'lg');
 

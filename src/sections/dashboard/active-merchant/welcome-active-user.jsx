@@ -6,6 +6,9 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import { alpha, useTheme } from '@mui/material/styles';
 
+import { paths } from 'src/routes/paths';
+import { useRouter } from 'src/routes/hooks';
+
 import { fNumber, fCurrency } from 'src/utils/format-number';
 
 import { bgGradient } from 'src/theme/css';
@@ -20,6 +23,7 @@ const ROW_MIN_HEIGHT = 88;
 export default function WelcomeActiveUser({ userName, ordersToday = 0, weeklyRevenue = 0 }) {
   const { t } = useTranslation();
   const theme = useTheme();
+  const router = useRouter();
 
   const today = new Date().toLocaleDateString(undefined, {
     weekday: 'long',
@@ -63,6 +67,7 @@ export default function WelcomeActiveUser({ userName, ordersToday = 0, weeklyRev
           value={fNumber(ordersToday)}
           label={t('new_orders_today')}
           color={theme.palette.primary.main}
+          onClick={() => router.push(paths.dashboard.order.root)}
         />
         <MiniStat
           icon="solar:dollar-minimalistic-bold-duotone"
@@ -83,9 +88,15 @@ WelcomeActiveUser.propTypes = {
 
 // ----------------------------------------------------------------------
 
-function MiniStat({ icon, value, label, color }) {
+function MiniStat({ icon, value, label, color, onClick }) {
   return (
-    <Stack direction="row" alignItems="center" spacing={1}>
+    <Stack
+      direction="row"
+      alignItems="center"
+      spacing={1}
+      onClick={onClick}
+      sx={onClick ? { cursor: 'pointer', '&:hover': { opacity: 0.8 } } : undefined}
+    >
       <Box
         sx={{
           width: 32,
@@ -117,4 +128,5 @@ MiniStat.propTypes = {
   value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   label: PropTypes.string,
   color: PropTypes.string,
+  onClick: PropTypes.func,
 };

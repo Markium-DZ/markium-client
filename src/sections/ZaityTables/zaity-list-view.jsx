@@ -73,6 +73,8 @@ export default function ZaityListView({
   selectedIds,
   onToggleRow,
   onToggleAllRows,
+  // --- Opt-in: make each row clickable (e.g. open the record).
+  onRowClick,
 }) {
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslate();
@@ -207,6 +209,7 @@ export default function ZaityListView({
                       selected={isRowSelected(row)}
                       onSelectRow={selectable ? () => onToggleRow?.(row) : () => table.onSelectRow(row.id)}
                       selectable={selectable}
+                      onRowClick={onRowClick}
                     />
                   ))}
 

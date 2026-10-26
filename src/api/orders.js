@@ -140,3 +140,8 @@ export async function updateOrder(order_id, body) {
     const URL = endpoints.order.root+"/"+order_id;
     return await axios.patch(URL, body);
 }
+
+export async function updateOrderDeliveryType(order_id, deliveryType) {
+    const URL = `${endpoints.order.root}/${order_id}/delivery-type`;
+    return await axios.patch(URL, { delivery_type: deliveryType });
+}

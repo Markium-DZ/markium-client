@@ -19,18 +19,23 @@ import { t } from 'i18next';
 
 // ----------------------------------------------------------------------
 
-export default function OrderTableRow({ TABLE_HEAD, row, unit, pv, currentLang, selected, onSelectRow, actions, selectable = false }) {
+export default function OrderTableRow({ TABLE_HEAD, row, unit, pv, currentLang, selected, onSelectRow, actions, selectable = false, onRowClick }) {
 
   const popover = usePopover();
   const router = useRouter();
   const renderPrimary = (
-    <TableRow hover selected={selected}>
+    <TableRow
+      hover
+      selected={selected}
+      onClick={onRowClick ? () => onRowClick(row) : undefined}
+      sx={onRowClick ? { cursor: 'pointer' } : undefined}
+    >
       {/* <TableCell align='start' sx={{ width: "100px" }} padding="checkbox" >
         <Checkbox checked={selected} onClick={onSelectRow} />
       </TableCell> */}
       {selectable && (
         <TableCell padding="checkbox">
-          <Checkbox checked={!!selected} onClick={onSelectRow} inputProps={{ 'aria-label': t('select_row') }} />
+          <Checkbox checked={!!selected} onClick={(e) => { e.stopPropagation(); onSelectRow?.(e); }} inputProps={{ 'aria-label': t('select_row') }} />
         </TableCell>
       )}
 
@@ -62,6 +67,7 @@ OrderTableRow.propTypes = {
   onDeleteRow: PropTypes.func,
   onSelectRow: PropTypes.func,
   selectable: PropTypes.bool,
+  onRowClick: PropTypes.func,
 };
 
 
