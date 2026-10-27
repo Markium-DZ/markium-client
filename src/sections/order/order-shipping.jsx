@@ -162,17 +162,31 @@ export default function OrderShipping({ quotesGroupedByProvider, loading, error,
                           label={
                             <Stack direction="row" spacing={2} alignItems="center" sx={{ flexGrow: 1, width: '100%' }}>
                               {/* Provider Logo */}
-                              <Avatar
-                                src={quote.connection?.provider?.logo}
-                                alt={quote.connection?.provider?.name}
-                                variant="rounded"
-                                sx={{
-                                  width: 48,
-                                  height: 48,
-                                  bgcolor: 'background.neutral',
-                                  border: (theme) => `1px solid ${theme.palette.divider}`,
-                                }}
-                              />
+                              {quote.connection?.provider?.logo ? (
+                                <Box
+                                  component="img"
+                                  src={quote.connection.provider.logo}
+                                  alt={quote.connection?.provider?.name}
+                                  sx={{
+                                    width: { xs: 72, sm: 110 },
+                                    height: 48,
+                                    flexShrink: 0,
+                                    objectFit: 'contain',
+                                    p: 0.5,
+                                    borderRadius: 1,
+                                    bgcolor: '#fff',
+                                    border: (theme) => `1px solid ${theme.palette.divider}`,
+                                  }}
+                                />
+                              ) : (
+                                <Avatar
+                                  alt={quote.connection?.provider?.name}
+                                  variant="rounded"
+                                  sx={{ width: 48, height: 48, flexShrink: 0 }}
+                                >
+                                  {quote.connection?.provider?.name?.charAt(0)}
+                                </Avatar>
+                              )}
 
                               {/* Service Details */}
                               <Box sx={{ flexGrow: 1 }}>
